@@ -5,7 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d9c0e26e-b41a-4ae2-9eb5-77465e757608" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/scala/hello.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/hello.scala" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -108,7 +107,7 @@
       <workItem from="1675801206857" duration="152000" />
       <workItem from="1675801367108" duration="90000" />
       <workItem from="1675801467927" duration="919000" />
-      <workItem from="1675802400122" duration="2232000" />
+      <workItem from="1675802400122" duration="2537000" />
     </task>
     <servers />
   </component>
