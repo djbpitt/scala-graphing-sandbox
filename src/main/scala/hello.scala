@@ -2,8 +2,15 @@ import scalax.collection.Graph
 import scalax.collection.mutable
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
+// These are outer nodes, see http://www.scala-graph.org/guides/core-inner-outer.html
+// TODO: Learn about difference between inner and outer nodes
+// TODO; Cannot retrieve node just by integer; learn now to look up by id property
 case class A_node(id: Int, tokens:List[String])
-case class A_edge_labels (witnesses: List[String])
+
+// For traversal graph for transposition prevention use weighted directed edges
+// For variant graph use key (one key per witness) labeled edges
+// -> We should not need to create a custom edge (phew!)
+// http://www.scala-graph.org/guides/core-initializing.html
 
 @main def hello(): Unit =
   val h = mutable.Graph.empty[A_node, DiEdge]
