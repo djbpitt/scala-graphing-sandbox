@@ -1,31 +1,18 @@
 import play.api.libs.json.Json
 
-import scala.io.Source
-import scala.util.{Failure, Success, Using}
-
-// import scala.util.parsing.json._
 @main def unaligned_dev():Unit =
   val wd = os.pwd
   println(wd)
 
-  val datafile_path = (os.pwd/"src"/"main"/"data"/"unaligned_data.json").toString
+  val datafile_path = os.pwd/"src"/"main"/"data"/"unaligned_data.json"
 
-  val fileContents = Using(Source.fromFile(datafile_path)) { source => source.mkString }
+  val fileContents = os.read(datafile_path)
   // println(fileContents)
-
-  fileContents match
-    case Success(data) =>
-      val json = Json.parse(data)
-      println(json)
-    case Failure(exception) =>
-      println(exception)
+  val json = Json.parse(fileContents)
+  println(json)
 
 
 
-//  val source: String = Source.fromFile("app/assets/jsons/countriesToCities.json").map(Json.parse)
-//  val json: JsValue = Json.parse(source)
-//
-//
 //
 //  val result = JSON.parseFull(jsonStr)
 //  result match {
