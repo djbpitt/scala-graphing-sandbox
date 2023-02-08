@@ -1,5 +1,14 @@
-import play.api.libs.json.{JsArray, JsObject, Json}
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
+import play.api.libs.json.{JsArray, JsObject, Json, Reads, __}
 
+case class UnalignedFragment(nodeno: Int, readings: List[List[String]])
+
+object UnalignedFragment {
+  implicit val reads: Reads[UnalignedFragment] = (
+    (__ \ "nodeno").read[Int] and
+      (__ \ "readings").read[List[List[String]]]
+    )(UnalignedFragment.apply _)
+}
 @main def unaligned_dev():Unit =
   val wd = os.pwd
   println(wd)
@@ -8,18 +17,10 @@ import play.api.libs.json.{JsArray, JsObject, Json}
 
   val fileContents = os.read(datafile_path)
   // println(fileContents)
-  val json = Json.parse(fileContents)
-  // println(json)
+  val parsedJsValue = Json.parse(fileContents)
+  val parsed = Json.fromJson[List[UnalignedFragment]](parsedJsValue)
+  println(parsed)
 
-  // see: https://stackoverflow.com/questions/50245602/convert-json-to-case-class-with-a-nested-objects-using-scala-play
-  // for a better way of doing this.
-  json match
-    case JsArray(arr) =>
-      for node <- arr do
-        node match
-          case JsObject(obj) =>
-            val readings = obj("readings")
-            println(readings)
 
 
 //  for node in darwin: # Each unaligned zone is its own node
