@@ -12,6 +12,10 @@ target/
 *.iml
 *.ipr
 
+### Scala ###
+.bsp/sbg.json
+.idea/*
+
 ### Eclipse ###
 .apt_generated
 .classpath
