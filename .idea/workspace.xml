@@ -4,9 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d9c0e26e-b41a-4ae2-9eb5-77465e757608" name="Changes" comment="">
+    <list default="true" id="d9c0e26e-b41a-4ae2-9eb5-77465e757608" name="Changes" comment="Simplified reading the JSON file by using the OS library.">
+      <change beforePath="$PROJECT_DIR$/.bsp/sbt.json" beforeDir="false" afterPath="$PROJECT_DIR$/.bsp/sbt.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/hello.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/hello.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/unaligned_dev.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/unaligned_dev.scala" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,6 +43,13 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="jar://$USER_HOME$/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/os-lib_3/0.9.0/os-lib_3-0.9.0-sources.jar!/package.scala" root0="SKIP_INSPECTION" />
+    <setting file="jar://$USER_HOME$/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/typesafe/play/play-json_2.13/2.9.4/play-json_2.13-2.9.4-sources.jar!/play/api/libs/json/Json.scala" root0="SKIP_INSPECTION" />
+  </component>
+  <component name="MacroExpansionManager">
+    <option name="directoryName" value="2q20z66g" />
+  </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
@@ -62,11 +71,12 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
+    "last_opened_file_path": "/Users/rhdekker/IdeaProjects/scala-graphing-sandbox",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
-    "project.structure.last.edited": "Modules",
+    "project.structure.last.edited": "SDKs",
     "project.structure.proportion": "0.0",
     "project.structure.side.proportion": "0.2",
     "scala_project_settings_configurable.last_selected_tab_index": "6",
@@ -74,6 +84,28 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+  <component name="RunManager" selected="Application.unaligned_dev">
+    <configuration name="hello" type="Application" factoryName="Application" temporary="true">
+      <option name="MAIN_CLASS_NAME" value="hello" />
+      <module name="scala-graphing-sandbox" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="unaligned_dev" type="Application" factoryName="Application" temporary="true">
+      <option name="MAIN_CLASS_NAME" value="unaligned_dev" />
+      <module name="scala-graphing-sandbox" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.unaligned_dev" />
+        <item itemvalue="Application.hello" />
+      </list>
+    </recent_temporary>
+  </component>
   <component name="ScalaProjectSettings">
     <option name="intInjectionMapping">
       <map>
@@ -110,10 +142,38 @@
       <workItem from="1675801467927" duration="919000" />
       <workItem from="1675802400122" duration="5068000" />
     </task>
+    <task id="LOCAL-00001" summary="Added the unaligned_data.json file and code to read it into a String.">
+      <created>1675874663742</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1675874663743</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Parse the JSON data.">
+      <created>1675875744035</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1675875744035</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Simplified reading the JSON file by using the OS library.">
+      <created>1675876126933</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1675876126933</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Added the unaligned_data.json file and code to read it into a String." />
+    <MESSAGE value="Parse the JSON data." />
+    <MESSAGE value="Simplified reading the JSON file by using the OS library." />
+    <option name="LAST_COMMIT_MESSAGE" value="Simplified reading the JSON file by using the OS library." />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
