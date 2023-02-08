@@ -1,8 +1,12 @@
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json.{JsArray, JsObject, Json, Reads, __}
 
+import scala.annotation.unused
+
 case class UnalignedFragment(nodeno: Int, readings: List[List[String]])
 
+// object is used, but somehow IDE doesn't detect it's usage.
+@unused
 object UnalignedFragment {
   implicit val reads: Reads[UnalignedFragment] = (
     (__ \ "nodeno").read[Int] and
