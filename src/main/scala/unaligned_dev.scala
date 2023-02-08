@@ -1,7 +1,7 @@
 import play.api.libs.json.Json
 
 import scala.io.Source
-import scala.util.Using
+import scala.util.{Failure, Success, Using}
 
 // import scala.util.parsing.json._
 @main def unaligned_dev():Unit =
@@ -11,8 +11,16 @@ import scala.util.Using
   val datafile_path = (os.pwd/"src"/"main"/"data"/"unaligned_data.json").toString
 
   val fileContents = Using(Source.fromFile(datafile_path)) { source => source.mkString }
+  // println(fileContents)
 
-  println(fileContents)
+  fileContents match
+    case Success(data) =>
+      val json = Json.parse(data)
+      println(json)
+    case Failure(exception) =>
+      println(exception)
+
+
 
 //  val source: String = Source.fromFile("app/assets/jsons/countriesToCities.json").map(Json.parse)
 //  val json: JsValue = Json.parse(source)
