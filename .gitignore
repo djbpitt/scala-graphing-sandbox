@@ -13,7 +13,7 @@ target/
 *.ipr
 
 ### Scala ###
-.bsp/sbg.json
+.bsp/*
 .idea/*
 
 ### Eclipse ###
@@ -40,3 +40,4 @@ build/
 
 ### Mac OS ###
 .DS_Store
+*~
