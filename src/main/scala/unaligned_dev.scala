@@ -20,14 +20,14 @@ object UnalignedFragment {
   val datafile_path = os.pwd/"src"/"main"/"data"/"unaligned_data.json"
 
   val fileContents = os.read(datafile_path)
-  // println(fileContents)
   val parsedJsValue = Json.parse(fileContents)
   val parsed = Json.fromJson[List[UnalignedFragment]](parsedJsValue)
-  println(parsed)
+  val darwin = parsed.get
+//  println(darwin)
+
+  for node <- darwin
+    if node.nodeno == 1146 do
+      println(node.readings)
 
 
-
-//  for node in darwin: # Each unaligned zone is its own node
-//    readings = node["readings"] # list of lists
-//    current_linkage_object, current_cophenetic = create_linkage_object(readings)
 
