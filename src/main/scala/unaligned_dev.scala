@@ -11,6 +11,8 @@ import play.api.libs.json.{JsArray, JsObject, Json}
   val json = Json.parse(fileContents)
   // println(json)
 
+  // see: https://stackoverflow.com/questions/50245602/convert-json-to-case-class-with-a-nested-objects-using-scala-play
+  // for a better way of doing this.
   json match
     case JsArray(arr) =>
       for node <- arr do
