@@ -27,7 +27,14 @@ object UnalignedFragment {
 
   for node <- darwin
     if node.nodeno == 1146 do
-      println(node.readings)
+      println(node.readings.head)
+      // have to join tokens into a string again for this library to work
+      val tokens = node.readings.head
+      val joined = tokens.mkString(" ")
+
+      val bagOfWords = smile.nlp.pimpString(joined).bag(filter="", stemmer = None)
+      println(bagOfWords)
+
 
 
 
