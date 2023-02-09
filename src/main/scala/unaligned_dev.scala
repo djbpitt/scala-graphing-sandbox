@@ -36,7 +36,11 @@ object UnalignedFragment {
       val list_bags_of_readings_joined = node.readings.map(reading => pimpString(reading.mkString(" ")).bag(filter="", stemmer=None))
       println(list_bags_of_readings_joined)
 
-
+      // calculate combined keys of bags.
+      val keys = list_bags_of_readings_joined.map( bag => bag.keySet)
+      println(keys)
+      val terms = keys.reduce(_.union(_))
+      println(terms)
 
 
 
