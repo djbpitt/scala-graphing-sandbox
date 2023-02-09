@@ -47,12 +47,13 @@ def vectorize_unaligned_fragment(node: UnalignedFragment): Unit = { // Unit is t
 
   val vectors = list_bags_of_readings.map(smile.nlp.vectorize(terms, _))
   // vectors.foreach(println(_.getClass())) // doesn't work; needs type info
-  vectors.foreach(e => println(e.getClass))
-  println(vectors.head.mkString("Array(", ", ", ")"))
+  vectors.foreach(e => println(e.mkString("Array(", ", ", ")")))
+  // println(vectors.head.mkString("Array(", ", ", ")"))
 }
 @main def unaligned_dev():Unit =
   val darwin: List[UnalignedFragment] = read_data
-
+  // we know there's only one, so we could have told it to find the first
+  //   and then skipped the foreach()
   darwin.filter(_.nodeno == 1146).foreach(vectorize_unaligned_fragment)
 
 
