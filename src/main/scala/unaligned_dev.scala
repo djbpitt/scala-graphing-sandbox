@@ -2,7 +2,7 @@ import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json.{JsArray, JsObject, Json, Reads, __}
 
 import scala.annotation.unused // tell IDE not to raise error for indirect reference
-import smile.nlp.pimpString // extended string with additional properties
+import smile.nlp.pimpString // extended string with additional properties (we use .bag())
 case class UnalignedFragment(nodeno: Int, readings: List[List[String]])
 
 // object is used, but somehow IDE doesn't detect its usage.
@@ -27,24 +27,26 @@ def read_data: List[UnalignedFragment] = {
   //  println(darwin)
   darwin
 }
-def vectorize_unaligned_fragment(node: UnalignedFragment): Unit = {
+def vectorize_unaligned_fragment(node: UnalignedFragment): Unit = { // Unit is the type for a void function
   // we have got to convert each reading into a bag of words
   // that is a map/transform operation
   // have to join tokens into a string again for this library to work
   // Then we vectorize each reading using the bag of words of that reading
   // and the terms of the combined keys of all the bags of words
 
-  val list_bags_of_readings_joined = node.readings.map(reading => pimpString(reading.mkString(" ")).bag(filter = "", stemmer = None))
-  println(list_bags_of_readings_joined)
+  // By default filter removes stopwords and stemmer stems, so turn those off
+  // NB: filter has to be set to empty string, and not to None, for no obvious reason
+  val list_bags_of_readings = node.readings.map(reading => pimpString(reading.mkString(" ")).bag(filter = "", stemmer = None))
+  println(list_bags_of_readings)
 
-  // calculate combined keys of bags.
-  val keys = list_bags_of_readings_joined.map(bag => bag.keySet)
+  // calculate combined keys of bags; vectorization requires all words, even those not present in a reading
+  val keys = list_bags_of_readings.map(bag => bag.keySet) // list of sets of keys, one per reading, without counts
   println(keys)
-  val terms = keys.reduce(_.union(_)).toArray.sorted
-  println(terms.mkString("Array(", ", ", ")"))
+  val terms = keys.reduce(_.union(_)).toArray.sorted // merge the sit sets into one without duplicates
+  println(terms.mkString("Array(", ", ", ")")) // arrays don't have a print method; prefix, divider, postfix
 
-  val vectors = list_bags_of_readings_joined.map(smile.nlp.vectorize(terms, _))
-  // vectors.foreach(println(_.getClass))
+  val vectors = list_bags_of_readings.map(smile.nlp.vectorize(terms, _))
+  // vectors.foreach(println(_.getClass()))
   println(vectors.head.mkString("Array(", ", ", ")"))
 }
 @main def unaligned_dev():Unit =
