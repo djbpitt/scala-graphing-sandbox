@@ -47,6 +47,7 @@ def vectorize_unaligned_fragment(node: UnalignedFragment): Unit = { // Unit is t
 
   val vectors = list_bags_of_readings.map(smile.nlp.vectorize(terms, _))
   // vectors.foreach(println(_.getClass()))
+  vectors.foreach(e => println(e.getClass))
   println(vectors.head.mkString("Array(", ", ", ")"))
 }
 @main def unaligned_dev():Unit =
