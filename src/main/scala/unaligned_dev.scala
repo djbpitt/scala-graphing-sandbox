@@ -2,7 +2,7 @@ import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json.{JsArray, JsObject, Json, Reads, __}
 
 import scala.annotation.unused
-
+import smile.nlp.pimpString
 case class UnalignedFragment(nodeno: Int, readings: List[List[String]])
 
 // object is used, but somehow IDE doesn't detect it's usage.
@@ -27,13 +27,15 @@ object UnalignedFragment {
 
   for node <- darwin
     if node.nodeno == 1146 do
-      println(node.readings.head)
+      // we have got to convert each reading into a bag of words
+      // that is a map/transform operation
       // have to join tokens into a string again for this library to work
-      val tokens = node.readings.head
-      val joined = tokens.mkString(" ")
+      // Then we vectorize each reading using the bag of words of that reading
+      // and the terms of the combined keys of all the bags of words
 
-      val bagOfWords = smile.nlp.pimpString(joined).bag(filter="", stemmer = None)
-      println(bagOfWords)
+      val list_bags_of_readings_joined = node.readings.map(reading => pimpString(reading.mkString(" ")).bag(filter="", stemmer=None))
+      println(list_bags_of_readings_joined)
+
 
 
 
