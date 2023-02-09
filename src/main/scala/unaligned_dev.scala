@@ -1,6 +1,6 @@
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json.{JsArray, JsObject, Json, Reads, __}
-import scala.annotation.unused // tell IDE not to raise error for indirect reference
+import scala.annotation.unused // tell IDE not to raise warning for indirect reference
 import smile.nlp.pimpString // extended string with additional properties (we use .bag())
 import smile.clustering.{hclust, HierarchicalClustering} // https://haifengl.github.io/clustering.html#hierarchical
 import smile.plot.show
@@ -62,8 +62,8 @@ def cluster_readings(data: List[Array[Double]]): HierarchicalClustering =
   darwin.filter(_.nodeno == 1146).
     map(vectorize_unaligned_fragment).
     map(cluster_readings).
-    map(dendrogram)
-    .foreach(e => desktop(e))
+    map(dendrogram).
+    foreach(e => desktop(e))
 
 
 
