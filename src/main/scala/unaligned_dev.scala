@@ -1,17 +1,18 @@
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json.{JsArray, JsObject, Json, Reads, __}
 
-import scala.annotation.unused
-import smile.nlp.pimpString
+import scala.annotation.unused // tell IDE not to raise error for indirect reference
+import smile.nlp.pimpString // extended string with additional properties
 case class UnalignedFragment(nodeno: Int, readings: List[List[String]])
 
-// object is used, but somehow IDE doesn't detect it's usage.
+// object is used, but somehow IDE doesn't detect its usage.
 @unused
-object UnalignedFragment:
-  implicit val reads: Reads[UnalignedFragment] = (
-    (__ \ "nodeno").read[Int] and
+object UnalignedFragment: // add method to read from JSON into case class
+  // implicit means lazy evaluation (maybe?); Reads is part of play library
+  implicit val reads: Reads[UnalignedFragment] = ( // Read into tuple, which is passed to constructor
+    (__ \ "nodeno").read[Int] and // __ is part of play; name of property to read; values are assigned by position
       (__ \ "readings").read[List[List[String]]]
-    )(UnalignedFragment.apply _)
+    )(UnalignedFragment.apply _) // call UnalignedFragment constructor with our properties
 
 def read_data: List[UnalignedFragment] = {
   val wd = os.pwd
@@ -21,7 +22,7 @@ def read_data: List[UnalignedFragment] = {
 
   val fileContents = os.read(datafile_path)
   val parsedJsValue = Json.parse(fileContents)
-  val parsed = Json.fromJson[List[UnalignedFragment]](parsedJsValue)
+  val parsed = Json.fromJson[List[UnalignedFragment]](parsedJsValue) // List[UnalignedFragments] is output type
   val darwin = parsed.get
   //  println(darwin)
   darwin
