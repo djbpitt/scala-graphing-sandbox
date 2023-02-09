@@ -13,17 +13,22 @@ object UnalignedFragment {
       (__ \ "readings").read[List[List[String]]]
     )(UnalignedFragment.apply _)
 }
-@main def unaligned_dev():Unit =
+
+def read_data: List[UnalignedFragment] = {
   val wd = os.pwd
   println(wd)
 
-  val datafile_path = os.pwd/"src"/"main"/"data"/"unaligned_data.json"
+  val datafile_path = os.pwd / "src" / "main" / "data" / "unaligned_data.json"
 
   val fileContents = os.read(datafile_path)
   val parsedJsValue = Json.parse(fileContents)
   val parsed = Json.fromJson[List[UnalignedFragment]](parsedJsValue)
   val darwin = parsed.get
-//  println(darwin)
+  //  println(darwin)
+  darwin
+}
+@main def unaligned_dev():Unit =
+  val darwin: List[UnalignedFragment] = read_data
 
   for node <- darwin
     if node.nodeno == 1146 do
