@@ -46,7 +46,7 @@ def vectorize_unaligned_fragment(node: UnalignedFragment): Unit = { // Unit is t
   println(terms.mkString("Array(", ", ", ")")) // arrays don't have a print method; prefix, divider, postfix
 
   val vectors = list_bags_of_readings.map(smile.nlp.vectorize(terms, _))
-  // vectors.foreach(println(_.getClass()))
+  // vectors.foreach(println(_.getClass())) // doesn't work; needs type info
   vectors.foreach(e => println(e.getClass))
   println(vectors.head.mkString("Array(", ", ", ")"))
 }
