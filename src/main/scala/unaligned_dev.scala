@@ -39,7 +39,7 @@ def vectorize_unaligned_fragment(node: UnalignedFragment): Unit = {
   // calculate combined keys of bags.
   val keys = list_bags_of_readings_joined.map(bag => bag.keySet)
   println(keys)
-  val terms = keys.reduce(_.union(_))
+  val terms = keys.reduce(_.union(_)).toList.sorted
   println(terms)
 }
 @main def unaligned_dev():Unit =
