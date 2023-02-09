@@ -44,7 +44,8 @@ def vectorize_unaligned_fragment(node: UnalignedFragment): Unit = {
   println(terms.mkString("Array(", ", ", ")"))
 
   val vectors = list_bags_of_readings_joined.map(smile.nlp.vectorize(terms, _))
-  vectors.foreach(println(_))
+  // vectors.foreach(println(_.getClass))
+  println(vectors.head.mkString("Array(", ", ", ")"))
 }
 @main def unaligned_dev():Unit =
   val darwin: List[UnalignedFragment] = read_data
