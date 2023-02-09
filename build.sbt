@@ -12,3 +12,4 @@ libraryDependencies += ("org.scala-graph" %% "graph-core" % "1.13.5").cross(Cros
 libraryDependencies += ("com.typesafe.play" %% "play-json" % "2.9.4").cross(CrossVersion.for3Use2_13)
 libraryDependencies += "com.lihaoyi" %% "os-lib" % "0.9.0"
 libraryDependencies += ("com.github.haifengl" %% "smile-scala" % "3.0.0").cross(CrossVersion.for3Use2_13)
+libraryDependencies += "com.spotify" %% "featran-core" % "0.8.0"
