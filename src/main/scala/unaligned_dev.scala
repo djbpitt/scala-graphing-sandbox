@@ -40,8 +40,11 @@ def vectorize_unaligned_fragment(node: UnalignedFragment): Unit = {
   // calculate combined keys of bags.
   val keys = list_bags_of_readings_joined.map(bag => bag.keySet)
   println(keys)
-  val terms = keys.reduce(_.union(_)).toList.sorted
-  println(terms)
+  val terms = keys.reduce(_.union(_)).toArray.sorted
+  println(terms.mkString("Array(", ", ", ")"))
+
+  val vectors = list_bags_of_readings_joined.map(smile.nlp.vectorize(terms, _))
+  vectors.foreach(println(_))
 }
 @main def unaligned_dev():Unit =
   val darwin: List[UnalignedFragment] = read_data
