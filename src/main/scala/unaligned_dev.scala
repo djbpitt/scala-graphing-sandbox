@@ -48,26 +48,26 @@ def vectorize_unaligned_fragment(node: UnalignedFragment): Array[Array[Double]] 
   *   4) convert to Array[Array[Double]] and return
   * */
   val list_bags_of_readings = node.readings.map(reading => pimpString(reading.mkString(" ")).bag(filter = "", stemmer = None))
-  println(list_bags_of_readings)
+  // println(list_bags_of_readings)
 
   // calculate combined keys of bags; vectorization requires all words, even those not present in a reading
   val keys = list_bags_of_readings.map(bag => bag.keySet) // list of sets of keys, one per reading, without counts
-  println(keys)
+  // println(keys)
   val terms = keys.reduce(_.union(_)).toArray.sorted // merge the sit sets into one without duplicates
-  println(terms.mkString("Array(", ", ", ")")) // arrays don't have a print method; prefix, divider, postfix
+  // println(terms.mkString("Array(", ", ", ")")) // arrays don't have a print method; prefix, divider, postfix
 
   val vectors = list_bags_of_readings.map(smile.nlp.vectorize(terms, _))
   // vectors.foreach(println(_.getClass())) // doesn't work; needs type info
   vectors.foreach(e => println(e.mkString("Array(", ", ", ")")))
   // println(vectors.head.mkString("Array(", ", ", ")"))
   val df = DataFrame.of(vectors.toArray)
-//  println("My awesome dataframe")
-//  println(df)
+  // println("My awesome dataframe")
+  // println(df)
   val scaler = WinsorScaler.fit(df, 0.05, 0.95)
   val transformed = scaler.apply(df)
-//  println(transformed)
+  // println(transformed)
   val df_array = transformed.toArray()
-  df_array.foreach(e => println(e.mkString(",")))
+  // df_array.foreach(e => println(e.mkString(",")))
   df_array
 
 def cluster_readings(data: Array[Array[Double]]): HierarchicalClustering =
