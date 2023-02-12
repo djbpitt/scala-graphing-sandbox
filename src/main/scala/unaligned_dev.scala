@@ -1,11 +1,14 @@
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json.{JsArray, JsObject, Json, Reads, __}
-import scala.annotation.unused // tell IDE not to raise warning for indirect reference
-import smile.nlp.pimpString // extended string with additional properties (we use .bag())
-import smile.clustering.{hclust, HierarchicalClustering} // https://haifengl.github.io/clustering.html#hierarchical
+
+import scala.annotation.unused
+import smile.nlp.{pimpString, vectorize}
+import smile.clustering.{HierarchicalClustering, hclust}
 import smile.plot.show
-import smile.plot.swing._
-import smile.plot.Render._
+import smile.plot.swing.*
+import smile.plot.Render.*
+import smile.feature.transform.WinsorScaler
+import smile.data.DataFrame
 case class UnalignedFragment(nodeno: Int, readings: List[List[String]])
 
 @unused // object is used, but somehow IDE doesn't detect its usage.
@@ -29,7 +32,7 @@ def read_data: List[UnalignedFragment] =
   //  println(darwin)
   darwin
 
-def vectorize_unaligned_fragment(node: UnalignedFragment): List[Array[Double]] = // Unit is the type for a void function
+def vectorize_unaligned_fragment(node: UnalignedFragment): Array[Array[Double]] = // Unit is the type for a void function
   // we have got to convert each reading into a bag of words
   // that is a map/transform operation
   // have to join tokens into a string again for this library to work
@@ -37,6 +40,13 @@ def vectorize_unaligned_fragment(node: UnalignedFragment): List[Array[Double]] =
   // and the terms of the combined keys of all the bags of words
   // By default filter removes stopwords and stemmer stems, so turn those off
   // NB: filter has to be set to empty string, and not to None, for no obvious reason
+  /*
+  * StandardScaler requires DataFrame[Double], but clustering requires Array[Array[Double]], so we:
+  *   1) vectorize
+  *   2) convert to DataFrame
+  *   3) scale (still a DataFrame)
+  *   4) convert to Array[Array[Double]] and return
+  * */
   val list_bags_of_readings = node.readings.map(reading => pimpString(reading.mkString(" ")).bag(filter = "", stemmer = None))
   println(list_bags_of_readings)
 
@@ -50,10 +60,18 @@ def vectorize_unaligned_fragment(node: UnalignedFragment): List[Array[Double]] =
   // vectors.foreach(println(_.getClass())) // doesn't work; needs type info
   vectors.foreach(e => println(e.mkString("Array(", ", ", ")")))
   // println(vectors.head.mkString("Array(", ", ", ")"))
-  vectors
+  val df = DataFrame.of(vectors.toArray)
+//  println("My awesome dataframe")
+//  println(df)
+  val scaler = WinsorScaler.fit(df, 0.05, 0.95)
+  val transformed = scaler.apply(df)
+//  println(transformed)
+  val df_array = transformed.toArray()
+  df_array.foreach(e => println(e.mkString(",")))
+  df_array
 
-def cluster_readings(data: List[Array[Double]]): HierarchicalClustering =
-  hclust(data.toArray, "ward")
+def cluster_readings(data: Array[Array[Double]]): HierarchicalClustering =
+  hclust(data, "ward")
 
 @main def unaligned_dev(): Unit =
   val darwin: List[UnalignedFragment] = read_data
