@@ -1,5 +1,4 @@
-import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import play.api.libs.json.{JsArray, JsObject, Json, Reads, __}
+import upickle.default._
 
 import scala.annotation.unused
 import smile.nlp.{pimpString, vectorize}
@@ -12,24 +11,16 @@ import smile.data.DataFrame
 case class UnalignedFragment(nodeno: Int, readings: List[List[String]])
 
 @unused // object is used, but somehow IDE doesn't detect its usage.
-object UnalignedFragment: // add method to read from JSON into case class
-  // implicit means lazy evaluation (maybe?); Reads is part of play library
-  implicit val reads: Reads[UnalignedFragment] = (// Read into tuple, which is passed to constructor
-    (__ \ "nodeno").read[Int] and // __ is part of play; name of property to read; values are assigned by position
-      (__ \ "readings").read[List[List[String]]]
-    )(UnalignedFragment.apply _) // call UnalignedFragment constructor with our properties
-
+object UnalignedFragment{  // add method to read from JSON into case class
+  implicit val rw: ReadWriter[UnalignedFragment] = macroRW
+}
 def read_data: List[UnalignedFragment] =
   val wd = os.pwd
   println(wd)
 
   val datafile_path = os.pwd / "src" / "main" / "data" / "unaligned_data.json"
-
   val fileContents = os.read(datafile_path)
-  val parsedJsValue = Json.parse(fileContents)
-  val parsed = Json.fromJson[List[UnalignedFragment]](parsedJsValue) // List[UnalignedFragments] is output type
-  val darwin = parsed.get
-  //  println(darwin)
+  val darwin = read[List[UnalignedFragment]](fileContents)
   darwin
 
 def vectorize_unaligned_fragment(node: UnalignedFragment): Array[Array[Double]] = // Unit is the type for a void function

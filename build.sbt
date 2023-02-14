@@ -8,9 +8,8 @@ lazy val root = (project in file("."))
   )
 
 libraryDependencies += ("org.scala-graph" %% "graph-core" % "1.13.5").cross(CrossVersion.for3Use2_13)
-//libraryDependencies += "com.lihaoyi" %% "upickle" % "0.9.5"
-libraryDependencies += ("com.typesafe.play" %% "play-json" % "2.9.4").cross(CrossVersion.for3Use2_13)
 libraryDependencies += "com.lihaoyi" %% "os-lib" % "0.9.0"
+libraryDependencies += "com.lihaoyi" %% "upickle" % "3.0.0-M2"
 libraryDependencies += ("com.github.haifengl" %% "smile-scala" % "3.0.0").cross(CrossVersion.for3Use2_13)
 //libraryDependencies += "com.spotify" %% "featran-core" % "0.8.0"
 //libraryDependencies += ("org.apache.spark" %% "spark-core" % "3.2.3").cross(CrossVersion.for3Use2_13)
