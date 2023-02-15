@@ -11,9 +11,9 @@ import smile.data.DataFrame
 case class UnalignedFragment(nodeno: Int, readings: List[List[String]])
 
 @unused // object is used, but somehow IDE doesn't detect its usage.
-object UnalignedFragment{  // add method to read from JSON into case class
+object UnalignedFragment:  // add method to read from JSON into case class
   implicit val rw: ReadWriter[UnalignedFragment] = macroRW
-}
+
 def read_data: List[UnalignedFragment] =
   val wd = os.pwd
   println(wd)
@@ -66,7 +66,13 @@ def cluster_readings(data: Array[Array[Double]]): HierarchicalClustering =
 
 
 
-case class ClusterInfo(item1: Int, item2: Int, height: Double)
+case class ClusterInfo(item1: Int, item2: Int, height: Double):
+  def toNodeTypes(witnessCount: Int): NodeTypes =
+    this match
+      case c if c.item1 < witnessCount && c.item2 < witnessCount => NodeTypes.SingletonSingleton
+      case c if c.item1 < witnessCount || c.item2 < witnessCount => NodeTypes.SingletonTree // Assume singleton is first
+      case _ => NodeTypes.TreeTree
+
 
 def hc_result(clustering: HierarchicalClustering): Array[ClusterInfo] =
   val array1 = clustering.tree.map(e => (e(0), e(1)))
@@ -82,11 +88,11 @@ enum NodeTypes:
   case TreeTree
 
 
-def cluster_to_enum(clusterInfo: ClusterInfo, witnessCount: Int): NodeTypes =
-  clusterInfo match
-    case c if (c.item1 < witnessCount && c.item2 < witnessCount) => NodeTypes.SingletonSingleton
-    case c if (c.item1 < witnessCount || c.item2 < witnessCount) => NodeTypes.SingletonTree // Assume singleton is first
-    case _ => NodeTypes.TreeTree
+//def cluster_to_enum(clusterInfo: ClusterInfo, witnessCount: Int): NodeTypes =
+//  clusterInfo match
+//    case c if (c.item1 < witnessCount && c.item2 < witnessCount) => NodeTypes.SingletonSingleton
+//    case c if (c.item1 < witnessCount || c.item2 < witnessCount) => NodeTypes.SingletonTree // Assume singleton is first
+//    case _ => NodeTypes.TreeTree
 
 @main def unaligned_dev(): Unit =
   val darwin: List[UnalignedFragment] = read_data
@@ -98,8 +104,7 @@ def cluster_to_enum(clusterInfo: ClusterInfo, witnessCount: Int): NodeTypes =
 //    .map(dendrogram)
 //    .foreach(e => desktop(e))
     .map(e => hc_result(e))
-    .map(_.map(e => cluster_to_enum(e, 6))) // FIXME: compute number of witnesses
-    .foreach(_.map(e => println(e)))
+    .map(_.map(e => println(e.toString + e.toNodeTypes(6))))
 
 
 
