@@ -64,15 +64,28 @@ def vectorize_unaligned_fragment(node: UnalignedFragment): Array[Array[Double]] 
 def cluster_readings(data: Array[Array[Double]]): HierarchicalClustering =
   hclust(data, "ward")
 
+
+
+case class ClusterInfo(item1: Int, item2: Int, height: Double)
+
+def hc_result(clustering: HierarchicalClustering): Array[ClusterInfo] =
+  val array1 = clustering.tree.map(e => (e(0), e(1)))
+  val array2 = clustering.height
+  val hc_data_as_array = array1 zip array2
+  val hc_data = hc_data_as_array.map(e => ClusterInfo(e(0)(0), e(0)(1), e(1)))
+  hc_data
+
 @main def unaligned_dev(): Unit =
   val darwin: List[UnalignedFragment] = read_data
   // we know there's only one, so we could have told it to find the first
   //   and then skipped the foreach()
-  darwin.filter(_.nodeno == 1146).
-    map(vectorize_unaligned_fragment).
-    map(cluster_readings).
-    map(dendrogram).
-    foreach(e => desktop(e))
+  darwin.filter(_.nodeno == 1146)
+    .map(vectorize_unaligned_fragment)
+    .map(cluster_readings)
+//    .map(dendrogram)
+//    .foreach(e => desktop(e))
+    .map(e => hc_result(e))
+    .foreach(e => println(e.mkString(" ")))
 
 
 
