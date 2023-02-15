@@ -75,6 +75,19 @@ def hc_result(clustering: HierarchicalClustering): Array[ClusterInfo] =
   val hc_data = hc_data_as_array.map(e => ClusterInfo(e(0)(0), e(0)(1), e(1)))
   hc_data
 
+
+enum NodeTypes:
+  case SingletonSingleton
+  case SingletonTree
+  case TreeTree
+
+
+def cluster_to_enum(clusterInfo: ClusterInfo, witnessCount: Int): NodeTypes =
+  clusterInfo match
+    case c: ClusterInfo if (c.item1 < witnessCount && c.item2 < witnessCount) => NodeTypes.SingletonSingleton
+    case c: ClusterInfo if (c.item1 < witnessCount || c.item2 < witnessCount) => NodeTypes.SingletonTree // Assume singleton is first
+    case _ => NodeTypes.TreeTree
+
 @main def unaligned_dev(): Unit =
   val darwin: List[UnalignedFragment] = read_data
   // we know there's only one, so we could have told it to find the first
@@ -85,7 +98,9 @@ def hc_result(clustering: HierarchicalClustering): Array[ClusterInfo] =
 //    .map(dendrogram)
 //    .foreach(e => desktop(e))
     .map(e => hc_result(e))
-    .foreach(e => println(e.mkString(" ")))
+    .map(_.map(e => cluster_to_enum(e, 6))) // FIXME: compute number of witnesses
+    .foreach(_.map(e => println(e)))
+
 
 
 
