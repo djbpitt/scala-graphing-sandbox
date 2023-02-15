@@ -84,8 +84,8 @@ enum NodeTypes:
 
 def cluster_to_enum(clusterInfo: ClusterInfo, witnessCount: Int): NodeTypes =
   clusterInfo match
-    case c: ClusterInfo if (c.item1 < witnessCount && c.item2 < witnessCount) => NodeTypes.SingletonSingleton
-    case c: ClusterInfo if (c.item1 < witnessCount || c.item2 < witnessCount) => NodeTypes.SingletonTree // Assume singleton is first
+    case c if (c.item1 < witnessCount && c.item2 < witnessCount) => NodeTypes.SingletonSingleton
+    case c if (c.item1 < witnessCount || c.item2 < witnessCount) => NodeTypes.SingletonTree // Assume singleton is first
     case _ => NodeTypes.TreeTree
 
 @main def unaligned_dev(): Unit =
