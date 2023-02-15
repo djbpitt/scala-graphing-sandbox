@@ -88,12 +88,6 @@ enum NodeTypes:
   case TreeTree
 
 
-//def cluster_to_enum(clusterInfo: ClusterInfo, witnessCount: Int): NodeTypes =
-//  clusterInfo match
-//    case c if (c.item1 < witnessCount && c.item2 < witnessCount) => NodeTypes.SingletonSingleton
-//    case c if (c.item1 < witnessCount || c.item2 < witnessCount) => NodeTypes.SingletonTree // Assume singleton is first
-//    case _ => NodeTypes.TreeTree
-
 @main def unaligned_dev(): Unit =
   val darwin: List[UnalignedFragment] = read_data
   // we know there's only one, so we could have told it to find the first
