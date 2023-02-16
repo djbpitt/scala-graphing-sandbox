@@ -71,12 +71,8 @@ case class ClusterInfo(item1: Int, item2: Int, height: Double):
     (this.item1 < witnessCount, this.item2 < witnessCount) match
       case (true, true) => NodeTypes.SingletonSingleton
       case (true, false) => NodeTypes.SingletonTree // Assume singleton is first
-      case _ => NodeTypes.TreeTree
-
-//this match
-//  case c if c.item1 < witnessCount && c.item2 < witnessCount => NodeTypes.SingletonSingleton
-//  case c if c.item1 < witnessCount || c.item2 < witnessCount => NodeTypes.SingletonTree // Assume singleton is first
-//  case _ => NodeTypes.TreeTree
+      case (false, false) => NodeTypes.TreeTree
+      case _ => throw Exception ("(false, true) should not oocur")
 
 def hc_result(clustering: HierarchicalClustering): Array[ClusterInfo] =
   val array1 = clustering.tree.map(e => (e(0), e(1)))
@@ -87,10 +83,7 @@ def hc_result(clustering: HierarchicalClustering): Array[ClusterInfo] =
 
 
 enum NodeTypes:
-  case SingletonSingleton
-  case SingletonTree
-  case TreeTree
-
+  case SingletonSingleton, SingletonTree, TreeTree
 
 @main def unaligned_dev(): Unit =
   val darwin: List[UnalignedFragment] = read_data
