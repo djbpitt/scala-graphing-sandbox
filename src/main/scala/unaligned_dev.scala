@@ -68,11 +68,15 @@ def cluster_readings(data: Array[Array[Double]]): HierarchicalClustering =
 
 case class ClusterInfo(item1: Int, item2: Int, height: Double):
   def toNodeTypes(witnessCount: Int): NodeTypes =
-    this match
-      case c if c.item1 < witnessCount && c.item2 < witnessCount => NodeTypes.SingletonSingleton
-      case c if c.item1 < witnessCount || c.item2 < witnessCount => NodeTypes.SingletonTree // Assume singleton is first
+    (this.item1 < witnessCount, this.item2 < witnessCount) match
+      case (true, true) => NodeTypes.SingletonSingleton
+      case (true, false) => NodeTypes.SingletonTree // Assume singleton is first
       case _ => NodeTypes.TreeTree
 
+//this match
+//  case c if c.item1 < witnessCount && c.item2 < witnessCount => NodeTypes.SingletonSingleton
+//  case c if c.item1 < witnessCount || c.item2 < witnessCount => NodeTypes.SingletonTree // Assume singleton is first
+//  case _ => NodeTypes.TreeTree
 
 def hc_result(clustering: HierarchicalClustering): Array[ClusterInfo] =
   val array1 = clustering.tree.map(e => (e(0), e(1)))
