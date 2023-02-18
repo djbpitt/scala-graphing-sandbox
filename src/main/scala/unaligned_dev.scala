@@ -42,7 +42,7 @@ def read_data: List[UnalignedFragment] =
   val darwin = read[List[UnalignedFragment]](fileContents)
   darwin
 
-def vectorize_readings(node: UnalignedFragment): Array[Array[Double]] = // Unit is the type for a void function
+def vectorize_readings(node: UnalignedFragment): Array[Array[Double]] =
   // we have got to convert each reading into a bag of words
   // that is a map/transform operation
   // have to join tokens into a string again for this library to work
