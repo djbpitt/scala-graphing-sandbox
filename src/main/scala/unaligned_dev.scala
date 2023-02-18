@@ -29,6 +29,9 @@ object ClusterInfo:
     ClusterInfo(item1, item2, height, nodeType)
 
 
+enum NodeTypes:
+  case SingletonSingleton, SingletonTree, TreeTree
+
 
 def read_data: List[UnalignedFragment] =
   val wd = os.pwd
@@ -64,9 +67,7 @@ def vectorize_unaligned_fragment(node: UnalignedFragment): Array[Array[Double]] 
   // println(terms.mkString("Array(", ", ", ")")) // arrays don't have a print method; prefix, divider, postfix
 
   val vectors = list_bags_of_readings.map(smile.nlp.vectorize(terms, _))
-  // vectors.foreach(println(_.getClass())) // doesn't work; needs type info
-  vectors.foreach(e => println(e.mkString("Array(", ", ", ")")))
-  // println(vectors.head.mkString("Array(", ", ", ")"))
+  // vectors.foreach(e => println(e.mkString("Array(", ", ", ")")))
   val df = DataFrame.of(vectors.toArray)
   // println("My awesome dataframe")
   // println(df)
@@ -84,11 +85,6 @@ def cluster_readings(data: Array[Array[Double]]): Array[ClusterInfo] =
   val hc_data_as_array = array1 zip array2
   val hc_data = hc_data_as_array.map(e => ClusterInfo.of(e(0)(0), e(0)(1), e(1), data.length))
   hc_data
-
-
-
-enum NodeTypes:
-  case SingletonSingleton, SingletonTree, TreeTree
 
 def vectorize_and_cluster_readings(node: UnalignedFragment):List[ClusterInfo] =
   val vectors = vectorize_unaligned_fragment(node)
