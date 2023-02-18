@@ -80,7 +80,7 @@ def vectorize_unaligned_fragment(node: UnalignedFragment): Array[Array[Double]] 
 
 def cluster_readings(data: Array[Array[Double]]): Array[ClusterInfo] =
   val clustering = hclust(data, "ward")
-  val array1 = clustering.tree.map(e => (e(0), e(1)))
+  val array1 = clustering.tree
   val array2 = clustering.height
   val hc_data_as_array = array1 zip array2
   val hc_data = hc_data_as_array.map(e => ClusterInfo.of(e(0)(0), e(0)(1), e(1), data.length))
