@@ -83,15 +83,17 @@ case class ClusterInfo(item1: Int, item2: Int, height: Double, witnessCount: Int
 enum NodeTypes:
   case SingletonSingleton, SingletonTree, TreeTree
 
+def vectorize_and_cluster_readings(node: UnalignedFragment):List[ClusterInfo] =
+  val vectors = vectorize_unaligned_fragment(node)
+  val clusters = cluster_readings(vectors).toList
+  clusters
+
 @main def unaligned_dev(): Unit =
   val darwin: List[UnalignedFragment] = read_data
   // we know there's only one, so we could have told it to find the first
   //   and then skipped the foreach()
   darwin.filter(_.nodeno == 1146)
-    .map(vectorize_unaligned_fragment)
-    .map(cluster_readings)
-//    .map(dendrogram)
-//    .foreach(e => desktop(e))
+    .map(vectorize_and_cluster_readings)
     .map(_.map(e => println(e.toString + " " + e.toNodeTypes)))
 
 
