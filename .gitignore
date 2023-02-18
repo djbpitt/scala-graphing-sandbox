@@ -16,6 +16,8 @@ target/
 **/.bsp/*
 **/.scala-build/*
 .idea/*
+*.tasty
+*.class
 
 ### Eclipse ###
 .apt_generated
