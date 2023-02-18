@@ -83,10 +83,10 @@ def cluster_readings(data: Array[Array[Double]]): List[ClusterInfo] =
   // we know there's only one, so we could have told it to find the first
   //   and then skipped the foreach()
   darwin.filter(_.nodeno == 1146)
-    .map(node => node -> vectorize_readings.andThen(cluster_readings)(node))
-    .toMap
+    .map(node => node -> (vectorize_readings andThen cluster_readings)(node)) // list of tuples
+    .toMap // map object (key -> value pairs)
     .foreach {
-      case(node, clusters) => println(s"${node.nodeno}:$clusters")
+      (node, clusters) => println(s"${node.nodeno}:$clusters")
     }
 
 
