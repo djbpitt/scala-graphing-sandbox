@@ -43,9 +43,6 @@ def read_data: List[UnalignedFragment] =
   darwin
 
 def vectorize_readings(node: UnalignedFragment): Array[Array[Double]] =
-  // have to join tokens into a string again for this library to work
-  // By default filter removes stopwords and stemmer stems, so turn those off
-  // NB: filter has to be set to empty string, and not to None, for no obvious reason
   /*
   * WinsorScaler requires DataFrame[Double], but clustering requires Array[Array[Double]], so we:
   *   1) vectorize
@@ -56,7 +53,8 @@ def vectorize_readings(node: UnalignedFragment): Array[Array[Double]] =
   val list_bags_of_readings = node
     .readings
     .map(reading => pimpString(reading.mkString(" "))) // normal string doesn't have .bag() method
-    .map(_.bag(filter = "", stemmer = None))
+    // NB: filter has to be set to empty string, and not to None, for no obvious reason
+    .map(_.bag(filter = "", stemmer = None)) // By default filter removes stopwords and stemmer stems, so turn those off
   // calculate combined keys of bags; vectorization requires all words, even those not present in a reading
   val terms = list_bags_of_readings
     .map(_.keySet)
