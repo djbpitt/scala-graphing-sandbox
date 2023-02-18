@@ -93,10 +93,10 @@ def vectorize_and_cluster_readings(node: UnalignedFragment):List[ClusterInfo] =
   // we know there's only one, so we could have told it to find the first
   //   and then skipped the foreach()
   darwin.filter(_.nodeno == 1146)
-    .map(node => Map(node -> vectorize_and_cluster_readings(node)))
-    .foreach(_.foreach {
+    .map(node => node -> vectorize_and_cluster_readings(node)).toMap
+    .foreach {
       case(fragment, clusters) => println(fragment.nodeno+":"+clusters)
-    })
+    }
 
 
 
