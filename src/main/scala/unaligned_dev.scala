@@ -55,7 +55,8 @@ def vectorize_readings(node: UnalignedFragment): Array[Array[Double]] =
   * */
   val list_bags_of_readings = node
     .readings
-    .map(reading => pimpString(reading.mkString(" ")).bag(filter = "", stemmer = None))
+    .map(reading => pimpString(reading.mkString(" "))) // normal string doesn't have .bag() method
+    .map(_.bag(filter = "", stemmer = None))
   // calculate combined keys of bags; vectorization requires all words, even those not present in a reading
   val terms = list_bags_of_readings
     .map(_.keySet)
