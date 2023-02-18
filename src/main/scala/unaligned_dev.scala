@@ -42,7 +42,7 @@ def read_data: List[UnalignedFragment] =
   val darwin = read[List[UnalignedFragment]](fileContents)
   darwin
 
-def vectorize_unaligned_fragment(node: UnalignedFragment): Array[Array[Double]] = // Unit is the type for a void function
+def vectorize_readings(node: UnalignedFragment): Array[Array[Double]] = // Unit is the type for a void function
   // we have got to convert each reading into a bag of words
   // that is a map/transform operation
   // have to join tokens into a string again for this library to work
@@ -86,17 +86,15 @@ def cluster_readings(data: Array[Array[Double]]): List[ClusterInfo] =
   val hc_data = hc_data_as_array.map(e => ClusterInfo.of(e(0)(0), e(0)(1), e(1), data.length))
   hc_data.toList
 
-def vectorize_and_cluster_readings(node: UnalignedFragment):List[ClusterInfo] =
-    vectorize_unaligned_fragment.andThen(cluster_readings)(node)
-
 @main def unaligned_dev(): Unit =
   val darwin: List[UnalignedFragment] = read_data
   // we know there's only one, so we could have told it to find the first
   //   and then skipped the foreach()
   darwin.filter(_.nodeno == 1146)
-    .map(node => node -> vectorize_and_cluster_readings(node)).toMap
+    .map(node => node -> vectorize_readings.andThen(cluster_readings)(node))
+    .toMap
     .foreach {
-      case(fragment, clusters) => println(fragment.nodeno+":"+clusters)
+      case(node, clusters) => println(node.nodeno+":"+clusters)
     }
 
 
