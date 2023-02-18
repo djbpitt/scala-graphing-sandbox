@@ -7,6 +7,8 @@ lazy val root = (project in file("."))
     name := "scala-graphing-sandbox"
   )
 
+scalacOptions := Seq("-unchecked", "-deprecation")
+
 libraryDependencies += ("org.scala-graph" %% "graph-core" % "1.13.5").cross(CrossVersion.for3Use2_13)
 libraryDependencies += "com.lihaoyi" %% "os-lib" % "0.9.0"
 libraryDependencies += "com.lihaoyi" %% "upickle" % "3.0.0-M2"

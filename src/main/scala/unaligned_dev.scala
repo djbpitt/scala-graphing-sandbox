@@ -94,7 +94,7 @@ def cluster_readings(data: Array[Array[Double]]): List[ClusterInfo] =
     .map(node => node -> vectorize_readings.andThen(cluster_readings)(node))
     .toMap
     .foreach {
-      case(node, clusters) => println(node.nodeno+":"+clusters)
+      case(node, clusters) => println(s"${node.nodeno}:$clusters")
     }
 
 
