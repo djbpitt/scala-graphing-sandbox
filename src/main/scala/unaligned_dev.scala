@@ -14,6 +14,22 @@ case class UnalignedFragment(nodeno: Int, readings: List[List[String]])
 object UnalignedFragment:  // add method to read from JSON into case class
   implicit val rw: ReadWriter[UnalignedFragment] = macroRW
 
+
+case class ClusterInfo(item1: Int, item2: Int, height: Double, nodeType: NodeTypes)
+
+object ClusterInfo:
+  def of(item1: Int, item2: Int, height: Double, witnessCount: Int):ClusterInfo =
+    val nodeType =
+      (item1 < witnessCount, item2 < witnessCount) match
+        case (true, true) => NodeTypes.SingletonSingleton
+        case (true, false) => NodeTypes.SingletonTree // Assume singleton is first
+        case (false, false) => NodeTypes.TreeTree
+        case _ => throw Exception("(false, true) should not occur")
+
+    ClusterInfo(item1, item2, height, nodeType)
+
+
+
 def read_data: List[UnalignedFragment] =
   val wd = os.pwd
   println(wd)
@@ -66,17 +82,8 @@ def cluster_readings(data: Array[Array[Double]]): Array[ClusterInfo] =
   val array1 = clustering.tree.map(e => (e(0), e(1)))
   val array2 = clustering.height
   val hc_data_as_array = array1 zip array2
-  val hc_data = hc_data_as_array.map(e => ClusterInfo(e(0)(0), e(0)(1), e(1),data.length))
+  val hc_data = hc_data_as_array.map(e => ClusterInfo.of(e(0)(0), e(0)(1), e(1), data.length))
   hc_data
-
-
-case class ClusterInfo(item1: Int, item2: Int, height: Double, witnessCount: Int) :
-  def toNodeTypes: NodeTypes =
-    (this.item1 < witnessCount, this.item2 < witnessCount) match
-      case (true, true) => NodeTypes.SingletonSingleton
-      case (true, false) => NodeTypes.SingletonTree // Assume singleton is first
-      case (false, false) => NodeTypes.TreeTree
-      case _ => throw Exception ("(false, true) should not occur")
 
 
 
