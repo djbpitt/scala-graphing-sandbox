@@ -5,6 +5,7 @@ package org.hammerlab.suffixes.dc3
  *  Original file licensed as Apache 2.0 (https://github.com/hammerlab/suffix-arrays/blob/master/LICENSE)
  */
 
+import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 
 /*
@@ -14,7 +15,8 @@ import scala.collection.mutable.ArrayBuffer
  */
 
 object DC3 {
-  def radixPass(a: Seq[Int], b: Array[Int], r: Seq[Int], n: Int, K: Int, stableZeros: Boolean = true): Unit = {
+  @tailrec
+  private def radixPass(a: Seq[Int], b: Array[Int], r: Seq[Int], n: Int, K: Int, stableZeros: Boolean = true): Unit = {
     var c = Array.fill(K + 1)(0)
     val zeros: ArrayBuffer[Int] = ArrayBuffer()
     (0 until n).foreach(i => {
@@ -38,13 +40,13 @@ object DC3 {
       c(rv) += 1
     })
     if (stableZeros && zeros.length > 1) {
-      var d = Array.fill(r.length)(0)
+      val d = Array.fill(r.length)(0)
       zeros.foreach(ai => d(ai) = ai)
-      radixPass(zeros.toSeq, b, d, zeros.length, r.length, stableZeros = false)
+      radixPass(zeros.toIndexedSeq, b, d, zeros.length, r.length, stableZeros = false)
     }
   }
 
-  def cmp2(t1: (Int, Int, Int), t2: (Int, Int, Int)): Boolean = {
+  private def cmp2(t1: (Int, Int, Int), t2: (Int, Int, Int)): Boolean = {
     if (t1._1 < t2._1)
       true
     else if (t1._1 == t2._1)
@@ -56,7 +58,7 @@ object DC3 {
       false
   }
 
-  def cmp3(t1: (Int, Int, Int, Int), t2: (Int, Int, Int, Int)): Boolean = {
+  private def cmp3(t1: (Int, Int, Int, Int), t2: (Int, Int, Int, Int)): Boolean = {
     if (t1._1 < t2._1)
       true
     else if (t1._1 == t2._1)
@@ -75,6 +77,12 @@ object DC3 {
       false
   }
 
+  /** Create suffix array
+   *
+   * @param s array of integers representing token array data
+   * @param K vocabulary size
+   * @return array of integers of same size as input array representing suffix array
+   */
   def make(s: Array[Int], K: Int): Array[Int] = {
     // We always need at least two zeros of padding; if the size is 1%3, then the [12]%3-array's final 1%3 element, in
     // the middle of the array, will have no zeros in the triple that it anchors, raising the possibility that a suffix
@@ -95,7 +103,7 @@ object DC3 {
     )
   }
 
-  def make(s: Array[Int], n: Int, K: Int, treatZerosAsSentinels: Boolean): Array[Int] = {
+  private def make(s: Array[Int], n: Int, K: Int, treatZerosAsSentinels: Boolean): Array[Int] = {
     if (n == 0) return Array()
     if (n == 1) return Array(0)
 
@@ -105,7 +113,7 @@ object DC3 {
     // The [12]%3 indices of s will be placed in here, replaced with "name"s, and sent to the recursive make() call.
     // The latter step requires zero-padding as described in the make() wrapper above: 3 zeros if the length is 1%3,
     // 2 zeros otherwise.
-    var s12 = Array.fill(n02 + (if (n02 % 3 > 0) 3 else 2))(0)
+    val s12 = Array.fill(n02 + (if (n02 % 3 > 0) 3 else 2))(0)
 
     // This will eventually store the suffix array of the [12]%3 elements of s.
     var SA12 = Array.fill(n02)(0)
@@ -188,7 +196,7 @@ object DC3 {
 
     // First, create s0: the 0%3 indices sorted by successor-1%3-suffixes' SA12-rank.
     // Note the entries in s0 comprise all multiples of 3 in [0, n).
-    var s0 = Array.fill(n0)(-1)
+    val s0 = Array.fill(n0)(-1)
     j = 0
     (0 until n02).foreach(i =>
       if (SA12(i) < n0) {
@@ -199,7 +207,7 @@ object DC3 {
 
     // Next, create SA0 by stably sorting s0 by the actual elements in s at 0%3 indices, ties broken by the above
     // 1%3-successor-sort.
-    var SA0 = Array.fill(n0)(-1)
+    val SA0 = Array.fill(n0)(-1)
     radixPass(s0, SA0, s, n0, K, stableZeros = treatZerosAsSentinels)
 
     // SA0 is now the 0%3 indices in correct order (according to the suffixes they anchor).
@@ -207,7 +215,7 @@ object DC3 {
     var p = 0
     var t = 0
     var k = 0
-    var SA = Array.fill(n)(-1)
+    val SA = Array.fill(n)(-1)
     while (k < n) {
 
       // offset of current position in offset-12 array
@@ -218,7 +226,7 @@ object DC3 {
           (SA12(t) - n0) * 3 + 2
 
       // offset of current position in offset-0 array
-      var i0 = SA0(p)
+      val i0 = SA0(p)
 
       val cmp =
         if (SA12(t) < n0)
