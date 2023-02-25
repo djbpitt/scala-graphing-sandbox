@@ -16,7 +16,7 @@ import scala.collection.mutable.ArrayBuffer
 
 
 @tailrec
-private def radixPass(a: Seq[Int], b: Array[Int], r: Seq[Int], n: Int, K: Int, stableZeros: Boolean = true): Unit =
+private def radixPass(a: Array[Int], b: Array[Int], r: Array[Int], n: Int, K: Int, stableZeros: Boolean = true): Unit =
   var c = Array.fill(K + 1)(0)
   val zeros: ArrayBuffer[Int] = ArrayBuffer()
   (0 until n).foreach(i => {
@@ -42,7 +42,7 @@ private def radixPass(a: Seq[Int], b: Array[Int], r: Seq[Int], n: Int, K: Int, s
   if (stableZeros && zeros.length > 1) {
     val d = Array.fill(r.length)(0)
     zeros.foreach(ai => d(ai) = ai)
-    radixPass(zeros.toIndexedSeq, b, d, zeros.length, r.length, stableZeros = false)
+    radixPass(zeros.toArray, b, d, zeros.length, r.length, stableZeros = false)
   }
 
 private def cmp2(t1: (Int, Int, Int), t2: (Int, Int, Int)): Boolean =
@@ -125,10 +125,10 @@ private def make(s: Array[Int], n: Int, K: Int, treatZerosAsSentinels: Boolean):
 
   // These radix passes have the net effect of sorting the [12]%3 s-indices by the s-triplets that they anchor.
 
-  radixPass(s12, SA12, s.view.slice(2, n + 3).toSeq, n02, K, stableZeros = treatZerosAsSentinels)
+  radixPass(s12, SA12, s.slice(2, n + 3), n02, K, stableZeros = treatZerosAsSentinels)
   // Now SA12 contains the elements of s12 above, sorted by the elements 2 places ahead of them in s.
 
-  radixPass(SA12, s12, s.view.slice(1, n + 3).toSeq, n02, K, stableZeros = treatZerosAsSentinels)
+  radixPass(SA12, s12, s.slice(1, n + 3), n02, K, stableZeros = treatZerosAsSentinels)
   // Now the torch has been passed back to s12, which has the [12]%3 elements sorted by the elements 1- and 2- places
   // ahead of them in s.
 
