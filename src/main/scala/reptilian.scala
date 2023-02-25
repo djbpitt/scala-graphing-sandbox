@@ -10,7 +10,7 @@ def read_data(): IndexedSeq[List[String]] =
   os.walk(datafiles)
     .sorted
     .map(os.read(_))
-    .map(_.split("\\s+").toList)
+    .map(_.split(raw"\s+").toList)
 
 @main def main(): Unit =
   val token_lists = read_data()
