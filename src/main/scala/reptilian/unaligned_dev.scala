@@ -39,7 +39,7 @@ enum NodeTypes:
 /*
  * Functions to manipulate unaligned nodes
  * */
-def read_data: List[UnalignedFragment] =
+def read_json_data: List[UnalignedFragment] =
   val datafile_path = os.pwd / "src" / "main" / "data" / "unaligned_data.json"
   val fileContents = os.read(datafile_path)
   val darwin = read[List[UnalignedFragment]](fileContents)
@@ -81,7 +81,7 @@ def cluster_readings(data: Array[Array[Double]]): List[ClusterInfo] =
     .toList
 
 @main def unaligned_dev(): Unit =
-  val darwin: List[UnalignedFragment] = read_data
+  val darwin: List[UnalignedFragment] = read_json_data
   // we know there's only one, so we could have told it to find the first
   //   and then skipped the foreach()
   darwin.filter(_.nodeno == 1146)
