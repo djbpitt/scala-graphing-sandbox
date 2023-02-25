@@ -1,12 +1,15 @@
-import upickle.default.*
-import scala.annotation.unused
-import smile.nlp.{pimpString, vectorize}
+package reptilian
+
 import smile.clustering.{HierarchicalClustering, hclust}
+import smile.data.DataFrame
+import smile.feature.transform.WinsorScaler
+import smile.nlp.{pimpString, vectorize}
+import smile.plot.Render.*
 import smile.plot.show
 import smile.plot.swing.*
-import smile.plot.Render.*
-import smile.feature.transform.WinsorScaler
-import smile.data.DataFrame
+import upickle.default.*
+
+import scala.annotation.unused
 
 /*
  * Domain classes, companion objects, enums
