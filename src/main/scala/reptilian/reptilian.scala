@@ -14,4 +14,5 @@ def read_data(): IndexedSeq[List[String]] =
 
 @main def main(): Unit =
   val token_lists = read_data()
-  token_lists.foreach(println)
+  val token_array = token_lists.head ++ token_lists.tail.flatMap(e => List(" #0 ") ++ e)
+  token_array.foreach(println)
