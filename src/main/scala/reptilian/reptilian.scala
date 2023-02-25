@@ -9,7 +9,7 @@ def read_data(): IndexedSeq[List[String]] =
   val datafiles = os.pwd / "src" / "main" / "data" / "darwin"
   os.walk(datafiles)
     .sorted
-    .map(os.read(_))
+    .map(os.read)
     .map(_.split(raw"\s+").toList)
 
 @main def main(): Unit =
