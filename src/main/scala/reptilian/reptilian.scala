@@ -36,7 +36,7 @@ def tokenize(witness_data: String, token_pattern: Regex): List[String] =
 def normalize(witness_data: String): String =
   witness_data.toLowerCase
 
-def create_token_array(token_lists: IndexedSeq[List[String]]): List[String] =
+def create_token_array(token_lists: List[List[String]]): List[String] =
   token_lists
     .head ++ token_lists
     .tail
@@ -56,6 +56,6 @@ def vectorize_token_array(token_array: List[String]): mutable.Map[String, Int] =
   val witness_tokens = witness_strings
     .map(normalize)
     .map(tokenize(_, token_pattern)) // List of one list of strings per witness
-  witness_tokens.foreach(println)
-//  val token_terms = vectorize_token_array(token_array)
+  val token_array = create_token_array(witness_tokens)
+  println(token_array)
 //  token_terms.foreach(println)
