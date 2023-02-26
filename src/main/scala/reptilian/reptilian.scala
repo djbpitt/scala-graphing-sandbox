@@ -16,13 +16,13 @@ def read_data(path_to_data: Path): List[String] =
     .toList
     .map(os.read)
 
-/** Tokenize individual witness on supplied regex matching pattern
+/** Used as partially applied function to create tokenizer
  *
- * @param witness_data Individual witness as string
  * @param token_pattern Regex matching individual tokens
+ * @param witness_data  Individual witness as string
  * @return List of strings for single witness
  */
-def tokenize(witness_data: String, token_pattern: Regex): List[String] =
+def make_tokenizer(token_pattern: Regex)(witness_data: String) =
   token_pattern.findAllIn(witness_data).toList
 
 /** Normalize witness data
@@ -30,7 +30,7 @@ def tokenize(witness_data: String, token_pattern: Regex): List[String] =
  * @param witness_data String with data for individual witness
  * @return Input string in all lower case
  *
- * TODO: Allow user to specify normalization rules
+ *         TODO: Allow user to specify normalization rules
  */
 def normalize(witness_data: String): String =
   witness_data.toLowerCase
@@ -51,13 +51,11 @@ def vectorize_token_array(token_array: List[String]): mutable.Map[String, Int] =
 @main def main(): Unit =
   val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
+  val tokenizer = make_tokenizer(token_pattern)(_) // Tokenizer function with user-supplied regex
   val witness_strings = read_data(path_to_darwin) // One string per witness
   val witness_tokens = witness_strings
     .map(normalize)
-    // Review: would be better if the tokenizer was created before use by taken the token pattern and calling a method on a companion object.
-    // The constructor method would return a function that has the reg exp as private data and applies it to the first parameter.
-    // That would make the tokenize function a single parameter function, which is preferable.
-    .map(tokenize(_, token_pattern)) // List of one list of strings per witness
+    .map(tokenizer) // List of one list of strings per witness
   val token_array = create_token_array(witness_tokens)
   println(token_array)
 //  token_terms.foreach(println)
