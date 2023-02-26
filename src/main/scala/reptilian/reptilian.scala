@@ -23,6 +23,8 @@ def read_data(path_to_data: Path): List[String] =
  * @return List of strings for single witness
  */
 def tokenize(witness_data: String, token_pattern: Regex): List[String] =
+  // Review: Why the use of a val here? Token_pattern is already a parameter.
+  // Why not call it directly?
   val re = token_pattern
   re.findAllIn(witness_data).toList
 
@@ -55,6 +57,9 @@ def vectorize_token_array(token_array: List[String]): mutable.Map[String, Int] =
   val witness_strings = read_data(path_to_darwin) // One string per witness
   val witness_tokens = witness_strings
     .map(normalize)
+    // Review: would be better if the tokenizer was created before use by taken the token pattern and calling a method on a companion object.
+    // The constructor method would return a function that has the reg exp as private data and applies it to the first parameter.
+    // That would make the tokenize function a single parameter function, which is preferable.
     .map(tokenize(_, token_pattern)) // List of one list of strings per witness
   val token_array = create_token_array(witness_tokens)
   println(token_array)
