@@ -51,11 +51,11 @@ def vectorize_token_array(token_array: List[String]): mutable.Map[String, Int] =
 @main def main(): Unit =
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
   val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
-  val pipeline = { (plain_witnesses:List[String]) =>
+  val pipeline = ( (plain_witnesses:List[String]) =>
     plain_witnesses
       .map(normalize)
       .map(tokenizer) // List of one list of strings per witness
-  } andThen create_token_array
+  ) andThen create_token_array
 
   val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
   val witness_strings = read_data(path_to_darwin) // One string per witness
