@@ -23,10 +23,7 @@ def read_data(path_to_data: Path): List[String] =
  * @return List of strings for single witness
  */
 def tokenize(witness_data: String, token_pattern: Regex): List[String] =
-  // Review: Why the use of a val here? Token_pattern is already a parameter.
-  // Why not call it directly?
-  val re = token_pattern
-  re.findAllIn(witness_data).toList
+  token_pattern.findAllIn(witness_data).toList
 
 /** Normalize witness data
  *
