@@ -2,6 +2,7 @@ package reptilian
 
 import os.Path
 
+import scala.collection.immutable.VectorMap
 import scala.collection.mutable
 import scala.util.matching.Regex
 
@@ -54,7 +55,7 @@ def create_token_array(token_lists: List[List[String]]): List[String] =
  *  from normalized properties.
  */
 def vectorize(token_array: List[String]): Map[String, Int] =
-  token_array.toSet.toSeq.sorted.zipWithIndex.toMap
+  VectorMap.from(token_array.toSet.toSeq.sorted.zipWithIndex)
 
 @main def main(): Unit =
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
@@ -69,4 +70,4 @@ def vectorize(token_array: List[String]): Map[String, Int] =
   val witness_strings = read_data(path_to_darwin) // One string per witness
   val token_array = pipeline(witness_strings)
   val vectorization = vectorize(token_array)
-  vectorization.toSeq.sortBy(_._1).foreach(println) // to verify sorting}
+  vectorization.foreach(println) // to verify sorting}
