@@ -2,7 +2,6 @@ package reptilian
 
 import os.Path
 
-import scala.collection.immutable.SortedMap
 import scala.collection.mutable
 import scala.util.matching.Regex
 
@@ -46,21 +45,16 @@ def create_token_array(token_lists: List[List[String]]): List[String] =
 /** Create sorted map from tokens to integers
  *
  * @param token_array All tokens in all witnesses (includes duplicates)
- * @return Sorted map from tokens to integers
+ * @return Map from tokens to integers, where integers correspond to alphabet order of tokens
  *
  * Map from token strings to integers because suffix array requires integers.
  *
  * TODO: Currently operates on tokenized input that retains trailing spaces, e.g., "when" and "when " are different
  *  tokens. Implement complex object with separate t (text) and n (normalized) properties and build vector mapping
  *  from normalized properties.
- * TODO: Can we chain convertion to sorted immutable map at end instead of creating intermediate value?
  */
-def vectorize_token_array(token_array: List[String]): Map[String, Int] =
-  val m = token_array.foldLeft(mutable.Map[String, Int]())(op = (term_mapping, next_term) => {
-    term_mapping.getOrElseUpdate(next_term, term_mapping.size)
-    term_mapping
-  }).toMap[String, Int]
-  scala.collection.immutable.ListMap[String,Int](m.toSeq.sortBy(_._1):_*)
+def vectorize(token_array: List[String]): Map[String, Int] =
+  token_array.toSet.toSeq.sorted.zipWithIndex.toMap
 
 @main def main(): Unit =
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
@@ -74,6 +68,5 @@ def vectorize_token_array(token_array: List[String]): Map[String, Int] =
   val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
   val witness_strings = read_data(path_to_darwin) // One string per witness
   val token_array = pipeline(witness_strings)
-  val result = vectorize_token_array(token_array)
-  println(result)
-//  token_terms.foreach(println)
+  val vectorization = vectorize(token_array)
+  vectorization.toSeq.sortBy(_._1).foreach(println) // to verify sorting}
