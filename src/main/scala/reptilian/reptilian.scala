@@ -2,6 +2,7 @@ package reptilian
 
 import os.Path
 
+import scala.collection.immutable.SortedMap
 import scala.collection.mutable
 import scala.util.matching.Regex
 
@@ -42,11 +43,24 @@ def create_token_array(token_lists: List[List[String]]): List[String] =
     .zipWithIndex
     .flatMap((e, index) => List(s" #$index ") ++ e)
 
-def vectorize_token_array(token_array: List[String]): mutable.Map[String, Int] =
-  token_array.foldLeft(mutable.Map[String, Int]())((term_mapping, next_term) => {
+/** Create sorted map from tokens to integers
+ *
+ * @param token_array All tokens in all witnesses (includes duplicates)
+ * @return Sorted map from tokens to integers
+ *
+ * Map from token strings to integers because suffix array requires integers.
+ *
+ * TODO: Currently operates on tokenized input that retains trailing spaces, e.g., "when" and "when " are different
+ *  tokens. Implement complex object with separate t (text) and n (normalized) properties and build vector mapping
+ *  from normalized properties.
+ * TODO: Can we chain convertion to sorted immutable map at end instead of creating intermediate value?
+ */
+def vectorize_token_array(token_array: List[String]): Map[String, Int] =
+  val m = token_array.foldLeft(mutable.Map[String, Int]())(op = (term_mapping, next_term) => {
     term_mapping.getOrElseUpdate(next_term, term_mapping.size)
     term_mapping
-  })
+  }).toMap[String, Int]
+  scala.collection.immutable.ListMap[String,Int](m.toSeq.sortBy(_._1):_*)
 
 @main def main(): Unit =
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
@@ -60,5 +74,6 @@ def vectorize_token_array(token_array: List[String]): mutable.Map[String, Int] =
   val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
   val witness_strings = read_data(path_to_darwin) // One string per witness
   val token_array = pipeline(witness_strings)
-  println(token_array)
+  val result = vectorize_token_array(token_array)
+  println(result)
 //  token_terms.foreach(println)
