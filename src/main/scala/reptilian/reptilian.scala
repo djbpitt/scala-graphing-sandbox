@@ -37,7 +37,7 @@ def make_tokenizer(token_pattern: Regex)(witness_data: String) =
  *         from normalized properties.
  */
 def normalize(witness_data: List[String]): List[String] =
-  witness_data.map(_.toLowerCase.strip)
+  witness_data.map(_.toLowerCase.trim)
 
 def create_token_array(token_lists: List[List[String]]): List[String] =
   token_lists
