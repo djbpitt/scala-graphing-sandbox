@@ -1,0 +1,53 @@
+const int maxn = 200000;
+int sa[maxn];
+int lcp[maxn];
+int rank[maxn];
+unsigned char *s;
+int n;
+
+void calc_lcp() {
+    for (int i = 0; i < n; i++)
+        rank[sa[i]] = i;
+    for (int i = 0, h = 0; i < n; i++) {
+        if (rank[i] < n - 1) {
+            for (int j = sa[rank[i] + 1]; s[i + h] == s[j + h]; ++h)
+                ;
+            lcp[rank[i]] = h;
+            if (h > 0)
+                --h;
+        }
+    }
+}
+
+int main() {
+    string str = "abcab";
+    n = str.size();
+    s = (unsigned char*) str.c_str();
+    SA_IS(s, sa, n + 1, 256, 1);
+    calc_lcp();
+
+    for (int i = 0; i < n; i++) {
+        cout << str.substr(sa[i + 1]);
+        if (i < n - 1)
+            cout << " " << lcp[i + 1];
+        cout << endl;
+    }
+}
+
+(From Sebastian Wild video)
+
+procedure computeLCP(T[0..n], L[0..n], R[0..n])
+    // Assume T[n] = $, L and R are suffix array and inverse
+    l := 0
+    for i := 0, ..., n - 1 // Consider T[i] now
+        r := R[i]
+        // compute LCP[r]; note that r > 0 since R[n] = 0
+        while T[i + l] == T[L[r - 1] + l] do
+            l := l + 1
+        LCP[r] := l
+        l := max(l - 1, 0)
+    return LCP[1..n]
+
+Remember length l of induced common prefix
+Use l to get start index of suffixes
+T is the input token array

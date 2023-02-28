@@ -52,13 +52,17 @@ def create_token_array(token_lists: List[List[String]]): List[String] =
  * @return Map from tokens to integers, where integers correspond to alphabet order of tokens
  *
  * Map from token strings to integers because suffix array requires integers.
- *
- *
  */
 def vectorize(token_array: List[String]): (List[Int],Int) =
   val voc = token_array.distinct.sorted
   val terms_to_int = voc.zipWithIndex.to(VectorMap)
   (token_array.map(terms_to_int), voc.size)
+
+def calculate_lcp_array(token_array: List[String], suffix_array: Array[Int]) =
+  val inverse_suffix_array = Array.fill[Int](suffix_array.length){0}
+  for (i <- suffix_array.indices) do
+    inverse_suffix_array(suffix_array(i)) = i
+  inverse_suffix_array
 
 @main def main(): Unit =
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
@@ -76,5 +80,7 @@ def vectorize(token_array: List[String]): (List[Int],Int) =
   val suffix_array = calculate_suffix_array(vectorization.toArray, voc_size)
   //print(suffix_array.mkString(", "))
 
-  for suffix_start <- suffix_array.slice(0, 500) do
-    println(token_array.slice(suffix_start, suffix_start+15 min token_array.size).mkString(" "))
+//  for suffix_start <- suffix_array.slice(0, 500) do
+//    println(token_array.slice(suffix_start, suffix_start+15 min token_array.size).mkString(" "))
+
+  val lcp_array = calculate_lcp_array(token_array, suffix_array)

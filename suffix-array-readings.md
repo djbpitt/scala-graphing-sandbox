@@ -1,6 +1,6 @@
 # Suffix array readings
 
-## Spark-based implementation of pDC3, a linear-time parallel suffix-array-construction algorithm.
+## Spark-based (and non-Spark) implementation of pDC3, a linear-time parallel suffix-array-construction algorithm.
 
 <https://github.com/hammerlab/suffix-arrays> 
 
@@ -15,13 +15,18 @@ The referenced paper is Fabian Kulla and Peter Sanders, [Scalable Parallel Suffi
 
 ## Stanford lecture about suffix and LCP arrays
 
-[Suffix arrays](small11.pdf) (local copy)
+[Suffix arrays](Small11.pdf) (local copy)
 
 ## UCSD “Algorithms on strings” lecture about LCP array
 
 [Computing the LCP Array](https://www.coursera.org/lecture/algorithms-on-strings/computing-the-lcp-array-HyUlH). (Free) registration required on Coursera site.
 
+## Kasai’s algorithm for computing LCP array in linear time (Youtube video)
+
+Sebastian Wild’s (University of Liverpool) lecture: <https://www.youtube.com/watch?v=NSqD9iHQ_ys>
+
 ## C++ code
 
 [Suffix Array and LCP in O(N). Algorithm DC3](https://sites.google.com/site/indy256/algo_cpp/suffix_array_lcp) (part of [Data Structures and Algorithms in C++](https://sites.google.com/site/indy256/algo_cpp/))
+
 
