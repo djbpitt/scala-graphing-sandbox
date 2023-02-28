@@ -74,4 +74,7 @@ def vectorize(token_array: List[String]): (List[Int],Int) =
   val token_array = pipeline(witness_strings)
   val (vectorization, voc_size) = vectorize(token_array)
   val suffix_array = calculate_suffix_array(vectorization.toArray, voc_size)
-  print(suffix_array.mkString(", "))
+  //print(suffix_array.mkString(", "))
+
+  for suffix_start <- suffix_array.slice(0, 500) do
+    println(token_array.slice(suffix_start, suffix_start+15 min token_array.size).mkString(" "))
