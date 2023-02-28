@@ -55,7 +55,7 @@ def create_token_array(token_lists: List[List[String]]): List[String] =
  *  from normalized properties.
  */
 def vectorize(token_array: List[String]): Map[String, Int] =
-  token_array.toSet.toSeq.sorted.zipWithIndex.to(VectorMap)
+  token_array.distinct.sorted.zipWithIndex.to(VectorMap)
 
 @main def main(): Unit =
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
