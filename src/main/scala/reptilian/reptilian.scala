@@ -1,5 +1,6 @@
 package reptilian
 
+import org.hammerlab.suffixes.dc3.make as calculate_suffix_array
 import os.Path
 
 import scala.collection.immutable.VectorMap
@@ -54,9 +55,10 @@ def create_token_array(token_lists: List[List[String]]): List[String] =
  *
  *
  */
-def vectorize(token_array: List[String]): List[Int] =
-  val terms_to_int = token_array.distinct.sorted.zipWithIndex.to(VectorMap)
-  token_array.map(terms_to_int)
+def vectorize(token_array: List[String]): (List[Int],Int) =
+  val voc = token_array.distinct.sorted
+  val terms_to_int = voc.zipWithIndex.to(VectorMap)
+  (token_array.map(terms_to_int), voc.size)
 
 @main def main(): Unit =
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
@@ -70,5 +72,6 @@ def vectorize(token_array: List[String]): List[Int] =
   val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
   val witness_strings = read_data(path_to_darwin) // One string per witness
   val token_array = pipeline(witness_strings)
-  val vectorization = vectorize(token_array)
-  print(vectorization)
+  val (vectorization, voc_size) = vectorize(token_array)
+  val suffix_array = calculate_suffix_array(vectorization.toArray, voc_size)
+  print(suffix_array.mkString(", "))
