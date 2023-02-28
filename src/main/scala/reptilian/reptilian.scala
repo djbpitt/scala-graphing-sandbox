@@ -29,12 +29,14 @@ def make_tokenizer(token_pattern: Regex)(witness_data: String) =
 /** Normalize witness data
  *
  * @param witness_data String with data for individual witness
- * @return Input string in all lower case
+ * @return Input string in all lower case and strip trailing whitespace
  *
  *         TODO: Allow user to specify normalization rules
+ *         TODO: Implement complex object with separate t (text) and n (normalized) properties and build vector mapping
+ *         from normalized properties.
  */
-def normalize(witness_data: String): String =
-  witness_data.toLowerCase
+def normalize(witness_data: List[String]): List[String] =
+  witness_data.map(_.toLowerCase.strip)
 
 def create_token_array(token_lists: List[List[String]]): List[String] =
   token_lists
@@ -50,9 +52,7 @@ def create_token_array(token_lists: List[List[String]]): List[String] =
  *
  * Map from token strings to integers because suffix array requires integers.
  *
- * TODO: Currently operates on tokenized input that retains trailing spaces, e.g., "when" and "when " are different
- *  tokens. Implement complex object with separate t (text) and n (normalized) properties and build vector mapping
- *  from normalized properties.
+ *
  */
 def vectorize(token_array: List[String]): Map[String, Int] =
   token_array.distinct.sorted.zipWithIndex.to(VectorMap)
@@ -62,8 +62,8 @@ def vectorize(token_array: List[String]): Map[String, Int] =
   val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
   val pipeline = ( (plain_witnesses:List[String]) =>
     plain_witnesses
-      .map(normalize)
-      .map(tokenizer) // List of one list of strings per witness
+      .map(tokenizer)
+      .map(normalize) // List of one list of strings per witness
   ) andThen create_token_array
 
   val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
