@@ -54,8 +54,9 @@ def create_token_array(token_lists: List[List[String]]): List[String] =
  *
  *
  */
-def vectorize(token_array: List[String]): Map[String, Int] =
-  token_array.distinct.sorted.zipWithIndex.to(VectorMap)
+def vectorize(token_array: List[String]): List[Int] =
+  val terms_to_int = token_array.distinct.sorted.zipWithIndex.to(VectorMap)
+  token_array.map(terms_to_int)
 
 @main def main(): Unit =
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
@@ -70,4 +71,4 @@ def vectorize(token_array: List[String]): Map[String, Int] =
   val witness_strings = read_data(path_to_darwin) // One string per witness
   val token_array = pipeline(witness_strings)
   val vectorization = vectorize(token_array)
-  vectorization.foreach(println) // to verify sorting}
+  print(vectorization)
