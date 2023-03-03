@@ -40,12 +40,12 @@ def normalize(witness_data: List[String]): List[String] =
   witness_data.map(_.toLowerCase.trim)
 
 def create_token_array(token_lists: List[List[String]]): Array[String] =
-  val ta = token_lists
+  (token_lists
     .head ++ token_lists
     .tail
     .zipWithIndex
     .flatMap((e, index) => List(s" #$index ") ++ e)
-   ta.toArray
+    ).toArray
 
 /** Create sorted map from tokens to integers
  *
