@@ -59,10 +59,35 @@ def vectorize(token_array: List[String]): (List[Int],Int) =
   (token_array.map(terms_to_int), voc.size)
 
 def calculate_lcp_array(token_array: List[String], suffix_array: Array[Int]) =
-  val inverse_suffix_array = Array.fill[Int](suffix_array.length){0}
+  val rank = Array.fill[Int](suffix_array.length){0}
   for (i <- suffix_array.indices) do
-    inverse_suffix_array(suffix_array(i)) = i
-  inverse_suffix_array
+    rank(suffix_array(i)) = i
+  //rank
+  val start = 0
+  val length = suffix_array.length
+  var h: Int = 0
+  val lcp: Array[Int] = new Array[Int](length)
+  var i: Int = 0
+  while (i < length) {
+    val k: Int = rank(i)
+    if (k == 0) {
+      lcp(k) = -1
+    }
+    else {
+      val j: Int = suffix_array(k - 1)
+      while (i + h < length && j + h < length && (token_array(start + i + h) eq token_array(start + j + h))) {
+        h += 1
+      }
+      lcp(k) = h
+    }
+    if (h > 0) {
+      h -= 1
+    }
+
+    i += 1
+  }
+  lcp
+
 
 @main def main(): Unit =
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
@@ -83,4 +108,6 @@ def calculate_lcp_array(token_array: List[String], suffix_array: Array[Int]) =
 //  for suffix_start <- suffix_array.slice(0, 500) do
 //    println(token_array.slice(suffix_start, suffix_start+15 min token_array.size).mkString(" "))
 
+  //NOTE: We could also use the Integer array instead of token_array; should not change outcome
   val lcp_array = calculate_lcp_array(token_array, suffix_array)
+  println(lcp_array.mkString(" "))
