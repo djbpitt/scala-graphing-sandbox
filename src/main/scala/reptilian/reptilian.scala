@@ -39,12 +39,13 @@ def make_tokenizer(token_pattern: Regex)(witness_data: String) =
 def normalize(witness_data: List[String]): List[String] =
   witness_data.map(_.toLowerCase.trim)
 
-def create_token_array(token_lists: List[List[String]]): List[String] =
-  token_lists
+def create_token_array(token_lists: List[List[String]]): Array[String] =
+  val ta = token_lists
     .head ++ token_lists
     .tail
     .zipWithIndex
     .flatMap((e, index) => List(s" #$index ") ++ e)
+   ta.toArray
 
 /** Create sorted map from tokens to integers
  *
@@ -53,12 +54,12 @@ def create_token_array(token_lists: List[List[String]]): List[String] =
  *
  * Map from token strings to integers because suffix array requires integers.
  */
-def vectorize(token_array: List[String]): (List[Int],Int) =
+def vectorize(token_array: Array[String]): (Array[Int],Int) =
   val voc = token_array.distinct.sorted
   val terms_to_int = voc.zipWithIndex.to(VectorMap)
-  (token_array.map(terms_to_int), voc.size)
+  (token_array.map(terms_to_int), voc.length)
 
-def calculate_lcp_array(token_array: List[String], suffix_array: Array[Int]) =
+def calculate_lcp_array(token_array: Array[String], suffix_array: Array[Int]) =
   val rank = Array.fill[Int](suffix_array.length){0}
   for (i <- suffix_array.indices) do
     rank(suffix_array(i)) = i
@@ -102,22 +103,23 @@ def calculate_lcp_array(token_array: List[String], suffix_array: Array[Int]) =
   val witness_strings = read_data(path_to_darwin) // One string per witness
   val token_array = pipeline(witness_strings)
   val (vectorization, voc_size) = vectorize(token_array)
-  val suffix_array = calculate_suffix_array(vectorization.toArray, voc_size)
+  val suffix_array = calculate_suffix_array(vectorization, voc_size)
 //  //print(suffix_array.mkString(", "))
 //
 ////  for suffix_start <- suffix_array.slice(0, 500) do
 ////    println(token_array.slice(suffix_start, suffix_start+15 min token_array.size).mkString(" "))
 //
 //  // simple example to test LCP construction
-//  val token_array = List("b", "a", "n", "a", "n", "a", "b", "a","n", "$")
+//  val token_array = Array("b", "a", "n", "a", "n", "a", "b", "a","n", "$")
 //  val (vectorization, voc_size) = vectorize(token_array)
 //  val suffix_array = calculate_suffix_array(vectorization.toArray, voc_size)
-
-
 //  println(suffix_array.mkString(", "))
 //  println(suffix_array sameElements Array(9, 5, 7, 3, 1, 6, 0, 8, 4, 2))
+//  val lcp_array = calculate_lcp_array(token_array, suffix_array)
+//  println(lcp_array.mkString(" "))
+//  println(lcp_array sameElements Array(-1, 0, 1, 2, 3, 0, 3, 0, 1, 2))
 
-  //NOTE: We could also use the Integer array instead of token_array; should not change outcome
+  //NOTE: We could also use the Integer array instead of token_array;
+  // should not change outcome, but might be faster
   val lcp_array = calculate_lcp_array(token_array, suffix_array)
   println(lcp_array.mkString(" "))
-  println(lcp_array sameElements Array(-1, 0, 1, 2, 3, 0, 3, 0, 1, 2))
