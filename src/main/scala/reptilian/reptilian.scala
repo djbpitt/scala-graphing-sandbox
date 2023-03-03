@@ -104,21 +104,6 @@ def calculate_lcp_array(token_array: Array[String], suffix_array: Array[Int]) =
   val token_array = pipeline(witness_strings)
   val (vectorization, voc_size) = vectorize(token_array)
   val suffix_array = calculate_suffix_array(vectorization, voc_size)
-//  //print(suffix_array.mkString(", "))
-//
-////  for suffix_start <- suffix_array.slice(0, 500) do
-////    println(token_array.slice(suffix_start, suffix_start+15 min token_array.size).mkString(" "))
-//
-//  // simple example to test LCP construction
-//  val token_array = Array("b", "a", "n", "a", "n", "a", "b", "a","n", "$")
-//  val (vectorization, voc_size) = vectorize(token_array)
-//  val suffix_array = calculate_suffix_array(vectorization.toArray, voc_size)
-//  println(suffix_array.mkString(", "))
-//  println(suffix_array sameElements Array(9, 5, 7, 3, 1, 6, 0, 8, 4, 2))
-//  val lcp_array = calculate_lcp_array(token_array, suffix_array)
-//  println(lcp_array.mkString(" "))
-//  println(lcp_array sameElements Array(-1, 0, 1, 2, 3, 0, 3, 0, 1, 2))
-
   //NOTE: We could also use the Integer array instead of token_array;
   // should not change outcome, but might be faster
   val lcp_array = calculate_lcp_array(token_array, suffix_array)
