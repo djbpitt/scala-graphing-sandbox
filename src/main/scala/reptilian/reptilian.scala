@@ -61,6 +61,13 @@ def vectorize(token_array: Array[String]): (Array[Int],Int) =
   val terms_to_int = voc.zipWithIndex.to(VectorMap)
   (token_array.map(terms_to_int), voc.length)
 
+/** Create LCP array from suffix array and token array
+ *
+ * Follows Kasai algorithm
+ *
+ * @param token_array Array of text tokens
+ * @param suffix_array Array of Ints
+ */
 def calculate_lcp_array(token_array: Array[String], suffix_array: Array[Int]) =
   val length = suffix_array.length
   val rank = new Array[Int](length)
