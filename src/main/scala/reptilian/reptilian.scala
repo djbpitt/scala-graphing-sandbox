@@ -62,23 +62,21 @@ def vectorize(token_array: Array[String]): (Array[Int],Int) =
   (token_array.map(terms_to_int), voc.length)
 
 def calculate_lcp_array(token_array: Array[String], suffix_array: Array[Int]) =
-  val rank = Array.fill[Int](suffix_array.length){0}
-  for (i <- suffix_array.indices) do
-    rank(suffix_array(i)) = i
-  //rank
-  val start = 0
   val length = suffix_array.length
+  val rank = new Array[Int](length)
+  for i <- suffix_array.indices do
+    rank(suffix_array(i)) = i
   var h: Int = 0
   val lcp: Array[Int] = new Array[Int](length)
   var i: Int = 0
-  while (i < length) {
+  while i < length do
     val k: Int = rank(i)
     if (k == 0) {
       lcp(k) = -1
     }
     else {
       val j: Int = suffix_array(k - 1)
-      while (i + h < length && j + h < length && (token_array(start + i + h) == token_array(start + j + h))) {
+      while (i + h < length && j + h < length && (token_array(i + h) == token_array(j + h))) {
         h += 1
       }
       lcp(k) = h
@@ -86,9 +84,7 @@ def calculate_lcp_array(token_array: Array[String], suffix_array: Array[Int]) =
     if (h > 0) {
       h -= 1
     }
-
     i += 1
-  }
   lcp
 
 
