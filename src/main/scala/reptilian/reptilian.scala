@@ -3,8 +3,10 @@ package reptilian
 import org.hammerlab.suffixes.dc3.make as calculate_suffix_array
 import os.Path
 
+import scala.annotation.unused
 import scala.collection.immutable.VectorMap
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 import scala.util.matching.Regex
 
 /** Read data files from supplied path to directory (one file per witness)
@@ -89,6 +91,42 @@ def calculate_lcp_array(token_array: Array[String], suffix_array: Array[Int]) =
   }
   lcp
 
+
+case class OpenBlock(start: Int, length: Int)
+case class Block(start: Int, end: Int, length: Int)
+@unused
+def splitLCP_ArrayIntoIntervals(LCP_array: Array[Int]): List[Block] = {
+  val closedIntervals: ArrayBuffer[Block] = ArrayBuffer()
+  var previousLCP_value = 0
+  val openIntervals = mutable.Stack[OpenBlock]()
+  for (idx <- LCP_array.indices) {
+    val lcp_value = LCP_array(idx)
+    if (lcp_value > previousLCP_value) {
+      openIntervals.push(OpenBlock(idx - 1, lcp_value))
+      previousLCP_value = lcp_value
+    } else if (lcp_value < previousLCP_value) {
+      // close open intervals that are larger than current LCP value
+      while (openIntervals.nonEmpty && openIntervals.top.length > lcp_value) {
+        val a = openIntervals.pop()
+        closedIntervals += Block(a.start, idx - 1, a.length)
+      }
+      // then: open a new interval starting with filtered intervals
+      // NOTE: reptilian Python version checks more situations
+      if (lcp_value > 0) {
+        val start = closedIntervals(closedIntervals.size - 1).start
+        openIntervals.push(OpenBlock(start, lcp_value))
+      }
+      previousLCP_value = lcp_value
+    }
+  }
+  // add all the open intervals to the result
+  for (interval <- openIntervals) {
+    if (interval.length > 0) {
+      closedIntervals += Block(interval.start, LCP_array.length - 1, interval.length)
+    }
+  }
+  closedIntervals.toList
+}
 
 @main def main(): Unit =
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
