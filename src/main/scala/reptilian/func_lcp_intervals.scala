@@ -8,7 +8,9 @@ def split_lcp_array_into_intervals(lcp: Array[Int]): Unit =
 
   val f = (x1:List[Block], y1: (Int, Int)) =>
     println(s"$x1 $y1")
-    x1
+    (x1, y1._1) match
+      case (Nil, lcp_value) if lcp_value > 0 => List(Block(y1._2, -1, lcp_value))
+      case _ => x1
 
   val y = x.foldLeft[List[Block]](List[Block]())(f)
   for xx <- y do
