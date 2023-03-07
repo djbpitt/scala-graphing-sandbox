@@ -26,11 +26,18 @@ class ReptilianTest extends AnyFunSuite:
     val result = splitLCP_ArrayIntoIntervals(input)
     assert(result == List(Block(3, 6, 2), Block(0, 6, 1)))
   }
-  //
+  //Second interval, with value 1, runs from start to end because 1 < 2
   test("lcp array with values that go down can also return two adjacent intervals") {
     val input = Array[Int](-1, 2, 2, 2, 1, 1, 1)
     val result = splitLCP_ArrayIntoIntervals(input)
     assert(result == List(Block(0, 3, 2), Block(0, 6, 1)))
+  }
+  //The behavior for this is wrong in CollateX Java, and perhaps also Python
+  //Fixed in reptilian Python, although not tested there
+  test("lcp array with values that go up and down has two intervals, one full length") {
+    val input = Array[Int](-1, 1, 1, 1, 2, 2, 2, 1, 1, 1)
+    val result = splitLCP_ArrayIntoIntervals(input)
+    assert(result == List(Block(3, 6, 2), Block(0, 9, 1)))
   }
 end ReptilianTest
 

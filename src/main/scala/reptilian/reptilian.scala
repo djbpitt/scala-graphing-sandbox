@@ -113,8 +113,21 @@ def splitLCP_ArrayIntoIntervals(LCP_array: Array[Int]): List[Block] =
         val a = openIntervals.pop()
         closedIntervals += Block(a.start, idx - 1, a.length)
       // then: open a new interval starting with filtered intervals
-      // NOTE: reptilian Python version checks more situations
-      if (lcp_value > 0)
+      /**
+       * We look at three things to decide whether to create a new block:
+       *   1. Is there content in the accumulator
+       *   2. Is the top of accumulator lower than the new value (could be zero or other)
+       *   3. Is the top of accumulator the same as the new value
+       * (It is not possible for the top of accumulator to be greater than the new value
+       *     because we would have closed it)
+       * There are three options:
+       *   1. there is content in the accumulator and latest value is not 0
+       *   2. accumulator is empty and latest value is 0
+       *   3. accumulator is empty and latest value is not 0
+       * (the fourth logical combination, content in the accumulator and 0 value, cannot occur
+       *     because a 0 value will empty the accumulator)
+       */
+      if (lcp_value > 0 && (openIntervals.isEmpty || openIntervals.top.length != lcp_value))
         val start = closedIntervals(closedIntervals.size - 1).start
         openIntervals.push(OpenBlock(start, lcp_value))
       previousLCP_value = lcp_value
