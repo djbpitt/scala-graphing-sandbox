@@ -4,15 +4,33 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class ReptilianTest extends AnyFunSuite:
 
-  // tests for lcp interval
-  /** lcp array always starts with -1
-   *  If all other values are 0 should find no lcp intervals
-   *  Could happen if witnesses are dissimilar and there is no repetition
+  /** tests for lcp interval
+   *  lcp array always starts with -1
    */
+
+  //Could happen if witnesses are dissimilar and there is no repetition
   test("lcp array with all zero values should return no intervals") {
     val input = Array[Int](-1, 0, 0, 0, 0, 0)
     val result = splitLCP_ArrayIntoIntervals(input)
     assert(result.isEmpty)
+  }
+  //First value is offset before new interval, second is position of last member, third is length
+  test("lcp array with all same values (after first) should return one interval") {
+    val input = Array[Int](-1, 1, 1, 1, 1)
+    val result = splitLCP_ArrayIntoIntervals(input)
+    assert(result == List(Block(0, 4, 1)))
+  }
+  //First interval, with value 1, runs to end because 1 < 2
+  test("lcp array with two adjacent intervals should return … er … two adjacent intervals") {
+    val input = Array[Int](-1, 1, 1, 1, 2, 2, 2)
+    val result = splitLCP_ArrayIntoIntervals(input)
+    assert(result == List(Block(3, 6, 2), Block(0, 6, 1)))
+  }
+  //
+  test("lcp array with values that go down can also return two adjacent intervals") {
+    val input = Array[Int](-1, 2, 2, 2, 1, 1, 1)
+    val result = splitLCP_ArrayIntoIntervals(input)
+    assert(result == List(Block(0, 3, 2), Block(0, 6, 1)))
   }
 end ReptilianTest
 
