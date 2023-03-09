@@ -39,5 +39,13 @@ class ReptilianTest extends AnyFunSuite:
     val result = splitLCP_ArrayIntoIntervals(input)
     assert(result == List(Block(3, 6, 2), Block(0, 9, 1)))
   }
+
+  test("test that one or more zeroes at the end of an LCP array closes all open blocks and doesn't cause any zero length blocks to be created.") {
+    val input = Array[Int](-1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 0, 0)
+    val result = splitLCP_ArrayIntoIntervals(input)
+    assert(result == List(Block(3, 6, 2), Block(0, 9, 1)))
+  }
+
+
 end ReptilianTest
 
