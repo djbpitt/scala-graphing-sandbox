@@ -41,6 +41,13 @@ def make_tokenizer(token_pattern: Regex)(witness_data: String) =
 def normalize(witness_data: List[String]): List[String] =
   witness_data.map(_.toLowerCase.trim)
 
+/** Return token array as single vector with token separators
+ *
+ * Token separators are unique and sequential
+ *
+ * @param token_lists list of list of strings with one inner list per witness
+ * @return Vector[String] with unique separators inserted between witnesses
+ */
 def create_token_array(token_lists: List[List[String]]): Vector[String] =
   (token_lists
     .head ++ token_lists
@@ -71,6 +78,7 @@ def create_token_witness_mapping(token_lists: List[List[String]]): Vector[Int] =
  * @return Map from tokens to integers, where integers correspond to alphabet order of tokens
  *
  * Map from token strings to integers because suffix array requires integers.
+ * Array instead of vector because third-party library requires array
  */
 def vectorize(token_array: Vector[String]): (Array[Int],Int) =
   val voc = token_array.distinct.sorted
@@ -83,8 +91,10 @@ def vectorize(token_array: Vector[String]): (Array[Int],Int) =
  *
  * @param token_array Array of text tokens
  * @param suffix_array Array of Ints
+ *
+ * Array and not vector because third-party library requires array
  */
-def calculate_lcp_array(token_array: Vector[String], suffix_array: Array[Int]) =
+def calculate_lcp_array(token_array: Vector[String], suffix_array: Array[Int]): Vector[Int] =
   val length = suffix_array.length
   val rank = new Array[Int](length)
   for i <- suffix_array.indices do
@@ -108,12 +118,12 @@ def calculate_lcp_array(token_array: Vector[String], suffix_array: Array[Int]) =
       h -= 1
     }
     i += 1
-  lcp
+  lcp.toVector
 
 
 case class OpenBlock(start: Int, length: Int)
 case class Block(start: Int, end: Int, length: Int)
-@unused
+
 def splitLCP_ArrayIntoIntervals(LCP_array: Array[Int]): List[Block] =
   val closedIntervals: ArrayBuffer[Block] = ArrayBuffer()
   var previousLCP_value = 0
