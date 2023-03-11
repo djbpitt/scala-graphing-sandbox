@@ -41,15 +41,20 @@ def make_tokenizer(token_pattern: Regex)(witness_data: String) =
 def normalize(witness_data: List[String]): List[String] =
   witness_data.map(_.toLowerCase.trim)
 
-def create_token_array(token_lists: List[List[String]]): Array[String] =
+def create_token_array(token_lists: List[List[String]]): Vector[String] =
   (token_lists
     .head ++ token_lists
     .tail
     .zipWithIndex
     .flatMap((e, index) => List(s" #$index ") ++ e)
-    ).toArray
+    ).toVector
 
-def create_token_witness_mapping(token_lists: List[List[String]]): Array[Int] =
+/** Create mapping from tokens to witnesses
+ *
+ * @param token_lists (one inner list per witness)
+ * @return Vector[Int] with zero-based witness number for each token
+ */
+def create_token_witness_mapping(token_lists: List[List[String]]): Vector[Int] =
   val buffer: ArrayBuffer[Int] = ArrayBuffer[Int]()
   buffer.appendAll(Array.fill(token_lists.head.length)(0))
   token_lists.tail
@@ -58,7 +63,7 @@ def create_token_witness_mapping(token_lists: List[List[String]]): Array[Int] =
     (tokens, index) => buffer.append(-1)
       buffer.appendAll(Array.fill(tokens.length)(index+1))
   }
-  buffer.toArray
+  buffer.toVector
 
 /** Create sorted map from tokens to integers
  *
@@ -67,10 +72,10 @@ def create_token_witness_mapping(token_lists: List[List[String]]): Array[Int] =
  *
  * Map from token strings to integers because suffix array requires integers.
  */
-def vectorize(token_array: Array[String]): (Array[Int],Int) =
+def vectorize(token_array: Vector[String]): (Array[Int],Int) =
   val voc = token_array.distinct.sorted
   val terms_to_int = voc.zipWithIndex.to(VectorMap)
-  (token_array.map(terms_to_int), voc.length)
+  (token_array.map(terms_to_int).toArray, voc.length)
 
 /** Create LCP array from suffix array and token array
  *
@@ -79,7 +84,7 @@ def vectorize(token_array: Array[String]): (Array[Int],Int) =
  * @param token_array Array of text tokens
  * @param suffix_array Array of Ints
  */
-def calculate_lcp_array(token_array: Array[String], suffix_array: Array[Int]) =
+def calculate_lcp_array(token_array: Vector[String], suffix_array: Array[Int]) =
   val length = suffix_array.length
   val rank = new Array[Int](length)
   for i <- suffix_array.indices do
@@ -138,7 +143,7 @@ def splitLCP_ArrayIntoIntervals(LCP_array: Array[Int]): List[Block] =
        * (the fourth logical combination, content in the accumulator and 0 value, cannot occur
        *     because a 0 value will empty the accumulator)
        */
-      if (lcp_value > 0 && (openIntervals.isEmpty || openIntervals.top.length != lcp_value))
+      if (lcp_value > 0 && (openIntervals.isEmpty || openIntervals.top.length < lcp_value))
         val start = closedIntervals(closedIntervals.size - 1).start
         openIntervals.push(OpenBlock(start, lcp_value))
       previousLCP_value = lcp_value

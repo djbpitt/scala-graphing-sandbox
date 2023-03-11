@@ -3,7 +3,7 @@ import org.hammerlab.suffixes.dc3.make as calculate_suffix_array
 
 @main def test_suffix_lcp():Unit =
 // simple example to test LCP construction
-  val token_array = Array("b", "a", "n", "a", "n", "a", "b", "a","n", "$")
+  val token_array = Vector("b", "a", "n", "a", "n", "a", "b", "a","n", "$")
   val (vectorization, voc_size) = vectorize(token_array)
   val suffix_array = calculate_suffix_array(vectorization, voc_size)
   println(suffix_array.mkString(", "))
