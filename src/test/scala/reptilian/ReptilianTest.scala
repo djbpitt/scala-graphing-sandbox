@@ -2,6 +2,8 @@ package reptilian
 
 import org.scalatest.funsuite.AnyFunSuite
 
+import scala.util.matching.Regex
+
 class ReptilianTest extends AnyFunSuite:
 
   /** tests for lcp interval
@@ -46,6 +48,16 @@ class ReptilianTest extends AnyFunSuite:
     assert(result == List(Block(3, 6, 2), Block(0, 9, 1)))
   }
 
+  test("Test token position to witness number mapping") {
+    val input = List[String]("a a2", "b b2", "c c2" )
+    // prepare tokenizer
+    val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
+    val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
+    // tokenizer
+    val tokenized_input = input.map(tokenizer)
+    val result = create_token_witness_mapping(tokenized_input)
+    assert(result sameElements Array(0, 0, -1, 1, 1, -1, 2, 2))
+  }
 
 end ReptilianTest
 

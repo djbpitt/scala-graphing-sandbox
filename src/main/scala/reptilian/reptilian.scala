@@ -49,6 +49,17 @@ def create_token_array(token_lists: List[List[String]]): Array[String] =
     .flatMap((e, index) => List(s" #$index ") ++ e)
     ).toArray
 
+def create_token_witness_mapping(token_lists: List[List[String]]): Array[Int] =
+  val buffer: ArrayBuffer[Int] = ArrayBuffer[Int]()
+  buffer.appendAll(Array.fill(token_lists.head.length)(0))
+  token_lists.tail
+  .zipWithIndex
+  .foreach {
+    (tokens, index) => buffer.append(-1)
+      buffer.appendAll(Array.fill(tokens.length)(index+1))
+  }
+  buffer.toArray
+
 /** Create sorted map from tokens to integers
  *
  * @param token_array All tokens in all witnesses (includes duplicates)
