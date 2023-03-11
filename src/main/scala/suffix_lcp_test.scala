@@ -7,12 +7,12 @@ import org.hammerlab.suffixes.dc3.make as calculate_suffix_array
   val (vectorization, voc_size) = vectorize(token_array)
   val suffix_array = calculate_suffix_array(vectorization, voc_size)
   println(suffix_array.mkString(", "))
-  println(suffix_array sameElements Vector(9, 5, 7, 3, 1, 6, 0, 8, 4, 2))
+  println(suffix_array sameElements Array(9, 5, 7, 3, 1, 6, 0, 8, 4, 2))
 
   for suffix_start <- suffix_array do
     println(token_array.slice(suffix_start, suffix_start+15 min token_array.length).mkString(" "))
 
   val lcp_array = calculate_lcp_array(token_array, suffix_array)
   println(lcp_array.mkString(" "))
-  println(lcp_array sameElements Vector(-1, 0, 1, 2, 3, 0, 3, 0, 1, 2))
+  println(lcp_array == Vector[Int](-1, 0, 1, 2, 3, 0, 3, 0, 1, 2))
 
