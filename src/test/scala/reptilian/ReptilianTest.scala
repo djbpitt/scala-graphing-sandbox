@@ -1,13 +1,28 @@
 package reptilian
 
 import org.scalatest.funsuite.AnyFunSuite
+import org.hammerlab.suffixes.dc3.make as calculate_suffix_array
 
 import scala.util.matching.Regex
 
 class ReptilianTest extends AnyFunSuite:
 
+  /** tests for suffix array
+   *
+   */
+  //Verify final output of suffix array
+  test("suffix array returns correct suffixes and integers") {
+    val token_array = Vector("b", "a", "n", "a", "n", "a", "b", "a", "n", "$")
+    val (vectorization, voc_size) = vectorize(token_array)
+    val suffix_positions = calculate_suffix_array(vectorization, voc_size)
+    val suffixes: Array[Vector[String]] = suffix_positions.map(token_array.slice(_, suffix_positions.length))
+    val target_suffixes = Array[String]("$", "aban$", "an$", "anaban$", "ananaban$", "ban$", "bananaban$", "n$", "naban$", "nanaban$")
+    assert(suffix_positions sameElements Array(9, 5, 7, 3, 1, 6, 0, 8, 4, 2))
+    assert(suffixes.map(_.toString) sameElements target_suffixes.map(_.toVector).map(_.toString))
+  }
+
   /** tests for lcp interval
-   *  lcp array always starts with -1
+   * lcp array always starts with -1
    */
 
   //Could happen if witnesses are dissimilar and there is no repetition
@@ -53,7 +68,7 @@ class ReptilianTest extends AnyFunSuite:
    */
 
   test("Test token position to witness number mapping") {
-    val input = List[String]("a a2", "b b2", "c c2" )
+    val input = List[String]("a a2", "b b2", "c c2")
     // prepare tokenizer
     val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
     val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
