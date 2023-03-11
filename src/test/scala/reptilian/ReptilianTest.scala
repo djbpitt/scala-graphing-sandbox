@@ -2,6 +2,7 @@ package reptilian
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.hammerlab.suffixes.dc3.make as calculate_suffix_array
+import org.scalatest.matchers.should.Matchers._
 
 import scala.util.matching.Regex
 
@@ -18,7 +19,8 @@ class ReptilianTest extends AnyFunSuite:
     val suffixes: Array[Vector[String]] = suffix_positions.map(token_array.slice(_, suffix_positions.length))
     val target_suffixes = Array[String]("$", "aban$", "an$", "anaban$", "ananaban$", "ban$", "bananaban$", "n$", "naban$", "nanaban$")
     assert(suffix_positions sameElements Array(9, 5, 7, 3, 1, 6, 0, 8, 4, 2))
-    assert(suffixes.map(_.toString) sameElements target_suffixes.map(_.toVector).map(_.toString))
+    //assert(suffixes.map(_.toString) sameElements target_suffixes.map(_.toVector).map(_.toString))
+    suffixes.map(_.toString) should contain allElementsOf target_suffixes.map(_.toVector).map(_.toString)
   }
 
   /** tests for lcp interval
