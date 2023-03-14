@@ -122,7 +122,24 @@ def calculate_lcp_array(token_array: Vector[String], suffix_array: Array[Int]): 
 
 
 case class OpenBlock(start: Int, length: Int)
+
+/** Block is an lcp interval
+ *
+ * @param start start position in suffix array
+ * @param end end position in suffix array
+ * @param length number of tokens in prefix
+ *
+ * width = end - start (number of instances)
+ *  if one per witness, block is full-depth, but could be repetition within a single witness
+ */
 case class Block(start: Int, end: Int, length: Int)
+
+def make_depth_of_block(suffix_array:Vector[Int], token_witness_mapping: Vector[Int])(block: Block) =
+  val witnesses: Vector[Int] = suffix_array
+    .slice(block.start, block.end)
+    .map(token_witness_mapping)
+    .distinct
+  witnesses
 
 def splitLCP_ArrayIntoIntervals(LCP_array: Array[Int]): List[Block] =
   val closedIntervals: ArrayBuffer[Block] = ArrayBuffer()
@@ -180,4 +197,5 @@ def splitLCP_ArrayIntoIntervals(LCP_array: Array[Int]): List[Block] =
   //NOTE: We could also use the Integer array instead of token_array;
   // should not change outcome, but might be faster
   val lcp_array = calculate_lcp_array(token_array, suffix_array)
-  println(lcp_array.mkString(" "))
+  //val token_witness_mapping = create_token_witness_mapping()
+  // val depth_of_block = make_depth_of_block(suffix_array, token_witness_mapping)
