@@ -11,7 +11,7 @@ import scala.util.matching.Regex
 
 class ReptilianTest extends AnyFunSuite:
 
-  /** tests for suffix array
+  /** tests for creating suffix array
    *
    */
   //Verify final output of suffix array
@@ -26,7 +26,20 @@ class ReptilianTest extends AnyFunSuite:
     forAll (zs) {(x, y) => assert(x == y)}
   }
 
-  /** tests for lcp interval
+  /** test for creating lcp array
+   *
+   */
+  test("lcp array returns correct values") {
+    val target_lcp_values = Vector[Int](-1, 0, 1, 2, 3, 0, 3, 0, 1, 2)
+    val token_array = Vector("b", "a", "n", "a", "n", "a", "b", "a", "n", "$")
+    val (vectorization, voc_size) = vectorize(token_array)
+    val suffix_positions = calculate_suffix_array(vectorization, voc_size)
+    val lcp_array = calculate_lcp_array(token_array, suffix_positions)
+    val zs = lcp_array zip target_lcp_values
+    forAll(zs) {(x, y) => assert(x == y)}
+  }
+
+  /** tests for computing lcp intervals
    * lcp array always starts with -1
    */
 
