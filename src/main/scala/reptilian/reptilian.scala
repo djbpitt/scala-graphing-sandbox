@@ -38,8 +38,8 @@ def make_tokenizer(token_pattern: Regex)(witness_data: String) =
  *         TODO: Implement complex object with separate t (text) and n (normalized) properties and build vector mapping
  *         from normalized properties.
  */
-def normalize(witness_data: List[String]): List[String] =
-  witness_data.map(_.toLowerCase.trim)
+def normalize(witness_data: String): String =
+  witness_data.toLowerCase.trim
 
 /** Return token array as single vector with token separators
  *
@@ -60,6 +60,9 @@ def create_token_array(token_lists: List[List[String]]): Vector[String] =
  *
  * @param token_lists (one inner list per witness)
  * @return Vector[Int] with zero-based witness number for each token
+ *
+ * Insert -1 as witness separator because all values must be Int
+ * and witnesses begin at 0
  */
 def create_token_witness_mapping(token_lists: List[List[String]]): Vector[Int] =
   val buffer: ArrayBuffer[Int] = ArrayBuffer[Int]()
@@ -180,22 +183,33 @@ def splitLCP_ArrayIntoIntervals(LCP_array: Array[Int]): List[Block] =
       closedIntervals += Block(interval.start, LCP_array.length - 1, interval.length)
   closedIntervals.toList
 
+/** Token as complex object
+ *
+ * @param t Raw token, which may include trailing whitespace
+ * @param n Normalized token, e.g., lower-case and traim
+ * @param w Witness identifier, zero-based
+ *
+ * Tokenization and normalization are under user control (to be implement)
+ */
+case class Token(t: String, n: String, w: Int)
+
 @main def main(): Unit =
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
   val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
   val pipeline = ( (plain_witnesses:List[String]) =>
     plain_witnesses
-      .map(tokenizer)
-      .map(normalize) // List of one list of strings per witness
-  ) andThen create_token_array
+      .map(tokenizer) // List of one list of strings per witness
+  ) andThen (e => create_token_array(e) zip create_token_witness_mapping(e)) // TODO: lists instead of vectors
+
 
   val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
   val witness_strings = read_data(path_to_darwin) // One string per witness
   val token_array = pipeline(witness_strings)
-  val (vectorization, voc_size) = vectorize(token_array)
-  val suffix_array = calculate_suffix_array(vectorization, voc_size)
-  //NOTE: We could also use the Integer array instead of token_array;
-  // should not change outcome, but might be faster
-  val lcp_array = calculate_lcp_array(token_array, suffix_array)
-  //val token_witness_mapping = create_token_witness_mapping()
+  token_array.map((t, w) => Token(t, normalize(t), w)).foreach(println)
+//  val (vectorization, voc_size) = vectorize(token_array)
+//  val suffix_array = calculate_suffix_array(vectorization, voc_size)
+//  //NOTE: We could also use the Integer array instead of token_array;
+//  // should not change outcome, but might be faster
+//  val lcp_array = calculate_lcp_array(token_array, suffix_array)
+//  //val token_witness_mapping = create_token_witness_mapping()
   // val depth_of_block = make_depth_of_block(suffix_array, token_witness_mapping)
