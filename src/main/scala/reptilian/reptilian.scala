@@ -199,13 +199,14 @@ case class Token(t: String, n: String, w: Int)
   val pipeline = ( (plain_witnesses:List[String]) =>
     plain_witnesses
       .map(tokenizer) // List of one list of strings per witness
-  ) andThen (e => create_token_array(e) zip create_token_witness_mapping(e)) // TODO: lists instead of vectors
-
+  ) .andThen(e => create_token_array(e) zip create_token_witness_mapping(e)) // TODO: lists instead of vectors
+    .andThen(_.map(e => Token(e(0), normalize(e(0)), e(1))))
+  //map((t, w) => Token(t, normalize(t), w))
 
   val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
   val witness_strings = read_data(path_to_darwin) // One string per witness
   val token_array = pipeline(witness_strings)
-  token_array.map((t, w) => Token(t, normalize(t), w)).foreach(println)
+  token_array.foreach(println)
 //  val (vectorization, voc_size) = vectorize(token_array)
 //  val suffix_array = calculate_suffix_array(vectorization, voc_size)
 //  //NOTE: We could also use the Integer array instead of token_array;
