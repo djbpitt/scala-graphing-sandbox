@@ -9,6 +9,30 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.util.matching.Regex
 
+/** Token as complex object
+ *
+ * @param t Raw token, which may include trailing whitespace
+ * @param n Normalized token, e.g., lower-case and traim
+ * @param w Witness identifier, zero-based
+ *
+ * Tokenization and normalization are under user control (to be implement)
+ */
+case class Token(t: String, n: String, w: Int)
+
+case class OpenBlock(start: Int, length: Int)
+
+/** Block is an lcp interval
+ *
+ * @param start start position in suffix array
+ * @param end end position in suffix array
+ * @param length number of tokens in prefix
+ *
+ * width = end - start (number of instances)
+ *  if one per witness, block is full-depth, but could be repetition within a single witness
+ */
+case class Block(start: Int, end: Int, length: Int)
+
+
 /** Read data files from supplied path to directory (one file per witness)
  *
  * @param path_to_data os.Path object that points to data directory
@@ -123,20 +147,6 @@ def calculate_lcp_array(token_array: Vector[String], suffix_array: Array[Int]): 
     i += 1
   lcp.toVector
 
-
-case class OpenBlock(start: Int, length: Int)
-
-/** Block is an lcp interval
- *
- * @param start start position in suffix array
- * @param end end position in suffix array
- * @param length number of tokens in prefix
- *
- * width = end - start (number of instances)
- *  if one per witness, block is full-depth, but could be repetition within a single witness
- */
-case class Block(start: Int, end: Int, length: Int)
-
 def make_depth_of_block(suffix_array:Vector[Int], token_witness_mapping: Vector[Int])(block: Block) =
   val witnesses: Vector[Int] = suffix_array
     .slice(block.start, block.end)
@@ -182,16 +192,6 @@ def splitLCP_ArrayIntoIntervals(LCP_array: Array[Int]): List[Block] =
     if (interval.length > 0)
       closedIntervals += Block(interval.start, LCP_array.length - 1, interval.length)
   closedIntervals.toList
-
-/** Token as complex object
- *
- * @param t Raw token, which may include trailing whitespace
- * @param n Normalized token, e.g., lower-case and traim
- * @param w Witness identifier, zero-based
- *
- * Tokenization and normalization are under user control (to be implement)
- */
-case class Token(t: String, n: String, w: Int)
 
 @main def main(): Unit =
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
