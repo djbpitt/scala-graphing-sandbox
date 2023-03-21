@@ -148,14 +148,19 @@ def calculate_lcp_array(token_array: Vector[Token], suffix_array: Array[Int]): V
     i += 1
   lcp.toVector
 
-def make_depth_of_block(suffix_array:Vector[Int], token_witness_mapping: Vector[Int])(block: Block) =
-  val witnesses: Vector[Int] = suffix_array
+def find_witnesses_of_block(suffix_array:Array[Int], token_array: Vector[Token])(block: Block) =
+  val witnesses: Array[Int] = suffix_array
     .slice(block.start, block.end)
-    .map(token_witness_mapping)
+    .map(token_array(_).w)
     .distinct
-  witnesses
+  witnesses.toVector
 
-def splitLCP_ArrayIntoIntervals(LCP_array: Array[Int]): List[Block] =
+/** Calculate blocks
+ *
+ * @param LCP_array Vector[Int]
+ * @return List of Block objects
+ */
+def create_blocks(LCP_array: Vector[Int]): List[Block] =
   val closedIntervals: ArrayBuffer[Block] = ArrayBuffer()
   var previousLCP_value = 0
   val openIntervals = mutable.Stack[OpenBlock]()
@@ -219,6 +224,7 @@ def tokenize(tokenizer: String => List[String]) =
   //NOTE: We could also use the Integer array instead of token_array;
   // should not change outcome, but might be faster
   val lcp_array = calculate_lcp_array(token_array, suffix_array)
-  lcp_array.foreach(println)
-  //val token_witness_mapping = create_token_witness_mapping()
-  // val depth_of_block = make_depth_of_block(suffix_array, token_witness_mapping)
+  val witnesses_of_block = find_witnesses_of_block(suffix_array, token_array)
+  val blocks = create_blocks(lcp_array)
+  val witnesses_of_blocks = blocks.map(witnesses_of_block)
+  witnesses_of_blocks.foreach(println)
