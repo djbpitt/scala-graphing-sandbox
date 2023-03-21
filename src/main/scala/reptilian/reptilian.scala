@@ -107,10 +107,10 @@ def create_token_witness_mapping(token_lists: List[List[String]]): Vector[Int] =
  * Map from token strings to integers because suffix array requires integers.
  * Array instead of vector because third-party library requires array
  */
-def vectorize(token_array: Vector[String]): (Array[Int],Int) =
-  val voc = token_array.distinct.sorted
+def vectorize(token_array: Vector[Token]): (Array[Int],Int) =
+  val voc = token_array.map(_.t).distinct.sorted
   val terms_to_int = voc.zipWithIndex.to(VectorMap)
-  (token_array.map(terms_to_int).toArray, voc.length)
+  (token_array.map(_.t).map(terms_to_int).toArray, voc.length)
 
 /** Create LCP array from suffix array and token array
  *
@@ -121,7 +121,8 @@ def vectorize(token_array: Vector[String]): (Array[Int],Int) =
  *
  * Array and not vector because third-party library requires array
  */
-def calculate_lcp_array(token_array: Vector[String], suffix_array: Array[Int]): Vector[Int] =
+def calculate_lcp_array(token_array: Vector[Token], suffix_array: Array[Int]): Vector[Int] =
+  val t_array = token_array.map(_.t)
   val length = suffix_array.length
   val rank = new Array[Int](length)
   for i <- suffix_array.indices do
@@ -136,7 +137,7 @@ def calculate_lcp_array(token_array: Vector[String], suffix_array: Array[Int]): 
     }
     else {
       val j: Int = suffix_array(k - 1)
-      while (i + h < length && j + h < length && (token_array(i + h) == token_array(j + h))) {
+      while (i + h < length && j + h < length && (t_array(i + h) == t_array(j + h))) {
         h += 1
       }
       lcp(k) = h
@@ -194,6 +195,11 @@ def splitLCP_ArrayIntoIntervals(LCP_array: Array[Int]): List[Block] =
   closedIntervals.toList
 
 
+/** Create token array as sequence of complex Token objects
+ *
+ * @param tokenizer Built from regex by partially applied function
+ * @return Function that creates array of complex Token objects
+ */
 def tokenize(tokenizer: String => List[String]) =
   ( (plain_witnesses:List[String]) =>
   plain_witnesses
@@ -208,11 +214,11 @@ def tokenize(tokenizer: String => List[String]) =
   val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
   val witness_strings = read_data(path_to_darwin) // One string per witness
   val token_array = tokenize(tokenizer)(witness_strings)
-  token_array.foreach(println)
-//  val (vectorization, voc_size) = vectorize(token_array)
-//  val suffix_array = calculate_suffix_array(vectorization, voc_size)
-//  //NOTE: We could also use the Integer array instead of token_array;
-//  // should not change outcome, but might be faster
-//  val lcp_array = calculate_lcp_array(token_array, suffix_array)
-//  //val token_witness_mapping = create_token_witness_mapping()
+  val (vectorization, voc_size) = vectorize(token_array)
+  val suffix_array = calculate_suffix_array(vectorization, voc_size)
+  //NOTE: We could also use the Integer array instead of token_array;
+  // should not change outcome, but might be faster
+  val lcp_array = calculate_lcp_array(token_array, suffix_array)
+  lcp_array.foreach(println)
+  //val token_witness_mapping = create_token_witness_mapping()
   // val depth_of_block = make_depth_of_block(suffix_array, token_witness_mapping)
