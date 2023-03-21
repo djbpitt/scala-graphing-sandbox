@@ -15,15 +15,15 @@ class ReptilianTest extends AnyFunSuite:
    *
    */
   val tokens: Vector[Token] = Vector(
-    Token("b", "b", 0),
-    Token("a", "a", 0),
-    Token("n", "n", 0),
-    Token("a", "a", 0),
-    Token("n", "n", 0),
-    Token("a", "a", 0),
-    Token("b", "b", 0),
-    Token("a", "a", 0),
-    Token("n", "n", 0),
+    Token("B ", "b", 0),
+    Token("a ", "a", 0),
+    Token("n ", "n", 0),
+    Token("a ", "a", 0),
+    Token("n ", "n", 0),
+    Token("a ", "a", 0),
+    Token("b ", "b", 0),
+    Token("a ", "a", 0),
+    Token("n ", "n", 0),
     Token("$", "$", 0)
   )
 
@@ -34,7 +34,7 @@ class ReptilianTest extends AnyFunSuite:
   test("suffix array returns correct suffixes and integers") {
     val (vectorization, voc_size) = vectorize(tokens)
     val suffix_positions = calculate_suffix_array(vectorization, voc_size)
-    val suffixes: Array[Vector[String]] = suffix_positions.map(tokens.map(_.t).slice(_, suffix_positions.length))
+    val suffixes: Array[Vector[String]] = suffix_positions.map(tokens.map(_.n).slice(_, suffix_positions.length))
     val target_suffixes = Array[String]("$", "aban$", "an$", "anaban$", "ananaban$", "ban$", "bananaban$", "n$", "naban$", "nanaban$")
     assert(suffix_positions sameElements Array(9, 5, 7, 3, 1, 6, 0, 8, 4, 2))
     val zs = suffixes.map(_.toString) zip target_suffixes.map(_.toVector).map(_.toString)

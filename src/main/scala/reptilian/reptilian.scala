@@ -108,9 +108,9 @@ def create_token_witness_mapping(token_lists: List[List[String]]): Vector[Int] =
  * Array instead of vector because third-party library requires array
  */
 def vectorize(token_array: Vector[Token]): (Array[Int],Int) =
-  val voc = token_array.map(_.t).distinct.sorted
+  val voc = token_array.map(_.n).distinct.sorted
   val terms_to_int = voc.zipWithIndex.to(VectorMap)
-  (token_array.map(_.t).map(terms_to_int).toArray, voc.length)
+  (token_array.map(_.n).map(terms_to_int).toArray, voc.length)
 
 /** Create LCP array from suffix array and token array
  *
@@ -122,7 +122,7 @@ def vectorize(token_array: Vector[Token]): (Array[Int],Int) =
  * Array and not vector because third-party library requires array
  */
 def calculate_lcp_array(token_array: Vector[Token], suffix_array: Array[Int]): Vector[Int] =
-  val t_array = token_array.map(_.t)
+  val n_array = token_array.map(_.n)
   val length = suffix_array.length
   val rank = new Array[Int](length)
   for i <- suffix_array.indices do
@@ -137,7 +137,7 @@ def calculate_lcp_array(token_array: Vector[Token], suffix_array: Array[Int]): V
     }
     else {
       val j: Int = suffix_array(k - 1)
-      while (i + h < length && j + h < length && (t_array(i + h) == t_array(j + h))) {
+      while (i + h < length && j + h < length && (n_array(i + h) == n_array(j + h))) {
         h += 1
       }
       lcp(k) = h
@@ -213,18 +213,23 @@ def tokenize(tokenizer: String => List[String]) =
   .andThen(_.map(e => Token(e(0), normalize(e(0)), e(1))))
 
 @main def main(): Unit =
+  // Prepare tokenizer (partially applied function)
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
   val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
-
+  // Prepare data (List[String])
   val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
   val witness_strings = read_data(path_to_darwin) // One string per witness
+  // Prepare tokens (Vector[Token])
   val token_array = tokenize(tokenizer)(witness_strings)
+  // Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
   val (vectorization, voc_size) = vectorize(token_array)
   val suffix_array = calculate_suffix_array(vectorization, voc_size)
-  //NOTE: We could also use the Integer array instead of token_array;
-  // should not change outcome, but might be faster
   val lcp_array = calculate_lcp_array(token_array, suffix_array)
-  val witnesses_of_block = find_witnesses_of_block(suffix_array, token_array)
   val blocks = create_blocks(lcp_array)
-  val witnesses_of_blocks = blocks.map(witnesses_of_block)
-  witnesses_of_blocks.foreach(println)
+  val witnesses_of_block = find_witnesses_of_block(suffix_array, token_array) // Partially applied, requires Block
+  val full_depth_nonrepeating_blocks =
+    blocks
+      .map(e => (e, e.end - e.start))
+      .filter((_, occurrence_count) => occurrence_count == witness_strings.size)
+      .filter((block, depth) => witnesses_of_block(block).length == depth)
+  full_depth_nonrepeating_blocks.foreach(println)
