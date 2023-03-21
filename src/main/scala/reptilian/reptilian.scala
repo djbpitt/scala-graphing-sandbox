@@ -193,19 +193,21 @@ def splitLCP_ArrayIntoIntervals(LCP_array: Array[Int]): List[Block] =
       closedIntervals += Block(interval.start, LCP_array.length - 1, interval.length)
   closedIntervals.toList
 
+
+def tokenize(tokenizer: String => List[String]) =
+  ( (plain_witnesses:List[String]) =>
+  plain_witnesses
+    .map(tokenizer) // List of one list of strings per witness
+  ) .andThen(e => create_token_array(e) zip create_token_witness_mapping(e)) // TODO: lists instead of vectors
+  .andThen(_.map(e => Token(e(0), normalize(e(0)), e(1))))
+
 @main def main(): Unit =
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
   val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
-  val pipeline = ( (plain_witnesses:List[String]) =>
-    plain_witnesses
-      .map(tokenizer) // List of one list of strings per witness
-  ) .andThen(e => create_token_array(e) zip create_token_witness_mapping(e)) // TODO: lists instead of vectors
-    .andThen(_.map(e => Token(e(0), normalize(e(0)), e(1))))
-  //map((t, w) => Token(t, normalize(t), w))
 
   val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
   val witness_strings = read_data(path_to_darwin) // One string per witness
-  val token_array = pipeline(witness_strings)
+  val token_array = tokenize(tokenizer)(witness_strings)
   token_array.foreach(println)
 //  val (vectorization, voc_size) = vectorize(token_array)
 //  val suffix_array = calculate_suffix_array(vectorization, voc_size)
