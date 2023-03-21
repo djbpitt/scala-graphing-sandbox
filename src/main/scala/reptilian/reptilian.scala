@@ -232,4 +232,5 @@ def tokenize(tokenizer: String => List[String]) =
       .map(e => (e, e.end - e.start))
       .filter((_, occurrence_count) => occurrence_count == witness_strings.size)
       .filter((block, depth) => witnesses_of_block(block).length == depth)
-  full_depth_nonrepeating_blocks.foreach(println)
+  val block_tokens = full_depth_nonrepeating_blocks.map((block, _) => token_array.slice(suffix_array(block.start), suffix_array(block.start) + block.length))
+  block_tokens.sortBy(_.size).reverse.map(e => e.map(_.n).mkString(" ")).foreach(println)
