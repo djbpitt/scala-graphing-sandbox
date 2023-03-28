@@ -228,24 +228,10 @@ def tokenize(tokenizer: String => List[String]) =
   val lcp_array = calculate_lcp_array(token_array, suffix_array)
   val blocks = create_blocks(lcp_array)
   val witnesses_of_block = find_witnesses_of_block(suffix_array, token_array) // Partially applied, requires Block
-  val tmp_blocks = blocks.map(e => (e, e.end - e.start + 1))
-  val tmp_blocks_tokens = tmp_blocks.map((block, _) => token_array
-    .slice(suffix_array(block.start), suffix_array(block.start) + block.length))
-    .map(_.map(e => e.t).mkString)
-  val tmp_blocks_occurrences = tmp_blocks.map((_, occurrences) => occurrences)
-  val tmp_blocks_witness_count = tmp_blocks.map((block, _) => witnesses_of_block(block))
-  (tmp_blocks_tokens lazyZip tmp_blocks_occurrences lazyZip tmp_blocks_witness_count).toList.foreach(println)
-//  tmp_blocks_occurrences.zip(tmp_blocks_witness_count).filter((_, witness_count) => witness_count.length == 6).foreach(println)
-//  tmp_blocks_occurrences.zip(blocks)
-//    .filter((occurrence_count, _) => occurrence_count == witness_strings.size)
-//    .filter((occurrences, block) => occurrences == witnesses_of_block(block).length)
-//    .foreach(println)
-//  blocks.map(witnesses_of_block).map(_.length).foreach(println)
-//  val full_depth_nonrepeating_blocks =
-//    blocks
-//      .map(e => (e, e.end - e.start + 1))
-//      .filter((_, occurrence_count) => occurrence_count == witness_strings.size)
-//      .filter((block, depth) => witnesses_of_block(block).length == depth)
-//  full_depth_nonrepeating_blocks.foreach(println)
-//  val block_tokens = full_depth_nonrepeating_blocks.map((block, _) => token_array.slice(suffix_array(block.start), suffix_array(block.start) + block.length))
-//  block_tokens.sortBy(_.size).reverse.map(e => e.map(_.n).mkString(" ")).foreach(println)
+  val full_depth_nonrepeating_blocks =
+    blocks
+      .map(e => (e, e.end - e.start + 1))
+      .filter((_, occurrence_count) => occurrence_count == witness_strings.size)
+      .filter((block, depth) => witnesses_of_block(block).length == depth)
+  val block_tokens = full_depth_nonrepeating_blocks.map((block, _) => token_array.slice(suffix_array(block.start), suffix_array(block.start) + block.length))
+  block_tokens.sortBy(_.size).reverse.map(e => e.map(_.n).mkString(" ")).foreach(println)
