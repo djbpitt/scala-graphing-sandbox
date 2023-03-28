@@ -233,5 +233,10 @@ def tokenize(tokenizer: String => List[String]) =
       .map(e => (e, e.end - e.start + 1))
       .filter((_, occurrence_count) => occurrence_count == witness_strings.size)
       .filter((block, depth) => witnesses_of_block(block).length == depth)
-  val block_tokens = full_depth_nonrepeating_blocks.map((block, _) => token_array.slice(suffix_array(block.start), suffix_array(block.start) + block.length))
-  block_tokens.sortBy(_.size).reverse.map(e => e.map(_.n).mkString(" ")).foreach(println)
+  val block_tokens = full_depth_nonrepeating_blocks
+    .map((block, _) => token_array
+    .slice(suffix_array(block.start), suffix_array(block.start) + block.length))
+  val block_end_positions = blocks.map(e => suffix_array(e.end) + e.length)
+  // Find all suffix array values in interval, sort, and take first (or last)
+  // See create_blocks.py find_longest_sequences()
+  (full_depth_nonrepeating_blocks lazyZip block_end_positions lazyZip block_tokens.sortBy(_.size).reverse.map(e => e.map(_.n).mkString(" "))).toList.foreach(println)
