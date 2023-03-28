@@ -150,7 +150,7 @@ def calculate_lcp_array(token_array: Vector[Token], suffix_array: Array[Int]): V
 
 def find_witnesses_of_block(suffix_array:Array[Int], token_array: Vector[Token])(block: Block) =
   val witnesses: Array[Int] = suffix_array
-    .slice(block.start, block.end)
+    .slice(block.start, block.end + 1)
     .map(token_array(_).w)
     .distinct
   witnesses.toVector
@@ -233,9 +233,14 @@ def tokenize(tokenizer: String => List[String]) =
     .slice(suffix_array(block.start), suffix_array(block.start) + block.length))
     .map(_.map(e => e.t).mkString)
   val tmp_blocks_occurrences = tmp_blocks.map((_, occurrences) => occurrences)
-  tmp_blocks_occurrences.zip(tmp_blocks_tokens)
-    .filter((occurrence_count, _) => occurrence_count == witness_strings.size)
-    .foreach(println)
+  val tmp_blocks_witness_count = tmp_blocks.map((block, _) => witnesses_of_block(block))
+  (tmp_blocks_tokens lazyZip tmp_blocks_occurrences lazyZip tmp_blocks_witness_count).toList.foreach(println)
+//  tmp_blocks_occurrences.zip(tmp_blocks_witness_count).filter((_, witness_count) => witness_count.length == 6).foreach(println)
+//  tmp_blocks_occurrences.zip(blocks)
+//    .filter((occurrence_count, _) => occurrence_count == witness_strings.size)
+//    .filter((occurrences, block) => occurrences == witnesses_of_block(block).length)
+//    .foreach(println)
+//  blocks.map(witnesses_of_block).map(_.length).foreach(println)
 //  val full_depth_nonrepeating_blocks =
 //    blocks
 //      .map(e => (e, e.end - e.start + 1))
