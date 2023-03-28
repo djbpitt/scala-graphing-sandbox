@@ -217,7 +217,8 @@ def tokenize(tokenizer: String => List[String]) =
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
   val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
   // Prepare data (List[String])
-  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
+  // val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
+  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_small"
   val witness_strings = read_data(path_to_darwin) // One string per witness
   // Prepare tokens (Vector[Token])
   val token_array = tokenize(tokenizer)(witness_strings)
@@ -227,10 +228,17 @@ def tokenize(tokenizer: String => List[String]) =
   val lcp_array = calculate_lcp_array(token_array, suffix_array)
   val blocks = create_blocks(lcp_array)
   val witnesses_of_block = find_witnesses_of_block(suffix_array, token_array) // Partially applied, requires Block
-  val full_depth_nonrepeating_blocks =
-    blocks
-      .map(e => (e, e.end - e.start))
-      .filter((_, occurrence_count) => occurrence_count == witness_strings.size)
-      .filter((block, depth) => witnesses_of_block(block).length == depth)
-  val block_tokens = full_depth_nonrepeating_blocks.map((block, _) => token_array.slice(suffix_array(block.start), suffix_array(block.start) + block.length))
-  block_tokens.sortBy(_.size).reverse.map(e => e.map(_.n).mkString(" ")).foreach(println)
+  val tmp_blocks = blocks.map(e => (e, e.end - e.start + 1))
+  val tmp_blocks_tokens = tmp_blocks.map((block, _) => token_array
+    .slice(suffix_array(block.start), suffix_array(block.start) + block.length))
+    .map(_.map(e => e.t).mkString)
+  val tmp_blocks_occurrences = tmp_blocks.map((_, occurrences) => occurrences)
+  tmp_blocks_occurrences.zip(tmp_blocks_tokens).foreach(println)
+//  val full_depth_nonrepeating_blocks =
+//    blocks
+//      .map(e => (e, e.end - e.start + 1))
+//      .filter((_, occurrence_count) => occurrence_count == witness_strings.size)
+//      .filter((block, depth) => witnesses_of_block(block).length == depth)
+//  full_depth_nonrepeating_blocks.foreach(println)
+//  val block_tokens = full_depth_nonrepeating_blocks.map((block, _) => token_array.slice(suffix_array(block.start), suffix_array(block.start) + block.length))
+//  block_tokens.sortBy(_.size).reverse.map(e => e.map(_.n).mkString(" ")).foreach(println)
