@@ -230,7 +230,8 @@ def tokenize(tokenizer: String => List[String]) =
   val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
   // Prepare data (List[String])
   // val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
-  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_small"
+//  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_small"
+  val path_to_darwin = os.pwd / "src" / "main" / "data" / "cats"
   val witness_strings = read_data(path_to_darwin) // One string per witness
   // Prepare tokens (Vector[Token])
   val token_array = tokenize(tokenizer)(witness_strings)
@@ -239,30 +240,38 @@ def tokenize(tokenizer: String => List[String]) =
   val suffix_array = calculate_suffix_array(vectorization, voc_size)
   val lcp_array = calculate_lcp_array(token_array, suffix_array)
   val blocks = create_blocks(lcp_array)
+//  blocks
+//    .map(e => token_array.slice(suffix_array(e.start), suffix_array(e.start) + e.length))
+//    .foreach(println)
   val witnesses_of_block = find_witnesses_of_block(suffix_array, token_array) // Partially applied, requires Block
-  val full_depth_nonrepeating_blocks =
+  val tmp_full_depth_nonrepeating_blocks =
     blocks
       .map(e => (e, e.end - e.start + 1))
       .filter((_, occurrence_count) => occurrence_count == witness_strings.size)
       .filter((block, depth) => witnesses_of_block(block).length == depth)
-  val block_lengths = full_depth_nonrepeating_blocks.map((block, _) => block.length)
-  val block_start_positions = full_depth_nonrepeating_blocks
+//  tmp_full_depth_nonrepeating_blocks
+//    .map((block, _) => token_array.slice(suffix_array(block.start), suffix_array(block.start) + block.length))
+//    .foreach(println)
+  val block_lengths = tmp_full_depth_nonrepeating_blocks.map((block, _) => block.length)
+  val block_start_positions = tmp_full_depth_nonrepeating_blocks
     .map((block, _) => suffix_array.slice(block.start, block.end + 1))
     .map(_.sorted)
-  val longest_full_depth_nonrepeating_blocks = (block_start_positions lazyZip block_lengths).
-    map((starts, length) => FullDepthBlock(starts.toVector, length))
-    .groupBy(e => e.instances(0) + e.length)
-    .map(e => e(1))
-    .reduce((block1, block2) => if block1.length > block2.length then block1 else block2)
-  longest_full_depth_nonrepeating_blocks.foreach(println)
-//  val block_tokens = full_depth_nonrepeating_blocks
-//    .map((block, _) => token_array
-//    .slice(suffix_array(block.start), suffix_array(block.start) + block.length))
-  // Find all suffix array values in interval, sort, and take first (or last)
-  // See create_blocks.py find_longest_sequences()
-//  (full_depth_nonrepeating_blocks lazyZip block_end_positions lazyZip block_tokens
-//    .sortBy(_.size)
-//    .reverse
-//    .map(e => e.map(_.n).mkString(" "))
-//    ).toList
+  val full_depth_nonrepeating_blocks: List[FullDepthBlock] =
+    (block_start_positions lazyZip block_lengths)
+      .map((starts, length) => FullDepthBlock(starts.toVector, length))
+
+  full_depth_nonrepeating_blocks
+    .map(e => token_array.slice(e.instances(0), e.instances(0) + e.length))
+    .map(_.map(_.n))
+    .map(_.mkString(" "))
+    .foreach(println)
+//      .groupBy(e => e.instances(0) + e.length)
+//      .map(e => e(1))
+//      .reduce((block1, block2) => if block1.length > block2.length then block1 else block2)
+//  val block_text = longest_full_depth_nonrepeating_blocks
+//    .map(e => token_array.slice(e.instances(0), e.instances(0) + e.length))
+//  block_text
+//    .map(_.map(e => e.n))
 //    .foreach(println)
+
+
