@@ -247,10 +247,11 @@ def tokenize(tokenizer: String => List[String]) =
       .filter((block, depth) => witnesses_of_block(block).length == depth)
   val longest_full_depth_nonrepeating_blocks = full_depth_nonrepeating_blocks
     .map((block, _) => suffix_array.slice(block.start, block.end + 1))
-  longest_full_depth_nonrepeating_blocks
+  val block_lengths = full_depth_nonrepeating_blocks.map((block, _) => block.length)
+  val block_start_positions = longest_full_depth_nonrepeating_blocks
     .map(_.sorted)
-    .map(_.mkString(" "))
-    .foreach(println)
+  val stuff = (block_start_positions lazyZip block_lengths).map((starts, length) => FullDepthBlock(starts.toVector, length))
+  stuff.foreach(println)
 //  val block_tokens = full_depth_nonrepeating_blocks
 //    .map((block, _) => token_array
 //    .slice(suffix_array(block.start), suffix_array(block.start) + block.length))
