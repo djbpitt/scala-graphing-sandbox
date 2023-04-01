@@ -224,6 +224,17 @@ def tokenize(tokenizer: String => List[String]) =
   ) .andThen(e => create_token_array(e) zip create_token_witness_mapping(e)) // TODO: lists instead of vectors
   .andThen(_.map(e => Token(e(0), normalize(e(0)), e(1))))
 
+
+/** Remove shorter embedded blocks
+ *
+ * @param full_depth_blocks as List[FullDepthBlock]
+ * @return map from end position of pattern to longest pattern
+ *         (change this to other return, without end position?)
+ */
+def remove_overlapping_blocks(full_depth_blocks: List[FullDepthBlock]): Map[Int, FullDepthBlock] =
+  full_depth_blocks
+    .groupBy(e => e.instances(0) + e.length) // end position of instance in witness 0
+    .map {case(key, fd_blocks) => key -> fd_blocks.sortBy(_.length).reverse.head}
 @main def main(): Unit =
   // Prepare tokenizer (partially applied function)
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
@@ -259,19 +270,18 @@ def tokenize(tokenizer: String => List[String]) =
   val full_depth_nonrepeating_blocks: List[FullDepthBlock] =
     (block_start_positions lazyZip block_lengths)
       .map((starts, length) => FullDepthBlock(starts.toVector, length))
-
-  full_depth_nonrepeating_blocks
-    .map(e => token_array.slice(e.instances(0), e.instances(0) + e.length))
-    .map(_.map(_.n))
-    .map(_.mkString(" "))
+  val longest_full_depth_nonrepeating_blocks =
+    remove_overlapping_blocks(full_depth_nonrepeating_blocks)
+  longest_full_depth_nonrepeating_blocks
+    .map {case(endposition, fd_block) => token_array.slice(fd_block.instances(0), endposition)}
     .foreach(println)
-//      .groupBy(e => e.instances(0) + e.length)
-//      .map(e => e(1))
-//      .reduce((block1, block2) => if block1.length > block2.length then block1 else block2)
-//  val block_text = longest_full_depth_nonrepeating_blocks
+
+//  full_depth_nonrepeating_blocks
 //    .map(e => token_array.slice(e.instances(0), e.instances(0) + e.length))
-//  block_text
-//    .map(_.map(e => e.n))
+//    .map(_.map(_.n))
+//    .map(_.mkString(" "))
 //    .foreach(println)
+
+
 
 
