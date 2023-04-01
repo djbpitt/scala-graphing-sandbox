@@ -245,13 +245,16 @@ def tokenize(tokenizer: String => List[String]) =
       .map(e => (e, e.end - e.start + 1))
       .filter((_, occurrence_count) => occurrence_count == witness_strings.size)
       .filter((block, depth) => witnesses_of_block(block).length == depth)
-  val longest_full_depth_nonrepeating_blocks = full_depth_nonrepeating_blocks
-    .map((block, _) => suffix_array.slice(block.start, block.end + 1))
   val block_lengths = full_depth_nonrepeating_blocks.map((block, _) => block.length)
-  val block_start_positions = longest_full_depth_nonrepeating_blocks
+  val block_start_positions = full_depth_nonrepeating_blocks
+    .map((block, _) => suffix_array.slice(block.start, block.end + 1))
     .map(_.sorted)
-  val stuff = (block_start_positions lazyZip block_lengths).map((starts, length) => FullDepthBlock(starts.toVector, length))
-  stuff.foreach(println)
+  val longest_full_depth_nonrepeating_blocks = (block_start_positions lazyZip block_lengths).
+    map((starts, length) => FullDepthBlock(starts.toVector, length))
+    .groupBy(e => e.instances(0) + e.length)
+    .map(e => e(1))
+    .reduce((block1, block2) => if block1.length > block2.length then block1 else block2)
+  longest_full_depth_nonrepeating_blocks.foreach(println)
 //  val block_tokens = full_depth_nonrepeating_blocks
 //    .map((block, _) => token_array
 //    .slice(suffix_array(block.start), suffix_array(block.start) + block.length))
