@@ -32,6 +32,18 @@ case class OpenBlock(start: Int, length: Int)
  */
 case class Block(start: Int, end: Int, length: Int)
 
+/** Full depth block
+ *
+ * @param instances : start positions of all instances (at least two) in enhanced token array
+ *                  (incorporates token witness membership information)
+ *                  Sort in order of witnesses during construction
+ * @param length : length of pattern
+ *
+ * Start position plus length makes it possible to compute end positions, if needed
+ * We use this remove shorter embedded blocks
+ * This plus token array is enough for all subsequent processing; no further need for suffix array, etc.
+ */
+case class FullDepthBlock(instances: Vector[Int], length:Int)
 
 /** Read data files from supplied path to directory (one file per witness)
  *
@@ -233,10 +245,20 @@ def tokenize(tokenizer: String => List[String]) =
       .map(e => (e, e.end - e.start + 1))
       .filter((_, occurrence_count) => occurrence_count == witness_strings.size)
       .filter((block, depth) => witnesses_of_block(block).length == depth)
-  val block_tokens = full_depth_nonrepeating_blocks
-    .map((block, _) => token_array
-    .slice(suffix_array(block.start), suffix_array(block.start) + block.length))
-  val block_end_positions = blocks.map(e => suffix_array(e.end) + e.length)
+  val longest_full_depth_nonrepeating_blocks = full_depth_nonrepeating_blocks
+    .map((block, _) => suffix_array.slice(block.start, block.end + 1))
+  longest_full_depth_nonrepeating_blocks
+    .map(_.sorted)
+    .map(_.mkString(" "))
+    .foreach(println)
+//  val block_tokens = full_depth_nonrepeating_blocks
+//    .map((block, _) => token_array
+//    .slice(suffix_array(block.start), suffix_array(block.start) + block.length))
   // Find all suffix array values in interval, sort, and take first (or last)
   // See create_blocks.py find_longest_sequences()
-  (full_depth_nonrepeating_blocks lazyZip block_end_positions lazyZip block_tokens.sortBy(_.size).reverse.map(e => e.map(_.n).mkString(" "))).toList.foreach(println)
+//  (full_depth_nonrepeating_blocks lazyZip block_end_positions lazyZip block_tokens
+//    .sortBy(_.size)
+//    .reverse
+//    .map(e => e.map(_.n).mkString(" "))
+//    ).toList
+//    .foreach(println)
