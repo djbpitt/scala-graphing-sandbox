@@ -228,13 +228,12 @@ def tokenize(tokenizer: String => List[String]) =
 /** Remove shorter embedded blocks
  *
  * @param full_depth_blocks as List[FullDepthBlock]
- * @return map from end position of pattern to longest pattern
- *         (change this to other return, without end position?)
+ * @return Iterable of longest patterns
  */
-def remove_overlapping_blocks(full_depth_blocks: List[FullDepthBlock]): Map[Int, FullDepthBlock] =
-  full_depth_blocks
-    .groupBy(e => e.instances(0) + e.length) // end position of instance in witness 0
-    .map {case(key, fd_blocks) => key -> fd_blocks.sortBy(_.length).reverse.head}
+def remove_overlapping_blocks(full_depth_blocks: List[FullDepthBlock]): Iterable[FullDepthBlock] =
+    val mapping = full_depth_blocks.groupBy(e => e.instances(0) + e.length) // end position of instance in witness 0
+    for fd_blocks <- mapping.values yield fd_blocks.maxBy(_.length)
+
 @main def main(): Unit =
   // Prepare tokenizer (partially applied function)
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
@@ -273,7 +272,7 @@ def remove_overlapping_blocks(full_depth_blocks: List[FullDepthBlock]): Map[Int,
   val longest_full_depth_nonrepeating_blocks =
     remove_overlapping_blocks(full_depth_nonrepeating_blocks)
   longest_full_depth_nonrepeating_blocks
-    .map {case(endposition, fd_block) => token_array.slice(fd_block.instances(0), endposition)}
+    .map(fd_block => token_array.slice(fd_block.instances(0), fd_block.instances(0)+fd_block.length))
     .foreach(println)
 
 //  full_depth_nonrepeating_blocks
