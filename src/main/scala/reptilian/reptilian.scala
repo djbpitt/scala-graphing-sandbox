@@ -273,6 +273,26 @@ def htmlify(token_array: Vector[Token], longest_full_depth_nonrepeating_blocks: 
     )
   )
 }
+
+def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
+  val (vectorization, voc_size) = vectorize(token_array)
+  val suffix_array = calculate_suffix_array(vectorization, voc_size)
+  val lcp_array = calculate_lcp_array(token_array, suffix_array)
+  val blocks = create_blocks(lcp_array)
+  val witnesses_of_block = find_witnesses_of_block(suffix_array, token_array) // Partially applied, requires Block
+  val tmp_full_depth_nonrepeating_blocks =
+    blocks
+      .map(e => (e, e.end - e.start + 1))
+      .filter((_, occurrence_count) => occurrence_count == witness_count)
+      .filter((block, depth) => witnesses_of_block(block).length == depth)
+  val block_lengths = tmp_full_depth_nonrepeating_blocks.map((block, _) => block.length)
+  val block_start_positions = tmp_full_depth_nonrepeating_blocks
+    .map((block, _) => suffix_array.slice(block.start, block.end + 1))
+    .map(_.sorted)
+  val annoying_interim_variable = (block_start_positions lazyZip block_lengths)
+    .map((starts, length) => FullDepthBlock(starts.toVector, length))
+  remove_overlapping_blocks(annoying_interim_variable)
+
 @main def main(): Unit =
   // Prepare tokenizer (partially applied function)
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
@@ -280,49 +300,17 @@ def htmlify(token_array: Vector[Token], longest_full_depth_nonrepeating_blocks: 
   // Prepare data (List[String])
   // val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
   val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_small"
-//  val path_to_darwin = os.pwd / "src" / "main" / "data" / "cats"
+  //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "cats"
   val witness_strings = read_data(path_to_darwin) // One string per witness
   // Prepare tokens (Vector[Token])
   val token_array = tokenize(tokenizer)(witness_strings)
   // Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
-  val (vectorization, voc_size) = vectorize(token_array)
-  val suffix_array = calculate_suffix_array(vectorization, voc_size)
-  val lcp_array = calculate_lcp_array(token_array, suffix_array)
-  val blocks = create_blocks(lcp_array)
-//  blocks
-//    .map(e => token_array.slice(suffix_array(e.start), suffix_array(e.start) + e.length))
-//    .foreach(println)
-  val witnesses_of_block = find_witnesses_of_block(suffix_array, token_array) // Partially applied, requires Block
-  val tmp_full_depth_nonrepeating_blocks =
-    blocks
-      .map(e => (e, e.end - e.start + 1))
-      .filter((_, occurrence_count) => occurrence_count == witness_strings.size)
-      .filter((block, depth) => witnesses_of_block(block).length == depth)
-//  tmp_full_depth_nonrepeating_blocks
-//    .map((block, _) => token_array.slice(suffix_array(block.start), suffix_array(block.start) + block.length))
-//    .foreach(println)
-  val block_lengths = tmp_full_depth_nonrepeating_blocks.map((block, _) => block.length)
-  val block_start_positions = tmp_full_depth_nonrepeating_blocks
-    .map((block, _) => suffix_array.slice(block.start, block.end + 1))
-    .map(_.sorted)
-  val full_depth_nonrepeating_blocks: List[FullDepthBlock] =
-    (block_start_positions lazyZip block_lengths)
-      .map((starts, length) => FullDepthBlock(starts.toVector, length))
-  val longest_full_depth_nonrepeating_blocks =
-    remove_overlapping_blocks(full_depth_nonrepeating_blocks)
-//  longest_full_depth_nonrepeating_blocks
-//    .map(fd_block => token_array.slice(fd_block.instances(0), fd_block.instances(0)+fd_block.length))
-//    .foreach(println)
+  val longest_full_depth_nonrepeating_blocks = create_aligned_blocks(token_array, witness_strings.size)
+  // Create HTML output and write to specified path
   val output = htmlify(token_array, longest_full_depth_nonrepeating_blocks)
   val outputPath = os.pwd / "src" / "main" / "output" / "alignment.xhtml"
-//  println(output)
-  println(longest_full_depth_nonrepeating_blocks)
   os.write.over(outputPath, output)
-//  full_depth_nonrepeating_blocks
-//    .map(e => token_array.slice(e.instances(0), e.instances(0) + e.length))
-//    .map(_.map(_.n))
-//    .map(_.mkString(" "))
-//    .foreach(println)
+
 
 
 
