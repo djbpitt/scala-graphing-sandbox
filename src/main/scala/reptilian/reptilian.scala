@@ -231,8 +231,11 @@ def tokenize(tokenizer: String => List[String]) =
  * @return Iterable of longest patterns
  */
 def remove_overlapping_blocks(full_depth_blocks: List[FullDepthBlock]): Iterable[FullDepthBlock] =
-    val mapping = full_depth_blocks.groupBy(e => e.instances(0) + e.length) // end position of instance in witness 0
-    for fd_blocks <- mapping.values yield fd_blocks.maxBy(_.length)
+  full_depth_blocks
+    .groupBy(e => e.instances(0) + e.length) // end position of instance in witness 0
+    .values
+    .map(fdblocks => fdblocks.maxBy(_.length))
+
 
 @main def main(): Unit =
   // Prepare tokenizer (partially applied function)
@@ -240,8 +243,8 @@ def remove_overlapping_blocks(full_depth_blocks: List[FullDepthBlock]): Iterable
   val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
   // Prepare data (List[String])
   // val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
-//  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_small"
-  val path_to_darwin = os.pwd / "src" / "main" / "data" / "cats"
+  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_small"
+//  val path_to_darwin = os.pwd / "src" / "main" / "data" / "cats"
   val witness_strings = read_data(path_to_darwin) // One string per witness
   // Prepare tokens (Vector[Token])
   val token_array = tokenize(tokenizer)(witness_strings)
