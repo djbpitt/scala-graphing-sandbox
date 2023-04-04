@@ -8,6 +8,7 @@ import scala.collection.immutable.VectorMap
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.util.matching.Regex
+import scalatags.Text.all._
 
 /** Token as complex object
  *
@@ -44,6 +45,12 @@ case class Block(start: Int, end: Int, length: Int)
  * This plus token array is enough for all subsequent processing; no further need for suffix array, etc.
  */
 case class FullDepthBlock(instances: Vector[Int], length:Int)
+extension (b:FullDepthBlock)
+  def show(token_array: Vector[Token]): String =
+    token_array
+      .slice(b.instances(0), b.instances(0) + b.length)
+      .map(_.n)
+      .mkString(" ")
 
 /** Read data files from supplied path to directory (one file per witness)
  *
@@ -274,10 +281,41 @@ def remove_overlapping_blocks(full_depth_blocks: List[FullDepthBlock]): Iterable
       .map((starts, length) => FullDepthBlock(starts.toVector, length))
   val longest_full_depth_nonrepeating_blocks =
     remove_overlapping_blocks(full_depth_nonrepeating_blocks)
-  longest_full_depth_nonrepeating_blocks
-    .map(fd_block => token_array.slice(fd_block.instances(0), fd_block.instances(0)+fd_block.length))
-    .foreach(println)
-
+//  longest_full_depth_nonrepeating_blocks
+//    .map(fd_block => token_array.slice(fd_block.instances(0), fd_block.instances(0)+fd_block.length))
+//    .foreach(println)
+  val htmlBoilerplate = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
+  val output = htmlBoilerplate + html(xmlns:="http://www.w3.org/1999/xhtml")(
+    head(
+      tag("title")("Alignments"),
+      tag("style")(
+        "table, tr, th, td {border: 1px black solid; border-collapse: collapse;}" +
+          " th, td {padding: 3px;} " +
+          "td:first-child {text-align: right;}")
+    ),
+    body(
+        h1("Alignments"),
+        table(
+          tr(
+            th("Node"),
+            th("Block type"),
+            th("Block")
+          ),
+          for ((block, index) <- longest_full_depth_nonrepeating_blocks
+            .toSeq
+            .sortBy(_.instances(0))
+            .zipWithIndex) yield tr(
+            td(s"$index"),
+            td("Aligned"),
+            td(s"${block.show(token_array)}")
+          )
+        )
+      )
+  )
+  val outputPath = os.pwd / "src" / "main" / "output" / "alignment.xhtml"
+//  println(output)
+  println(longest_full_depth_nonrepeating_blocks)
+  os.write.over(outputPath, output)
 //  full_depth_nonrepeating_blocks
 //    .map(e => token_array.slice(e.instances(0), e.instances(0) + e.length))
 //    .map(_.map(_.n))

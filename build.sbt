@@ -17,3 +17,4 @@ libraryDependencies += ("com.github.haifengl" %% "smile-scala" % "3.0.0")
   .cross(CrossVersion.for3Use2_13)
   .exclude("org.scala-lang.modules", "scala-xml_2.13")
 libraryDependencies += ("org.scalatest" %% "scalatest" % "3.2.15" % "test")
+libraryDependencies += "com.lihaoyi" %% "scalatags" % "0.12.0"
