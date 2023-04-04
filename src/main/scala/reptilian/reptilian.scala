@@ -244,6 +244,36 @@ def remove_overlapping_blocks(full_depth_blocks: List[FullDepthBlock]): Iterable
     .map(fdblocks => fdblocks.maxBy(_.length))
 
 
+def htmlify(token_array: Vector[Token], longest_full_depth_nonrepeating_blocks: Iterable[FullDepthBlock]) = {
+  val htmlBoilerplate = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
+  htmlBoilerplate + html(xmlns := "http://www.w3.org/1999/xhtml")(
+    head(
+      tag("title")("Alignments"),
+      tag("style")(
+        "table, tr, th, td {border: 1px black solid; border-collapse: collapse;}" +
+          " th, td {padding: 3px;} " +
+          "td:first-child {text-align: right;}")
+    ),
+    body(
+      h1("Alignments"),
+      table(
+        tr(
+          th("Node"),
+          th("Block type"),
+          th("Block")
+        ),
+        for ((block, index) <- longest_full_depth_nonrepeating_blocks
+          .toSeq
+          .sortBy(_.instances(0))
+          .zipWithIndex) yield tr(
+          td(s"$index"),
+          td("Aligned"),
+          td(s"${block.show(token_array)}")
+        )
+      )
+    )
+  )
+}
 @main def main(): Unit =
   // Prepare tokenizer (partially applied function)
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
@@ -284,34 +314,7 @@ def remove_overlapping_blocks(full_depth_blocks: List[FullDepthBlock]): Iterable
 //  longest_full_depth_nonrepeating_blocks
 //    .map(fd_block => token_array.slice(fd_block.instances(0), fd_block.instances(0)+fd_block.length))
 //    .foreach(println)
-  val htmlBoilerplate = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
-  val output = htmlBoilerplate + html(xmlns:="http://www.w3.org/1999/xhtml")(
-    head(
-      tag("title")("Alignments"),
-      tag("style")(
-        "table, tr, th, td {border: 1px black solid; border-collapse: collapse;}" +
-          " th, td {padding: 3px;} " +
-          "td:first-child {text-align: right;}")
-    ),
-    body(
-        h1("Alignments"),
-        table(
-          tr(
-            th("Node"),
-            th("Block type"),
-            th("Block")
-          ),
-          for ((block, index) <- longest_full_depth_nonrepeating_blocks
-            .toSeq
-            .sortBy(_.instances(0))
-            .zipWithIndex) yield tr(
-            td(s"$index"),
-            td("Aligned"),
-            td(s"${block.show(token_array)}")
-          )
-        )
-      )
-  )
+  val output = htmlify(token_array, longest_full_depth_nonrepeating_blocks)
   val outputPath = os.pwd / "src" / "main" / "output" / "alignment.xhtml"
 //  println(output)
   println(longest_full_depth_nonrepeating_blocks)
