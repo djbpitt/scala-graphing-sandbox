@@ -44,11 +44,10 @@ case class Block(start: Int, end: Int, length: Int)
  * We use this remove shorter embedded blocks
  * This plus token array is enough for all subsequent processing; no further need for suffix array, etc.
  */
-case class FullDepthBlock(instances: Vector[Int], length:Int)
-extension (b:FullDepthBlock)
+case class FullDepthBlock(instances: Vector[Int], length:Int):
   def show(token_array: Vector[Token]): String =
     token_array
-      .slice(b.instances(0), b.instances(0) + b.length)
+      .slice(this.instances(0), this.instances(0) + this.length)
       .map(_.n)
       .mkString(" ")
 
