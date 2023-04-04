@@ -13,7 +13,7 @@ import scalatags.Text.all._
 /** Token as complex object
  *
  * @param t Raw token, which may include trailing whitespace
- * @param n Normalized token, e.g., lower-case and traim
+ * @param n Normalized token, e.g., lower-case and trim
  * @param w Witness identifier, zero-based
  *
  * Tokenization and normalization are under user control (to be implement)
