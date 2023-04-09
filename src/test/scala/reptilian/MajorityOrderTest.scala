@@ -41,8 +41,19 @@ val blocks: Vector[FullDepthBlock] = Vector(
 
 class MajorityOrderTest extends AnyFunSuite:
   test("create_graph_from_blocks") {
-    val result = create_graph(blocks)
-    assert(result == Graph(-1, -2, 192, 225, 4, 101, 229, 38, 134, 198, 39, 104, 43, 172, 142, 146, 243, 212, 184, 60, 188, 93, 31))
+    val result = compute_nodes_for_graph(blocks)
+    assert(result ==
+      Graph(-1, -2, 192, 225, 4, 101, 229, 38, 134, 198, 39, 104, 43, 172, 142, 146, 243, 212, 184, 60, 188, 93, 31))
+  }
+
+  test("compute_edges_for_witness") {
+    val result = compute_edges_for_witness(blocks, 0)
+    assert(result ==
+      Vector(DiEdge(4, 31), DiEdge(31, 38), DiEdge(38, 39), DiEdge(39, 43), DiEdge(43, 60), DiEdge(60, 93),
+        DiEdge(93, 101), DiEdge(101, 104), DiEdge(104, 134), DiEdge(134, 142), DiEdge(142, 146), DiEdge(146, 172),
+        DiEdge(172, 184), DiEdge(184, 188), DiEdge(188, 192), DiEdge(192, 198), DiEdge(198, 212), DiEdge(212, 225),
+        DiEdge(225, 229), DiEdge(229, 243))
+    )
   }
 
 end MajorityOrderTest
