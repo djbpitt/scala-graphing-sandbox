@@ -52,7 +52,7 @@ class MajorityOrderTest extends AnyFunSuite:
       Vector(DiEdge(4, 31), DiEdge(31, 38), DiEdge(38, 39), DiEdge(39, 43), DiEdge(43, 60), DiEdge(60, 93),
         DiEdge(93, 101), DiEdge(101, 104), DiEdge(104, 134), DiEdge(134, 142), DiEdge(142, 146), DiEdge(146, 172),
         DiEdge(172, 184), DiEdge(184, 188), DiEdge(188, 192), DiEdge(192, 198), DiEdge(198, 212), DiEdge(212, 225),
-        DiEdge(225, 229), DiEdge(229, 243))
+        DiEdge(225, 229), DiEdge(229, 243), DiEdge(-1, 4), DiEdge(243, -2))
     )
   }
 

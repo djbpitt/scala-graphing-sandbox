@@ -18,11 +18,12 @@ import scalax.collection.mutable.ArraySet.Hints
 implicit val myConfig: CoreConfig = CoreConfig()
 
 def compute_edges_for_witness(blocks: Vector[FullDepthBlock], w: Int): Vector[DiEdge[Int]] =
-  blocks
+  val edges = blocks
     .sortBy(_.instances(w))
     .sliding(2, 1)
     .map(e => DiEdge[Int](e(0).instances(0), e(1).instances(0)))
     .toVector
+  edges ++ Vector(DiEdge(-1, edges.head.from), DiEdge(edges.last.to, -2))
 
 def compute_nodes_for_graph(blocks: Vector[FullDepthBlock]) =
   val node_identifiers: Vector[Int] =
