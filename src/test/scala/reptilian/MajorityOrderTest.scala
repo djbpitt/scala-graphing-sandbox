@@ -42,7 +42,7 @@ val blocks: Vector[FullDepthBlock] = Vector(
 class MajorityOrderTest extends AnyFunSuite:
   test("create_graph_from_blocks") {
     val result = create_graph(blocks)
-    assert(result == Graph(192, 225, 4, 101, 229, 38, 134, 198, 39, 104, 43, 172, 142, 146, 243, 212, 184, 60, 188, 93, 31))
+    assert(result == Graph(-1, -2, 192, 225, 4, 101, 229, 38, 134, 198, 39, 104, 43, 172, 142, 146, 243, 212, 184, 60, 188, 93, 31))
   }
 
 end MajorityOrderTest
