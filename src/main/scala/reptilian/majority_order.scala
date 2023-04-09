@@ -13,6 +13,7 @@ package reptilian
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.mutable.Graph
 import scalax.collection.config.CoreConfig
+import scalax.collection.edge.WDiEdge
 import scalax.collection.mutable.ArraySet.Hints
 
 implicit val myConfig: CoreConfig = CoreConfig()
@@ -31,4 +32,12 @@ def compute_nodes_for_graph(blocks: Vector[FullDepthBlock]) =
       .map(e => e.instances(0))
   val g = Graph.from[Int, DiEdge](node_identifiers ++ Vector(-1, -2))
   g
+
+def compute_weighted_edges(edges: Vector[Vector[DiEdge[Int]]]): Vector[WDiEdge[Int]] =
+  edges
+    .flatten
+    .groupBy(identity)
+    .map((edge, group) => WDiEdge(edge.to, edge.from) (group.size))
+    .toVector
+
 

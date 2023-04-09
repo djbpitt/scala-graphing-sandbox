@@ -8,6 +8,8 @@ import Assertions.*
 import Inspectors.*
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.DiEdge
+import scalax.collection.edge.WDiEdge
+
 
 import scala.util.matching.Regex
 
@@ -40,13 +42,14 @@ val blocks: Vector[FullDepthBlock] = Vector(
 )
 
 class MajorityOrderTest extends AnyFunSuite:
-  test("create_graph_from_blocks") {
+  test("create graph from blocks") {
     val result = compute_nodes_for_graph(blocks)
     assert(result ==
       Graph(-1, -2, 192, 225, 4, 101, 229, 38, 134, 198, 39, 104, 43, 172, 142, 146, 243, 212, 184, 60, 188, 93, 31))
   }
 
-  test("compute_edges_for_witness") {
+
+  test("compute edges for witness") {
     val result = compute_edges_for_witness(blocks, 0)
     assert(result ==
       Vector(DiEdge(4, 31), DiEdge(31, 38), DiEdge(38, 39), DiEdge(39, 43), DiEdge(43, 60), DiEdge(60, 93),
@@ -56,4 +59,37 @@ class MajorityOrderTest extends AnyFunSuite:
     )
   }
 
+  test("compute weighted edges") {
+    val result = compute_weighted_edges(
+      Vector(compute_edges_for_witness(blocks, 0), compute_edges_for_witness(blocks, 1), compute_edges_for_witness(blocks, 4))
+    )
+    val expected = Vector(
+      WDiEdge(146, 142)(3.0),
+      WDiEdge(225, 212)(3.0),
+      WDiEdge(184, 172)(3.0),
+      WDiEdge(229, 225)(3.0),
+      WDiEdge(198, 192)(3.0),
+      WDiEdge(4, -1)(3.0),
+      WDiEdge(39, 31)(1.0),
+      WDiEdge(-2, 243)(3.0),
+      WDiEdge(243, 229)(3.0),
+      WDiEdge(60, 43)(3.0),
+      WDiEdge(134, 104)(3.0),
+      WDiEdge(43, 38)(1.0),
+      WDiEdge(172, 146)(3.0),
+      WDiEdge(212, 198)(3.0),
+      WDiEdge(38, 39)(1.0),
+      WDiEdge(93, 60)(3.0),
+      WDiEdge(104, 101)(3.0),
+      WDiEdge(142, 134)(3.0),
+      WDiEdge(38, 31)(2.0),
+      WDiEdge(188, 184)(3.0),
+      WDiEdge(43, 39)(2.0),
+      WDiEdge(31, 4)(3.0),
+      WDiEdge(192, 188)(3.0),
+      WDiEdge(39, 38)(2.0),
+      WDiEdge(101, 93)(3.0))
+    assert(result == expected)
+    assert(result.map(_.weight) == expected.map(_.weight))
+  }
 end MajorityOrderTest
