@@ -306,6 +306,7 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
   val token_array = tokenize(tokenizer)(witness_strings)
   // Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
   val longest_full_depth_nonrepeating_blocks = create_aligned_blocks(token_array, witness_strings.size)
+  longest_full_depth_nonrepeating_blocks.foreach(println)
   // Create HTML output and write to specified path
   val output = htmlify(token_array, longest_full_depth_nonrepeating_blocks)
   val outputPath = os.pwd / "src" / "main" / "output" / "alignment.xhtml"
