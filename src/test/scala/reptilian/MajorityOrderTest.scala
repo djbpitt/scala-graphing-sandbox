@@ -52,10 +52,30 @@ class MajorityOrderTest extends AnyFunSuite:
   test("compute edges for witness") {
     val result = compute_edges_for_witness(blocks, 0)
     assert(result ==
-      Vector(DiEdge(4, 31), DiEdge(31, 38), DiEdge(38, 39), DiEdge(39, 43), DiEdge(43, 60), DiEdge(60, 93),
-        DiEdge(93, 101), DiEdge(101, 104), DiEdge(104, 134), DiEdge(134, 142), DiEdge(142, 146), DiEdge(146, 172),
-        DiEdge(172, 184), DiEdge(184, 188), DiEdge(188, 192), DiEdge(192, 198), DiEdge(198, 212), DiEdge(212, 225),
-        DiEdge(225, 229), DiEdge(229, 243), DiEdge(-1, 4), DiEdge(243, -2))
+      Vector(
+        4 ~> 31,
+        31 ~> 38,
+        38 ~> 39,
+        39 ~> 43,
+        43 ~> 60,
+        60 ~> 93,
+        93 ~> 101,
+        101 ~> 104,
+        104 ~> 134,
+        134 ~> 142,
+        142 ~> 146,
+        146 ~> 172,
+        172 ~> 184,
+        184 ~> 188,
+        188 ~> 192,
+        192 ~> 198,
+        198 ~> 212,
+        212 ~> 225,
+        225 ~> 229,
+        229 ~> 243,
+        -1 ~> 4,
+        243 ~> -2
+      )
     )
   }
 
