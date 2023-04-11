@@ -11,6 +11,8 @@ package reptilian
  */
 
 import scalax.collection.GraphEdge.DiEdge
+import scalax.collection.GraphPredef.EdgeAssoc
+import scalax.collection.edge.Implicits.edge2WDiEdgeAssoc
 import scalax.collection.mutable.Graph
 import scalax.collection.config.CoreConfig
 import scalax.collection.edge.WDiEdge
@@ -22,9 +24,9 @@ def compute_edges_for_witness(blocks: Vector[FullDepthBlock], w: Int): Vector[Di
   val edges = blocks
     .sortBy(_.instances(w))
     .sliding(2, 1)
-    .map(e => DiEdge[Int](e(0).instances(0), e(1).instances(0)))
+    .map(e => e(0).instances(0) ~> e(1).instances(0))
     .toVector
-  edges ++ Vector(DiEdge(-1, edges.head.from), DiEdge(edges.last.to, -2))
+  edges ++ Vector(-1 ~> edges.head.from, edges.last.to ~> -2)
 
 def compute_nodes_for_graph(blocks: Vector[FullDepthBlock]) =
   val node_identifiers: Vector[Int] =
@@ -37,7 +39,7 @@ def compute_weighted_edges(edges: Vector[Vector[DiEdge[Int]]]): Vector[WDiEdge[I
   edges
     .flatten
     .groupBy(identity)
-    .map((edge, group) => WDiEdge(edge.to, edge.from) (group.size))
+    .map((edge, group) => edge.from ~> edge.to % group.size)
     .toVector
 
 
