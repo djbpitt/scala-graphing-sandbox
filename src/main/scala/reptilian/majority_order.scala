@@ -70,7 +70,7 @@ def graph_to_dot(g: Graph[Int, WDiEdge]) =
           Some((root,
             DotEdgeStmt(source.toString,
               target.toString,
-              List(DotAttr("weight", weight.toString))
+              List(DotAttr("label", weight.toInt.toString))
             )))
       }
     }

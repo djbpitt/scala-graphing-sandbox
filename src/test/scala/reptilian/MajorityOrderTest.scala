@@ -135,6 +135,7 @@ class MajorityOrderTest extends AnyFunSuite:
     val g = create_traversal_graph(blocks)
     val result = graph_to_dot(g)
     assert(result == result)
-    println(result)
+    val outputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
+    os.write.over(outputPath, result)
   }
 end MajorityOrderTest
