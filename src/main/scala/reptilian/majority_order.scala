@@ -20,7 +20,7 @@ import scalax.collection.mutable.ArraySet.Hints
 
 implicit val myConfig: CoreConfig = CoreConfig()
 
-def compute_edges_for_witness(blocks: Vector[FullDepthBlock], w: Int): Vector[DiEdge[Int]] =
+protected def compute_edges_for_witness(blocks: Vector[FullDepthBlock], w: Int): Vector[DiEdge[Int]] =
   val edges = blocks
     .sortBy(_.instances(w))
     .sliding(2, 1)
@@ -28,18 +28,27 @@ def compute_edges_for_witness(blocks: Vector[FullDepthBlock], w: Int): Vector[Di
     .toVector
   edges ++ Vector(-1 ~> edges.head.from, edges.last.to ~> -2)
 
-def compute_nodes_for_graph(blocks: Vector[FullDepthBlock]) =
+protected def compute_nodes_for_graph(blocks: Vector[FullDepthBlock]) =
   val node_identifiers: Vector[Int] =
     blocks
       .map(e => e.instances(0))
-  val g = Graph.from[Int, DiEdge](node_identifiers ++ Vector(-1, -2))
+  val g = Graph.from[Int, WDiEdge](node_identifiers ++ Vector(-1, -2))
   g
 
-def compute_weighted_edges(edges: Vector[Vector[DiEdge[Int]]]): Vector[WDiEdge[Int]] =
+protected def compute_weighted_edges(edges: Vector[Vector[DiEdge[Int]]]): Vector[WDiEdge[Int]] =
   edges
     .flatten
     .groupBy(identity)
     .map((edge, group) => edge.from ~> edge.to % group.size)
     .toVector
 
+
+def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
+  val witness_count = blocks(0).instances.length
+  val g = compute_nodes_for_graph(blocks)
+  val edges =
+    (0 until witness_count).map(e => compute_edges_for_witness(blocks, e)).toVector
+  val weighted_edges = compute_weighted_edges(edges)
+  g ++= weighted_edges
+  g
 

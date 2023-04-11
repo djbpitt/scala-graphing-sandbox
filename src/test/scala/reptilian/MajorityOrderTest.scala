@@ -18,27 +18,27 @@ import scala.util.matching.Regex
  * blocks copied from first paragraph of six Darwin witnesses
  */
 val blocks: Vector[FullDepthBlock] = Vector(
-  FullDepthBlock(Vector(104, 363, 621, 883, 1142, 1394),29),
-    FullDepthBlock(Vector(243, 501, 759, 1022, 1274, 1524),17),
-    FullDepthBlock(Vector(212, 470, 728, 991, 1245, 1495),12),
-    FullDepthBlock(Vector(134, 393, 651, 913, 1172, 1424),7),
-    FullDepthBlock(Vector(142, 400, 658, 920, 1179, 1432),2),
-    FullDepthBlock(Vector(38, 298, 556, 818, 1082, 1331),1),
-    FullDepthBlock(Vector(39, 299, 557, 819, 1079, 1332),3),
-    FullDepthBlock(Vector(31, 292, 550, 812, 1073, 1325),6),
-    FullDepthBlock(Vector(188, 446, 704, 966, 1221, 1471),3),
-    FullDepthBlock(Vector(43, 302, 560, 822, 1083, 1335),16),
-    FullDepthBlock(Vector(101, 360, 618, 880, 1140, 1392),2),
-    FullDepthBlock(Vector(60, 319, 577, 839, 1101, 1353),31),
-    FullDepthBlock(Vector(192, 450, 708, 970, 1225, 1475),6),
-    FullDepthBlock(Vector(184, 442, 700, 962, 1219, 1469),2),
-    FullDepthBlock(Vector(146, 404, 662, 924, 1183, 1433),25),
-    FullDepthBlock(Vector(4, 265, 523, 785, 1047, 1299),26),
-    FullDepthBlock(Vector(172, 430, 688, 950, 1208, 1458),11),
-    FullDepthBlock(Vector(198, 456, 714, 977, 1232, 1482),12),
-    FullDepthBlock(Vector(229, 487, 745, 1008, 1261, 1511),13),
-    FullDepthBlock(Vector(225, 483, 741, 1004, 1258, 1508),2),
-    FullDepthBlock(Vector(93, 352, 610, 872, 1132, 1384),7)
+  FullDepthBlock(Vector(104, 363, 621, 883, 1142, 1394), 29),
+  FullDepthBlock(Vector(243, 501, 759, 1022, 1274, 1524), 17),
+  FullDepthBlock(Vector(212, 470, 728, 991, 1245, 1495), 12),
+  FullDepthBlock(Vector(134, 393, 651, 913, 1172, 1424), 7),
+  FullDepthBlock(Vector(142, 400, 658, 920, 1179, 1432), 2),
+  FullDepthBlock(Vector(38, 298, 556, 818, 1082, 1331), 1),
+  FullDepthBlock(Vector(39, 299, 557, 819, 1079, 1332), 3),
+  FullDepthBlock(Vector(31, 292, 550, 812, 1073, 1325), 6),
+  FullDepthBlock(Vector(188, 446, 704, 966, 1221, 1471), 3),
+  FullDepthBlock(Vector(43, 302, 560, 822, 1083, 1335), 16),
+  FullDepthBlock(Vector(101, 360, 618, 880, 1140, 1392), 2),
+  FullDepthBlock(Vector(60, 319, 577, 839, 1101, 1353), 31),
+  FullDepthBlock(Vector(192, 450, 708, 970, 1225, 1475), 6),
+  FullDepthBlock(Vector(184, 442, 700, 962, 1219, 1469), 2),
+  FullDepthBlock(Vector(146, 404, 662, 924, 1183, 1433), 25),
+  FullDepthBlock(Vector(4, 265, 523, 785, 1047, 1299), 26),
+  FullDepthBlock(Vector(172, 430, 688, 950, 1208, 1458), 11),
+  FullDepthBlock(Vector(198, 456, 714, 977, 1232, 1482), 12),
+  FullDepthBlock(Vector(229, 487, 745, 1008, 1261, 1511), 13),
+  FullDepthBlock(Vector(225, 483, 741, 1004, 1258, 1508), 2),
+  FullDepthBlock(Vector(93, 352, 610, 872, 1132, 1384), 7)
 )
 
 class MajorityOrderTest extends AnyFunSuite:
@@ -78,12 +78,12 @@ class MajorityOrderTest extends AnyFunSuite:
       )
     )
   }
-  
+
   test("compute weighted edges") {
     val result = compute_weighted_edges(
       Vector(
-        compute_edges_for_witness(blocks, 0), 
-        compute_edges_for_witness(blocks, 1), 
+        compute_edges_for_witness(blocks, 0),
+        compute_edges_for_witness(blocks, 1),
         compute_edges_for_witness(blocks, 4)
       )
     )
@@ -116,5 +116,18 @@ class MajorityOrderTest extends AnyFunSuite:
     )
     assert(result == expected)
     assert(result.map(_.weight) == expected.map(_.weight))
+  }
+  test("create traversal graph") {
+    val result = create_traversal_graph(blocks)
+    assert(result ==
+      Graph(-2, -1, 4, 31, 38, 39, 43, 60, 93, 101, 104, 134, 142,
+        146, 172, 184, 188, 192, 198, 212, 225, 229, 243,
+        -1 ~> 4 % 6.0, 4 ~> 31 % 6.0, 31 ~> 38 % 5.0, 31 ~> 39 % 1.0, 38 ~> 39 % 5.0,
+        38 ~> 43 % 1.0, 39 ~> 38 % 1.0, 39 ~> 43 % 5.0, 43 ~> 60 % 6.0, 60 ~> 93 % 6.0,
+        93 ~> 101 % 6.0, 101 ~> 104 % 6.0, 104 ~> 134 % 6.0, 134 ~> 142 % 6.0,
+        142 ~> 146 % 6.0, 146 ~> 172 % 6.0, 172 ~> 184 % 6.0, 184 ~> 188 % 6.0,
+        188 ~> 192 % 6.0, 192 ~> 198 % 6.0, 198 ~> 212 % 6.0, 212 ~> 225 % 6.0,
+        225 ~> 229 % 6.0, 229 ~> 243 % 6.0, 243 ~> -2 % 6.0)
+    )
   }
 end MajorityOrderTest
