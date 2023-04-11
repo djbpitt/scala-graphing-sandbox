@@ -78,11 +78,14 @@ class MajorityOrderTest extends AnyFunSuite:
       )
     )
   }
-
-  // TODO: Have we confused from / to?
+  
   test("compute weighted edges") {
     val result = compute_weighted_edges(
-      Vector(compute_edges_for_witness(blocks, 0), compute_edges_for_witness(blocks, 1), compute_edges_for_witness(blocks, 4))
+      Vector(
+        compute_edges_for_witness(blocks, 0), 
+        compute_edges_for_witness(blocks, 1), 
+        compute_edges_for_witness(blocks, 4)
+      )
     )
     val expected = Vector(
       142 ~> 146 % 3,
