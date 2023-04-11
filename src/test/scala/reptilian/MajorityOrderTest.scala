@@ -8,9 +8,9 @@ import Assertions.*
 import Inspectors.*
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.DiEdge
+import scalax.collection.GraphPredef.EdgeAssoc
+import scalax.collection.edge.Implicits.edge2WDiEdgeAssoc
 import scalax.collection.edge.WDiEdge
-
-
 import scala.util.matching.Regex
 
 /** Set up fixtures
@@ -65,31 +65,32 @@ class MajorityOrderTest extends AnyFunSuite:
       Vector(compute_edges_for_witness(blocks, 0), compute_edges_for_witness(blocks, 1), compute_edges_for_witness(blocks, 4))
     )
     val expected = Vector(
-      WDiEdge(146, 142)(3.0),
-      WDiEdge(225, 212)(3.0),
-      WDiEdge(184, 172)(3.0),
-      WDiEdge(229, 225)(3.0),
-      WDiEdge(198, 192)(3.0),
-      WDiEdge(4, -1)(3.0),
-      WDiEdge(39, 31)(1.0),
-      WDiEdge(-2, 243)(3.0),
-      WDiEdge(243, 229)(3.0),
-      WDiEdge(60, 43)(3.0),
-      WDiEdge(134, 104)(3.0),
-      WDiEdge(43, 38)(1.0),
-      WDiEdge(172, 146)(3.0),
-      WDiEdge(212, 198)(3.0),
-      WDiEdge(38, 39)(1.0),
-      WDiEdge(93, 60)(3.0),
-      WDiEdge(104, 101)(3.0),
-      WDiEdge(142, 134)(3.0),
-      WDiEdge(38, 31)(2.0),
-      WDiEdge(188, 184)(3.0),
-      WDiEdge(43, 39)(2.0),
-      WDiEdge(31, 4)(3.0),
-      WDiEdge(192, 188)(3.0),
-      WDiEdge(39, 38)(2.0),
-      WDiEdge(101, 93)(3.0))
+      146 ~> 142 % 3,
+      225 ~> 212 % 3,
+      184 ~> 172 % 3,
+      229 ~> 225 % 3,
+      198 ~> 192 % 3,
+      4 ~> -1 % 3,
+      39 ~> 31 % 1,
+      -2 ~> 243 % 3,
+      243 ~> 229 % 3,
+      60 ~> 43 % 3,
+      134 ~> 104 % 3,
+      43 ~> 38 % 1,
+      172 ~> 146 % 3,
+      212 ~> 198 % 3,
+      38 ~> 39 % 1,
+      93 ~> 60 % 3,
+      104 ~> 101 % 3,
+      142 ~> 134 % 3,
+      38 ~> 31 % 2,
+      188 ~> 184 % 3,
+      43 ~> 39 % 2,
+      31 ~> 4 % 3,
+      192 ~> 188 % 3,
+      39 ~> 38 % 2,
+      101 ~> 93 % 3
+    )
     assert(result == expected)
     assert(result.map(_.weight) == expected.map(_.weight))
   }
