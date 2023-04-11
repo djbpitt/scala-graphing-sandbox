@@ -17,6 +17,9 @@ import scalax.collection.mutable.Graph
 import scalax.collection.config.CoreConfig
 import scalax.collection.edge.WDiEdge
 import scalax.collection.mutable.ArraySet.Hints
+import scalax.collection.io.dot.*
+import scalax.collection.io.dot.implicits.toId
+import scalax.collection.io.dot.implicits.toNodeId
 
 implicit val myConfig: CoreConfig = CoreConfig()
 
@@ -52,3 +55,25 @@ def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
   g ++= weighted_edges
   g
 
+def graph_to_dot(g: Graph[Int, WDiEdge]) =
+  val root = DotRootGraph(
+    directed = true,
+    id = Some("MyDot"),
+    attrStmts = List(DotAttrStmt(Elem.node, List(DotAttr("shape", "record")))),
+    attrList = List(DotAttr("attr_1", """"one""""),
+      DotAttr("attr_2", "<two>")))
+
+  def edgeTransformer(innerEdge: scalax.collection.Graph[Int, WDiEdge]#EdgeT):
+    Option[(DotGraph, DotEdgeStmt)] = innerEdge.edge match {
+      case WDiEdge(source, target, weight) => weight match {
+        case weight: Double =>
+          Some((root,
+            DotEdgeStmt(source.toString,
+              target.toString,
+              List(DotAttr("weight", weight.toString))
+            )))
+      }
+    }
+
+  val dot = g.toDot(root, edgeTransformer)
+  dot

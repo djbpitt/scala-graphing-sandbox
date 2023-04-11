@@ -130,4 +130,11 @@ class MajorityOrderTest extends AnyFunSuite:
         225 ~> 229 % 6.0, 229 ~> 243 % 6.0, 243 ~> -2 % 6.0)
     )
   }
+
+  test("create dot file") {
+    val g = create_traversal_graph(blocks)
+    val result = graph_to_dot(g)
+    assert(result == result)
+    println(result)
+  }
 end MajorityOrderTest
