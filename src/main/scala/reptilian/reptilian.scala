@@ -317,6 +317,9 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
     .sortBy(block => block.instances(0))
   // full_depth_blocks.foreach(e => println(e.show(token_array)))
 
+  val transposed = longest_full_depth_nonrepeating_blocks.filter(block => !set_of_non_transposed_node_ids.contains(block.instances(0)))
+  transposed.foreach(e => println(e.show(token_array)))
+
   // Create HTML output and write to specified path
   val output = htmlify(token_array, full_depth_blocks)
   val outputPath = os.pwd / "src" / "main" / "output" / "alignment.xhtml"
