@@ -16,7 +16,6 @@ import scalax.collection.edge.Implicits.edge2WDiEdgeAssoc
 import scalax.collection.mutable.Graph
 import scalax.collection.config.CoreConfig
 import scalax.collection.edge.WDiEdge
-import scalax.collection.mutable.ArraySet.Hints
 import scalax.collection.io.dot.*
 import scalax.collection.io.dot.implicits.toId
 import scalax.collection.io.dot.implicits.toNodeId
@@ -54,6 +53,11 @@ def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
   val weighted_edges = compute_weighted_edges(edges)
   g ++= weighted_edges
   g
+
+def find_non_transposed_nodes(graph: Graph[Int, WDiEdge], witness_count: Int) =
+  graph.edges
+    .filter(weighted_edge => weighted_edge.weight == witness_count)
+    .flatMap(edge => Set(edge.from.value, edge.to.value))
 
 def graph_to_dot(g: Graph[Int, WDiEdge]) =
   val root = DotRootGraph(
