@@ -10,6 +10,7 @@ package reptilian
  * Edges weighted by number of witnesses that share order (1 < n < witnessCount)
  */
 
+import scalax.collection.GraphEdge
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef.EdgeAssoc
 import scalax.collection.edge.Implicits.edge2WDiEdgeAssoc
@@ -22,12 +23,30 @@ import scalax.collection.io.dot.implicits.toNodeId
 
 implicit val myConfig: CoreConfig = CoreConfig()
 
+
+def check_backward_edges_generator(blocks: Vector[FullDepthBlock], w: Int): Vector[Boolean] =
+    blocks
+      .sortBy(_.instances(w))
+      .sliding(2, 1)
+      .map(e => e(0).instances zip e(1).instances)
+      .map(_.map((value1, value2) => value2 - value1))
+      .map(_.map(_.sign))
+      .map(_.forall(_ == 1))
+      .toVector
+
+def edges_generator(blocks: Vector[FullDepthBlock], w: Int): Vector[DiEdge[Int]] =
+   blocks
+     .sortBy(_.instances(w))
+     .sliding(2, 1)
+     .map(e => e(0).instances(0) ~> e(1).instances(0))
+     .toVector
+
 protected def compute_edges_for_witness(blocks: Vector[FullDepthBlock], w: Int): Vector[DiEdge[Int]] =
-  val edges = blocks
-    .sortBy(_.instances(w))
-    .sliding(2, 1)
-    .map(e => e(0).instances(0) ~> e(1).instances(0))
-    .toVector
+  val edges_with_cycles = edges_generator(blocks, w) zip check_backward_edges_generator(blocks, w)
+  val edges = edges_with_cycles
+    .filter((_, forwards) => forwards)
+    .map((edge, _) => edge)
+
   edges ++ Vector(-1 ~> edges.head.from, edges.last.to ~> -2)
 
 protected def compute_nodes_for_graph(blocks: Vector[FullDepthBlock]) =
@@ -43,7 +62,6 @@ protected def compute_weighted_edges(edges: Vector[Vector[DiEdge[Int]]]): Vector
     .groupBy(identity)
     .map((edge, group) => edge.from ~> edge.to % group.size)
     .toVector
-
 
 def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
   val witness_count = blocks(0).instances.length
