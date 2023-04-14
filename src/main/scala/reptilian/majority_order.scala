@@ -49,7 +49,7 @@ protected def compute_edges_for_witness(blocks: Vector[FullDepthBlock], w: Int):
 
   val sorted_blocks = blocks.sortBy(_.instances(w))
   edges ++ Vector(-1 ~> edges.head.from % sorted_blocks.head.length,
-    edges.last.to ~> -2 % sorted_blocks.last.length)
+    edges.last.to ~> -2 % 0)
 
 protected def compute_nodes_for_graph(blocks: Vector[FullDepthBlock]) =
   val node_identifiers: Vector[Int] =

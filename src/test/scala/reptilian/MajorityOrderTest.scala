@@ -109,7 +109,7 @@ class MajorityOrderTest extends AnyFunSuite:
       212 ~> 225 % 2,
       225 ~> 229 % 13,
       229 ~> 243 % 17,
-      243 ~> -2 % 17
+      243 ~> -2 % 0
     )
     assert(result.sortBy(e => e.from) == expected)
     assert(result.sortBy(e => e.from).map(_.weight) == expected.map(_.weight))
