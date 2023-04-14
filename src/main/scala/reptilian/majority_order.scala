@@ -34,20 +34,22 @@ def check_backward_edges_generator(blocks: Vector[FullDepthBlock], w: Int): Vect
       .map(_.forall(_ == 1))
       .toVector
 
-def edges_generator(blocks: Vector[FullDepthBlock], w: Int): Vector[DiEdge[Int]] =
+def edges_generator(blocks: Vector[FullDepthBlock], w: Int): Vector[WDiEdge[Int]] =
    blocks
      .sortBy(_.instances(w))
      .sliding(2, 1)
-     .map(e => e(0).instances(0) ~> e(1).instances(0))
+     .map(e => e(0).instances(0) ~> e(1).instances(0) % e(1).length)
      .toVector
 
-protected def compute_edges_for_witness(blocks: Vector[FullDepthBlock], w: Int): Vector[DiEdge[Int]] =
+protected def compute_edges_for_witness(blocks: Vector[FullDepthBlock], w: Int): Vector[WDiEdge[Int]] =
   val edges_with_cycles = edges_generator(blocks, w) zip check_backward_edges_generator(blocks, w)
   val edges = edges_with_cycles
     .filter((_, forwards) => forwards)
     .map((edge, _) => edge)
 
-  edges ++ Vector(-1 ~> edges.head.from, edges.last.to ~> -2)
+  val sorted_blocks = blocks.sortBy(_.instances(w))
+  edges ++ Vector(-1 ~> edges.head.from % sorted_blocks.head.length,
+    edges.last.to ~> -2 % sorted_blocks.last.length)
 
 protected def compute_nodes_for_graph(blocks: Vector[FullDepthBlock]) =
   val node_identifiers: Vector[Int] =
@@ -56,12 +58,10 @@ protected def compute_nodes_for_graph(blocks: Vector[FullDepthBlock]) =
   val g = Graph.from[Int, WDiEdge](node_identifiers ++ Vector(-1, -2))
   g
 
-protected def compute_weighted_edges(edges: Vector[Vector[DiEdge[Int]]]): Vector[WDiEdge[Int]] =
+protected def compute_weighted_edges(edges: Vector[Vector[WDiEdge[Int]]]): Vector[WDiEdge[Int]] =
   edges
     .flatten
-    .groupBy(identity)
-    .map((edge, group) => edge.from ~> edge.to % group.size)
-    .toVector
+    .distinct
 
 def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
   val witness_count = blocks(0).instances.length

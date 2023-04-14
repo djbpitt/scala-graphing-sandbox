@@ -87,35 +87,37 @@ class MajorityOrderTest extends AnyFunSuite:
       )
     )
     val expected = Vector(
-      142 ~> 146 % 3,
-      212 ~> 225 % 3,
-      172 ~> 184 % 3,
-      225 ~> 229 % 3,
-      192 ~> 198 % 3,
-      -1 ~> 4 % 3,
-      31 ~> 39 % 1,
-      243 ~> -2 % 3,
-      229 ~> 243 % 3,
-      43 ~> 60 % 3,
-      93 ~> 101 % 3,
-      104 ~> 134 % 3,
-      38 ~> 43 % 1,
-      146 ~> 172 % 3,
-      198 ~> 212 % 3,
-      60 ~> 93 % 3,
-      101 ~> 104 % 3,
-      134 ~> 142 % 3,
-      31 ~> 38 % 2,
+      -1 ~> 4 % 26,
+      4 ~> 31 % 6,
+      31 ~> 38 % 1,
+      31 ~> 39 % 3,
+      38 ~> 43 % 16,
+      39 ~> 43 % 16,
+      43 ~> 60 % 31,
+      60 ~> 93 % 7,
+      93 ~> 101 % 2,
+      101 ~> 104 % 29,
+      104 ~> 134 % 7,
+      134 ~> 142 % 2,
+      142 ~> 146 % 25,
+      146 ~> 172 % 11,
+      172 ~> 184 % 2,
       184 ~> 188 % 3,
-      39 ~> 43 % 2,
-      4 ~> 31 % 3,
-      188 ~> 192 % 3
+      188 ~> 192 % 6,
+      192 ~> 198 % 12,
+      198 ~> 212 % 12,
+      212 ~> 225 % 2,
+      225 ~> 229 % 13,
+      229 ~> 243 % 17,
+      243 ~> -2 % 17
     )
-    assert(result == expected)
-    assert(result.map(_.weight) == expected.map(_.weight))
+    assert(result.sortBy(e => e.from) == expected)
+    assert(result.sortBy(e => e.from).map(_.weight) == expected.map(_.weight))
   }
+
   test("create traversal graph") {
     val result = create_traversal_graph(blocks)
+    // note: the weights om the edges are not checked in this assert!
     assert(result ==
       Graph(-2, -1, 4, 31, 38, 39, 43, 60, 93, 101, 104, 134, 142,
         146, 172, 184, 188, 192, 198, 212, 225, 229, 243,
