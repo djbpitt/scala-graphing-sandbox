@@ -81,15 +81,10 @@ def find_optimal_alignment(graph: Graph[Int, WDiEdge]): Vector[Int] =
   var optimal_path = Vector[Int]()
   while current != end do
     optimal_path = optimal_path :+ current.value
-    val target_node = current.outgoing.maxBy(weighted_edge => weighted_edge.weight).to
+    val target_node = current.outgoing.maxBy(_.weight).to
     current = target_node
 
   optimal_path
-
-def find_non_transposed_nodes(graph: Graph[Int, WDiEdge], witness_count: Int) =
-  graph.edges
-    .filter(weighted_edge => weighted_edge.weight == witness_count)
-    .flatMap(edge => Set(edge.from.value, edge.to.value))
 
 def graph_to_dot(g: Graph[Int, WDiEdge]) =
   val root = DotRootGraph(

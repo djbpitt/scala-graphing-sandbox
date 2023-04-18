@@ -310,24 +310,21 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
 
   // create navigation graph and filter out transposed nodes
   val graph = create_traversal_graph(longest_full_depth_nonrepeating_blocks.toVector)
-  val optimal_path = find_optimal_alignment(graph)
-  println(optimal_path)
+  val set_of_non_transposed_node_ids = find_optimal_alignment(graph).toSet
 
+  val full_depth_blocks = longest_full_depth_nonrepeating_blocks
+    .filter(block => set_of_non_transposed_node_ids.contains(block.instances(0)))
+    .toVector
+    .sortBy(block => block.instances(0))
+  // full_depth_blocks.foreach(e => println(e.show(token_array)))
 
-//  val set_of_non_transposed_node_ids = find_non_transposed_nodes(graph, 6)
-//  val full_depth_blocks = longest_full_depth_nonrepeating_blocks
-//    .filter(block => set_of_non_transposed_node_ids.contains(block.instances(0)))
-//    .toVector
-//    .sortBy(block => block.instances(0))
-//  // full_depth_blocks.foreach(e => println(e.show(token_array)))
-//
-//  val transposed = longest_full_depth_nonrepeating_blocks.filter(block => !set_of_non_transposed_node_ids.contains(block.instances(0)))
-//  transposed.foreach(e => println(e.show(token_array)))
-//
-//  // Create HTML output and write to specified path
-//  val output = htmlify(token_array, full_depth_blocks)
-//  val outputPath = os.pwd / "src" / "main" / "output" / "alignment.xhtml"
-//  os.write.over(outputPath, output)
+  val transposed = longest_full_depth_nonrepeating_blocks.filter(block => !set_of_non_transposed_node_ids.contains(block.instances(0)))
+  transposed.foreach(e => println(e.show(token_array)))
+
+  // Create HTML output and write to specified path
+  val output = htmlify(token_array, full_depth_blocks)
+  val outputPath = os.pwd / "src" / "main" / "output" / "alignment.xhtml"
+  os.write.over(outputPath, output)
 
 
 
