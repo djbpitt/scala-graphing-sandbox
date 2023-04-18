@@ -310,8 +310,8 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
 
   // create navigation graph and filter out transposed nodes
   val graph = create_traversal_graph(longest_full_depth_nonrepeating_blocks.toVector)
-  find_optimal_alignment(graph)
-
+  val optimal_path = find_optimal_alignment(graph)
+  println(optimal_path)
 
 
 //  val set_of_non_transposed_node_ids = find_non_transposed_nodes(graph, 6)

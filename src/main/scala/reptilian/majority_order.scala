@@ -69,23 +69,22 @@ def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
   val edges =
     (0 until witness_count).map(e => compute_edges_for_witness(blocks, e)).toVector
   val weighted_edges = compute_weighted_edges(edges)
-  g ++= weightSed_edges
+  g ++= weighted_edges
   g
 
-def find_optimal_alignment(graph: Graph[Int, WDiEdge]): Unit =
+def find_optimal_alignment(graph: Graph[Int, WDiEdge]): Vector[Int] =
   def n(outer: Int): graph.NodeT = graph get outer // look up 'outer' that is known to be contained
 
   val start = n(-1)
   val end = n(-2)
   var current = start
+  var optimal_path = Vector[Int]()
   while current != end do
-    println(current.outgoing)
-    val maximum_weighted_edge = current.outgoing.maxBy(weighted_edge => weighted_edge.weight)
-    println(maximum_weighted_edge)
-    val target_node = maximum_weighted_edge.to
+    optimal_path = optimal_path :+ current.value
+    val target_node = current.outgoing.maxBy(weighted_edge => weighted_edge.weight).to
     current = target_node
-    //current = end
 
+  optimal_path
 
 def find_non_transposed_nodes(graph: Graph[Int, WDiEdge], witness_count: Int) =
   graph.edges
