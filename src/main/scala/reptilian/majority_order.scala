@@ -24,6 +24,10 @@ import scalax.collection.io.dot.implicits.toNodeId
 implicit val myConfig: CoreConfig = CoreConfig()
 
 
+/** Check whether all edges point forward
+ *
+ * Perform vector subtraction of source from target; all values should be positive
+ */
 def check_backward_edges_generator(blocks: Vector[FullDepthBlock], w: Int): Vector[Boolean] =
     blocks
       .sortBy(_.instances(w))
@@ -41,6 +45,9 @@ def edges_generator(blocks: Vector[FullDepthBlock], w: Int): Vector[WDiEdge[Int]
      .map(e => e(0).instances(0) ~> e(1).instances(0) % e(1).length)
      .toVector
 
+/** Filter out edges that introduce cycles
+ *
+ */
 protected def compute_edges_for_witness(blocks: Vector[FullDepthBlock], w: Int): Vector[WDiEdge[Int]] =
   val edges_with_cycles = edges_generator(blocks, w) zip check_backward_edges_generator(blocks, w)
   val edges = edges_with_cycles
