@@ -93,7 +93,7 @@ def find_optimal_alignment(graph: Graph[Int, WDiEdge]): Vector[Int] =
 
   optimal_path
 
-def graph_to_dot(g: Graph[Int, WDiEdge]) =
+def graph_to_dot(g: Graph[Int, WDiEdge], b: Map[Int, String]) =
   val root = DotRootGraph(
     directed = true,
     id = Some("MyDot"),
@@ -113,5 +113,10 @@ def graph_to_dot(g: Graph[Int, WDiEdge]) =
       }
     }
 
-  val dot = g.toDot(root, edgeTransformer)
+  def nodeTransformer(innerNode: scalax.collection.Graph[Int, WDiEdge]#NodeT):
+      Option[(DotGraph,DotNodeStmt)] =
+    Some(root, DotNodeStmt(innerNode.toString, Nil))
+
+
+  val dot = g.toDot(root, edgeTransformer, cNodeTransformer = Some(nodeTransformer))
   dot

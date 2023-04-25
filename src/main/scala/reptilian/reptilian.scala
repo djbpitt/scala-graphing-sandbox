@@ -293,13 +293,20 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
     .map((starts, length) => FullDepthBlock(starts.toVector, length))
   remove_overlapping_blocks(annoying_interim_variable)
 
+
+def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token]): Map[Int, String] =
+  blocks
+    .map(e => e.instances(0) -> e.show(token_array))
+    .toMap
+  
+
 @main def main(): Unit =
   // Prepare tokenizer (partially applied function)
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
   val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
   // Prepare data (List[String])
-  // val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
-  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_small"
+  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
+  // val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_small"
   //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "cats"
   val witness_strings = read_data(path_to_darwin) // One string per witness
   // Prepare tokens (Vector[Token])
@@ -307,9 +314,15 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
   // Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
   val longest_full_depth_nonrepeating_blocks = create_aligned_blocks(token_array, witness_strings.size)
   // longest_full_depth_nonrepeating_blocks.foreach(println)
-
+  val block_texts: Map[Int, String] = block_text_by_id(longest_full_depth_nonrepeating_blocks, token_array)
   // create navigation graph and filter out transposed nodes
   val graph = create_traversal_graph(longest_full_depth_nonrepeating_blocks.toVector)
+  // Diagnostic: visualize traversal graph
+  val result = graph_to_dot(graph, block_texts)
+  val graphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
+  os.write.over(graphOutputPath, result)
+
+
   val set_of_non_transposed_node_ids = find_optimal_alignment(graph).toSet
 
   val full_depth_blocks = longest_full_depth_nonrepeating_blocks
