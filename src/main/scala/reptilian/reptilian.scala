@@ -251,13 +251,14 @@ def htmlify(token_array: Vector[Token], longest_full_depth_nonrepeating_blocks: 
       tag("style")(
         "table, tr, th, td {border: 1px black solid; border-collapse: collapse;}" +
           " th, td {padding: 3px;} " +
-          "td:first-child {text-align: right;}")
+          "td:first-child, td:nth-child(2) {text-align: right;}")
     ),
     body(
-      h1("Alignments"),
+      h1("Alignment"),
       table(
         tr(
-          th("Node"),
+          th("Alignment", br, "node", br, "number"),
+          th("Traversal",br,"node",br,"number"),
           th("Block type"),
           th("Block")
         ),
@@ -266,6 +267,7 @@ def htmlify(token_array: Vector[Token], longest_full_depth_nonrepeating_blocks: 
           .sortBy(_.instances(0))
           .zipWithIndex) yield tr(
           td(s"$index"),
+          td(block.instances(0)),
           td("Aligned"),
           td(s"${block.show(token_array)}")
         )
