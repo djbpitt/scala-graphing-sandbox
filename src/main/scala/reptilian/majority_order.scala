@@ -79,19 +79,28 @@ def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
   g ++= weighted_edges
   g
 
-def find_optimal_alignment(graph: Graph[Int, WDiEdge]): Vector[Int] =
-  def n(outer: Int): graph.NodeT = graph get outer // look up 'outer' that is known to be contained
-
+def find_optimal_alignment(graph: Graph[Int, WDiEdge]) = // specify return type?
+  def n(outer: Int): graph.NodeT = graph get outer // supply outer (our Int value) to retrieve complex inner
+  val beam_max = 5
   val start = n(-1)
   val end = n(-2)
-  var current = start
-  var optimal_path = Vector[Int]()
-  while current != end do
-    optimal_path = optimal_path :+ current.value
-    val target_node = current.outgoing.maxBy(_.weight).to
-    current = target_node
+  var open_paths: Vector[Vector[Int]] = Vector(Vector(start.value)) // initialize beam
+  // Exit once all options on the beam end at the end node
+  while !open_paths.map(_.last).forall(_ == -2) do
+    if n(open_paths(0).last).outgoing.nonEmpty then // currently assume only one open path
+      val target_node: graph.NodeT = n(open_paths(0).last).outgoing.maxBy(_.weight).to
+      val new_path = open_paths(0) :+ target_node.value
+      open_paths = Vector(new_path)
+  open_paths(0)
+  
+  
+//  var optimal_path = Vector[Int]()
+//  while current != end do
+//    optimal_path = optimal_path :+ current.value
+//    val target_node = current.outgoing.maxBy(_.weight).to
+//    current = target_node
 
-  optimal_path
+
 
 def graph_to_dot(g: Graph[Int, WDiEdge], b: Map[Int, String]) =
   val root = DotRootGraph(
@@ -115,7 +124,7 @@ def graph_to_dot(g: Graph[Int, WDiEdge], b: Map[Int, String]) =
 
   def nodeTransformer(innerNode: scalax.collection.Graph[Int, WDiEdge]#NodeT):
       Option[(DotGraph,DotNodeStmt)] =
-    // Remove (for now) double quotes because dot-to-svg uses them as string delimiters 
+    // Remove (for now) double quotes because dot-to-svg uses them as string delimiters
     Some(root, DotNodeStmt(innerNode.toString, List(DotAttr("tooltip", b.getOrElse(innerNode.value, "none").replaceAll("\"", "")))))
 
 
