@@ -115,7 +115,7 @@ def graph_to_dot(g: Graph[Int, WDiEdge], b: Map[Int, String]) =
 
   def nodeTransformer(innerNode: scalax.collection.Graph[Int, WDiEdge]#NodeT):
       Option[(DotGraph,DotNodeStmt)] =
-    Some(root, DotNodeStmt(innerNode.toString, Nil))
+    Some(root, DotNodeStmt(innerNode.toString, List(DotAttr("tooltip", "test"))))
 
 
   val dot = g.toDot(root, edgeTransformer, cNodeTransformer = Some(nodeTransformer))
