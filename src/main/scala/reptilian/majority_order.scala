@@ -115,7 +115,8 @@ def graph_to_dot(g: Graph[Int, WDiEdge], b: Map[Int, String]) =
 
   def nodeTransformer(innerNode: scalax.collection.Graph[Int, WDiEdge]#NodeT):
       Option[(DotGraph,DotNodeStmt)] =
-    Some(root, DotNodeStmt(innerNode.toString, List(DotAttr("tooltip", "test"))))
+    // Remove (for now) double quotes because dot-to-svg uses them as string delimiters 
+    Some(root, DotNodeStmt(innerNode.toString, List(DotAttr("tooltip", b.getOrElse(innerNode.value, "none").replaceAll("\"", "")))))
 
 
   val dot = g.toDot(root, edgeTransformer, cNodeTransformer = Some(nodeTransformer))
