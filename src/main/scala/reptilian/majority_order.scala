@@ -106,6 +106,11 @@ def score_all_options(graph: Graph[Int, WDiEdge], current: BeamOption): Vector[B
 
 
 def find_optimal_alignment(graph: Graph[Int, WDiEdge]) = // specify return type?
+  // Call score_all_options() to … er … score all options for each item on beam
+  // Not yet sorting and slicing to beam size
+  // Sorting and slicing constructs (reassigned) beam for next tier
+  // Return single BeamOption, representing (one) best alignment
+  // Restore temporarily disabled unit tests
   def n(outer: Int): graph.NodeT = graph get outer // supply outer (our Int value) to retrieve complex inner
   val beam_max = 5
   val start = BeamOption(path = List(-1), score = 0)
