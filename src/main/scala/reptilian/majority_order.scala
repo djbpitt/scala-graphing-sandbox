@@ -23,6 +23,11 @@ import scalax.collection.io.dot.implicits.toNodeId
 
 implicit val myConfig: CoreConfig = CoreConfig()
 
+/* Beam search maintains collection of BeamOption objects
+* path : list of nodes; prepend new values, so list is in reverse order at end
+* score : cumulative count of tokens placed by path
+* */
+case class BeamOption (path: List[Int], score: Double)
 
 /** Check whether all edges point forward
  *
@@ -79,19 +84,34 @@ def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
   g ++= weighted_edges
   g
 
+
+/** Take path step for all edges on BeamOption and return all potential new BeamOption objects
+ * graph : Needed to get out edges
+ * current : BeamOption to process
+ *
+ * If head of path is -2, we're at the end, so return current value (which might ultimately be optimal)
+ * Otherwise check each out-edge, prepend to path, increment score, and return new BeamOption
+ * Returns all options; we decide elsewhere which ones to keep on the beam for the next tier
+* */
+def score_all_options(graph: Graph[Int, WDiEdge], current: BeamOption): Vector[BeamOption] =
+  def n(outer: Int): graph.NodeT = graph get outer // supply outer (our Int value) to retrieve complex inner
+  val current_last: Int = current.path.head
+  if current_last == -2 then
+    Vector(current)
+  else
+    n(current_last)
+      .outgoing
+      .toVector
+      .map(e => BeamOption(path = e.to :: current.path, score = current.score + e.weight))
+
+
 def find_optimal_alignment(graph: Graph[Int, WDiEdge]) = // specify return type?
   def n(outer: Int): graph.NodeT = graph get outer // supply outer (our Int value) to retrieve complex inner
   val beam_max = 5
-  val start = n(-1)
-  val end = n(-2)
-  var open_paths: Vector[Vector[Int]] = Vector(Vector(start.value)) // initialize beam
+  val start = BeamOption(path = List(-1), score = 0)
+  var open_paths: Vector[BeamOption] = Vector(start) // initialize beam to hold just start node (zero tokens)
   // Exit once all options on the beam end at the end node
-  while !open_paths.map(_.last).forall(_ == -2) do
-    if n(open_paths(0).last).outgoing.nonEmpty then // currently assume only one open path
-      val target_node: graph.NodeT = n(open_paths(0).last).outgoing.maxBy(_.weight).to
-      val new_path = open_paths(0) :+ target_node.value
-      open_paths = Vector(new_path)
-  open_paths(0)
+  open_paths(0).path.reverse
   
   
 //  var optimal_path = Vector[Int]()

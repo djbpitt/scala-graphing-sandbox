@@ -324,7 +324,6 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val graphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
   os.write.over(graphOutputPath, result)
 
-
   val set_of_non_transposed_node_ids = find_optimal_alignment(graph).toSet
 
   val full_depth_blocks = longest_full_depth_nonrepeating_blocks
@@ -334,7 +333,7 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   full_depth_blocks.foreach(e => println(e.show(token_array)))
 
   val transposed = longest_full_depth_nonrepeating_blocks.filter(block => !set_of_non_transposed_node_ids.contains(block.instances(0)))
-//  transposed.foreach(e => println(e.show(token_array))) // diagnostic
+  // transposed.foreach(e => println(e.show(token_array))) // diagnostic
 
   // Create HTML output and write to specified path
   // Output directory (also file?) must already exist

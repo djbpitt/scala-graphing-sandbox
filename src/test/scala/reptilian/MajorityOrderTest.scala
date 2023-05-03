@@ -6,7 +6,7 @@ import org.scalatest.matchers.should.Matchers.*
 import org.scalatest.*
 import Assertions.*
 import Inspectors.*
-import scalax.collection.Graph
+import scalax.collection.mutable.Graph
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef.EdgeAssoc
 import scalax.collection.edge.Implicits.edge2WDiEdgeAssoc
@@ -130,11 +130,27 @@ class MajorityOrderTest extends AnyFunSuite:
     )
   }
 
-  test("create dot file") {
+  test("find potential next path steps") {
     val g = create_traversal_graph(blocks)
-    val result = graph_to_dot(g)
-    assert(result == result)
-    val outputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
-    os.write.over(outputPath, result)
+    val b1 = BeamOption(path = List(38, 31, 4, -1), score = 10) // one option
+    val result1 = score_all_options(g, b1)
+    val expect1 = Vector(BeamOption(List(43, 38, 31, 4, -1), score=26))
+    assert(result1 == expect1)
+    val b2 = BeamOption(path = List(-2, -1), score = 20) // at end, no options
+    val result2 = score_all_options(g, b2)
+    val expect2 = Vector(BeamOption(List(-2, -1), score = 20))
+    assert(result2 == expect2)
+    val b3 = BeamOption(path=List(31, 4, -1), score=20) // two options
+    val result3 = score_all_options(g, b3)
+    val expect3 = Vector(BeamOption(List(38, 31, 4, -1), 21), BeamOption(List(39, 31, 4, -1), 23))
+    assert(result3 == expect3)
   }
+
+//  test("create dot file") {
+//    val g = create_traversal_graph(blocks)
+//    val result = graph_to_dot(g, blocks)
+//    assert(result == result)
+//    val outputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
+//    os.write.over(outputPath, result)
+//  }
 end MajorityOrderTest
