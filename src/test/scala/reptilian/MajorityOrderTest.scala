@@ -146,6 +146,20 @@ class MajorityOrderTest extends AnyFunSuite:
     assert(result3 == expect3)
   }
 
+  test(testName = "skip when necessary") {
+    val token_array1 = List("1", "2", "3", "4", "5", "6", "#1", "7", "8", "9", "10", "11", "12")
+    val blocks1: Vector[FullDepthBlock] = Vector(
+      FullDepthBlock(Vector(1, 7), 1),
+      FullDepthBlock(Vector(2, 11), 1),
+      FullDepthBlock(Vector(3, 9), 2),
+      FullDepthBlock(Vector(5, 8), 1),
+      FullDepthBlock(Vector(6, 12), 1)
+    )
+    val result1 = create_traversal_graph(blocks1)
+    println(result1)
+    assert(result1 == result1)
+  }
+
 //  test("create dot file") {
 //    val g = create_traversal_graph(blocks)
 //    val result = graph_to_dot(g, blocks)
