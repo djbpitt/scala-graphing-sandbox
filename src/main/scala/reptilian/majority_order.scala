@@ -107,16 +107,25 @@ def score_all_options(graph: Graph[Int, WDiEdge], current: BeamOption): Vector[B
 
 def find_optimal_alignment(graph: Graph[Int, WDiEdge]) = // specify return type?
   // Call score_all_options() to … er … score all options for each item on beam
-  // Not yet sorting and slicing to beam size
-  // Sorting and slicing constructs (reassigned) beam for next tier
+  //
+  // If number of new options is smaller than beam size, assign all options to new beam
+  // Otherwise, sort and slice to construct (reassigned) beam for next tier
+  //
   // Return single BeamOption, representing (one) best alignment
-  // Restore temporarily disabled unit tests
+  // TODO: Restore temporarily disabled unit tests
+  val beam_max = 5 // Fixed, but could be adaptable, e.g., x% of possible options
   def n(outer: Int): graph.NodeT = graph get outer // supply outer (our Int value) to retrieve complex inner
-  val beam_max = 5
   val start = BeamOption(path = List(-1), score = 0)
-  var open_paths: Vector[BeamOption] = Vector(start) // initialize beam to hold just start node (zero tokens)
-  // Exit once all options on the beam end at the end node
-  open_paths(0).path.reverse
+  var beam: Vector[BeamOption] = Vector(start) // initialize beam to hold just start node (zero tokens)
+
+  while !beam.map(_.path.head).forall(_ == -2) do
+    val new_options = beam.flatMap(e => score_all_options(graph = graph, current = e))
+    if new_options.size <= beam_max then
+      beam = new_options
+    else
+      beam = new_options.sortBy(_.score * -1).slice(from = 0, until = beam_max)
+
+  beam.sortBy(_.score * -1).head.path.reverse // Exit once all options on the beam end at the end node
   
   
 //  var optimal_path = Vector[Int]()
@@ -127,7 +136,7 @@ def find_optimal_alignment(graph: Graph[Int, WDiEdge]) = // specify return type?
 
 
 
-def graph_to_dot(g: Graph[Int, WDiEdge], b: Map[Int, String]) =
+def graph_to_dot(g: Graph[Int, WDiEdge], b: Map[Int, String], path_nodes: Set[Int]) =
   val root = DotRootGraph(
     directed = true,
     id = Some("MyDot"),
@@ -150,7 +159,11 @@ def graph_to_dot(g: Graph[Int, WDiEdge], b: Map[Int, String]) =
   def nodeTransformer(innerNode: scalax.collection.Graph[Int, WDiEdge]#NodeT):
       Option[(DotGraph,DotNodeStmt)] =
     // Remove (for now) double quotes because dot-to-svg uses them as string delimiters
-    Some(root, DotNodeStmt(innerNode.toString, List(DotAttr("tooltip", b.getOrElse(innerNode.value, "none").replaceAll("\"", "")))))
+    Some(root, DotNodeStmt(innerNode.toString, List(
+      DotAttr("tooltip", b.getOrElse(innerNode.value, "none").replaceAll("\"", "")),
+      DotAttr("style", "filled"),
+      DotAttr("fillcolor", if path_nodes.contains(innerNode.value) then "pink" else "white"))
+    ))
 
 
   val dot = g.toDot(root, edgeTransformer, cNodeTransformer = Some(nodeTransformer))
