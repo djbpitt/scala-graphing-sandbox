@@ -94,12 +94,12 @@ def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
  * Returns all options; we decide elsewhere which ones to keep on the beam for the next tier
 * */
 def score_all_options(graph: Graph[Int, WDiEdge], current: BeamOption): Vector[BeamOption] =
-  def n(outer: Int): graph.NodeT = graph get outer // supply outer (our Int value) to retrieve complex inner
+  // supply outer (our Int value) to retrieve complex inner
   val current_last: Int = current.path.head
   if current_last == -2 then
     Vector(current)
   else
-    n(current_last)
+    (graph get current_last)
       .outgoing
       .toVector
       .map(e => BeamOption(path = e.to :: current.path, score = current.score + e.weight))
