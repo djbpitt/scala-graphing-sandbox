@@ -11,6 +11,8 @@ import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef.EdgeAssoc
 import scalax.collection.edge.Implicits.edge2WDiEdgeAssoc
 import scalax.collection.edge.WDiEdge
+
+import scala.collection.mutable.ArrayBuffer
 import scala.util.matching.Regex
 
 /** Set up fixtures
@@ -147,7 +149,6 @@ class MajorityOrderTest extends AnyFunSuite:
   }
 
   test(testName = "skip when necessary") {
-    val token_array1 = List("1", "2", "3", "4", "5", "6", "#1", "7", "8", "9", "10", "11", "12")
     val blocks1: Vector[FullDepthBlock] = Vector(
       FullDepthBlock(Vector(1, 7), 1),
       FullDepthBlock(Vector(2, 11), 1),
@@ -156,8 +157,49 @@ class MajorityOrderTest extends AnyFunSuite:
       FullDepthBlock(Vector(6, 12), 1)
     )
     val result1 = create_traversal_graph(blocks1)
-    println(result1)
     assert(result1 == result1)
+  }
+
+  test(testName= "create edges by block") {
+    val result = compute_block_order_for_witnesses(blocks)
+      .map(_.map(_.instances.head))
+    val expected = Vector(
+      Vector(4, 31, 38, 39, 43, 60, 93, 101, 104, 134, 142, 146, 172, 184, 188, 192, 198, 212, 225, 229, 243),
+      Vector(4, 31, 38, 39, 43, 60, 93, 101, 104, 134, 142, 146, 172, 184, 188, 192, 198, 212, 225, 229, 243),
+      Vector(4, 31, 38, 39, 43, 60, 93, 101, 104, 134, 142, 146, 172, 184, 188, 192, 198, 212, 225, 229, 243),
+      Vector(4, 31, 38, 39, 43, 60, 93, 101, 104, 134, 142, 146, 172, 184, 188, 192, 198, 212, 225, 229, 243),
+      Vector(4, 31, 39, 38, 43, 60, 93, 101, 104, 134, 142, 146, 172, 184, 188, 192, 198, 212, 225, 229, 243),
+      Vector(4, 31, 38, 39, 43, 60, 93, 101, 104, 134, 142, 146, 172, 184, 188, 192, 198, 212, 225, 229, 243))
+    assert(result == expected)
+  }
+
+  test(testName = "compute block offsets in all witnesses") {
+    val result = (compute_block_order_for_witnesses
+      andThen compute_block_offsets_in_all_witnesses)(blocks)
+    val expected = List(
+      (101, ArrayBuffer(7, 7, 7, 7, 7, 7)),
+      (142, ArrayBuffer(10, 10, 10, 10, 10, 10)),
+      (184, ArrayBuffer(13, 13, 13, 13, 13, 13)),
+      (93, ArrayBuffer(6, 6, 6, 6, 6, 6)),
+      (243, ArrayBuffer(20, 20, 20, 20, 20, 20)),
+      (60, ArrayBuffer(5, 5, 5, 5, 5, 5)),
+      (229, ArrayBuffer(19, 19, 19, 19, 19, 19)),
+      (188, ArrayBuffer(14, 14, 14, 14, 14, 14)),
+      (134, ArrayBuffer(9, 9, 9, 9, 9, 9)),
+      (198, ArrayBuffer(16, 16, 16, 16, 16, 16)),
+      (31, ArrayBuffer(1, 1, 1, 1, 1, 1)),
+      (43, ArrayBuffer(4, 4, 4, 4, 4, 4)),
+      (104, ArrayBuffer(8, 8, 8, 8, 8, 8)),
+      (146, ArrayBuffer(11, 11, 11, 11, 11, 11)),
+      (4, ArrayBuffer(0, 0, 0, 0, 0, 0)),
+      (38, ArrayBuffer(2, 2, 2, 2, 3, 2)),
+      (192, ArrayBuffer(15, 15, 15, 15, 15, 15)),
+      (225, ArrayBuffer(18, 18, 18, 18, 18, 18)),
+      (212, ArrayBuffer(17, 17, 17, 17, 17, 17)),
+      (172, ArrayBuffer(12, 12, 12, 12, 12, 12)),
+      (39, ArrayBuffer(3, 3, 3, 3, 2, 3))
+    ).toMap
+    assert(result == expected)
   }
 
 //  test("create dot file") {

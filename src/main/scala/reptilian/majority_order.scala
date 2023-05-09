@@ -21,6 +21,8 @@ import scalax.collection.io.dot.*
 import scalax.collection.io.dot.implicits.toId
 import scalax.collection.io.dot.implicits.toNodeId
 
+import scala.collection.mutable.ArrayBuffer
+
 implicit val myConfig: CoreConfig = CoreConfig()
 
 /* Beam search maintains collection of BeamOption objects
@@ -75,12 +77,51 @@ protected def compute_weighted_edges(edges: Vector[Vector[WDiEdge[Int]]]): Vecto
     .flatten
     .distinct
 
+
+/** Sort all blocks according to all witnesses
+ *
+ * Returns vector of vectors of all blocks, each sorted by a different witness
+ *
+ */
+protected def compute_block_order_for_witnesses(blocks: Vector[FullDepthBlock]): Vector[Vector[FullDepthBlock]] =
+  val witness_count = blocks(0).instances.length
+  val block_order_by_witness =
+    Range(0, witness_count)
+      .map(e => blocks.sortBy(_.instances(e)))
+  block_order_by_witness.toVector
+
+
+/** Create map from block id (offset in witness 0) to array buffer of offsets in all witnesses
+ *
+ * @param block_orders Vector of vectors of all blocks, each sorted by a different witness
+ *
+ * Returns map from block id (offset in witness 0) to array buffer of offsets in all witness
+ */
+protected def compute_block_offsets_in_all_witnesses(block_orders: Vector[Vector[FullDepthBlock]]) =
+  // Traverse each inner vector and add value to Map[Int, ArrayBuffer]
+  // Key is offset in witness 0
+  val block_offsets = block_orders
+    .head
+    .map(_.instances.head)
+    .zipWithIndex
+    .map((k, v) => k -> ArrayBuffer(v))
+    .toMap
+  block_orders
+    .tail
+    .map(_.map(_.instances.head)
+      .zipWithIndex
+      .map((k, v) => block_offsets(k) += v)
+    )
+  block_offsets
+
 def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
   val witness_count = blocks(0).instances.length
   val g = compute_nodes_for_graph(blocks)
   val edges =
     (0 until witness_count).map(e => compute_edges_for_witness(blocks, e)).toVector
   val weighted_edges = compute_weighted_edges(edges)
+  val block_order_for_witnesses = compute_block_order_for_witnesses(blocks)
+  val block_offsets = compute_block_offsets_in_all_witnesses(block_order_for_witnesses)
   g ++= weighted_edges
   g
 
@@ -125,7 +166,7 @@ def find_optimal_alignment(graph: Graph[Int, WDiEdge]) = // specify return type?
     else
       beam = new_options.sortBy(_.score * -1).slice(from = 0, until = beam_max)
 
-  beam.sortBy(_.score * -1).head.path.reverse // Exit once all options on the beam end at the end node
+  beam.minBy(_.score * -1).path.reverse // Exit once all options on the beam end at the end node
   
   
 //  var optimal_path = Vector[Int]()

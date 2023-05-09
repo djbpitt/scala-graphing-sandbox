@@ -326,7 +326,8 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
     .filter(block => set_of_non_transposed_node_ids.contains(block.instances(0)))
     .toVector
     .sortBy(block => block.instances(0))
-  full_depth_blocks.foreach(e => println(e.show(token_array)))
+  // full_depth_blocks.foreach(e => println(e.show(token_array)))
+  // full_depth_blocks.foreach(println)
 
   val transposed = longest_full_depth_nonrepeating_blocks.filter(block => !set_of_non_transposed_node_ids.contains(block.instances(0)))
   // transposed.foreach(e => println(e.show(token_array))) // diagnostic
