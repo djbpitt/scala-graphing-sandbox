@@ -119,12 +119,20 @@ protected def compute_block_offsets_in_all_witnesses(block_orders: Vector[Vector
 
 /** Identify transposition edges
  *
- * Edges for all witnesses must point in the same direction
+ * @param edge
+ * @param block_offsets
+ *
+ * Return boolean
+ *
+ * Edges for all witnesses must point forward
  * */
 def check_for_transposition(edge: WDiEdge[Int], block_offsets: Map[Int, ArrayBuffer[Int]]): Boolean =
   val from = edge.from
   val to = edge.to
-  val deltas = block_offsets(from).zip(block_offsets(to)).map((l, r) => r - l).map(_.sign).forall(_ == 1)
+  val deltas = block_offsets(from).zip(block_offsets(to)) // Tuple of array buffers, length = witness count
+    .map((l, r) => r - l) // Compute delta
+    .map(_.sign) // Convert to sign to find direction
+    .forall(_ == 1) // All directions must be forward for true value
   deltas
 
 
@@ -134,9 +142,9 @@ def check_for_transposition(edge: WDiEdge[Int], block_offsets: Map[Int, ArrayBuf
  * @param block_order_for_witnesses: vector of vectors of full-depth blocks, each sorted by a witness
  * @param block_offsets: map from block identifier to array buffer of positions of block in all witnesses
  *
- * Returns vector of directed edges
- * Filters out backwards edges to remove cycles
- * TODO: Weight edges
+ * Return vector of directed edges
+ * Filter out backwards edges to remove cycles
+ * TODO: Weight edges, all weights are currently set to 1
  */
 def create_outgoing_edges(
                            blocks: Vector[FullDepthBlock],
@@ -149,11 +157,12 @@ def create_outgoing_edges(
     .map(_.zipWithIndex
       .map((value, index) => block_order_for_witnesses(index)(value + 1 min current_offsets.size - 1).instances.head))
   val edges = blocks
-    .map(e => Vector.fill(block_order_for_witnesses.size)(e.instances.head))
-    .zip(neighbors).flatMap((l, r) => l.zip(r))
+    .map(e => Vector.fill(block_order_for_witnesses.size)(e.instances.head)) // Propagate block identifier for all witnesses
+    .zip(neighbors) // Zip repeated block identifier (source) with all targets
+    .flatMap((l, r) => l.zip(r)) // Zip each source with corresponding target
     .distinct
     .map((l, r) => WDiEdge(l, r)(1))
-  edges.filter(e => check_for_transposition(e, block_offsets))
+  edges.filter(e => check_for_transposition(e, block_offsets)) // Remove transposed or backward edges
 def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
   // TODO: Add start and end nodes, add skip edges
   val witness_count = blocks(0).instances.length
