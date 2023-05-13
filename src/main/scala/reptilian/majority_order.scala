@@ -147,7 +147,7 @@ def create_outgoing_edges(
     .map(_.zipWithIndex
       .map((value, index) => block_order_for_witnesses(index)(value + 1 min current_offsets.size - 1).instances.head))
   val edges = blocks
-    .map(e => Vector.fill(6)(e.instances.head)) // FIXME: Get rid of magic number
+    .map(e => Vector.fill(block_order_for_witnesses.size)(e.instances.head))
     .zip(neighbors).flatMap((l, r) => l.zip(r))
     .distinct
     .map((l, r) => WDiEdge(l, r)(1))
