@@ -307,8 +307,8 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
   val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
   // Prepare data (List[String])
-  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
-  // val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_small"
+//  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
+  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_small"
   //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "cats"
   val witness_strings = read_data(path_to_darwin) // One string per witness
   // Prepare tokens (Vector[Token])
@@ -320,7 +320,8 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   // create navigation graph and filter out transposed nodes
   val graph = create_traversal_graph(longest_full_depth_nonrepeating_blocks.toVector)
 
-  val set_of_non_transposed_node_ids = find_optimal_alignment(graph).toSet
+//  val set_of_non_transposed_node_ids = find_optimal_alignment(graph).toSet
+  val set_of_non_transposed_node_ids = Set[Int]()
 
   val full_depth_blocks = longest_full_depth_nonrepeating_blocks
     .filter(block => set_of_non_transposed_node_ids.contains(block.instances(0)))

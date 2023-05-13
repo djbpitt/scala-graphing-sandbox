@@ -81,6 +81,7 @@ protected def compute_weighted_edges(edges: Vector[Vector[WDiEdge[Int]]]): Vecto
 /** Sort all blocks according to all witnesses
  *
  * Returns vector of vectors of all blocks, each sorted by a different witness
+ *  Values are block identifiers (= token offset for witness 0)
  *
  */
 protected def compute_block_order_for_witnesses(blocks: Vector[FullDepthBlock]): Vector[Vector[FullDepthBlock]] =
@@ -99,7 +100,8 @@ protected def compute_block_order_for_witnesses(blocks: Vector[FullDepthBlock]):
  */
 protected def compute_block_offsets_in_all_witnesses(block_orders: Vector[Vector[FullDepthBlock]]) =
   // Traverse each inner vector and add value to Map[Int, ArrayBuffer]
-  // Key is offset in witness 0
+  // Key is token offset in witness 0
+  // Value is Vector of positions of block by witness
   val block_offsets = block_orders
     .head
     .map(_.instances.head)
@@ -114,15 +116,41 @@ protected def compute_block_offsets_in_all_witnesses(block_orders: Vector[Vector
     )
   block_offsets
 
+
+/** create_outgoing_edges
+ *
+ * @param blocks: vector of full-depth blocks
+ * @param block_order_for_witnesses: vector of vectors of full-depth blocks, each sorted by a witness
+ * @param block_offsets: map from block identifier to array buffer of positions of block in all witnesses
+ *
+ * Returns vector of weighted directed edges
+ */
+def create_outgoing_edges(
+                           blocks: Vector[FullDepthBlock],
+                           block_order_for_witnesses: Vector[Vector[FullDepthBlock]],
+                           block_offsets: Map[Int, ArrayBuffer[Int]]
+                         ): Vector[WDiEdge[Int]] =
+  // Head of block.instances is block identifier, can be used to look up all instances in block_offsets map
+  val current_offsets = blocks.map(e => block_offsets(e.instances.head))
+  val neighbors: Vector[ArrayBuffer[Int]] = current_offsets // We convert block to int, but we’ll need block for weight
+    .map(_.zipWithIndex
+      .map((value, index) => block_order_for_witnesses(index)(value + 1 min current_offsets.size - 1).instances.head))
+  val edges = blocks
+    .map(e => Vector.fill(6)(e.instances.head))
+    .zip(neighbors).flatMap((l, r) => l.zip(r))
+    .distinct
+    .map((l, r) => WDiEdge(l, r)(1))
+  edges
 def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
   val witness_count = blocks(0).instances.length
   val g = compute_nodes_for_graph(blocks)
-  val edges =
-    (0 until witness_count).map(e => compute_edges_for_witness(blocks, e)).toVector
-  val weighted_edges = compute_weighted_edges(edges)
+//  val edges =
+//    (0 until witness_count).map(e => compute_edges_for_witness(blocks, e)).toVector
+//  val weighted_edges = compute_weighted_edges(edges)
   val block_order_for_witnesses = compute_block_order_for_witnesses(blocks)
   val block_offsets = compute_block_offsets_in_all_witnesses(block_order_for_witnesses)
-  g ++= weighted_edges
+  val edges = create_outgoing_edges(blocks, block_order_for_witnesses, block_offsets)
+  g ++= edges
   g
 
 
