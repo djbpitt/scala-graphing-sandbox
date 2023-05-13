@@ -117,6 +117,17 @@ protected def compute_block_offsets_in_all_witnesses(block_orders: Vector[Vector
   block_offsets
 
 
+/** Identify transposition edges
+ *
+ * Edges for all witnesses must point in the same direction
+ * */
+def check_for_transposition(edge: WDiEdge[Int], block_offsets: Map[Int, ArrayBuffer[Int]]): Boolean =
+  val from = edge.from
+  val to = edge.to
+  val deltas = block_offsets(from).zip(block_offsets(to)).map((l, r) => r - l).map(_.sign).forall(_ == 1)
+  deltas
+  
+
 /** create_outgoing_edges
  *
  * @param blocks: vector of full-depth blocks
@@ -136,11 +147,11 @@ def create_outgoing_edges(
     .map(_.zipWithIndex
       .map((value, index) => block_order_for_witnesses(index)(value + 1 min current_offsets.size - 1).instances.head))
   val edges = blocks
-    .map(e => Vector.fill(6)(e.instances.head))
+    .map(e => Vector.fill(6)(e.instances.head)) // FIXME: Get rid of magic number
     .zip(neighbors).flatMap((l, r) => l.zip(r))
     .distinct
     .map((l, r) => WDiEdge(l, r)(1))
-  edges
+  edges.filter(e => check_for_transposition(e, block_offsets))
 def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
   val witness_count = blocks(0).instances.length
   val g = compute_nodes_for_graph(blocks)
