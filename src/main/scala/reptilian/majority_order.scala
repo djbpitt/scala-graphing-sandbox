@@ -164,6 +164,7 @@ def create_outgoing_edges(
     .map((l, r) => WDiEdge(l, r)(1))
   val direct_forward_edges = direct_edges.filter(e => check_for_transposition(e, block_offsets)) // Remove transposed or backward edges
 
+  // START HERE: Compiles and runs, but fails to create correct skip edges
   val skip_edge_sources = direct_forward_edges
     .groupBy(_.from)
     .filter((_, value) => value.size > 1)
@@ -182,6 +183,7 @@ def create_outgoing_edges(
     .distinct
     .map((l, r) => WDiEdge(l, r)(1))
   val forward_skip_edges = skip_edges.filter(e => check_for_transposition(e, block_offsets))
+
   direct_forward_edges ++ skip_edges
 
 
