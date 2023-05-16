@@ -307,9 +307,10 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
   val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
   // Prepare data (List[String])
-  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
+//  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
 //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_small"
-  //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "cats"
+//  val path_to_darwin = os.pwd / "src" / "main" / "data" / "cats"
+  val path_to_darwin = os.pwd / "src" / "main" / "data" / "two_cats"
   val witness_strings = read_data(path_to_darwin) // One string per witness
   // Prepare tokens (Vector[Token])
   val token_array = tokenize(tokenizer)(witness_strings)
