@@ -47,7 +47,7 @@ class MajorityOrderTest extends AnyFunSuite:
   test("create graph from blocks") {
     val result = compute_nodes_for_graph(blocks)
     assert(result ==
-      Graph(-1, -2, 192, 225, 4, 101, 229, 38, 134, 198, 39, 104, 43, 172, 142, 146, 243, 212, 184, 60, 188, 93, 31))
+      Graph(192, 225, 4, 101, 229, 38, 134, 198, 39, 104, 43, 172, 142, 146, 243, 212, 184, 60, 188, 93, 31))
   }
 
 
@@ -121,14 +121,14 @@ class MajorityOrderTest extends AnyFunSuite:
     val result = create_traversal_graph(blocks)
     // note: the weights om the edges are not checked in this assert!
     assert(result ==
-      Graph(-2, -1, 4, 31, 38, 39, 43, 60, 93, 101, 104, 134, 142,
+      Graph(-1, 2147483647, 4, 31, 38, 39, 43, 60, 93, 101, 104, 134, 142,
         146, 172, 184, 188, 192, 198, 212, 225, 229, 243,
         -1 ~> 4 % 6.0, 4 ~> 31 % 6.0, 31 ~> 38 % 5.0, 31 ~> 39 % 1.0,
         38 ~> 43 % 1.0, 39 ~> 43 % 5.0, 43 ~> 60 % 6.0, 60 ~> 93 % 6.0,
         93 ~> 101 % 6.0, 101 ~> 104 % 6.0, 104 ~> 134 % 6.0, 134 ~> 142 % 6.0,
         142 ~> 146 % 6.0, 146 ~> 172 % 6.0, 172 ~> 184 % 6.0, 184 ~> 188 % 6.0,
         188 ~> 192 % 6.0, 192 ~> 198 % 6.0, 198 ~> 212 % 6.0, 212 ~> 225 % 6.0,
-        225 ~> 229 % 6.0, 229 ~> 243 % 6.0, 243 ~> -2 % 6.0)
+        225 ~> 229 % 6.0, 229 ~> 243 % 6.0, 243 ~> 2147483647 % 6.0)
     )
   }
 
@@ -136,15 +136,15 @@ class MajorityOrderTest extends AnyFunSuite:
     val g = create_traversal_graph(blocks)
     val b1 = BeamOption(path = List(38, 31, 4, -1), score = 10) // one option
     val result1 = score_all_options(g, b1)
-    val expect1 = Vector(BeamOption(List(43, 38, 31, 4, -1), score=26))
+    val expect1 = Vector(BeamOption(List(43, 38, 31, 4, -1), score = 11))
     assert(result1 == expect1)
     val b2 = BeamOption(path = List(-2, -1), score = 20) // at end, no options
     val result2 = score_all_options(g, b2)
     val expect2 = Vector(BeamOption(List(-2, -1), score = 20))
     assert(result2 == expect2)
-    val b3 = BeamOption(path=List(31, 4, -1), score=20) // two options
+    val b3 = BeamOption(path = List(31, 4, -1), score = 20) // two options
     val result3 = score_all_options(g, b3)
-    val expect3 = Vector(BeamOption(List(38, 31, 4, -1), 21), BeamOption(List(39, 31, 4, -1), 23))
+    val expect3 = Vector(BeamOption(List(38, 31, 4, -1), 21), BeamOption(List(39, 31, 4, -1), 21))
     assert(result3 == expect3)
   }
 
@@ -160,7 +160,7 @@ class MajorityOrderTest extends AnyFunSuite:
     assert(result1 == result1)
   }
 
-  test(testName= "create edges by block") {
+  test(testName = "create edges by block") {
     val result = compute_block_order_for_witnesses(blocks)
       .map(_.map(_.instances.head))
     val expected = Vector(
@@ -209,11 +209,11 @@ class MajorityOrderTest extends AnyFunSuite:
     assert(result == result) // FIXME: Compare to real expected
   }
 
-//  test("create dot file") {
-//    val g = create_traversal_graph(blocks)
-//    val result = graph_to_dot(g, blocks)
-//    assert(result == result)
-//    val outputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
-//    os.write.over(outputPath, result)
-//  }
+  //  test("create dot file") {
+  //    val g = create_traversal_graph(blocks)
+  //    val result = graph_to_dot(g, blocks)
+  //    assert(result == result)
+  //    val outputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
+  //    os.write.over(outputPath, result)
+  //  }
 end MajorityOrderTest

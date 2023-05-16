@@ -69,7 +69,7 @@ protected def compute_nodes_for_graph(blocks: Vector[FullDepthBlock]) =
   val node_identifiers: Vector[Int] =
     blocks
       .map(e => e.instances(0))
-  val g = Graph.from[Int, WDiEdge](node_identifiers ++ Vector(-1, -2))
+  val g = Graph.from[Int, WDiEdge](node_identifiers)
   g
 
 protected def compute_weighted_edges(edges: Vector[Vector[WDiEdge[Int]]]): Vector[WDiEdge[Int]] =
@@ -119,8 +119,8 @@ protected def compute_block_offsets_in_all_witnesses(block_orders: Vector[Vector
 
 /** Identify transposition edges
  *
- * @param edge
- * @param block_offsets
+ * @param edge weighted directed edge
+ * @param block_offsets map from block identifier to offsets in all witnesses
  *
  * Return boolean
  *
@@ -163,16 +163,22 @@ def create_outgoing_edges(
     .distinct
     .map((l, r) => WDiEdge(l, r)(1))
   edges.filter(e => check_for_transposition(e, block_offsets)) // Remove transposed or backward edges
+
+
 def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
   // TODO: Add start and end nodes, add skip edges
   val witness_count = blocks(0).instances.length
-  val g = compute_nodes_for_graph(blocks)
+  val start_block = FullDepthBlock(instances = Vector.fill(witness_count)(-1), length = 1) // fake first (start) block
+  // FIXME (?): End-node uses maximum possible integer value (i.e., inconveniently large value)
+  val end_block = FullDepthBlock(instances = Vector.fill(witness_count)(Integer.MAX_VALUE), length = 1)
+  val blocks_for_graph = blocks ++ Vector(start_block, end_block)
+  val g = compute_nodes_for_graph(blocks_for_graph)
 //  val edges =
 //    (0 until witness_count).map(e => compute_edges_for_witness(blocks, e)).toVector
 //  val weighted_edges = compute_weighted_edges(edges)
-  val block_order_for_witnesses = compute_block_order_for_witnesses(blocks)
+  val block_order_for_witnesses = compute_block_order_for_witnesses(blocks_for_graph)
   val block_offsets = compute_block_offsets_in_all_witnesses(block_order_for_witnesses)
-  val edges = create_outgoing_edges(blocks, block_order_for_witnesses, block_offsets)
+  val edges = create_outgoing_edges(blocks_for_graph, block_order_for_witnesses, block_offsets)
   g ++= edges
   g
 
