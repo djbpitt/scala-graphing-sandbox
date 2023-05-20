@@ -136,6 +136,38 @@ def check_for_transposition(edge: WDiEdge[Int], block_offsets: Map[Int, ArrayBuf
   deltas
 
 
+def create_outgoing_edges_for_block(
+                                     block: FullDepthBlock,
+                                     block_order_for_witnesses: Vector[Vector[FullDepthBlock]],
+                                     block_offsets: Map[Int, ArrayBuffer[Int]]) =
+  // Remove backwards-facing edges before determining need for skip edges, since a second edge that is
+  //    backwards-facing is not a meaningful second edge
+  // Remove backwards-facing edges again from skip edges because skip edges might also be backward-facing
+  val id = block.instances.head
+  val neighbors: Vector[WDiEdge[Int]] = block_offsets(id)
+    .zipWithIndex
+    .map((value, index) => block_order_for_witnesses(index)(value + 1 min block_offsets.size - 1).instances.head)
+    .distinct
+    .toVector
+    .map(e => WDiEdge(id, e)(1))
+    .filter(e => check_for_transposition(e, block_offsets))
+  val skip_neighbors =
+    if neighbors.distinct.size > 1 then
+      block_offsets(id)
+        .zipWithIndex
+        .map((value, index) => block_order_for_witnesses(index)(value + 2 min block_offsets.size - 1).instances.head)
+        .distinct
+        .toVector
+        .map(e => WDiEdge(id, e)(1))
+        .filter(e => check_for_transposition(e, block_offsets))
+    else Vector.empty[WDiEdge[Int]]
+
+  neighbors ++ skip_neighbors
+  // Find neighbors and add direct edges
+  // Count distinct direct edges
+  // If count > 1 add skip edge(s)
+
+
 /** create_outgoing_edges
  *
  * @param blocks                    : vector of full-depth blocks
@@ -146,29 +178,13 @@ def check_for_transposition(edge: WDiEdge[Int], block_offsets: Map[Int, ArrayBuf
  *                                  Filter out backwards edges to remove cycles
  *                                  TODO: Weight edges, all weights are currently set to 1
  */
-
-
-def create_outgoing_edges_for_block(
-                                     block: FullDepthBlock,
-                                     block_order_for_witnesses: Vector[Vector[FullDepthBlock]],
-                                     block_offsets: Map[Int, ArrayBuffer[Int]]) =
-  val id = block.instances.head
-  val neighbors = block_offsets(id)
-    .zipWithIndex
-    .map((value, index) => block_order_for_witnesses(index)(value + 1 min block_offsets.size - 1).instances.head)
-  val edges = Vector.fill(block_order_for_witnesses.size)(id)
-    .zip(neighbors)
-    edges
-  // Find neighbors and add direct edges
-  // Count distinct direct edges
-  // If count > 1 add skip edge(s)
-
 def create_outgoing_edges(
                            blocks: Vector[FullDepthBlock],
                            block_order_for_witnesses: Vector[Vector[FullDepthBlock]],
                            block_offsets: Map[Int, ArrayBuffer[Int]]
                          ) =
-  blocks.map(e => create_outgoing_edges_for_block(e, block_order_for_witnesses, block_offsets))
+  blocks
+    .flatMap(e => create_outgoing_edges_for_block(e, block_order_for_witnesses, block_offsets))
   // Head of block.instances is block identifier, can be used to look up all instances in block_offsets map
 //  val all_offsets = blocks.map(e => block_offsets(e.instances.head))
 //  val neighbors: Vector[ArrayBuffer[Int]] = all_offsets // We convert block to int, but we’ll need block for weight
@@ -202,7 +218,7 @@ def create_outgoing_edges(
   //    .map((l, r) => WDiEdge(l, r)(1))
   //  val forward_skip_edges = skip_edges.filter(e => check_for_transposition(e, block_offsets))
 
-  
+
 
 
 def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
@@ -219,7 +235,7 @@ def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
   val block_order_for_witnesses = compute_block_order_for_witnesses(blocks_for_graph)
   val block_offsets = compute_block_offsets_in_all_witnesses(block_order_for_witnesses)
   val edges = create_outgoing_edges(blocks_for_graph, block_order_for_witnesses, block_offsets)
-//  g ++= edges
+  g ++= edges
   g
 
 
