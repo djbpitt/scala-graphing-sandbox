@@ -152,10 +152,10 @@ def create_outgoing_edges(
                            block_offsets: Map[Int, ArrayBuffer[Int]]
                          ): Vector[WDiEdge[Int]] =
   // Head of block.instances is block identifier, can be used to look up all instances in block_offsets map
-  val current_offsets = blocks.map(e => block_offsets(e.instances.head))
-  val neighbors: Vector[ArrayBuffer[Int]] = current_offsets // We convert block to int, but we’ll need block for weight
+  val all_offsets = blocks.map(e => block_offsets(e.instances.head))
+  val neighbors: Vector[ArrayBuffer[Int]] = all_offsets // We convert block to int, but we’ll need block for weight
     .map(_.zipWithIndex
-      .map((value, index) => block_order_for_witnesses(index)(value + 1 min current_offsets.size - 1).instances.head))
+      .map((value, index) => block_order_for_witnesses(index)(value + 1 min all_offsets.size - 1).instances.head))
   val direct_edges = blocks
     .map(e => Vector.fill(block_order_for_witnesses.size)(e.instances.head)) // Propagate block identifier for all witnesses
     .zip(neighbors) // Zip repeated block identifier (source) with all targets
@@ -173,13 +173,24 @@ def create_outgoing_edges(
   val skip_edge_current_offsets = blocks
     .filter(e => skip_edges_sources_as_set.contains(e.instances.head))
     .map(e => block_offsets(e.instances.head))
+  println("block_order_for_witnesses")
+  block_order_for_witnesses.foreach(println)
+  println()
+  println("block_offsets")
+  println(block_offsets)
+  println()
+  println("skip_edge_current_offsets")
+  skip_edge_current_offsets.foreach(println)
+  println()
   val skip_edge_neighbors = skip_edge_current_offsets
     .map(_.zipWithIndex
-      .map((value, index) => block_order_for_witnesses(index)(value + 2 min skip_edge_current_offsets.size - 1).instances.head))
+      .map((value, index) => block_order_for_witnesses(index)(value + 2 min all_offsets.size - 1).instances.head))
     .distinct
+  println("skip_edge_neighbors")
+  skip_edge_neighbors.foreach(println)
   val skip_edges = skip_edge_current_offsets
     .zip(skip_edge_neighbors) // Zip repeated block identifier (source) with all targets
-    .flatMap((l, r) => l.zip(r)) // Zip each source with corresponding target
+    .flatMap((l, r) => l.zip(r)) // Zip each source with corresponding target˘¯
     .distinct
     .map((l, r) => WDiEdge(l, r)(1))
   val forward_skip_edges = skip_edges.filter(e => check_for_transposition(e, block_offsets))
