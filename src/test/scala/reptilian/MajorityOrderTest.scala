@@ -209,6 +209,14 @@ class MajorityOrderTest extends AnyFunSuite:
     assert(result == result) // FIXME: Compare to real expected
   }
 
+  test("create_outgoing_edges_for_block") {
+    val block_order_for_witnesses = compute_block_order_for_witnesses(blocks)
+    val block_offsets_in_all_witnesses = compute_block_offsets_in_all_witnesses(block_order_for_witnesses)
+    val result = blocks.map(e => create_outgoing_edges_for_block(e, block_order_for_witnesses, block_offsets_in_all_witnesses))
+    result.foreach(println)
+    assert(result == result)
+  }
+
   //  test("create dot file") {
   //    val g = create_traversal_graph(blocks)
   //    val result = graph_to_dot(g, blocks)

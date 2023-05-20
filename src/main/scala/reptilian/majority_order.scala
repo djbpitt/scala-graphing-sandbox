@@ -29,28 +29,28 @@ implicit val myConfig: CoreConfig = CoreConfig()
 * path : list of nodes; prepend new values, so list is in reverse order at end
 * score : cumulative count of tokens placed by path
 * */
-case class BeamOption (path: List[Int], score: Double)
+case class BeamOption(path: List[Int], score: Double)
 
 /** Check whether all edges point forward
  *
  * Perform vector subtraction of source from target; all values should be positive
  */
 def check_backward_edges_generator(blocks: Vector[FullDepthBlock], w: Int): Vector[Boolean] =
-    blocks
-      .sortBy(_.instances(w))
-      .sliding(2, 1)
-      .map(e => e(0).instances zip e(1).instances)
-      .map(_.map((value1, value2) => value2 - value1))
-      .map(_.map(_.sign))
-      .map(_.forall(_ == 1))
-      .toVector
+  blocks
+    .sortBy(_.instances(w))
+    .sliding(2, 1)
+    .map(e => e(0).instances zip e(1).instances)
+    .map(_.map((value1, value2) => value2 - value1))
+    .map(_.map(_.sign))
+    .map(_.forall(_ == 1))
+    .toVector
 
 def edges_generator(blocks: Vector[FullDepthBlock], w: Int): Vector[WDiEdge[Int]] =
-   blocks
-     .sortBy(_.instances(w))
-     .sliding(2, 1)
-     .map(e => e(0).instances(0) ~> e(1).instances(0) % e(1).length)
-     .toVector
+  blocks
+    .sortBy(_.instances(w))
+    .sliding(2, 1)
+    .map(e => e(0).instances(0) ~> e(1).instances(0) % e(1).length)
+    .toVector
 
 /** Filter out edges that introduce cycles
  *
@@ -81,7 +81,7 @@ protected def compute_weighted_edges(edges: Vector[Vector[WDiEdge[Int]]]): Vecto
 /** Sort all blocks according to all witnesses
  *
  * Returns vector of vectors of all blocks, each sorted by a different witness
- *  Values are block identifiers (= token offset for witness 0)
+ * Values are block identifiers (= token offset for witness 0)
  *
  */
 protected def compute_block_order_for_witnesses(blocks: Vector[FullDepthBlock]): Vector[Vector[FullDepthBlock]] =
@@ -96,7 +96,7 @@ protected def compute_block_order_for_witnesses(blocks: Vector[FullDepthBlock]):
  *
  * @param block_orders Vector of vectors of all blocks, each sorted by a different witness
  *
- * Returns map from block id (offset in witness 0) to array buffer of offsets in all witness
+ *                     Returns map from block id (offset in witness 0) to array buffer of offsets in all witness
  */
 protected def compute_block_offsets_in_all_witnesses(block_orders: Vector[Vector[FullDepthBlock]]) =
   // Traverse each inner vector and add value to Map[Int, ArrayBuffer]
@@ -119,12 +119,12 @@ protected def compute_block_offsets_in_all_witnesses(block_orders: Vector[Vector
 
 /** Identify transposition edges
  *
- * @param edge weighted directed edge
+ * @param edge          weighted directed edge
  * @param block_offsets map from block identifier to offsets in all witnesses
  *
- * Return boolean
+ *                      Return boolean
  *
- * Edges for all witnesses must point forward
+ *                      Edges for all witnesses must point forward
  * */
 def check_for_transposition(edge: WDiEdge[Int], block_offsets: Map[Int, ArrayBuffer[Int]]): Boolean =
   val from = edge.from
@@ -138,64 +138,71 @@ def check_for_transposition(edge: WDiEdge[Int], block_offsets: Map[Int, ArrayBuf
 
 /** create_outgoing_edges
  *
- * @param blocks: vector of full-depth blocks
- * @param block_order_for_witnesses: vector of vectors of full-depth blocks, each sorted by a witness
- * @param block_offsets: map from block identifier to array buffer of positions of block in all witnesses
+ * @param blocks                    : vector of full-depth blocks
+ * @param block_order_for_witnesses : vector of vectors of full-depth blocks, each sorted by a witness
+ * @param block_offsets             : map from block identifier to array buffer of positions of block in all witnesses
  *
- * Return vector of directed edges
- * Filter out backwards edges to remove cycles
- * TODO: Weight edges, all weights are currently set to 1
+ *                                  Return vector of directed edges
+ *                                  Filter out backwards edges to remove cycles
+ *                                  TODO: Weight edges, all weights are currently set to 1
  */
+
+
+def create_outgoing_edges_for_block(
+                                     block: FullDepthBlock,
+                                     block_order_for_witnesses: Vector[Vector[FullDepthBlock]],
+                                     block_offsets: Map[Int, ArrayBuffer[Int]]) =
+  val id = block.instances.head
+  val neighbors = block_offsets(id)
+    .zipWithIndex
+    .map((value, index) => block_order_for_witnesses(index)(value + 1 min block_offsets.size - 1).instances.head)
+  val edges = Vector.fill(block_order_for_witnesses.size)(id)
+    .zip(neighbors)
+    edges
+  // Find neighbors and add direct edges
+  // Count distinct direct edges
+  // If count > 1 add skip edge(s)
+
 def create_outgoing_edges(
                            blocks: Vector[FullDepthBlock],
                            block_order_for_witnesses: Vector[Vector[FullDepthBlock]],
                            block_offsets: Map[Int, ArrayBuffer[Int]]
-                         ): Vector[WDiEdge[Int]] =
+                         ) =
+  blocks.map(e => create_outgoing_edges_for_block(e, block_order_for_witnesses, block_offsets))
   // Head of block.instances is block identifier, can be used to look up all instances in block_offsets map
-  val all_offsets = blocks.map(e => block_offsets(e.instances.head))
-  val neighbors: Vector[ArrayBuffer[Int]] = all_offsets // We convert block to int, but we’ll need block for weight
-    .map(_.zipWithIndex
-      .map((value, index) => block_order_for_witnesses(index)(value + 1 min all_offsets.size - 1).instances.head))
-  val direct_edges = blocks
-    .map(e => Vector.fill(block_order_for_witnesses.size)(e.instances.head)) // Propagate block identifier for all witnesses
-    .zip(neighbors) // Zip repeated block identifier (source) with all targets
-    .flatMap((l, r) => l.zip(r)) // Zip each source with corresponding target
-    .distinct
-    .map((l, r) => WDiEdge(l, r)(1))
-  val direct_forward_edges = direct_edges.filter(e => check_for_transposition(e, block_offsets)) // Remove transposed or backward edges
+//  val all_offsets = blocks.map(e => block_offsets(e.instances.head))
+//  val neighbors: Vector[ArrayBuffer[Int]] = all_offsets // We convert block to int, but we’ll need block for weight
+//    .map(_.zipWithIndex
+//      .map((value, index) => block_order_for_witnesses(index)(value + 1 min all_offsets.size - 1).instances.head))
+//  val direct_edges = blocks
+//    .map(e => Vector.fill(block_order_for_witnesses.size)(e.instances.head)) // Propagate block identifier for all witnesses
+//    .zip(neighbors) // Zip repeated block identifier (source) with all targets
+//    .flatMap((l, r) => l.zip(r)) // Zip each source with corresponding target
+//    .distinct
+//    .map((l, r) => WDiEdge(l, r)(1))
+//  val forward_edges = direct_edges.filter(e => check_for_transposition(e, block_offsets)) // Remove transposed or backward edges
 
   // START HERE: Compiles and runs, but fails to create correct skip edges
-  val skip_edge_sources = direct_forward_edges
-    .groupBy(_.from)
-    .filter((_, value) => value.size > 1)
-    .keys
-  val skip_edges_sources_as_set = skip_edge_sources.toSet
-  val skip_edge_current_offsets = blocks
-    .filter(e => skip_edges_sources_as_set.contains(e.instances.head))
-    .map(e => block_offsets(e.instances.head))
-  println("block_order_for_witnesses")
-  block_order_for_witnesses.foreach(println)
-  println()
-  println("block_offsets")
-  println(block_offsets)
-  println()
-  println("skip_edge_current_offsets")
-  skip_edge_current_offsets.foreach(println)
-  println()
-  val skip_edge_neighbors = skip_edge_current_offsets
-    .map(_.zipWithIndex
-      .map((value, index) => block_order_for_witnesses(index)(value + 2 min all_offsets.size - 1).instances.head))
-    .distinct
-  println("skip_edge_neighbors")
-  skip_edge_neighbors.foreach(println)
-  val skip_edges = skip_edge_current_offsets
-    .zip(skip_edge_neighbors) // Zip repeated block identifier (source) with all targets
-    .flatMap((l, r) => l.zip(r)) // Zip each source with corresponding target˘¯
-    .distinct
-    .map((l, r) => WDiEdge(l, r)(1))
-  val forward_skip_edges = skip_edges.filter(e => check_for_transposition(e, block_offsets))
+  //  val skip_edge_sources = direct_forward_edges
+  //    .groupBy(_.from)
+  //    .filter((_, value) => value.size > 1)
+  //    .keys
+  //  val skip_edges_sources_as_set = skip_edge_sources.toSet
+  //  val skip_edge_current_offsets = blocks
+  //    .filter(e => skip_edges_sources_as_set.contains(e.instances.head))
+  //    .map(e => block_offsets(e.instances.head))
+  //  val skip_edge_neighbors = skip_edge_current_offsets
+  //    .map(_.zipWithIndex
+  //      .map((value, index) => block_order_for_witnesses(index)(value + 2 min all_offsets.size - 1).instances.head))
+  //    .distinct
+  //  val skip_edges = skip_edge_current_offsets
+  //    .zip(skip_edge_neighbors) // Zip repeated block identifier (source) with all targets
+  //    .flatMap((l, r) => l.zip(r)) // Zip each source with corresponding target˘¯
+  //    .distinct
+  //    .map((l, r) => WDiEdge(l, r)(1))
+  //  val forward_skip_edges = skip_edges.filter(e => check_for_transposition(e, block_offsets))
 
-  direct_forward_edges ++ skip_edges
+  
 
 
 def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
@@ -206,13 +213,13 @@ def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
   val end_block = FullDepthBlock(instances = Vector.fill(witness_count)(Integer.MAX_VALUE), length = 1)
   val blocks_for_graph = blocks ++ Vector(start_block, end_block)
   val g = compute_nodes_for_graph(blocks_for_graph)
-//  val edges =
-//    (0 until witness_count).map(e => compute_edges_for_witness(blocks, e)).toVector
-//  val weighted_edges = compute_weighted_edges(edges)
+  //  val edges =
+  //    (0 until witness_count).map(e => compute_edges_for_witness(blocks, e)).toVector
+  //  val weighted_edges = compute_weighted_edges(edges)
   val block_order_for_witnesses = compute_block_order_for_witnesses(blocks_for_graph)
   val block_offsets = compute_block_offsets_in_all_witnesses(block_order_for_witnesses)
   val edges = create_outgoing_edges(blocks_for_graph, block_order_for_witnesses, block_offsets)
-  g ++= edges
+//  g ++= edges
   g
 
 
@@ -223,7 +230,7 @@ def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
  * If head of path is -2, we're at the end, so return current value (which might ultimately be optimal)
  * Otherwise check each out-edge, prepend to path, increment score, and return new BeamOption
  * Returns all options; we decide elsewhere which ones to keep on the beam for the next tier
-* */
+ * */
 def score_all_options(graph: Graph[Int, WDiEdge], current: BeamOption): Vector[BeamOption] =
   // supply outer (our Int value) to retrieve complex inner
   val current_last: Int = current.path.head
@@ -245,7 +252,9 @@ def find_optimal_alignment(graph: Graph[Int, WDiEdge]) = // specify return type?
   // Return single BeamOption, representing (one) best alignment
   // TODO: Restore temporarily disabled unit tests
   val beam_max = 5 // Fixed, but could be adaptable, e.g., x% of possible options
+
   def n(outer: Int): graph.NodeT = graph get outer // supply outer (our Int value) to retrieve complex inner
+
   val start = BeamOption(path = List(-1), score = 0)
   var beam: Vector[BeamOption] = Vector(start) // initialize beam to hold just start node (zero tokens)
 
@@ -257,14 +266,13 @@ def find_optimal_alignment(graph: Graph[Int, WDiEdge]) = // specify return type?
       beam = new_options.sortBy(_.score * -1).slice(from = 0, until = beam_max)
 
   beam.minBy(_.score * -1).path.reverse // Exit once all options on the beam end at the end node
-  
-  
+
+
 //  var optimal_path = Vector[Int]()
 //  while current != end do
 //    optimal_path = optimal_path :+ current.value
 //    val target_node = current.outgoing.maxBy(_.weight).to
 //    current = target_node
-
 
 
 def graph_to_dot(g: Graph[Int, WDiEdge], b: Map[Int, String], path_nodes: Set[Int]) =
@@ -276,20 +284,20 @@ def graph_to_dot(g: Graph[Int, WDiEdge], b: Map[Int, String], path_nodes: Set[In
       DotAttr("attr_2", "<two>")))
 
   def edgeTransformer(innerEdge: scalax.collection.Graph[Int, WDiEdge]#EdgeT):
-    Option[(DotGraph, DotEdgeStmt)] = innerEdge.edge match {
-      case WDiEdge(source, target, weight) => weight match {
-        case weight: Double =>
-          Some((root,
-            DotEdgeStmt(source.toString,
-              target.toString,
-              List(DotAttr("label", weight.toInt.toString))
-            )))
-      }
+  Option[(DotGraph, DotEdgeStmt)] = innerEdge.edge match {
+    case WDiEdge(source, target, weight) => weight match {
+      case weight: Double =>
+        Some((root,
+          DotEdgeStmt(source.toString,
+            target.toString,
+            List(DotAttr("label", weight.toInt.toString))
+          )))
     }
+  }
 
   def nodeTransformer(innerNode: scalax.collection.Graph[Int, WDiEdge]#NodeT):
-      Option[(DotGraph,DotNodeStmt)] =
-    // Remove (for now) double quotes because dot-to-svg uses them as string delimiters
+  Option[(DotGraph, DotNodeStmt)] =
+  // Remove (for now) double quotes because dot-to-svg uses them as string delimiters
     Some(root, DotNodeStmt(innerNode.toString, List(
       DotAttr("tooltip", b.getOrElse(innerNode.value, "none").replaceAll("\"", "")),
       DotAttr("style", "filled"),
