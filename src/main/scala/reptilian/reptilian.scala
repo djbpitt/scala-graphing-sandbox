@@ -310,8 +310,8 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
 //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
 //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_small"
 //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "cats"
-//  val path_to_darwin = os.pwd / "src" / "main" / "data" / "two_cats"
-  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_5_9"
+  val path_to_darwin = os.pwd / "src" / "main" / "data" / "two_cats"
+//  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_5_9"
   val witness_strings = read_data(path_to_darwin) // One string per witness
   // Prepare tokens (Vector[Token])
   val token_array = tokenize(tokenizer)(witness_strings)

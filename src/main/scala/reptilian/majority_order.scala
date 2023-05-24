@@ -156,6 +156,16 @@ def create_outgoing_edges_for_block(
     // If there are multiple forward edges there's a transposition, so consider also a skip edge
     // If there is no forward edge there's also a transposition (we've removed all direct edges),
     //    so consider also a skip edge here, as well
+    /* START HERE
+    The target of a skip edge is the closest block that gets skipped over by *all* direct edges.
+      E.g.: The red and some black cat ~ The black and some red cat => all direct edges from The
+      skip over "and some", so that’s the closest block for all witnesses
+    There may be no skip edge if no block is skipped over by all direct edges.
+      E.g.: The red black cat ~ The black red cat
+    There may be more than one skip edge (we think!), because different skipped blocks might be
+      closer to the source block for different witnesses. If so, we create all skip edges and let
+      the traversal (beam search) manage the options.
+    * */
       block_offsets(id)
         .zipWithIndex
         .map((value, index) => block_order_for_witnesses(index)(value + 2 min block_offsets.size - 1).instances.head)
