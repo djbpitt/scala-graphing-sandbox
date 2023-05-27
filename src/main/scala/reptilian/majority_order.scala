@@ -25,6 +25,10 @@ import scala.collection.mutable.ArrayBuffer
 
 implicit val myConfig: CoreConfig = CoreConfig()
 
+/** https://stackoverflow.com/questions/28254447/is-there-a-scala-java-equivalent-of-python-3s-collections-counter
+ */
+def counts[T](s: Seq[T]) = s.groupBy(identity).view.mapValues(_.length)
+
 /* Beam search maintains collection of BeamOption objects
 * path : list of nodes; prepend new values, so list is in reverse order at end
 * score : cumulative count of tokens placed by path
@@ -144,41 +148,31 @@ def create_outgoing_edges_for_block(
   //    backwards-facing is not a meaningful second edge
   // Remove backwards-facing edges again from skip edges because skip edges might also be backward-facing
   val id = block.instances.head
-  val neighbors: Vector[WDiEdge[Int]] = block_offsets(id)
+  val neighbor_targets: Vector[Int] = block_offsets(id)
     .zipWithIndex
     .map((value, index) => block_order_for_witnesses(index)(value + 1 min block_offsets.size - 1).instances.head)
     .distinct
     .toVector
-    .map(e => WDiEdge(id, e)(1))
-    .filter(e => check_for_transposition(e, block_offsets))
-  val skip_neighbors =
-    if neighbors.distinct.size > 1 || neighbors.distinct.isEmpty then
-    // If there are multiple forward edges there's a transposition, so consider also a skip edge
-    // If there is no forward edge there's also a transposition (we've removed all direct edges),
-    //    so consider also a skip edge here, as well
-    /* START HERE
-    The target of a skip edge is the closest block that gets skipped over by *all* direct edges.
-      E.g.: The red and some black cat ~ The black and some red cat => all direct edges from The
-      skip over "and some", so that’s the closest block for all witnesses
-    There may be no skip edge if no block is skipped over by all direct edges.
-      E.g.: The red black cat ~ The black red cat
-    There may be more than one skip edge (we think!), because different skipped blocks might be
-      closer to the source block for different witnesses. If so, we create all skip edges and let
-      the traversal (beam search) manage the options.
-    * */
-      block_offsets(id)
-        .zipWithIndex
-        .map((value, index) => block_order_for_witnesses(index)(value + 2 min block_offsets.size - 1).instances.head)
-        .distinct
-        .toVector
-        .map(e => WDiEdge(id, e)(1))
-        .filter(e => check_for_transposition(e, block_offsets))
-    else Vector.empty[WDiEdge[Int]]
+  val neighbor_edges: Vector[WDiEdge[Int]] =
+    neighbor_targets
+      .map(e => WDiEdge(id, e)(1))
+      .filter(e => check_for_transposition(e, block_offsets))
+  val skip_targets =
+    if neighbor_targets.size == 1 then
+      Vector.empty[Int]
+    else
+      val source_block_offsets: ArrayBuffer[Int] = block_offsets(id)
+      val skip_target_offsets: Vector[ArrayBuffer[Int]] = neighbor_targets // each target of a direct edge
+        .map(e => block_offsets(e))
+      val skipped_blocks =
+        skip_target_offsets
+          .map(e => source_block_offsets.zip(e))
+          .filter(e => e.map((start, end) => end - start).map(_.sign).forall(_ == 1)) // Remove backward deltas
+          .map(_.zipWithIndex)
+          .map(_.map((pointers, index) => (pointers(0), pointers(1), index)))
+      skipped_blocks.foreach(println)
 
-  neighbors ++ skip_neighbors
-// Find neighbors and add direct edges
-// Count distinct direct edges
-// If count > 1 add skip edge(s)
+  neighbor_edges
 
 
 /** create_outgoing_edges
