@@ -161,15 +161,24 @@ def create_outgoing_edges_for_block(
   val skip_edges =
     if neighbor_edges.size == 1 then
       Vector.empty[Int]
-    else
-      println(s"Multiple (or zero) direct edges from $id: ")
-      val skipped_blocks = neighbor_edges
+    else if neighbor_edges.size > 1 then
+      println(s"Multiple direct edges from $id: ")
+      val skipped_block_offsets = neighbor_edges
         .map(e => (e.from, e.to))
         .zipWithIndex // Add witness id
         .map((pointers, index) => (pointers._1, pointers._2, index)) // Flatten into (source, target, witness) tuple
-
-      println(id)
+      // START HERE: We are not finding skipped blocks
+      val skipped_blocks = skipped_block_offsets
+        .map((start, end, witness) => ???)
+      println(s"Source: $id")
+      print("Skipped block offsets: ")
+      skipped_block_offsets.foreach(println)
+      println("Skipped blocks: ")
       skipped_blocks.foreach(println)
+      print("skipped block tokens: ")
+      skipped_blocks.map(_.map(_.show)).foreach(println)
+    else
+      println(s"No outedges from node $id")
 //      val source_block_offsets: ArrayBuffer[Int] = block_offsets(id)
 //      val skip_target_offsets: Vector[ArrayBuffer[Int]] = neighbor_targets // each target of a direct edge
 //        .map(e => block_offsets(e))
@@ -209,7 +218,7 @@ def create_outgoing_edges(
                          )
                          (implicit token_array: Vector[Token])=
   blocks
-    .tail // End note is first block in vector and has no outgoing edges
+    .tail // End node is first block in vector and has no outgoing edges, so exclude
     .flatMap(e => create_outgoing_edges_for_block(e, block_order_for_witnesses, block_offsets))
 // Head of block.instances is block identifier, can be used to look up all instances in block_offsets map
 //  val all_offsets = blocks.map(e => block_offsets(e.instances.head))
@@ -251,6 +260,7 @@ def create_traversal_graph(blocks: Vector[FullDepthBlock])(using token_array: Ve
   val start_block = FullDepthBlock(instances = Vector.fill(witness_count)(-1), length = 1) // fake first (start) block
   // FIXME (?): End-node uses maximum possible integer value (i.e., inconveniently large value)
   val end_block = FullDepthBlock(instances = Vector.fill(witness_count)(Integer.MAX_VALUE), length = 1)
+  // end node first to we can use blocks.tail to compute outgoing edges
   val blocks_for_graph = Vector(end_block) ++ blocks ++ Vector(start_block)
   val g = compute_nodes_for_graph(blocks_for_graph)
   //  val edges =
