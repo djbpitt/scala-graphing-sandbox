@@ -45,7 +45,7 @@ case class Block(start: Int, end: Int, length: Int)
  * This plus token array is enough for all subsequent processing; no further need for suffix array, etc.
  */
 case class FullDepthBlock(instances: Vector[Int], length:Int):
-  def show(token_array: Vector[Token]): String =
+  def show(implicit token_array: Vector[Token]): String =
     token_array
       .slice(this.instances(0), this.instances(0) + this.length)
       .map(_.n)
@@ -300,7 +300,7 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   blocks
     .map(e => e.instances(0) -> e.show(token_array))
     .toMap
-  
+
 
 @main def main(): Unit =
   // Prepare tokenizer (partially applied function)
@@ -312,13 +312,13 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
 //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "cats"
   // Small skip edge test examples
 //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "no_skip_cats" // no skip edge; direct transposition
-//  val path_to_darwin = os.pwd / "src" / "main" / "data" / "one_skip_cats" // one skip edge
-  val path_to_darwin = os.pwd / "src" / "main" / "data" / "two_skip_cats" // two (parallel) skip edges
+  val path_to_darwin = os.pwd / "src" / "main" / "data" / "one_skip_cats" // one skip edge
+//  val path_to_darwin = os.pwd / "src" / "main" / "data" / "two_skip_cats" // two (parallel) skip edges
   // End of skip edge test examples
 //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_5_9"
   val witness_strings = read_data(path_to_darwin) // One string per witness
   // Prepare tokens (Vector[Token])
-  val token_array = tokenize(tokenizer)(witness_strings)
+  implicit val token_array: Vector[Token] = tokenize(tokenizer)(witness_strings)
   // Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
   val longest_full_depth_nonrepeating_blocks = create_aligned_blocks(token_array, witness_strings.size)
   // longest_full_depth_nonrepeating_blocks.foreach(println)
