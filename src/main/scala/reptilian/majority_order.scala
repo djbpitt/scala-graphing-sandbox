@@ -209,6 +209,7 @@ def create_outgoing_edges(
                          )
                          (implicit token_array: Vector[Token])=
   blocks
+    .tail // End note is first block in vector and has no outgoing edges
     .flatMap(e => create_outgoing_edges_for_block(e, block_order_for_witnesses, block_offsets))
 // Head of block.instances is block identifier, can be used to look up all instances in block_offsets map
 //  val all_offsets = blocks.map(e => block_offsets(e.instances.head))
@@ -250,7 +251,7 @@ def create_traversal_graph(blocks: Vector[FullDepthBlock])(using token_array: Ve
   val start_block = FullDepthBlock(instances = Vector.fill(witness_count)(-1), length = 1) // fake first (start) block
   // FIXME (?): End-node uses maximum possible integer value (i.e., inconveniently large value)
   val end_block = FullDepthBlock(instances = Vector.fill(witness_count)(Integer.MAX_VALUE), length = 1)
-  val blocks_for_graph = blocks ++ Vector(start_block, end_block)
+  val blocks_for_graph = Vector(end_block) ++ blocks ++ Vector(start_block)
   val g = compute_nodes_for_graph(blocks_for_graph)
   //  val edges =
   //    (0 until witness_count).map(e => compute_edges_for_witness(blocks, e)).toVector
