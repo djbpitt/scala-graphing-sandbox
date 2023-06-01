@@ -160,25 +160,44 @@ def create_outgoing_edges_for_block(
       .filter(e => check_for_cycles(e, block_offsets))
   val skip_edges =
     if neighbor_edges.size == 1 then
-      Vector.empty[Int]
+      Vector.empty[WDiEdge[Int]]
     else if neighbor_edges.size > 1 then
-      println(s"Multiple direct edges from $id: ")
-      val skipped_block_offsets = neighbor_edges
+      val neighbor_edges_by_witness = neighbor_edges
         .map(e => (e.from, e.to))
         .zipWithIndex // Add witness id
         .map((pointers, index) => (pointers._1, pointers._2, index)) // Flatten into (source, target, witness) tuple
-      // START HERE: We are not finding skipped blocks
-      val skipped_blocks = skipped_block_offsets
-        .map((start, end, witness) => ???)
-      println(s"Source: $id")
-      print("Skipped block offsets: ")
-      skipped_block_offsets.foreach(println)
-      println("Skipped blocks: ")
-      skipped_blocks.foreach(println)
-      print("skipped block tokens: ")
-      skipped_blocks.map(_.map(_.show)).foreach(println)
+//      println("block_offsets:")
+//      println(block_offsets)
+//      println("block_order_for_witnesses:")
+//      block_order_for_witnesses.foreach(println)
+//      println("Neighbor edges by witness (source, target, witness): ")
+//      neighbor_edges_by_witness.foreach(println)
+      // For each witness look up the blocks skipped
+      val skipped_blocks_by_witness = neighbor_edges_by_witness
+        .map((source, target, witness) =>
+          {
+            val skip_start_offset = block_offsets(source)(witness) + 1
+            val skip_end_offset = block_offsets(target)(witness) + 1
+            block_order_for_witnesses(witness).slice(skip_start_offset, skip_end_offset + 1)
+          }
+        )
+//      println("skipped_blocks_by_witness:")
+//      skipped_blocks_by_witness.foreach(println)
+      // Keep the intersection (blocks that occur once per witness, i.e., in all witnesses
+      val shared_skipped_blocks = counts(skipped_blocks_by_witness.flatten)
+        .filter((key, value) => value == block_order_for_witnesses.size)
+//      println(shared_skipped_blocks.toMap)
+      // TODO: For now just the closest one, but should it be all of them?
+      val closest = shared_skipped_blocks.keys.minBy(_.instances.head)
+//      println("closest edge points to:")
+//      println(closest)
+      val skip_edge = Vector(WDiEdge(id, closest.instances.head)(1))
+//      println("closest edge:")
+//      println(skip_edge)
+      skip_edge
     else
       println(s"No outedges from node $id")
+      Vector.empty[WDiEdge[Int]]// temporary
 //      val source_block_offsets: ArrayBuffer[Int] = block_offsets(id)
 //      val skip_target_offsets: Vector[ArrayBuffer[Int]] = neighbor_targets // each target of a direct edge
 //        .map(e => block_offsets(e))
@@ -198,7 +217,10 @@ def create_outgoing_edges_for_block(
 //      print("skipped block tokens: ")
 //      skipped_blocks.map(_.map(_.map(_.show))).foreach(println)
 //      println
-  neighbor_edges
+  val all_edges = neighbor_edges ++ skip_edges
+//  println("all_edges:")
+//  println(all_edges)
+  all_edges
 
 
 /** create_outgoing_edges
@@ -217,9 +239,12 @@ def create_outgoing_edges(
                            block_offsets: Map[Int, ArrayBuffer[Int]]
                          )
                          (implicit token_array: Vector[Token])=
-  blocks
+  val edges = blocks
     .tail // End node is first block in vector and has no outgoing edges, so exclude
     .flatMap(e => create_outgoing_edges_for_block(e, block_order_for_witnesses, block_offsets))
+//  println("printing all edges for graph:")
+//  println(edges)
+  edges
 // Head of block.instances is block identifier, can be used to look up all instances in block_offsets map
 //  val all_offsets = blocks.map(e => block_offsets(e.instances.head))
 //  val neighbors: Vector[ArrayBuffer[Int]] = all_offsets // We convert block to int, but we’ll need block for weight
@@ -269,8 +294,11 @@ def create_traversal_graph(blocks: Vector[FullDepthBlock])(using token_array: Ve
   val block_order_for_witnesses = compute_block_order_for_witnesses(blocks_for_graph)
   val block_offsets = compute_block_offsets_in_all_witnesses(block_order_for_witnesses)
   val edges = create_outgoing_edges(blocks_for_graph, block_order_for_witnesses, block_offsets)
-  g ++= edges
-  g
+//  println(g)
+//  println(edges)
+  val graph_with_edges = g ++ edges
+//  println(graph_with_edges)
+  graph_with_edges
 
 
 /** Take path step for all edges on BeamOption and return all potential new BeamOption objects
