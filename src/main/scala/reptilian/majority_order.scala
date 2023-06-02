@@ -166,12 +166,6 @@ def create_outgoing_edges_for_block(
         .map(e => (e.from, e.to))
         .zipWithIndex // Add witness id
         .map((pointers, index) => (pointers._1, pointers._2, index)) // Flatten into (source, target, witness) tuple
-//      println("block_offsets:")
-//      println(block_offsets)
-//      println("block_order_for_witnesses:")
-//      block_order_for_witnesses.foreach(println)
-//      println("Neighbor edges by witness (source, target, witness): ")
-//      neighbor_edges_by_witness.foreach(println)
       // For each witness look up the blocks skipped
       val skipped_blocks_by_witness = neighbor_edges_by_witness
         .map((source, target, witness) =>
@@ -181,45 +175,19 @@ def create_outgoing_edges_for_block(
             block_order_for_witnesses(witness).slice(skip_start_offset, skip_end_offset + 1)
           }
         )
-//      println("skipped_blocks_by_witness:")
-//      skipped_blocks_by_witness.foreach(println)
       // Keep the intersection (blocks that occur once per witness, i.e., in all witnesses
       val shared_skipped_blocks = counts(skipped_blocks_by_witness.flatten)
-        .filter((key, value) => value == block_order_for_witnesses.size)
-//      println(shared_skipped_blocks.toMap)
+        .filter((_, value) => value == block_order_for_witnesses.size)
       // TODO: For now just the closest one, but should it be all of them?
-      val closest = shared_skipped_blocks.keys.minBy(_.instances.head)
-//      println("closest edge points to:")
-//      println(closest)
-      val skip_edge = Vector(WDiEdge(id, closest.instances.head)(1))
-//      println("closest edge:")
-//      println(skip_edge)
-      skip_edge
+        val non_cyclic = shared_skipped_blocks
+          .map(e => WDiEdge(id, e._1.instances.head)(1))
+          .filter(e => check_for_cycles(e, block_offsets))
+        val skip_edge = non_cyclic.minBy(_._2)
+      Vector(skip_edge)
     else
       println(s"No outedges from node $id")
       Vector.empty[WDiEdge[Int]]// temporary
-//      val source_block_offsets: ArrayBuffer[Int] = block_offsets(id)
-//      val skip_target_offsets: Vector[ArrayBuffer[Int]] = neighbor_targets // each target of a direct edge
-//        .map(e => block_offsets(e))
-//      val skipped_block_offsets =
-//        skip_target_offsets
-//          .map(e => source_block_offsets.zip(e)) // Zip source and target offsets
-//          //.filter(e => e.map((start, end) => end - start).map(_.sign).forall(_ == 1)) // Remove backward deltas
-//          .map(_.zipWithIndex) // Add witness id
-//          .map(_.map((pointers, index) => (pointers(0), pointers(1), index))) // (start offset, end offset, witness no)
-//      print("skipped_block_offsets:")
-//      skipped_block_offsets.foreach(println)
-//      println("skipped_block_offsets size: " + skipped_block_offsets.size)
-//      val skipped_blocks = skipped_block_offsets
-//        .map(_.map((start, end, witness) => block_order_for_witnesses(witness).slice(from=start + 1, until=end)))
-//      print("skipped_blocks: ")
-//      skipped_blocks.foreach(println)
-//      print("skipped block tokens: ")
-//      skipped_blocks.map(_.map(_.map(_.show))).foreach(println)
-//      println
   val all_edges = neighbor_edges ++ skip_edges
-//  println("all_edges:")
-//  println(all_edges)
   all_edges
 
 
@@ -242,62 +210,21 @@ def create_outgoing_edges(
   val edges = blocks
     .tail // End node is first block in vector and has no outgoing edges, so exclude
     .flatMap(e => create_outgoing_edges_for_block(e, block_order_for_witnesses, block_offsets))
-//  println("printing all edges for graph:")
-//  println(edges)
   edges
-// Head of block.instances is block identifier, can be used to look up all instances in block_offsets map
-//  val all_offsets = blocks.map(e => block_offsets(e.instances.head))
-//  val neighbors: Vector[ArrayBuffer[Int]] = all_offsets // We convert block to int, but we’ll need block for weight
-//    .map(_.zipWithIndex
-//      .map((value, index) => block_order_for_witnesses(index)(value + 1 min all_offsets.size - 1).instances.head))
-//  val direct_edges = blocks
-//    .map(e => Vector.fill(block_order_for_witnesses.size)(e.instances.head)) // Propagate block identifier for all witnesses
-//    .zip(neighbors) // Zip repeated block identifier (source) with all targets
-//    .flatMap((l, r) => l.zip(r)) // Zip each source with corresponding target
-//    .distinct
-//    .map((l, r) => WDiEdge(l, r)(1))
-//  val forward_edges = direct_edges.filter(e => check_for_transposition(e, block_offsets)) // Remove transposed or backward edges
-
-// START HERE: Compiles and runs, but fails to create correct skip edges
-//  val skip_edge_sources = direct_forward_edges
-//    .groupBy(_.from)
-//    .filter((_, value) => value.size > 1)
-//    .keys
-//  val skip_edges_sources_as_set = skip_edge_sources.toSet
-//  val skip_edge_current_offsets = blocks
-//    .filter(e => skip_edges_sources_as_set.contains(e.instances.head))
-//    .map(e => block_offsets(e.instances.head))
-//  val skip_edge_neighbors = skip_edge_current_offsets
-//    .map(_.zipWithIndex
-//      .map((value, index) => block_order_for_witnesses(index)(value + 2 min all_offsets.size - 1).instances.head))
-//    .distinct
-//  val skip_edges = skip_edge_current_offsets
-//    .zip(skip_edge_neighbors) // Zip repeated block identifier (source) with all targets
-//    .flatMap((l, r) => l.zip(r)) // Zip each source with corresponding target˘¯
-//    .distinct
-//    .map((l, r) => WDiEdge(l, r)(1))
-//  val forward_skip_edges = skip_edges.filter(e => check_for_transposition(e, block_offsets))
 
 
 def create_traversal_graph(blocks: Vector[FullDepthBlock])(using token_array: Vector[Token]) =
-  // TODO: Add start and end nodes, add skip edges
   val witness_count = blocks(0).instances.length
   val start_block = FullDepthBlock(instances = Vector.fill(witness_count)(-1), length = 1) // fake first (start) block
-  // FIXME (?): End-node uses maximum possible integer value (i.e., inconveniently large value)
+  // End-node uses maximum possible integer value (i.e., inconveniently large value)
   val end_block = FullDepthBlock(instances = Vector.fill(witness_count)(Integer.MAX_VALUE), length = 1)
   // end node first to we can use blocks.tail to compute outgoing edges
   val blocks_for_graph = Vector(end_block) ++ blocks ++ Vector(start_block)
   val g = compute_nodes_for_graph(blocks_for_graph)
-  //  val edges =
-  //    (0 until witness_count).map(e => compute_edges_for_witness(blocks, e)).toVector
-  //  val weighted_edges = compute_weighted_edges(edges)
   val block_order_for_witnesses = compute_block_order_for_witnesses(blocks_for_graph)
   val block_offsets = compute_block_offsets_in_all_witnesses(block_order_for_witnesses)
   val edges = create_outgoing_edges(blocks_for_graph, block_order_for_witnesses, block_offsets)
-//  println(g)
-//  println(edges)
   val graph_with_edges = g ++ edges
-//  println(graph_with_edges)
   graph_with_edges
 
 
