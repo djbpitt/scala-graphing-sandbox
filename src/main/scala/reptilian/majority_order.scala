@@ -154,6 +154,7 @@ def create_outgoing_edges_for_block(
     .map((value, index) => block_order_for_witnesses(index)(value + 1 min block_offsets.size - 1).instances.head)
     .distinct
     .toVector
+  //  println(block_offsets(id))
   val neighbor_edges: Vector[WDiEdge[Int]] =
     neighbor_targets
       .map(e => WDiEdge(id, e)(1))
@@ -162,30 +163,46 @@ def create_outgoing_edges_for_block(
     if neighbor_edges.size == 1 then
       Vector.empty[WDiEdge[Int]]
     else if neighbor_edges.size > 1 then
-      val neighbor_edges_by_witness = neighbor_edges
-        .map(e => (e.from, e.to))
-        .zipWithIndex // Add witness id
-        .map((pointers, index) => (pointers._1, pointers._2, index)) // Flatten into (source, target, witness) tuple
-      // For each witness look up the blocks skipped
-      val skipped_blocks_by_witness = neighbor_edges_by_witness
-        .map((source, target, witness) => {
-          val skip_start_offset = block_offsets(source)(witness) + 1
-          val skip_end_offset = block_offsets(target)(witness) + 1
-          block_order_for_witnesses(witness).slice(skip_start_offset, skip_end_offset + 1)
-        }
-        )
-      // Keep the intersection (blocks that occur once per witness, i.e., in all witnesses
-      val shared_skipped_blocks = counts(skipped_blocks_by_witness.flatten)
-        .filter((_, value) => value == block_order_for_witnesses.size)
-      // TODO: For now just the closest one, but should it be all of them?
-      val non_cyclic = shared_skipped_blocks
-        .map(e => WDiEdge(id, e._1.instances.head)(1))
-        .filter(e => check_for_cycles(e, block_offsets))
-      if non_cyclic.nonEmpty then
-        val skip_edge = non_cyclic.minBy(_._2)
-        Vector(skip_edge)
+      val all_neighbor_edges_by_witness = {
+        block_offsets(id)
+          .zipWithIndex
+          .map((value, index) => (id, block_order_for_witnesses(index)(value + 1 min block_offsets.size - 1).instances.head, index))
+      }
+        .toVector // Vector of six triples with same source, one per witness
+      // Skip edge only if no witness points backward
+      // RESUME HERE: Create skip edges between the if … else
+      if all_neighbor_edges_by_witness.map((source, target, _) => source < target).forall(_ == true) then
+        println(all_neighbor_edges_by_witness)
+        Vector.empty[WDiEdge[Int]]
       else
-        Vector()
+        Vector.empty[WDiEdge[Int]]
+    //      val neighbor_edges_by_witness = neighbor_edges
+    //        .map(e => (e.from, e.to))
+    //        .zipWithIndex // Add witness id
+    //        .map((pointers, index) => (pointers._1, pointers._2, index)) // Flatten into (source, target, witness) tuple
+    //      // For each witness look up the blocks skipped
+    //      val skipped_blocks_by_witness = neighbor_edges_by_witness
+    //        .map((source, target, witness) => {
+    //          val skip_start_offset = block_offsets(source)(witness) + 1
+    //          val skip_end_offset = block_offsets(target)(witness) + 1
+    //          block_order_for_witnesses(witness).slice(skip_start_offset, skip_end_offset + 1)
+    //        }
+    //        )
+    //      // Keep the intersection (blocks that occur once per witness, i.e., in all witnesses
+    //      val shared_skipped_blocks_unfiltered = counts(skipped_blocks_by_witness.flatten)
+    //      val shared_skipped_blocks = shared_skipped_blocks_unfiltered
+    //        .filter((_, value) => value == block_order_for_witnesses.size)
+    //      // TODO: For now just the closest one, but should it be all of them?
+    //      val non_cyclic = shared_skipped_blocks
+    //        .map(e => WDiEdge(id, e._1.instances.head)(1))
+    //        .filter(e => check_for_cycles(e, block_offsets))
+    //      if non_cyclic.nonEmpty then
+    //        val skip_edge = non_cyclic.minBy(_._2)
+    //        print("Found a skip edge: ")
+    //        println(skip_edge)
+    //        Vector(skip_edge)
+    //      else
+    //        Vector()
     else
       println(s"No outedges from node $id")
       Vector.empty[WDiEdge[Int]] // temporary

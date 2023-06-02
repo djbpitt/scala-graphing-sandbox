@@ -308,13 +308,13 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
   val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
   // Prepare data (List[String])
-  //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
-  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_small" // no skip edge; direct transposition
+  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
+  //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_small" // no skip edge; direct transposition
   //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "cats"
   // Small skip edge test examples
   //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "no_skip_cats" // no skip edge; direct transposition
-//  val path_to_darwin = os.pwd / "src" / "main" / "data" / "one_skip_cats" // one skip edge
-  //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "two_skip_cats" // two (parallel) skip edges
+  // val path_to_darwin = os.pwd / "src" / "main" / "data" / "one_skip_cats" // one skip edge
+  // val path_to_darwin = os.pwd / "src" / "main" / "data" / "two_skip_cats" // two (parallel) skip edges
   // End of skip edge test examples
   //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_5_9"
   val witness_strings = read_data(path_to_darwin) // One string per witness
@@ -337,7 +337,7 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   // full_depth_blocks.foreach(e => println(e.show(token_array)))
   // full_depth_blocks.foreach(println)
 
-//  val transposed = longest_full_depth_nonrepeating_blocks.filter(block => !set_of_non_transposed_node_ids.contains(block.instances(0)))
+  // val transposed = longest_full_depth_nonrepeating_blocks.filter(block => !set_of_non_transposed_node_ids.contains(block.instances(0)))
   // transposed.foreach(e => println(e.show(token_array))) // diagnostic
 
   // Diagnostic: visualize traversal graph
