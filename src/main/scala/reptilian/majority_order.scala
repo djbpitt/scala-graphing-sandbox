@@ -168,25 +168,27 @@ def create_outgoing_edges_for_block(
         .map((pointers, index) => (pointers._1, pointers._2, index)) // Flatten into (source, target, witness) tuple
       // For each witness look up the blocks skipped
       val skipped_blocks_by_witness = neighbor_edges_by_witness
-        .map((source, target, witness) =>
-          {
-            val skip_start_offset = block_offsets(source)(witness) + 1
-            val skip_end_offset = block_offsets(target)(witness) + 1
-            block_order_for_witnesses(witness).slice(skip_start_offset, skip_end_offset + 1)
-          }
+        .map((source, target, witness) => {
+          val skip_start_offset = block_offsets(source)(witness) + 1
+          val skip_end_offset = block_offsets(target)(witness) + 1
+          block_order_for_witnesses(witness).slice(skip_start_offset, skip_end_offset + 1)
+        }
         )
       // Keep the intersection (blocks that occur once per witness, i.e., in all witnesses
       val shared_skipped_blocks = counts(skipped_blocks_by_witness.flatten)
         .filter((_, value) => value == block_order_for_witnesses.size)
       // TODO: For now just the closest one, but should it be all of them?
-        val non_cyclic = shared_skipped_blocks
-          .map(e => WDiEdge(id, e._1.instances.head)(1))
-          .filter(e => check_for_cycles(e, block_offsets))
+      val non_cyclic = shared_skipped_blocks
+        .map(e => WDiEdge(id, e._1.instances.head)(1))
+        .filter(e => check_for_cycles(e, block_offsets))
+      if non_cyclic.nonEmpty then
         val skip_edge = non_cyclic.minBy(_._2)
-      Vector(skip_edge)
+        Vector(skip_edge)
+      else
+        Vector()
     else
       println(s"No outedges from node $id")
-      Vector.empty[WDiEdge[Int]]// temporary
+      Vector.empty[WDiEdge[Int]] // temporary
   val all_edges = neighbor_edges ++ skip_edges
   all_edges
 
@@ -206,7 +208,7 @@ def create_outgoing_edges(
                            block_order_for_witnesses: Vector[Vector[FullDepthBlock]],
                            block_offsets: Map[Int, ArrayBuffer[Int]]
                          )
-                         (implicit token_array: Vector[Token])=
+                         (implicit token_array: Vector[Token]) =
   val edges = blocks
     .tail // End node is first block in vector and has no outgoing edges, so exclude
     .flatMap(e => create_outgoing_edges_for_block(e, block_order_for_witnesses, block_offsets))
