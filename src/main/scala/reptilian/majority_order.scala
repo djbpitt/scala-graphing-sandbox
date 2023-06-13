@@ -168,12 +168,49 @@ def create_outgoing_edges_for_block(
           .zipWithIndex
           .map((value, index) => (id, block_order_for_witnesses(index)(value + 1 min block_offsets.size - 1).instances.head, index))
       }
-        .toVector // Vector of six triples with same source, one per witness
+        .toVector // Vector of six triples with same source, one triple per witness
       // Skip edge only if no witness points backward
-      // RESUME HERE: Create skip edges between the if … else
       if all_neighbor_edges_by_witness.map((source, target, _) => source < target).forall(_ == true) then
-        println(all_neighbor_edges_by_witness)
-        Vector.empty[WDiEdge[Int]]
+        // print("all_neighbor_edges_by_witness: ")
+        // println(all_neighbor_edges_by_witness)
+        val skipped_blocks_by_witness = all_neighbor_edges_by_witness
+          .map((source, target, witness) => {
+            val skip_start_offset = block_offsets(source)(witness) + 1
+            val skip_end_offset = block_offsets(target)(witness) + 1
+            block_order_for_witnesses(witness).slice(skip_start_offset, skip_end_offset + 1)
+          })
+        // print("skipped_blocks_by_witness: ")
+        // println(skipped_blocks_by_witness)
+        // Keep the intersection (blocks that occur once per witness, i.e., in all witnesses
+        val shared_skipped_blocks_unfiltered = counts(skipped_blocks_by_witness.flatten)
+        val shared_skipped_blocks = shared_skipped_blocks_unfiltered
+          .filter((_, value) => value == block_order_for_witnesses.size)
+        // print("source: ")
+        // println(block_offsets(id))
+        // id is offsets in witness order, so we translate to offsets into token array
+        val source_token_offsets = block_order_for_witnesses(0)(block_offsets(id).head)
+        // print("token array offsets for source: ")
+        // println(source_token_offsets)
+        // print("shared_skipped_blocks: ")
+        val shared_skipped_block_keys = shared_skipped_blocks.keySet
+        // println(shared_skipped_block_keys)
+        // Vector subtraction of skipped block - source to find closest shared skipped block
+        val distances = shared_skipped_block_keys
+          .map(e => e.instances zip source_token_offsets.instances)
+          .map(_.map((target, source) => target - source))
+          .map(_.sum)
+          .zip(shared_skipped_block_keys)
+        // print("distances: ")
+        // println(distances)
+        if distances.isEmpty then
+          Vector.empty[WDiEdge[Int]]
+        else
+          val closest_skipped_block = distances
+            .minBy(_._1)
+            ._2
+          // print("closest_skipped_block: ")
+          // println(closest_skipped_block)
+          Vector(WDiEdge(source_token_offsets.instances.head, closest_skipped_block.instances.head)(2))
       else
         Vector.empty[WDiEdge[Int]]
     //      val neighbor_edges_by_witness = neighbor_edges
@@ -204,9 +241,10 @@ def create_outgoing_edges_for_block(
     //      else
     //        Vector()
     else
-      println(s"No outedges from node $id")
+      // println(s"No outedges from node $id")
       Vector.empty[WDiEdge[Int]] // temporary
   val all_edges = neighbor_edges ++ skip_edges
+  // println(all_edges)
   all_edges
 
 
@@ -314,7 +352,13 @@ def graph_to_dot(g: Graph[Int, WDiEdge], b: Map[Int, String], path_nodes: Set[In
         Some((root,
           DotEdgeStmt(source.toString,
             target.toString,
-            List(DotAttr("label", weight.toInt.toString))
+            List(
+              DotAttr("label", weight.toInt.toString),
+              if weight == 2 then
+                DotAttr("color", "red")
+              else
+                DotAttr("color", "black")
+            )
           )))
     }
   }

@@ -324,6 +324,12 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val longest_full_depth_nonrepeating_blocks = create_aligned_blocks(token_array, witness_strings.size)
   // longest_full_depth_nonrepeating_blocks.foreach(println)
   val block_texts: Map[Int, String] = block_text_by_id(longest_full_depth_nonrepeating_blocks, token_array)
+  val normalized_input = witness_strings
+    .map(e => tokenize(tokenizer)(List(e)).map(_.n).mkString(" "))
+  def block_check(block_text:String) = normalized_input
+    .map(_.contains(block_text))
+    .forall(_ == true)
+  block_texts.values.filter(e => !block_check(e)).foreach(println)
   // create navigation graph and filter out transposed nodes
   val graph = create_traversal_graph(longest_full_depth_nonrepeating_blocks.toVector)
 
