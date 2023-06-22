@@ -194,17 +194,18 @@ def create_blocks(LCP_array: Vector[Int]): List[Block] =
         val a = openIntervals.pop()
         closedIntervals += Block(a.start, idx - 1, a.length)
       // then: open a new interval starting with filtered intervals
-      /**
+      /*
        * We look at three things to decide whether to create a new block:
        *   1. Is there content in the accumulator
-       *      2. Is the top of accumulator lower than the new value (could be zero or other)
-       *      3. Is the top of accumulator the same as the new value
+       *   2. Is the top of accumulator lower than the new value (could be zero or other)
+       *   3. Is the top of accumulator the same as the new value
        *      (It is not possible for the top of accumulator to be greater than the new value
        *      because we would have closed it)
+       *
        *      There are three options:
        *   1. there is content in the accumulator and latest value is not 0
-       *      2. accumulator is empty and latest value is 0
-       *      3. accumulator is empty and latest value is not 0
+       *   2. accumulator is empty and latest value is 0
+       *   3. accumulator is empty and latest value is not 0
        *      (the fourth logical combination, content in the accumulator and 0 value, cannot occur
        *      because a 0 value will empty the accumulator)
        */
@@ -281,6 +282,17 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
   val (vectorization, voc_size) = vectorize(token_array)
   val suffix_array = calculate_suffix_array(vectorization, voc_size)
   val lcp_array = calculate_lcp_array(token_array, suffix_array)
+
+  // Dump suffix array and lcp array with initial tokens
+//  val tmp = suffix_array
+//    .map(e => token_array.slice(e, e + 15 min token_array.size))
+//    .map(_.map(_.t))
+//    .map(_.mkString(" "))
+//    .zipWithIndex
+//    .foreach((string, index) => println(s"$string : $index : ${lcp_array(index)}"))
+//  val stuff = suffix_array.indexOf(6203).toString
+//  println(s"Suffix array offset: $stuff")
+
   val blocks = create_blocks(lcp_array)
   val witnesses_of_block = find_witnesses_of_block(suffix_array, token_array) // Partially applied, requires Block
   val tmp_full_depth_nonrepeating_blocks =
@@ -329,7 +341,7 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   def block_check(block_text:String) = normalized_input
     .map(_.contains(block_text))
     .forall(_ == true)
-  block_texts.values.filter(e => !block_check(e)).foreach(println)
+  block_texts.filter((-, txt) => !block_check(txt)).foreach(println)
   // create navigation graph and filter out transposed nodes
   val graph = create_traversal_graph(longest_full_depth_nonrepeating_blocks.toVector)
 
@@ -355,8 +367,3 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val output = htmlify(token_array, full_depth_blocks)
   val outputPath = os.pwd / "src" / "main" / "output" / "alignment.xhtml"
   os.write.over(outputPath, output)
-
-
-
-
-
