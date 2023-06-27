@@ -127,8 +127,12 @@ def create_token_witness_mapping(token_lists: List[List[String]]): Vector[Int] =
  *         Array instead of vector because third-party library requires array
  */
 def vectorize(token_array: Vector[Token]): (Array[Int], Int) =
-  val voc = token_array.map(_.n).distinct.sorted
+  val voc = token_array
+    .map(_.n)
+    .distinct
+    .sorted
   val terms_to_int = voc.zipWithIndex.to(VectorMap)
+  terms_to_int.foreach(println)
   (token_array.map(_.n).map(terms_to_int).toArray, voc.length)
 
 /** Create LCP array from suffix array and token array
@@ -138,7 +142,8 @@ def vectorize(token_array: Vector[Token]): (Array[Int], Int) =
  * @param token_array  Array of text tokens
  * @param suffix_array Array of Ints
  *
- *                     Array and not vector because third-party library requires array
+ * Array and not vector because third-party library requires array
+ * https://www.geeksforgeeks.org/kasais-algorithm-for-construction-of-lcp-array-from-suffix-array/
  */
 def calculate_lcp_array(token_array: Vector[Token], suffix_array: Array[Int]): Vector[Int] =
   val n_array = token_array.map(_.n)
@@ -284,14 +289,31 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
   val lcp_array = calculate_lcp_array(token_array, suffix_array)
 
   // Dump suffix array and lcp array with initial tokens
-//  val tmp = suffix_array
-//    .map(e => token_array.slice(e, e + 15 min token_array.size))
-//    .map(_.map(_.t))
-//    .map(_.mkString(" "))
-//    .zipWithIndex
-//    .foreach((string, index) => println(s"$string : $index : ${lcp_array(index)}"))
-//  val stuff = suffix_array.indexOf(6203).toString
+  suffix_array
+    .map(e => token_array.slice(e, e + 35 min token_array.size))
+    .map(_.map(_.t))
+    .map(_.mkString(" "))
+    .zipWithIndex
+    .foreach((string, index) => println(s"$string : $index : ${lcp_array(index)}"))
+  val stuff = suffix_array.indexOf(6203).toString
 //  println(s"Suffix array offset: $stuff")
+  val slice_start = 79952
+  val slice = lcp_array.slice(slice_start, 79990)
+  println(slice.mkString(" "))
+  val blocks_slice = create_blocks(slice)
+    .map(e => Block(e.start + slice_start, e.end + slice_start, e.length))
+  println(blocks_slice)
+  // Represent blocks as token string
+  val blocks_slice_tokens = blocks_slice
+    .map(e => token_array.slice(suffix_array(e.start), suffix_array(e.start) + e.length))
+  val block_count = blocks_slice
+    .map(e => e.end - e.start + 1)
+  blocks_slice_tokens
+    .map(_.map(e => e.n)
+    .mkString(" "))
+    .zip(block_count)
+    .foreach(println)
+
 
   val blocks = create_blocks(lcp_array)
   val witnesses_of_block = find_witnesses_of_block(suffix_array, token_array) // Partially applied, requires Block
@@ -317,7 +339,8 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
 
 @main def main(): Unit =
   // Prepare tokenizer (partially applied function)
-  val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
+  // NB: Sequences of non-word characters (except spaces) are entire tokens
+  val token_pattern: Regex = raw"(\w+|[^\w\s])\s*".r // From CollateX Python, syntax adjusted for Scala
   val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
   // Prepare data (List[String])
   val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
@@ -341,7 +364,7 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   def block_check(block_text:String) = normalized_input
     .map(_.contains(block_text))
     .forall(_ == true)
-  block_texts.filter((-, txt) => !block_check(txt)).foreach(println)
+//  block_texts.filter((-, txt) => !block_check(txt)).foreach(println)
   // create navigation graph and filter out transposed nodes
   val graph = create_traversal_graph(longest_full_depth_nonrepeating_blocks.toVector)
 
