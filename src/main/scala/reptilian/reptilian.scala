@@ -132,7 +132,7 @@ def vectorize(token_array: Vector[Token]): (Array[Int], Int) =
     .distinct
     .sorted
   val terms_to_int = voc.zipWithIndex.to(VectorMap)
-  terms_to_int.foreach(println)
+  //terms_to_int.foreach(println)
   (token_array.map(_.n).map(terms_to_int).toArray, voc.length)
 
 /** Create LCP array from suffix array and token array
@@ -161,9 +161,17 @@ def calculate_lcp_array(token_array: Vector[Token], suffix_array: Array[Int]): V
     }
     else {
       val j: Int = suffix_array(k - 1)
+      val h_before = h
       while (i + h < length && j + h < length && (n_array(i + h) == n_array(j + h))) {
         h += 1
       }
+      val h_after = h
+      val n_array_1= n_array.slice(i, i+h_after+1).mkString(", ")
+      val n_array_2= n_array.slice(j, j+h_after+1).mkString(", ")
+      if n_array_1.startsWith("within, a, dozen") then
+        println("We compared "+n_array_1)
+        println(" and "+n_array_2)
+        println(" and we found "+h.toString+" agreement.")
       lcp(k) = h
     }
     if (h > 0) {
@@ -289,30 +297,30 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
   val lcp_array = calculate_lcp_array(token_array, suffix_array)
 
   // Dump suffix array and lcp array with initial tokens
-  suffix_array
-    .map(e => token_array.slice(e, e + 35 min token_array.size))
-    .map(_.map(_.t))
-    .map(_.mkString(" "))
-    .zipWithIndex
-    .foreach((string, index) => println(s"$string : $index : ${lcp_array(index)}"))
+//  suffix_array
+//    .map(e => token_array.slice(e, e + 35 min token_array.size))
+//    .map(_.map(_.t))
+//    .map(_.mkString(" "))
+//    .zipWithIndex
+//    .foreach((string, index) => println(s"$string : $index : ${lcp_array(index)}"))
   val stuff = suffix_array.indexOf(6203).toString
 //  println(s"Suffix array offset: $stuff")
   val slice_start = 79952
   val slice = lcp_array.slice(slice_start, 79990)
-  println(slice.mkString(" "))
+  // println(slice.mkString(" "))
   val blocks_slice = create_blocks(slice)
     .map(e => Block(e.start + slice_start, e.end + slice_start, e.length))
-  println(blocks_slice)
+  // println(blocks_slice)
   // Represent blocks as token string
   val blocks_slice_tokens = blocks_slice
     .map(e => token_array.slice(suffix_array(e.start), suffix_array(e.start) + e.length))
   val block_count = blocks_slice
     .map(e => e.end - e.start + 1)
-  blocks_slice_tokens
-    .map(_.map(e => e.n)
-    .mkString(" "))
-    .zip(block_count)
-    .foreach(println)
+//  blocks_slice_tokens
+//    .map(_.map(e => e.n)
+//    .mkString(" "))
+//    .zip(block_count)
+//    .foreach(println)
 
 
   val blocks = create_blocks(lcp_array)
