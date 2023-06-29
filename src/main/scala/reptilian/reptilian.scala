@@ -139,46 +139,51 @@ def vectorize(token_array: Vector[Token]): (Array[Int], Int) =
  *
  * Follows Kasai algorithm
  *
- * @param token_array  Array of text tokens
+ * @param txt Array of text tokens
  * @param suffix_array Array of Ints
  *
  * Array and not vector because third-party library requires array
  * https://www.geeksforgeeks.org/kasais-algorithm-for-construction-of-lcp-array-from-suffix-array/
  */
-def calculate_lcp_array(token_array: Vector[Token], suffix_array: Array[Int]): Vector[Int] =
-  val n_array = token_array.map(_.n)
-  val length = suffix_array.length
-  val rank = new Array[Int](length)
+
+def calculate_lcp_array_on_string_array(txt: Vector[String], suffix_array: Array[Int]): Vector[Int] = {
+  val n = suffix_array.length
+  val lcp: Array[Int] = new Array[Int](n)
+  val invSuff = new Array[Int](n)
   for i <- suffix_array.indices do
-    rank(suffix_array(i)) = i
-  var h: Int = 0
-  val lcp: Array[Int] = new Array[Int](length)
+    invSuff(suffix_array(i)) = i
+  var k: Int = 0
   var i: Int = 0
-  while i < length do
-    val k: Int = rank(i)
-    if (k == 0) {
-      lcp(k) = -1
+  while i < n do
+    if (invSuff(i) == n - 1) {
+      k = 0
     }
     else {
-      val j: Int = suffix_array(k - 1)
-      val h_before = h
-      while (i + h < length && j + h < length && (n_array(i + h) == n_array(j + h))) {
-        h += 1
+      val j: Int = suffix_array(invSuff(i) + 1)
+      val k_before = k
+      while (i + k < n && j + k < n && txt(i + k) == txt(j + k)) {
+        k += 1
       }
-      val h_after = h
-      val n_array_1= n_array.slice(i, i+h_after+1).mkString(", ")
-      val n_array_2= n_array.slice(j, j+h_after+1).mkString(", ")
+      val k_after = k
+      val n_array_1 = txt.slice(i, i + k_after + 1).mkString(", ")
+      val n_array_2 = txt.slice(j, j + k_after + 1).mkString(", ")
       if n_array_1.startsWith("within, a, dozen") then
-        println("We compared "+n_array_1)
-        println(" and "+n_array_2)
-        println(" and we found "+h.toString+" agreement.")
-      lcp(k) = h
-    }
-    if (h > 0) {
-      h -= 1
+        println("We compared " + n_array_1)
+        println(" and " + n_array_2)
+        println(" and we found " + k.toString + " agreement and we started at " + k_before.toString + " .")
+      lcp(invSuff(i)) = k
+      if (k > 0) {
+        k -= 1
+      }
     }
     i += 1
   lcp.toVector
+}
+
+def calculate_lcp_array(token_array: Vector[Token], suffix_array: Array[Int]): Vector[Int] =
+  val n_array = token_array.map(_.n)
+
+  calculate_lcp_array_on_string_array(n_array, suffix_array)
 
 def find_witnesses_of_block(suffix_array: Array[Int], token_array: Vector[Token])(block: Block) =
   val witnesses: Array[Int] = suffix_array
