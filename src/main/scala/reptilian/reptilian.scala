@@ -302,12 +302,13 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
   val lcp_array = calculate_lcp_array(token_array, suffix_array)
 
   // Dump suffix array and lcp array with initial tokens
-//  suffix_array
-//    .map(e => token_array.slice(e, e + 35 min token_array.size))
-//    .map(_.map(_.t))
-//    .map(_.mkString(" "))
-//    .zipWithIndex
-//    .foreach((string, index) => println(s"$string : $index : ${lcp_array(index)}"))
+  println("Start dump suffix and LCP array")
+  suffix_array
+    .map(e => token_array.slice(e, e + 35 min token_array.size))
+    .map(_.map(_.t))
+    .map(_.mkString(" "))
+    .zipWithIndex
+    .foreach((string, index) => println(s"$string : $index : ${lcp_array(index)}"))
   val stuff = suffix_array.indexOf(6203).toString
 //  println(s"Suffix array offset: $stuff")
   val slice_start = 79952
@@ -321,11 +322,12 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
     .map(e => token_array.slice(suffix_array(e.start), suffix_array(e.start) + e.length))
   val block_count = blocks_slice
     .map(e => e.end - e.start + 1)
-//  blocks_slice_tokens
-//    .map(_.map(e => e.n)
-//    .mkString(" "))
-//    .zip(block_count)
-//    .foreach(println)
+  println("Start dump blocks within the slice")
+  blocks_slice_tokens
+    .map(_.map(e => e.n)
+    .mkString(" "))
+    .zip(block_count)
+    .foreach(println)
 
 
   val blocks = create_blocks(lcp_array)
