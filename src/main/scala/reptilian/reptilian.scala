@@ -167,11 +167,11 @@ def calculate_lcp_array_on_string_array(txt: Vector[String], suffix_array: Array
       val k_after = k
       val n_array_1 = txt.slice(i, i + k_after + 1).mkString(", ")
       val n_array_2 = txt.slice(j, j + k_after + 1).mkString(", ")
-      if n_array_1.startsWith("within, a, dozen") then
-        println("We compared " + n_array_1)
-        println(" and " + n_array_2)
-        println(" and we found " + k.toString + " agreement and we started at " + k_before.toString + " .")
-      lcp(invSuff(i)) = k
+//      if n_array_1.startsWith("within, a, dozen") then
+//        println("We compared " + n_array_1)
+//        println(" and " + n_array_2)
+//        println(" and we found " + k.toString + " agreement and we started at " + k_before.toString + " .")
+      lcp(invSuff(i)+1) = k
       if (k > 0) {
         k -= 1
       }
