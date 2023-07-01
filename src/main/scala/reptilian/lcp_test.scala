@@ -30,7 +30,7 @@ import scala.util.matching.Regex
   val tokenizer = make_tokenizer(token_pattern)
 
   val token_array = tokenize(tokenizer)(witnesses01)
-  println(token_array)
+//  println(token_array)
 
   val (vectorization, voc_size) = vectorize(token_array)
   val suffix_array = calculate_suffix_array(vectorization, voc_size)
@@ -45,4 +45,22 @@ import scala.util.matching.Regex
     .map(_.map(_.t))
     .map(_.mkString(" "))
     .zipWithIndex
-    .foreach((string, index) => println(s"$string : $index : ${lcp_array(index)}"))
+//    .foreach((string, index) => println(s"$string : $index : ${lcp_array(index)}"))
+
+  val blocks = create_aligned_blocks(token_array, 6)
+  blocks.foreach(println)
+  blocks
+    .map(_.show(token_array))
+    .foreach(println)
+
+  // Represent blocks as token string
+//  val blocks_slice_tokens = blocks
+//    .map(e => token_array.slice(suffix_array(e.start), suffix_array(e.start) + e.length))
+//  val block_count = blocks
+//    .map(e => e.end - e.start + 1)
+//  println("Start dump blocks within the slice")
+//  blocks_slice_tokens
+//    .map(_.map(e => e.n)
+//      .mkString(" "))
+//    .zip(block_count)
+//    .foreach(println)

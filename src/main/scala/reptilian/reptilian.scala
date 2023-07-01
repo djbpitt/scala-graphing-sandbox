@@ -160,13 +160,13 @@ def calculate_lcp_array_on_string_array(txt: Vector[String], suffix_array: Array
     }
     else {
       val j: Int = suffix_array(invSuff(i) + 1)
-      val k_before = k
+//      val k_before = k
       while (i + k < n && j + k < n && txt(i + k) == txt(j + k)) {
         k += 1
       }
-      val k_after = k
-      val n_array_1 = txt.slice(i, i + k_after + 1).mkString(", ")
-      val n_array_2 = txt.slice(j, j + k_after + 1).mkString(", ")
+//      val k_after = k
+//      val n_array_1 = txt.slice(i, i + k_after + 1).mkString(", ")
+//      val n_array_2 = txt.slice(j, j + k_after + 1).mkString(", ")
       //      if n_array_1.startsWith("within, a, dozen") then
       //        println("We compared " + n_array_1)
       //        println(" and " + n_array_2)
@@ -301,32 +301,16 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
   val lcp_array = calculate_lcp_array(token_array, suffix_array)
 
   // Dump suffix array and lcp array with initial tokens
-  println("Start dump suffix and LCP array")
-  suffix_array
+//  println("Start dump suffix and LCP array")
+  val suffix_array_output = suffix_array
     .map(e => token_array.slice(e, e + 35 min token_array.size))
     .map(_.map(_.t))
     .map(_.mkString(" "))
     .zipWithIndex
-    .foreach((string, index) => println(s"$string : $index : ${lcp_array(index)}"))
-  val stuff = suffix_array.indexOf(6203).toString
-  //  println(s"Suffix array offset: $stuff")
-  val slice_start = 79952
-  val slice = lcp_array.slice(slice_start, 79990)
-  // println(slice.mkString(" "))
-  val blocks_slice = create_blocks(slice)
-    .map(e => Block(e.start + slice_start, e.end + slice_start, e.length))
-  // println(blocks_slice)
-  // Represent blocks as token string
-  val blocks_slice_tokens = blocks_slice
-    .map(e => token_array.slice(suffix_array(e.start), suffix_array(e.start) + e.length))
-  val block_count = blocks_slice
-    .map(e => e.end - e.start + 1)
-  println("Start dump blocks within the slice")
-  blocks_slice_tokens
-    .map(_.map(e => e.n)
-    .mkString(" "))
-    .zip(block_count)
-    .foreach(println)
+    .map((string, index) => s"$string : $index : ${lcp_array(index)}\n")
+  // Diagnostic: save suffix array and lcp array information
+  val sa_output_path = os.pwd / "src" / "main" / "output" / "suffix_array.txt"
+  os.write.over(sa_output_path, suffix_array_output) // Create HTML output and write to specified path
 
 
   val blocks = create_blocks(lcp_array)
