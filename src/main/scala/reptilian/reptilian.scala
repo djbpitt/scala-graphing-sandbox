@@ -139,11 +139,11 @@ def vectorize(token_array: Vector[Token]): (Array[Int], Int) =
  *
  * Follows Kasai algorithm
  *
- * @param txt Array of text tokens
+ * @param txt          Array of text tokens
  * @param suffix_array Array of Ints
  *
- * Array and not vector because third-party library requires array
- * https://www.geeksforgeeks.org/kasais-algorithm-for-construction-of-lcp-array-from-suffix-array/
+ *                     Array and not vector because third-party library requires array
+ *                     https://www.geeksforgeeks.org/kasais-algorithm-for-construction-of-lcp-array-from-suffix-array/
  */
 
 def calculate_lcp_array_on_string_array(txt: Vector[String], suffix_array: Array[Int]): Vector[Int] = {
@@ -167,11 +167,11 @@ def calculate_lcp_array_on_string_array(txt: Vector[String], suffix_array: Array
       val k_after = k
       val n_array_1 = txt.slice(i, i + k_after + 1).mkString(", ")
       val n_array_2 = txt.slice(j, j + k_after + 1).mkString(", ")
-//      if n_array_1.startsWith("within, a, dozen") then
-//        println("We compared " + n_array_1)
-//        println(" and " + n_array_2)
-//        println(" and we found " + k.toString + " agreement and we started at " + k_before.toString + " .")
-      lcp(invSuff(i)+1) = k
+      //      if n_array_1.startsWith("within, a, dozen") then
+      //        println("We compared " + n_array_1)
+      //        println(" and " + n_array_2)
+      //        println(" and we found " + k.toString + " agreement and we started at " + k_before.toString + " .")
+      lcp(invSuff(i) + 1) = k
       if (k > 0) {
         k -= 1
       }
@@ -182,7 +182,6 @@ def calculate_lcp_array_on_string_array(txt: Vector[String], suffix_array: Array
 
 def calculate_lcp_array(token_array: Vector[Token], suffix_array: Array[Int]): Vector[Int] =
   val n_array = token_array.map(_.n)
-
   calculate_lcp_array_on_string_array(n_array, suffix_array)
 
 def find_witnesses_of_block(suffix_array: Array[Int], token_array: Vector[Token])(block: Block) =
@@ -310,7 +309,7 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
     .zipWithIndex
     .foreach((string, index) => println(s"$string : $index : ${lcp_array(index)}"))
   val stuff = suffix_array.indexOf(6203).toString
-//  println(s"Suffix array offset: $stuff")
+  //  println(s"Suffix array offset: $stuff")
   val slice_start = 79952
   val slice = lcp_array.slice(slice_start, 79990)
   // println(slice.mkString(" "))
@@ -376,10 +375,12 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val block_texts: Map[Int, String] = block_text_by_id(longest_full_depth_nonrepeating_blocks, token_array)
   val normalized_input = witness_strings
     .map(e => tokenize(tokenizer)(List(e)).map(_.n).mkString(" "))
-  def block_check(block_text:String) = normalized_input
+
+  def block_check(block_text: String) = normalized_input
     .map(_.contains(block_text))
     .forall(_ == true)
-//  block_texts.filter((-, txt) => !block_check(txt)).foreach(println)
+
+  //  block_texts.filter((-, txt) => !block_check(txt)).foreach(println)
   // create navigation graph and filter out transposed nodes
   val graph = create_traversal_graph(longest_full_depth_nonrepeating_blocks.toVector)
 
