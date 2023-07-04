@@ -35,7 +35,6 @@ import scala.util.matching.Regex
   val (vectorization, voc_size) = vectorize(token_array)
   val suffix_array = calculate_suffix_array(vectorization, voc_size)
   val lcp_array1 = calculate_lcp_array_kasai(token_array.map(_.n), suffix_array)
-  val lcp_array2 = calculate_new_lcp_array(token_array.map(_.n), suffix_array)
 //  println(suffix_array)
 //  println(lcp_array)
 //  println(vectorization.mkString(" "))
@@ -46,7 +45,7 @@ import scala.util.matching.Regex
     .map(_.map(_.t))
     .map(_.mkString(" "))
     .zipWithIndex
-    .foreach((string, index) => println(s"$string : $index : ${lcp_array1(index)} : ${lcp_array2(index)}"))
+    .foreach((string, index) => println(s"$string : $index : ${lcp_array1(index)}"))
 
 //  val blocks = create_aligned_blocks(token_array, 6)
 //  blocks.foreach(println)
