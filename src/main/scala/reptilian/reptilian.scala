@@ -153,36 +153,6 @@ def create_suffix_array(vectorization: Array[Int]) =
     .map(_._2)
   suffix_array
 
-/** Create LCP array from suffix array and token array
- *
- * @param txt          Array of text tokens
- * @param suffix_array Array of Ints
- *
- *                     Array and not vector because third-party library requires array
- */
-def calculate_new_lcp_array(txt: Vector[String], suffix_array: Array[Int]): Vector[Int] = {
-  val n = suffix_array.length
-  val lcp: Array[Int] = new Array[Int](n)
-  for (window, index) <- suffix_array.sliding(2).zipWithIndex do
-    val previous_sa_value = window(0)
-    val current_sa_value = window(1)
-    val max_length:Int = n - previous_sa_value min n - current_sa_value
-    // debug
-//    val text1 = txt.slice(previous_sa_value, previous_sa_value+10)
-//    val text2 = txt.slice(current_sa_value, current_sa_value+10)
-//    println(previous_sa_value)
-//    println(current_sa_value)
-//    println(s"Comparing ${text1} and ${text2}")
-
-    // while do
-    var lcp_value = 0
-    while lcp_value < max_length && txt(previous_sa_value+lcp_value) == txt(current_sa_value+lcp_value) do
-      lcp_value+=1
-    lcp(index+1)=lcp_value
-//    println(lcp_value)
-
-  lcp.toVector
-}
 
 /** Create LCP array from suffix array and token array
  *
@@ -345,7 +315,6 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
   val (vectorization, _) = vectorize(token_array)
   val suffix_array = create_suffix_array(vectorization)
   val lcp_array = calculate_lcp_array_kasai(token_array.map(_.n), suffix_array)
-  val lcp_array_new = calculate_new_lcp_array(token_array.map(_.n), suffix_array)
   // Dump suffix array and lcp array with initial tokens
 //  println("Start dump suffix and LCP array")
 //  val suffix_array_output = suffix_array
@@ -353,10 +322,10 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
 //    .map(_.map(_.t))
 //    .map(_.mkString(""))
 //    .zipWithIndex
-//    .map((string, index) => s"$string : $index : ${lcp_array(index)} : ${lcp_array_new(index)} : ${lcp_array(index) == lcp_array_new(index)}\n")
+//    .map((string, index) => s"$string : $index : ${lcp_array(index)}\n")
 //  // Diagnostic: save suffix array and lcp array information
 //  val sa_output_path = os.pwd / "src" / "main" / "output" / "suffix_array.txt"
-//  os.write.over(sa_output_path, suffix_array_output) // Create HTML output and write to specified path
+//  os.write.over(sa_output_path, suffix_array_output) // Create suffix and LCP array output and write to specified path
 
 
   val blocks = create_blocks(lcp_array)
