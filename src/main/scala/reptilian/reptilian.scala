@@ -1,14 +1,13 @@
 package reptilian
 
-import org.hammerlab.suffixes.dc3.make as calculate_suffix_array
 import os.Path
 
 import scala.annotation.unused
 import scala.collection.immutable.VectorMap
-import scala.collection.mutable
+import scala.collection.{IndexedSeqView, mutable}
 import scala.collection.mutable.ArrayBuffer
 import scala.util.matching.Regex
-import scalatags.Text.all._
+import scalatags.Text.all.*
 
 /** Token as complex object
  *
@@ -135,6 +134,25 @@ def vectorize(token_array: Vector[Token]): (Array[Int], Int) =
   //terms_to_int.foreach(println)
   (token_array.map(_.n).map(terms_to_int).toArray, voc.length)
 
+
+def create_suffix_array(vectorization: Array[Int]) =
+  val suffixes = vectorization
+    .zipWithIndex
+    .map((_, index) => vectorization.view.slice(index, vectorization.length))
+  // Define ordering for IndexedSeqView[Int] comparison
+  object Int_array_ordering extends Ordering[IndexedSeqView[Int]] {
+    override def compare(x: IndexedSeqView[Int], y: IndexedSeqView[Int]): Int =
+      x.zip(y)
+        .map(_ compare _)
+        .find(e => e != 0) // return -1 or 1 for first non-0 value, or …
+        .getOrElse(x.length compare y.length) // return -1 or 1 if x < y (vs y < x); cannot be 0 because suffixes are unique
+  }
+  val suffix_array = suffixes
+    .zipWithIndex
+    .sortBy(_._1)(Int_array_ordering)
+    .map(_._2)
+  suffix_array
+
 /** Create LCP array from suffix array and token array
  *
  * @param txt          Array of text tokens
@@ -142,8 +160,6 @@ def vectorize(token_array: Vector[Token]): (Array[Int], Int) =
  *
  *                     Array and not vector because third-party library requires array
  */
-
-
 def calculate_new_lcp_array(txt: Vector[String], suffix_array: Array[Int]): Vector[Int] = {
   val n = suffix_array.length
   val lcp: Array[Int] = new Array[Int](n)
@@ -326,21 +342,21 @@ def htmlify(token_array: Vector[Token], longest_full_depth_nonrepeating_blocks: 
 }
 
 def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
-  val (vectorization, voc_size) = vectorize(token_array)
-  val suffix_array = calculate_suffix_array(vectorization, voc_size)
+  val (vectorization, _) = vectorize(token_array)
+  val suffix_array = create_suffix_array(vectorization)
   val lcp_array = calculate_lcp_array_kasai(token_array.map(_.n), suffix_array)
   val lcp_array_new = calculate_new_lcp_array(token_array.map(_.n), suffix_array)
   // Dump suffix array and lcp array with initial tokens
 //  println("Start dump suffix and LCP array")
-  val suffix_array_output = suffix_array
-    .map(e => token_array.slice(e, e + 35 min token_array.size))
-    .map(_.map(_.t))
-    .map(_.mkString(" "))
-    .zipWithIndex
-    .map((string, index) => s"$string : $index : ${lcp_array(index)} : ${lcp_array_new(index)} : ${lcp_array(index) == lcp_array_new(index)}\n")
-  // Diagnostic: save suffix array and lcp array information
-  val sa_output_path = os.pwd / "src" / "main" / "output" / "suffix_array.txt"
-  os.write.over(sa_output_path, suffix_array_output) // Create HTML output and write to specified path
+//  val suffix_array_output = suffix_array
+//    .map(e => token_array.slice(e, e + 35 min token_array.size))
+//    .map(_.map(_.t))
+//    .map(_.mkString(""))
+//    .zipWithIndex
+//    .map((string, index) => s"$string : $index : ${lcp_array(index)} : ${lcp_array_new(index)} : ${lcp_array(index) == lcp_array_new(index)}\n")
+//  // Diagnostic: save suffix array and lcp array information
+//  val sa_output_path = os.pwd / "src" / "main" / "output" / "suffix_array.txt"
+//  os.write.over(sa_output_path, suffix_array_output) // Create HTML output and write to specified path
 
 
   val blocks = create_blocks(lcp_array)
