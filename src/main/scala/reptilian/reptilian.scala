@@ -135,10 +135,17 @@ def vectorize(token_array: Vector[Token]): (Array[Int], Int) =
   (token_array.map(_.n).map(terms_to_int).toArray, voc.length)
 
 
+/** Create suffix array
+ *
+ * @param vectorization : Token array as Array[Int], corresponding to normalized words (in alphabetical order)
+ *
+ * @return : Suffix array
+ *
+ * Defines ordering for IndexedSeqView[Int] to sort vectorized suffixes
+ */
 def create_suffix_array(vectorization: Array[Int]) =
-  val suffixes = vectorization
-    .zipWithIndex
-    .map((_, index) => vectorization.view.slice(index, vectorization.length))
+  val suffixes = vectorization.indices
+    .map(e => vectorization.view.slice(e, vectorization.length))
   // Define ordering for IndexedSeqView[Int] comparison
   object Int_array_ordering extends Ordering[IndexedSeqView[Int]] {
     override def compare(x: IndexedSeqView[Int], y: IndexedSeqView[Int]): Int =
@@ -151,7 +158,7 @@ def create_suffix_array(vectorization: Array[Int]) =
     .zipWithIndex
     .sortBy(_._1)(Int_array_ordering)
     .map(_._2)
-  suffix_array
+  suffix_array.toArray
 
 
 /** Create LCP array from suffix array and token array
