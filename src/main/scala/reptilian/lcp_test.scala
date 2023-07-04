@@ -6,7 +6,7 @@ import scalatags.Text.all.raw
 
 import scala.util.matching.Regex
 
-@main def testmain(): Unit =
+@main def testMain(): Unit =
 
   val witnesses = List(
     "Or, secondly, that each breed, even the purest, has within a dozen\t\tor\t,\tat most\t,\twithin a score",
@@ -34,7 +34,8 @@ import scala.util.matching.Regex
 
   val (vectorization, voc_size) = vectorize(token_array)
   val suffix_array = calculate_suffix_array(vectorization, voc_size)
-  val lcp_array = calculate_lcp_array(token_array, suffix_array)
+  val lcp_array1 = calculate_lcp_array(token_array, suffix_array)
+  val lcp_array2 = calculate_new_lcp_array(token_array.map(_.n), suffix_array)
 //  println(suffix_array)
 //  println(lcp_array)
 //  println(vectorization.mkString(" "))
@@ -45,13 +46,13 @@ import scala.util.matching.Regex
     .map(_.map(_.t))
     .map(_.mkString(" "))
     .zipWithIndex
-//    .foreach((string, index) => println(s"$string : $index : ${lcp_array(index)}"))
+    .foreach((string, index) => println(s"$string : $index : ${lcp_array1(index)} : ${lcp_array2(index)}"))
 
-  val blocks = create_aligned_blocks(token_array, 6)
-  blocks.foreach(println)
-  blocks
-    .map(_.show(token_array))
-    .foreach(println)
+//  val blocks = create_aligned_blocks(token_array, 6)
+//  blocks.foreach(println)
+//  blocks
+//    .map(_.show(token_array))
+//    .foreach(println)
 
   // Represent blocks as token string
 //  val blocks_slice_tokens = blocks

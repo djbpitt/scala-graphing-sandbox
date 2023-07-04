@@ -137,6 +137,35 @@ def vectorize(token_array: Vector[Token]): (Array[Int], Int) =
 
 /** Create LCP array from suffix array and token array
  *
+ * @param txt          Array of text tokens
+ * @param suffix_array Array of Ints
+ *
+ *                     Array and not vector because third-party library requires array
+ */
+
+
+def calculate_new_lcp_array(txt: Vector[String], suffix_array: Array[Int]): Vector[Int] = {
+  val n = suffix_array.length
+  val lcp: Array[Int] = new Array[Int](n)
+  for (window, index) <- suffix_array.sliding(2).zipWithIndex do
+    val previous_sa_value = window(0)
+    val current_sa_value = window(1)
+    println(previous_sa_value)
+    println(current_sa_value)
+    val length1:Int = n - previous_sa_value
+    val length2:Int = n - current_sa_value
+    // while do
+    var lcp_value = 0
+    while lcp_value < (length1 min length2) && txt(previous_sa_value+lcp_value) != txt(current_sa_value+lcp_value) do
+      lcp_value+=1
+    lcp(index+1)=lcp_value
+    println(lcp_value)
+
+  lcp.toVector
+}
+
+/** Create LCP array from suffix array and token array
+ *
  * Follows Kasai algorithm
  *
  * @param txt          Array of text tokens
@@ -146,25 +175,6 @@ def vectorize(token_array: Vector[Token]): (Array[Int], Int) =
  *                     https://www.geeksforgeeks.org/kasais-algorithm-for-construction-of-lcp-array-from-suffix-array/
  */
 
-
-def calculate_new_lcp_array(txt: Vector[String], suffix_array: Array[Int]): Vector[Int] = {
-  val n = suffix_array.length
-  val lcp: Array[Int] = new Array[Int](n)
-  for window <- suffix_array.sliding(2) do
-    val previous_sa_value = window(0)
-    val current_sa_value = window(1)
-    println(previous_sa_value)
-    println(current_sa_value)
-    val length1:Int = n - previous_sa_value
-    val length2:Int = n - current_sa_value
-    // while do
-    var i = 0
-    while i < (length1 min length2) && txt(previous_sa_value+i) != txt(current_sa_value+i) do
-      i+=1
-    println(i)
-
-  lcp.toVector
-}
 
 def calculate_lcp_array_on_string_array(txt: Vector[String], suffix_array: Array[Int]): Vector[Int] = {
   val n = suffix_array.length
