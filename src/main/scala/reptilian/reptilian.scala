@@ -150,8 +150,7 @@ def calculate_new_lcp_array(txt: Vector[String], suffix_array: Array[Int]): Vect
   for (window, index) <- suffix_array.sliding(2).zipWithIndex do
     val previous_sa_value = window(0)
     val current_sa_value = window(1)
-    val length1:Int = n - previous_sa_value
-    val length2:Int = n - current_sa_value
+    val max_length:Int = n - previous_sa_value min n - current_sa_value
     // debug
 //    val text1 = txt.slice(previous_sa_value, previous_sa_value+10)
 //    val text2 = txt.slice(current_sa_value, current_sa_value+10)
@@ -161,7 +160,7 @@ def calculate_new_lcp_array(txt: Vector[String], suffix_array: Array[Int]): Vect
 
     // while do
     var lcp_value = 0
-    while lcp_value < (length1 min length2) && txt(previous_sa_value+lcp_value) == txt(current_sa_value+lcp_value) do
+    while lcp_value < max_length && txt(previous_sa_value+lcp_value) == txt(current_sa_value+lcp_value) do
       lcp_value+=1
     lcp(index+1)=lcp_value
 //    println(lcp_value)
