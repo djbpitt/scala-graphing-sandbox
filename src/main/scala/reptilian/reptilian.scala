@@ -180,7 +180,7 @@ def calculate_new_lcp_array(txt: Vector[String], suffix_array: Array[Int]): Vect
  */
 
 
-def calculate_lcp_array_on_string_array(txt: Vector[String], suffix_array: Array[Int]): Vector[Int] = {
+def calculate_lcp_array_kasai(txt: Vector[String], suffix_array: Array[Int]): Vector[Int] = {
   val n = suffix_array.length
   val lcp: Array[Int] = new Array[Int](n)
   val invSuff = new Array[Int](n)
@@ -213,10 +213,6 @@ def calculate_lcp_array_on_string_array(txt: Vector[String], suffix_array: Array
     i += 1
   lcp.toVector
 }
-
-def calculate_lcp_array(token_array: Vector[Token], suffix_array: Array[Int]): Vector[Int] =
-  val n_array = token_array.map(_.n)
-  calculate_lcp_array_on_string_array(n_array, suffix_array)
 
 def find_witnesses_of_block(suffix_array: Array[Int], token_array: Vector[Token])(block: Block) =
   val witnesses: Array[Int] = suffix_array
@@ -332,8 +328,8 @@ def htmlify(token_array: Vector[Token], longest_full_depth_nonrepeating_blocks: 
 def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
   val (vectorization, voc_size) = vectorize(token_array)
   val suffix_array = calculate_suffix_array(vectorization, voc_size)
-  val lcp_array = calculate_lcp_array(token_array, suffix_array)
-
+  val lcp_array = calculate_lcp_array_kasai(token_array.map(_.n), suffix_array)
+  val lcp_array_new = calculate_new_lcp_array(token_array.map(_.n), suffix_array)
   // Dump suffix array and lcp array with initial tokens
 //  println("Start dump suffix and LCP array")
   val suffix_array_output = suffix_array
@@ -341,7 +337,7 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
     .map(_.map(_.t))
     .map(_.mkString(" "))
     .zipWithIndex
-    .map((string, index) => s"$string : $index : ${lcp_array(index)}\n")
+    .map((string, index) => s"$string : $index : ${lcp_array(index)} : ${lcp_array_new(index)} : ${lcp_array(index) == lcp_array_new(index)}\n")
   // Diagnostic: save suffix array and lcp array information
   val sa_output_path = os.pwd / "src" / "main" / "output" / "suffix_array.txt"
   os.write.over(sa_output_path, suffix_array_output) // Create HTML output and write to specified path
