@@ -149,16 +149,21 @@ def create_outgoing_edges_for_block(
   //    backwards-facing is not a meaningful second edge
   // Remove backwards-facing edges again from skip edges because skip edges might also be backward-facing
   val id = block.instances.head
-  val neighbor_targets: Vector[Int] = block_offsets(id)
-    .zipWithIndex
-    .map((value, index) => block_order_for_witnesses(index)(value + 1 min block_offsets.size - 1).instances.head)
-    .distinct
-    .toVector
-  //  println(block_offsets(id))
-  val neighbor_edges: Vector[WDiEdge[Int]] =
-    neighbor_targets
-      .map(e => WDiEdge(id, e)(1))
-      .filter(e => check_for_cycles(e, block_offsets))
+
+  def create_neighbor_edges =
+    val neighbor_targets: Vector[Int] = block_offsets(id)
+      .zipWithIndex
+      .map((value, index) => block_order_for_witnesses(index)(value + 1 min block_offsets.size - 1).instances.head)
+      .distinct
+      .toVector
+    //  println(block_offsets(id))
+    val neighbor_edges: Vector[WDiEdge[Int]] =
+      neighbor_targets
+        .map(e => WDiEdge(id, e)(1))
+        .filter(e => check_for_cycles(e, block_offsets))
+    neighbor_edges
+
+  val neighbor_edges = create_neighbor_edges
   val skip_edges =
     if neighbor_edges.size == 1 then
       Vector.empty[WDiEdge[Int]]
@@ -171,77 +176,58 @@ def create_outgoing_edges_for_block(
         .toVector // Vector of six triples with same source, one triple per witness
       // Skip edge only if no witness points backward
       if all_neighbor_edges_by_witness.map((source, target, _) => source < target).forall(_ == true) then
-        // print("all_neighbor_edges_by_witness: ")
-        // println(all_neighbor_edges_by_witness)
         val skipped_blocks_by_witness = all_neighbor_edges_by_witness
           .map((source, target, witness) => {
             val skip_start_offset = block_offsets(source)(witness) + 1
             val skip_end_offset = block_offsets(target)(witness) + 1
             block_order_for_witnesses(witness).slice(skip_start_offset, skip_end_offset + 1)
           })
-        // print("skipped_blocks_by_witness: ")
-        // println(skipped_blocks_by_witness)
-        // Keep the intersection (blocks that occur once per witness, i.e., in all witnesses
         val shared_skipped_blocks_unfiltered = counts(skipped_blocks_by_witness.flatten)
         val shared_skipped_blocks = shared_skipped_blocks_unfiltered
           .filter((_, value) => value == block_order_for_witnesses.size)
-        // print("source: ")
-        // println(block_offsets(id))
         // id is offsets in witness order, so we translate to offsets into token array
         val source_token_offsets = block_order_for_witnesses(0)(block_offsets(id).head)
-        // print("token array offsets for source: ")
-        // println(source_token_offsets)
-        // print("shared_skipped_blocks: ")
         val shared_skipped_block_keys = shared_skipped_blocks.keySet
-        // println(shared_skipped_block_keys)
         // Vector subtraction of skipped block - source to find closest shared skipped block
         val distances = shared_skipped_block_keys
           .map(e => e.instances zip source_token_offsets.instances)
           .map(_.map((target, source) => target - source))
           .map(_.sum)
           .zip(shared_skipped_block_keys)
-        // print("distances: ")
-        // println(distances)
         if distances.isEmpty then
           Vector.empty[WDiEdge[Int]]
         else
           val closest_skipped_block = distances
             .minBy(_._1)
             ._2
-          // print("closest_skipped_block: ")
-          // println(closest_skipped_block)
           Vector(WDiEdge(source_token_offsets.instances.head, closest_skipped_block.instances.head)(2))
       else
         Vector.empty[WDiEdge[Int]]
-    //      val neighbor_edges_by_witness = neighbor_edges
-    //        .map(e => (e.from, e.to))
-    //        .zipWithIndex // Add witness id
-    //        .map((pointers, index) => (pointers._1, pointers._2, index)) // Flatten into (source, target, witness) tuple
-    //      // For each witness look up the blocks skipped
-    //      val skipped_blocks_by_witness = neighbor_edges_by_witness
-    //        .map((source, target, witness) => {
-    //          val skip_start_offset = block_offsets(source)(witness) + 1
-    //          val skip_end_offset = block_offsets(target)(witness) + 1
-    //          block_order_for_witnesses(witness).slice(skip_start_offset, skip_end_offset + 1)
-    //        }
-    //        )
-    //      // Keep the intersection (blocks that occur once per witness, i.e., in all witnesses
-    //      val shared_skipped_blocks_unfiltered = counts(skipped_blocks_by_witness.flatten)
-    //      val shared_skipped_blocks = shared_skipped_blocks_unfiltered
-    //        .filter((_, value) => value == block_order_for_witnesses.size)
-    //      // TODO: For now just the closest one, but should it be all of them?
-    //      val non_cyclic = shared_skipped_blocks
-    //        .map(e => WDiEdge(id, e._1.instances.head)(1))
-    //        .filter(e => check_for_cycles(e, block_offsets))
-    //      if non_cyclic.nonEmpty then
-    //        val skip_edge = non_cyclic.minBy(_._2)
-    //        print("Found a skip edge: ")
-    //        println(skip_edge)
-    //        Vector(skip_edge)
-    //      else
-    //        Vector()
     else
-      // println(s"No outedges from node $id")
+      println(s"No direct edges for node $id")
+      println(s"The offset of node $id all witnesses is: ")
+      println(block_offsets(id))
+      println("Token-array offsets of source: ")
+      val token_array_offsets_of_source =
+        block_order_for_witnesses(0)(block_offsets(id).head)
+          .instances
+      println(token_array_offsets_of_source)
+      println("All following nodes for witness 0: ")
+      val all_following_nodes_for_witness_0 =
+        block_order_for_witnesses(0)
+          .slice(block_offsets(id).head + 1, block_offsets.size - 1)
+      println(all_following_nodes_for_witness_0)
+      // Keep only if offset of target is greater than offset of source for all witnesses
+      // We filtered out targets that come earlier in witness 0 by examining only nodes that
+      //    come later in that witness
+      val non_transposed_following_nodes =
+        all_following_nodes_for_witness_0
+          .filter(e => e.instances
+            .zip(token_array_offsets_of_source)
+            .map((e, f) => e - f)
+            .map(_.sign)
+            .forall(_ == 1))
+      println(non_transposed_following_nodes)
       Vector.empty[WDiEdge[Int]] // temporary
   val all_edges = neighbor_edges ++ skip_edges
   // println(all_edges)
