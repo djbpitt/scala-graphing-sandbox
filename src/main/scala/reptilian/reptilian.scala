@@ -56,7 +56,7 @@ case class FullDepthBlock(instances: Vector[Int], length: Int):
  * @return Indexed sequence of lists of strings (token lists)
  */
 def read_data(path_to_data: Path): List[String] =
-  os.walk(path_to_data)
+  os.walk(path = path_to_data, skip = _.last.startsWith(".")) // exclude hidden files
     .sorted
     .toList
     .map(os.read)
@@ -138,10 +138,9 @@ def vectorize(token_array: Vector[Token]): (Array[Int], Int) =
 /** Create suffix array
  *
  * @param vectorization : Token array as Array[Int], corresponding to normalized words (in alphabetical order)
- *
  * @return : Suffix array
  *
- * Defines ordering for IndexedSeqView[Int] to sort vectorized suffixes
+ *         Defines ordering for IndexedSeqView[Int] to sort vectorized suffixes
  */
 def create_suffix_array(vectorization: Array[Int]) =
   val suffixes = vectorization.indices
@@ -187,13 +186,13 @@ def calculate_lcp_array_kasai(txt: Vector[String], suffix_array: Array[Int]): Ve
     }
     else {
       val j: Int = suffix_array(invSuff(i) + 1)
-//      val k_before = k
+      //      val k_before = k
       while (i + k < n && j + k < n && txt(i + k) == txt(j + k)) {
         k += 1
       }
-//      val k_after = k
-//      val n_array_1 = txt.slice(i, i + k_after + 1).mkString(", ")
-//      val n_array_2 = txt.slice(j, j + k_after + 1).mkString(", ")
+      //      val k_after = k
+      //      val n_array_1 = txt.slice(i, i + k_after + 1).mkString(", ")
+      //      val n_array_2 = txt.slice(j, j + k_after + 1).mkString(", ")
       //      if n_array_1.startsWith("within, a, dozen") then
       //        println("We compared " + n_array_1)
       //        println(" and " + n_array_2)
@@ -323,16 +322,16 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
   val suffix_array = create_suffix_array(vectorization)
   val lcp_array = calculate_lcp_array_kasai(token_array.map(_.n), suffix_array)
   // Dump suffix array and lcp array with initial tokens
-//  println("Start dump suffix and LCP array")
-//  val suffix_array_output = suffix_array
-//    .map(e => token_array.slice(e, e + 35 min token_array.size))
-//    .map(_.map(_.t))
-//    .map(_.mkString(""))
-//    .zipWithIndex
-//    .map((string, index) => s"$string : $index : ${lcp_array(index)}\n")
-//  // Diagnostic: save suffix array and lcp array information
-//  val sa_output_path = os.pwd / "src" / "main" / "output" / "suffix_array.txt"
-//  os.write.over(sa_output_path, suffix_array_output) // Create suffix and LCP array output and write to specified path
+  //  println("Start dump suffix and LCP array")
+  //  val suffix_array_output = suffix_array
+  //    .map(e => token_array.slice(e, e + 35 min token_array.size))
+  //    .map(_.map(_.t))
+  //    .map(_.mkString(""))
+  //    .zipWithIndex
+  //    .map((string, index) => s"$string : $index : ${lcp_array(index)}\n")
+  //  // Diagnostic: save suffix array and lcp array information
+  //  val sa_output_path = os.pwd / "src" / "main" / "output" / "suffix_array.txt"
+  //  os.write.over(sa_output_path, suffix_array_output) // Create suffix and LCP array output and write to specified path
 
 
   val blocks = create_blocks(lcp_array)
@@ -363,9 +362,9 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val token_pattern: Regex = raw"(\w+|[^\w\s])\s*".r // From CollateX Python, syntax adjusted for Scala
   val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
   // Prepare data (List[String])
-  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
+  //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
   //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_small" // no skip edge; direct transposition
-  //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "cats"
+  val path_to_darwin = os.pwd / "src" / "main" / "data" / "cats"
   // Small skip edge test examples
   //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "no_skip_cats" // no skip edge; direct transposition
   // val path_to_darwin = os.pwd / "src" / "main" / "data" / "one_skip_cats" // one skip edge
@@ -378,7 +377,6 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   implicit val token_array: Vector[Token] = tokenize(tokenizer)(witness_strings)
   // Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
   val longest_full_depth_nonrepeating_blocks = create_aligned_blocks(token_array, witness_strings.size)
-  // longest_full_depth_nonrepeating_blocks.foreach(println)
   val block_texts: Map[Int, String] = block_text_by_id(longest_full_depth_nonrepeating_blocks, token_array)
   val normalized_input = witness_strings
     .map(e => tokenize(tokenizer)(List(e)).map(_.n).mkString(" "))
