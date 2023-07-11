@@ -362,7 +362,7 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val token_pattern: Regex = raw"(\w+|[^\w\s])\s*".r // From CollateX Python, syntax adjusted for Scala
   val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
   // Prepare data (List[String])
-  //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
+  // val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
   //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_small" // no skip edge; direct transposition
   val path_to_darwin = os.pwd / "src" / "main" / "data" / "cats"
   // Small skip edge test examples
@@ -398,6 +398,9 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
     .sortBy(block => block.instances(0))
   // full_depth_blocks.foreach(e => println(e.show(token_array)))
   // full_depth_blocks.foreach(println)
+
+  val alignment = find_optimal_alignment(graph)
+  println(alignment)
 
   // val transposed = longest_full_depth_nonrepeating_blocks.filter(block => !set_of_non_transposed_node_ids.contains(block.instances(0)))
   // transposed.foreach(e => println(e.show(token_array))) // diagnostic

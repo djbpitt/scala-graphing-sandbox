@@ -204,19 +204,12 @@ def create_outgoing_edges_for_block(
       else
         Vector.empty[WDiEdge[Int]]
     else
-      println(s"No direct edges for node $id")
-      println(s"The offset of node $id all witnesses is: ")
-      println(block_offsets(id))
-      println("Token-array offsets of source: ")
       val token_array_offsets_of_source =
         block_order_for_witnesses(0)(block_offsets(id).head)
           .instances
-      println(token_array_offsets_of_source)
-      println("All following nodes for witness 0: ")
       val all_following_nodes_for_witness_0 =
         block_order_for_witnesses(0)
           .slice(block_offsets(id).head + 1, block_offsets.size - 1)
-      println(all_following_nodes_for_witness_0)
       // Keep only if offset of target is greater than offset of source for all witnesses
       // We filtered out targets that come earlier in witness 0 by examining only nodes that
       //    come later in that witness
@@ -225,7 +218,7 @@ def create_outgoing_edges_for_block(
        *
        * @param source: Offsets into token array for source node
        * @param target: Target node (offsets are instances property of target)
-       * 
+       *
        * Return: Deltas as Vector[Int] (target - source matrix subtraction)
        */
       def compute_deltas(source: Vector[Int], target: FullDepthBlock): Vector[Int] =
@@ -238,8 +231,6 @@ def create_outgoing_edges_for_block(
           .filter(e => compute_deltas(token_array_offsets_of_source, e)
             .map(_.sign)
             .forall(_ == 1))
-      println("Non-transposed following nodes: ")
-      println(non_transposed_following_nodes)
       val positive_deltas =
         non_transposed_following_nodes
           .map(e => compute_deltas(token_array_offsets_of_source, e).sum)
@@ -248,11 +239,8 @@ def create_outgoing_edges_for_block(
           .zip(positive_deltas)
           .minBy(_._2)
           ._1
-      println("Closest non-transposed following node: ")
-      println(closest_non_transposed_following_node)
       Vector(WDiEdge(token_array_offsets_of_source.head, closest_non_transposed_following_node.instances.head)(2))
   val all_edges = neighbor_edges ++ skip_edges
-  // println(all_edges)
   all_edges
 
 
@@ -328,7 +316,7 @@ def find_optimal_alignment(graph: Graph[Int, WDiEdge]) = // specify return type?
   val start = BeamOption(path = List(-1), score = 0)
   var beam: Vector[BeamOption] = Vector(start) // initialize beam to hold just start node (zero tokens)
 
-  while !beam.map(_.path.head).forall(_ == -2) do
+  while !beam.map(_.path.head).forall(_ == Integer.MAX_VALUE) do
     val new_options = beam.flatMap(e => score_all_options(graph = graph, current = e))
     if new_options.size <= beam_max then
       beam = new_options
