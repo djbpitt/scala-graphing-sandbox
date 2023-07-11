@@ -220,15 +220,37 @@ def create_outgoing_edges_for_block(
       // Keep only if offset of target is greater than offset of source for all witnesses
       // We filtered out targets that come earlier in witness 0 by examining only nodes that
       //    come later in that witness
+
+      /**
+       *
+       * @param source: Offsets into token array for source node
+       * @param target: Target node (offsets are instances property of target)
+       * 
+       * Return: Deltas as Vector[Int] (target - source matrix subtraction)
+       */
+      def compute_deltas(source: Vector[Int], target: FullDepthBlock): Vector[Int] =
+        target
+          .instances
+          .zip(source)
+          .map((e, f) => e - f)
       val non_transposed_following_nodes =
         all_following_nodes_for_witness_0
-          .filter(e => e.instances
-            .zip(token_array_offsets_of_source)
-            .map((e, f) => e - f)
+          .filter(e => compute_deltas(token_array_offsets_of_source, e)
             .map(_.sign)
             .forall(_ == 1))
+      println("Non-transposed following nodes: ")
       println(non_transposed_following_nodes)
-      Vector.empty[WDiEdge[Int]] // temporary
+      val positive_deltas =
+        non_transposed_following_nodes
+          .map(e => compute_deltas(token_array_offsets_of_source, e).sum)
+      val closest_non_transposed_following_node =
+        non_transposed_following_nodes
+          .zip(positive_deltas)
+          .minBy(_._2)
+          ._1
+      println("Closest non-transposed following node: ")
+      println(closest_non_transposed_following_node)
+      Vector(WDiEdge(token_array_offsets_of_source.head, closest_non_transposed_following_node.instances.head)(2))
   val all_edges = neighbor_edges ++ skip_edges
   // println(all_edges)
   all_edges
