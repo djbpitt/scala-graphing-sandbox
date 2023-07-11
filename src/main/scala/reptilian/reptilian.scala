@@ -377,7 +377,6 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   implicit val token_array: Vector[Token] = tokenize(tokenizer)(witness_strings)
   // Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
   val longest_full_depth_nonrepeating_blocks = create_aligned_blocks(token_array, witness_strings.size)
-  longest_full_depth_nonrepeating_blocks.foreach(println)
   val block_texts: Map[Int, String] = block_text_by_id(longest_full_depth_nonrepeating_blocks, token_array)
   val normalized_input = witness_strings
     .map(e => tokenize(tokenizer)(List(e)).map(_.n).mkString(" "))
@@ -401,21 +400,19 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   // full_depth_blocks.foreach(println)
 
   val alignment = find_optimal_alignment(graph)
-  println(alignment)
 
   // val transposed = longest_full_depth_nonrepeating_blocks.filter(block => !set_of_non_transposed_node_ids.contains(block.instances(0)))
   // transposed.foreach(e => println(e.show(token_array))) // diagnostic
 
   // Diagnostic: visualize traversal graph
   val result = graph_to_dot(graph, block_texts, set_of_non_transposed_node_ids)
-  val graphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
+  val graphOutputPath = os.pwd / "src" / "main" / "output" / "traversal.dot"
   os.write.over(graphOutputPath, result) // Create HTML output and write to specified path
 
   // Output directory (also file?) must already exist
   val alignment_as_set = alignment.toSet
   val alignment_blocks = longest_full_depth_nonrepeating_blocks
     .filter(e => alignment_as_set.contains(e.instances.head))
-  println(alignment_blocks)
   val output = htmlify(token_array, alignment_blocks)
   val outputPath = os.pwd / "src" / "main" / "output" / "alignment.xhtml"
   os.write.over(outputPath, output)

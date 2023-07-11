@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-dot -Tsvg alignment.dot -oalignment.svg
+dot -Tsvg traversal.dot -otraversal.svg
