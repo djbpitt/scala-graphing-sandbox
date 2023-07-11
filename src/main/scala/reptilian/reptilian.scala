@@ -362,9 +362,9 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val token_pattern: Regex = raw"(\w+|[^\w\s])\s*".r // From CollateX Python, syntax adjusted for Scala
   val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
   // Prepare data (List[String])
-  // val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
+  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
   //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_small" // no skip edge; direct transposition
-  val path_to_darwin = os.pwd / "src" / "main" / "data" / "cats"
+  // val path_to_darwin = os.pwd / "src" / "main" / "data" / "cats"
   // Small skip edge test examples
   //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "no_skip_cats" // no skip edge; direct transposition
   // val path_to_darwin = os.pwd / "src" / "main" / "data" / "one_skip_cats" // one skip edge
@@ -377,6 +377,7 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   implicit val token_array: Vector[Token] = tokenize(tokenizer)(witness_strings)
   // Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
   val longest_full_depth_nonrepeating_blocks = create_aligned_blocks(token_array, witness_strings.size)
+  longest_full_depth_nonrepeating_blocks.foreach(println)
   val block_texts: Map[Int, String] = block_text_by_id(longest_full_depth_nonrepeating_blocks, token_array)
   val normalized_input = witness_strings
     .map(e => tokenize(tokenizer)(List(e)).map(_.n).mkString(" "))
@@ -411,6 +412,10 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   os.write.over(graphOutputPath, result) // Create HTML output and write to specified path
 
   // Output directory (also file?) must already exist
-  val output = htmlify(token_array, full_depth_blocks)
+  val alignment_as_set = alignment.toSet
+  val alignment_blocks = longest_full_depth_nonrepeating_blocks
+    .filter(e => alignment_as_set.contains(e.instances.head))
+  println(alignment_blocks)
+  val output = htmlify(token_array, alignment_blocks)
   val outputPath = os.pwd / "src" / "main" / "output" / "alignment.xhtml"
   os.write.over(outputPath, output)
