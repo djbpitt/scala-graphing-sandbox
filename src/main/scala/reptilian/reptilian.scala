@@ -337,7 +337,8 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
 @main def main(): Unit =
   // Prepare tokenizer (partially applied function)
   // NB: Sequences of non-word characters (except spaces) are entire tokens
-  val token_pattern: Regex = raw"(\w+|[^\w\s])\s*".r // From CollateX Python, syntax adjusted for Scala
+  // Unlike in CollateX Python, punctuation characters are their own tokens
+  val token_pattern: Regex = raw"(\w+|[^\w\s])\s*".r
   val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
   // Prepare data (List[String])
   val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
@@ -348,46 +349,26 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   // val path_to_darwin = os.pwd / "src" / "main" / "data" / "one_skip_cats" // one skip edge
   // val path_to_darwin = os.pwd / "src" / "main" / "data" / "two_skip_cats" // two (parallel) skip edges
   // End of skip edge test examples
-  //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_5_9"
-  // val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_long-and-same"
   val witness_strings = read_data(path_to_darwin) // One string per witness
-  // Prepare tokens (Vector[Token])
   implicit val token_array: Vector[Token] = tokenize(tokenizer)(witness_strings)
   // Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
   val longest_full_depth_nonrepeating_blocks = create_aligned_blocks(token_array, witness_strings.size)
   val block_texts: Map[Int, String] = block_text_by_id(longest_full_depth_nonrepeating_blocks, token_array)
-  val normalized_input = witness_strings
-    .map(e => tokenize(tokenizer)(List(e)).map(_.n).mkString(" "))
 
-  def block_check(block_text: String) = normalized_input
-    .map(_.contains(block_text))
-    .forall(_ == true)
-
-  //  block_texts.filter((-, txt) => !block_check(txt)).foreach(println)
   // create navigation graph and filter out transposed nodes
   val graph = create_traversal_graph(longest_full_depth_nonrepeating_blocks.toVector)
 
   //  val set_of_non_transposed_node_ids = find_optimal_alignment(graph).toSet
   val set_of_non_transposed_node_ids = Set[Int]()
 
-  val full_depth_blocks = longest_full_depth_nonrepeating_blocks
-    .filter(block => set_of_non_transposed_node_ids.contains(block.instances(0)))
-    .toVector
-    .sortBy(block => block.instances(0))
-  // full_depth_blocks.foreach(e => println(e.show(token_array)))
-  // full_depth_blocks.foreach(println)
-
   val alignment = find_optimal_alignment(graph)
-
-  // val transposed = longest_full_depth_nonrepeating_blocks.filter(block => !set_of_non_transposed_node_ids.contains(block.instances(0)))
-  // transposed.foreach(e => println(e.show(token_array))) // diagnostic
 
   // Diagnostic: visualize traversal graph
   val result = graph_to_dot(graph, block_texts, set_of_non_transposed_node_ids)
   val graphOutputPath = os.pwd / "src" / "main" / "output" / "traversal.dot"
   os.write.over(graphOutputPath, result) // Create HTML output and write to specified path
 
-  // Output directory (also file?) must already exist
+  // Output directory must already exist
   val alignment_as_set = alignment.toSet
   val alignment_blocks = longest_full_depth_nonrepeating_blocks
     .filter(e => alignment_as_set.contains(e.instances.head))

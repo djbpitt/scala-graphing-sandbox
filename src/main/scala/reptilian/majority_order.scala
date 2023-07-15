@@ -4,9 +4,8 @@ package reptilian
 /** Create directed graph
  *
  * Find majority order
- * Return graph with
- * Nodes for each block, with integer identifier
- * Add Start (-1) and End (-2) nodes
+ * Create nodes for each block, with integer identifier, and add to graph
+ * Add Start (-1) and End (Integer.MAX_VALUE) nodes
  * Edges weighted by number of witnesses that share order (1 < n < witnessCount)
  */
 
@@ -23,6 +22,7 @@ import scalax.collection.io.dot.implicits.toNodeId
 
 import scala.collection.mutable.ArrayBuffer
 
+val end_node_id = Integer.MAX_VALUE  // End-node uses maximum possible integer value (i.e., inconveniently large value)
 implicit val myConfig: CoreConfig = CoreConfig()
 
 /** https://stackoverflow.com/questions/28254447/is-there-a-scala-java-equivalent-of-python-3s-collections-counter
@@ -56,15 +56,12 @@ def edges_generator(blocks: Vector[FullDepthBlock], w: Int): Vector[WDiEdge[Int]
     .map(e => e(0).instances(0) ~> e(1).instances(0) % e(1).length)
     .toVector
 
-/** Filter out edges that introduce cycles
- *
- */
+/** Filter out edges that introduce cycles */
 protected def compute_edges_for_witness(blocks: Vector[FullDepthBlock], w: Int): Vector[WDiEdge[Int]] =
   val edges_with_cycles = edges_generator(blocks, w) zip check_backward_edges_generator(blocks, w)
   val edges = edges_with_cycles
     .filter((_, forwards) => forwards)
     .map((edge, _) => edge)
-
   val sorted_blocks = blocks.sortBy(_.instances(w))
   edges ++ Vector(-1 ~> edges.head.from % sorted_blocks.head.length,
     edges.last.to ~> -2 % 0)
@@ -99,8 +96,7 @@ protected def compute_block_order_for_witnesses(blocks: Vector[FullDepthBlock]):
 /** Create map from block id (offset in witness 0) to array buffer of offsets in all witnesses
  *
  * @param block_orders Vector of vectors of all blocks, each sorted by a different witness
- *
- *                     Returns map from block id (offset in witness 0) to array buffer of offsets in all witness
+ * @return Map from block id (offset in witness 0) to array buffer of offsets in all witness
  */
 protected def compute_block_offsets_in_all_witnesses(block_orders: Vector[Vector[FullDepthBlock]]) =
   // Traverse each inner vector and add value to Map[Int, ArrayBuffer]
@@ -125,10 +121,9 @@ protected def compute_block_offsets_in_all_witnesses(block_orders: Vector[Vector
  *
  * @param edge          weighted directed edge
  * @param block_offsets map from block identifier to offsets in all witnesses
+ * @return              boolean
  *
- *                      Return boolean
- *
- *                      Edges for all witnesses must point forward
+ * Edges for all witnesses must point forward
  * */
 def check_for_cycles(edge: WDiEdge[Int], block_offsets: Map[Int, ArrayBuffer[Int]]): Boolean =
   val from = edge.from
@@ -143,8 +138,7 @@ def check_for_cycles(edge: WDiEdge[Int], block_offsets: Map[Int, ArrayBuffer[Int
 def create_outgoing_edges_for_block(
                                      block: FullDepthBlock,
                                      block_order_for_witnesses: Vector[Vector[FullDepthBlock]],
-                                     block_offsets: Map[Int, ArrayBuffer[Int]])
-                                   (implicit token_array: Vector[Token]) =
+                                     block_offsets: Map[Int, ArrayBuffer[Int]]) =
   // Remove backwards-facing edges before determining need for skip edges, since a second edge that is
   //    backwards-facing is not a meaningful second edge
   // Remove backwards-facing edges again from skip edges because skip edges might also be backward-facing
@@ -218,8 +212,7 @@ def create_outgoing_edges_for_block(
        *
        * @param source: Offsets into token array for source node
        * @param target: Target node (offsets are instances property of target)
-       *
-       * Return: Deltas as Vector[Int] (target - source matrix subtraction)
+       * @return Deltas as Vector[Int] (target - source matrix subtraction)
        */
       def compute_deltas(source: Vector[Int], target: FullDepthBlock): Vector[Int] =
         target
@@ -250,7 +243,7 @@ def create_outgoing_edges_for_block(
  * @param block_order_for_witnesses : vector of vectors of full-depth blocks, each sorted by a witness
  * @param block_offsets             : map from block identifier to array buffer of positions of block in all witnesses
  *
- *                                  Return vector of directed edges
+ * @return                          : vector of directed edges
  *                                  Filter out backwards edges to remove cycles
  *                                  TODO: Weight edges, all weights are currently set to 1
  */
@@ -258,19 +251,17 @@ def create_outgoing_edges(
                            blocks: Vector[FullDepthBlock],
                            block_order_for_witnesses: Vector[Vector[FullDepthBlock]],
                            block_offsets: Map[Int, ArrayBuffer[Int]]
-                         )
-                         (implicit token_array: Vector[Token]) =
+                         ) =
   val edges = blocks
     .tail // End node is first block in vector and has no outgoing edges, so exclude
     .flatMap(e => create_outgoing_edges_for_block(e, block_order_for_witnesses, block_offsets))
   edges
 
 
-def create_traversal_graph(blocks: Vector[FullDepthBlock])(using token_array: Vector[Token]) =
+def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
   val witness_count = blocks(0).instances.length
   val start_block = FullDepthBlock(instances = Vector.fill(witness_count)(-1), length = 1) // fake first (start) block
-  // End-node uses maximum possible integer value (i.e., inconveniently large value)
-  val end_block = FullDepthBlock(instances = Vector.fill(witness_count)(Integer.MAX_VALUE), length = 1)
+  val end_block = FullDepthBlock(instances = Vector.fill(witness_count)(end_node_id), length = 1)
   // end node first to we can use blocks.tail to compute outgoing edges
   val blocks_for_graph = Vector(end_block) ++ blocks ++ Vector(start_block)
   val g = compute_nodes_for_graph(blocks_for_graph)
@@ -285,7 +276,7 @@ def create_traversal_graph(blocks: Vector[FullDepthBlock])(using token_array: Ve
  * graph : Needed to get out edges
  * current : BeamOption to process
  *
- * If head of path is -2, we're at the end, so return current value (which might ultimately be optimal)
+ * If head of path is end_node_id, we're at the end, so return current value (which might ultimately be optimal)
  * Otherwise check each out-edge, prepend to path, increment score, and return new BeamOption
  * Returns all options; we decide elsewhere which ones to keep on the beam for the next tier
  * */
@@ -309,14 +300,11 @@ def find_optimal_alignment(graph: Graph[Int, WDiEdge]) = // specify return type?
   //
   // Return single BeamOption, representing (one) best alignment
   // TODO: Restore temporarily disabled unit tests
-  val beam_max = 5 // Fixed, but could be adaptable, e.g., x% of possible options
-
-  def n(outer: Int): graph.NodeT = graph get outer // supply outer (our Int value) to retrieve complex inner
-
+  val beam_max = 5 // TODO: could be adaptable, e.g., x% of possible options
   val start = BeamOption(path = List(-1), score = 0)
   var beam: Vector[BeamOption] = Vector(start) // initialize beam to hold just start node (zero tokens)
 
-  while !beam.map(_.path.head).forall(_ == Integer.MAX_VALUE) do
+  while !beam.map(_.path.head).forall(_ == end_node_id) do
     val new_options = beam.flatMap(e => score_all_options(graph = graph, current = e))
     if new_options.size <= beam_max then
       beam = new_options
@@ -324,13 +312,6 @@ def find_optimal_alignment(graph: Graph[Int, WDiEdge]) = // specify return type?
       beam = new_options.sortBy(_.score * -1).slice(from = 0, until = beam_max)
 
   beam.minBy(_.score * -1).path.reverse // Exit once all options on the beam end at the end node
-
-
-//  var optimal_path = Vector[Int]()
-//  while current != end do
-//    optimal_path = optimal_path :+ current.value
-//    val target_node = current.outgoing.maxBy(_.weight).to
-//    current = target_node
 
 
 def graph_to_dot(g: Graph[Int, WDiEdge], b: Map[Int, String], path_nodes: Set[Int]) =
