@@ -131,7 +131,6 @@ def vectorize(token_array: Vector[Token]): (Array[Int], Int) =
     .distinct
     .sorted
   val terms_to_int = voc.zipWithIndex.to(VectorMap)
-  //terms_to_int.foreach(println)
   (token_array.map(_.n).map(terms_to_int).toArray, voc.length)
 
 
@@ -186,17 +185,9 @@ def calculate_lcp_array_kasai(txt: Vector[String], suffix_array: Array[Int]): Ve
     }
     else {
       val j: Int = suffix_array(invSuff(i) + 1)
-      //      val k_before = k
       while (i + k < n && j + k < n && txt(i + k) == txt(j + k)) {
         k += 1
       }
-      //      val k_after = k
-      //      val n_array_1 = txt.slice(i, i + k_after + 1).mkString(", ")
-      //      val n_array_2 = txt.slice(j, j + k_after + 1).mkString(", ")
-      //      if n_array_1.startsWith("within, a, dozen") then
-      //        println("We compared " + n_array_1)
-      //        println(" and " + n_array_2)
-      //        println(" and we found " + k.toString + " agreement and we started at " + k_before.toString + " .")
       lcp(invSuff(i) + 1) = k
       if (k > 0) {
         k -= 1
@@ -321,19 +312,6 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
   val (vectorization, _) = vectorize(token_array)
   val suffix_array = create_suffix_array(vectorization)
   val lcp_array = calculate_lcp_array_kasai(token_array.map(_.n), suffix_array)
-  // Dump suffix array and lcp array with initial tokens
-  //  println("Start dump suffix and LCP array")
-  //  val suffix_array_output = suffix_array
-  //    .map(e => token_array.slice(e, e + 35 min token_array.size))
-  //    .map(_.map(_.t))
-  //    .map(_.mkString(""))
-  //    .zipWithIndex
-  //    .map((string, index) => s"$string : $index : ${lcp_array(index)}\n")
-  //  // Diagnostic: save suffix array and lcp array information
-  //  val sa_output_path = os.pwd / "src" / "main" / "output" / "suffix_array.txt"
-  //  os.write.over(sa_output_path, suffix_array_output) // Create suffix and LCP array output and write to specified path
-
-
   val blocks = create_blocks(lcp_array)
   val witnesses_of_block = find_witnesses_of_block(suffix_array, token_array) // Partially applied, requires Block
   val tmp_full_depth_nonrepeating_blocks =
