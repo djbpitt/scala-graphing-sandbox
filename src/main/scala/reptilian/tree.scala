@@ -3,19 +3,19 @@ package reptilian
 
 import scala.collection.mutable.ListBuffer
 
-trait AlignmentTreeNode // supertype of all nodes
+sealed trait AlignmentTreeNode // supertype of all nodes
+
+final case class RootNode(witness_count: Int, children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
+
+
+final case class LeafNode(witness_readings: WitnessReadings) extends AlignmentTreeNode
+
+final case class BranchingNode(children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
+
+final case class UnexpandedNode(witness_readings: WitnessReadings) extends AlignmentTreeNode
 
 // One map entry per witness, from witness id to start and end (inclusive, so "to") offset in global token array
 type WitnessReadings = Map[Int, (Int, Int)]
-
-case class RootNode(witness_count: Int, children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
-
-
-case class LeafNode(witness_readings: WitnessReadings) extends AlignmentTreeNode
-
-case class BranchingNode(children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
-
-case class UnexpandedNode(witness_readings: WitnessReadings) extends AlignmentTreeNode
 
 def tree(witness_count: Int) =
   val root = RootNode(witness_count)
