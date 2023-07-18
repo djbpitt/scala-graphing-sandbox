@@ -1,7 +1,8 @@
 package reptilian
 
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable
+import scala.collection.mutable.{ListBuffer, Queue}
 
 // One map entry per witness, from witness id to start and end (inclusive "to") offset in global token array
 type WitnessReadings = Map[Int, (Int, Int)] // type alias
@@ -43,6 +44,39 @@ def show(node: AlignmentTreeNode): Unit =
     case StringNode(txt) => println(txt) // To report errors
   }
 
+/** Create GraphViz dot representation of tree
+ *
+ * @param root : RootNode
+ * @return : String containing dot code for GraphViz
+ * */
+def dot(root: RootNode): String =
+  val header: String = "digraph MyGraph {\n\tnode [shape = record]\n\t"
+  val footer: String = "\n}"
+  var id = 0
+  val nodes_to_process: mutable.Queue[(Int, AlignmentTreeNode)] = mutable.Queue((id, root))
+  var edges = List[String]()
+  while nodes_to_process.nonEmpty do
+    val current_node = nodes_to_process.dequeue()
+    current_node match {
+      case (_, RootNode(children)) =>
+        for i <- children do {
+          id += 1
+          nodes_to_process.enqueue((id, i))
+          edges = List(current_node._1, " -> ", id).mkString(" ") :: edges
+        }
+      case (_, BranchingNode(children)) => nodes_to_process.enqueueAll(
+        children.map(
+          e => {
+            id += 1
+            (id, e)
+          }
+        )
+      )
+      case (_, LeafNode(witness_readings)) => ()
+      case _ => ()
+    }
+  header + edges.mkString("\n\t") + footer
+
 def tree(witness_count: Int) =
   val root = RootNode()
   root
@@ -55,4 +89,7 @@ def build_tree(): Unit =
     LeafNode(3 -> (300, 301), 4 -> (400, 401)),
     LeafNode()
   )
-  show(t)
+  val dot_result = dot(t)
+  val graphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
+  os.write.over(graphOutputPath, dot_result)
+  println(dot_result)
