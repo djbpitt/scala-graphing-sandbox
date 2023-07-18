@@ -8,9 +8,11 @@ type WitnessReadings = Map[Int, (Int, Int)] // type alias
 
 sealed trait AlignmentTreeNode // supertype of all nodes
 
-case class RootNode(witness_count: Int, children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
+final case class RootNode(witness_count: Int, children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
 
-case class LeafNode(witness_readings: WitnessReadings) extends AlignmentTreeNode
+final case class StringNode(txt: String = "unspecified mistake") extends AlignmentTreeNode
+
+final case class LeafNode(witness_readings: WitnessReadings) extends AlignmentTreeNode
 
 /** Custom constructor to simplify creation of LeafNode
  *
@@ -18,15 +20,19 @@ case class LeafNode(witness_readings: WitnessReadings) extends AlignmentTreeNode
  * Constructor converts it to a Map, which is wraps in LeafNode
  * Can create new LeafNode as:
  *    LeafNode(1 -> (2, 3), 4 -> (5, 6))
+ * Catch and report empty parameter, which is always a mistake because leaf nodes cannot be empty
  * */
 object LeafNode {
-  def apply(m: (Int, (Int, Int))*): LeafNode =
-    LeafNode(m.toMap)
+  def apply(m: (Int, (Int, Int))*): AlignmentTreeNode =
+    if m.isEmpty then
+      StringNode("Empty leaf node not allowed")
+    else
+      LeafNode(m.toMap)
 }
 
-case class BranchingNode(children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
+final case class BranchingNode(children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
 
-case class UnexpandedNode(witness_readings: WitnessReadings) extends AlignmentTreeNode
+final case class UnexpandedNode(witness_readings: WitnessReadings) extends AlignmentTreeNode
 
 def show(node: AlignmentTreeNode): Unit =
   node match {
@@ -34,6 +40,7 @@ def show(node: AlignmentTreeNode): Unit =
     case LeafNode(witness_readings) => println(witness_readings)
     case BranchingNode(children) => println(children)
     case UnexpandedNode(witness_readings) => println(witness_readings)
+    case StringNode(txt) => println(txt)
   }
 
 def tree(witness_count: Int) =
@@ -45,6 +52,7 @@ def build_tree(): Unit =
   val t = tree(3)
   t.children ++= List(
     LeafNode(1 -> (100, 101), 2 -> (200, 201)),
-    LeafNode(3 -> (300, 301), 4 -> (400, 401))
+    LeafNode(3 -> (300, 301), 4 -> (400, 401)),
+    LeafNode()
   )
   show(t)
