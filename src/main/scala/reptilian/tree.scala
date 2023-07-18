@@ -8,7 +8,7 @@ type WitnessReadings = Map[Int, (Int, Int)] // type alias
 
 sealed trait AlignmentTreeNode // supertype of all nodes
 
-final case class RootNode(witness_count: Int, children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
+final case class RootNode(children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
 
 final case class StringNode(txt: String = "unspecified mistake") extends AlignmentTreeNode
 
@@ -36,15 +36,15 @@ final case class UnexpandedNode(witness_readings: WitnessReadings) extends Align
 
 def show(node: AlignmentTreeNode): Unit =
   node match {
-    case RootNode(witness_count, children) => println(children)
+    case RootNode(children) => println(children)
     case LeafNode(witness_readings) => println(witness_readings)
     case BranchingNode(children) => println(children)
     case UnexpandedNode(witness_readings) => println(witness_readings)
-    case StringNode(txt) => println(txt)
+    case StringNode(txt) => println(txt) // To report errors
   }
 
 def tree(witness_count: Int) =
-  val root = RootNode(witness_count)
+  val root = RootNode()
   root
 
 @main
