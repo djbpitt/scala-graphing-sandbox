@@ -54,7 +54,7 @@ def dot(root: RootNode): String =
   val footer: String = "\n}"
   var id = 0
   val nodes_to_process: mutable.Queue[(Int, AlignmentTreeNode)] = mutable.Queue((id, root))
-  var edges = List[String]()
+  val edges = ListBuffer[String]() // Not List because we append to maintain order
   while nodes_to_process.nonEmpty do
     val current_node = nodes_to_process.dequeue()
     current_node match {
@@ -62,7 +62,7 @@ def dot(root: RootNode): String =
         for i <- children do {
           id += 1
           nodes_to_process.enqueue((id, i))
-          edges = List(current_node._1, " -> ", id).mkString(" ") :: edges
+          edges.append(List(current_node._1, " -> ", id).mkString(" "))
         }
       case (_, BranchingNode(children)) => nodes_to_process.enqueueAll(
         children.map(
