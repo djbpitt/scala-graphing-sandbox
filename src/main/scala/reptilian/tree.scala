@@ -112,4 +112,8 @@ and the (w0, w1)
 black (w1) ~ red (w0)
 cat (w0, w1)
 
+Token array:
+
+"The", "red", "and", "the", "black", "cat", "#1", "The", "black", "and", "the", "red", "cat"
+
 * */
