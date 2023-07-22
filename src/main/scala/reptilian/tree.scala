@@ -9,7 +9,7 @@ type WitnessReadings = Map[Int, (Int, Int)] // type alias
 
 sealed trait AlignmentTreeNode // supertype of all nodes
 
-final case class RootNode(children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
+final case class BranchingNode(children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
 
 final case class StringNode(txt: String = "unspecified mistake") extends AlignmentTreeNode
 
@@ -31,13 +31,10 @@ object LeafNode {
       LeafNode(m.toMap)
 }
 
-final case class BranchingNode(children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
-
 final case class UnexpandedNode(witness_readings: WitnessReadings) extends AlignmentTreeNode
 
 def show(node: AlignmentTreeNode): Unit =
   node match {
-    case RootNode(children) => println(children)
     case LeafNode(witness_readings) => println(witness_readings)
     case BranchingNode(children) => println(children)
     case UnexpandedNode(witness_readings) => println(witness_readings)
@@ -49,7 +46,7 @@ def show(node: AlignmentTreeNode): Unit =
  * @param root : RootNode
  * @return : String containing dot code for GraphViz
  * */
-def dot(root: RootNode): String =
+def dot(root: BranchingNode): String =
   val header: String = "digraph MyGraph {\n\tnode [shape = record]\n\t"
   val footer: String = "\n}"
   var id = 0
@@ -58,27 +55,19 @@ def dot(root: RootNode): String =
   while nodes_to_process.nonEmpty do
     val current_node = nodes_to_process.dequeue()
     current_node match {
-      case (_, RootNode(children)) =>
+      case (_, BranchingNode(children)) =>
         for i <- children do {
           id += 1
           nodes_to_process.enqueue((id, i))
           edges.append(List(current_node._1, " -> ", id).mkString(" "))
         }
-      case (_, BranchingNode(children)) => nodes_to_process.enqueueAll(
-        children.map(
-          e => {
-            id += 1
-            (id, e)
-          }
-        )
-      )
       case (_, LeafNode(witness_readings)) => ()
       case _ => ()
     }
   header + edges.mkString("\n\t") + footer
 
 def tree(witness_count: Int) =
-  val root = RootNode()
+  val root = BranchingNode()
   root
 
 @main
