@@ -52,6 +52,7 @@ def dot(root: BranchingNode): String =
   var id = 0
   val nodes_to_process: mutable.Queue[(Int, AlignmentTreeNode)] = mutable.Queue((id, root))
   val edges = ListBuffer[String]() // Not List because we append to maintain order
+  val nodes = ListBuffer[String]() // Store node attributes where needed
   while nodes_to_process.nonEmpty do
     val current_node = nodes_to_process.dequeue()
     current_node match {
@@ -66,9 +67,16 @@ def dot(root: BranchingNode): String =
           id += 1
           edges.append(List(current_node._1, " -> ", id).mkString(" "))
         }
+      case (_, StringNode(txt)) =>
+        id += 1
+        edges.append(List(current_node._1, " -> ", id).mkString(" "))
+        nodes.append(id.toString)
       case _ => ()
     }
-  header + edges.mkString("\n\t") + footer
+  println("Nodes: ")
+  val formatted_nodes = nodes
+    .map(e => List(e, " [style=filled, fillcolor=pink]").mkString("")).mkString("\n")
+  List(header, formatted_nodes, edges.mkString("\n\t"), footer).mkString("\n")
 
 def tree(witness_count: Int) =
   val root = BranchingNode()
@@ -83,8 +91,8 @@ def build_tree(): Unit =
     BranchingNode(children=ListBuffer(LeafNode(5 -> (500, 501)))),
     LeafNode()
   )
-  println(t.children.head)
   val dot_result = dot(t)
   val graphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
   os.write.over(graphOutputPath, dot_result)
   println(dot_result)
+
