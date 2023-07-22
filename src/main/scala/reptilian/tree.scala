@@ -61,7 +61,11 @@ def dot(root: BranchingNode): String =
           nodes_to_process.enqueue((id, i))
           edges.append(List(current_node._1, " -> ", id).mkString(" "))
         }
-      case (_, LeafNode(witness_readings)) => ()
+      case (_, LeafNode(witness_readings)) =>
+        for i <- witness_readings do {
+          id += 1
+          edges.append(List(current_node._1, " -> ", id).mkString(" "))
+        }
       case _ => ()
     }
   header + edges.mkString("\n\t") + footer
@@ -76,8 +80,10 @@ def build_tree(): Unit =
   t.children ++= List(
     LeafNode(1 -> (100, 101), 2 -> (200, 201)),
     LeafNode(3 -> (300, 301), 4 -> (400, 401)),
+    BranchingNode(children=ListBuffer(LeafNode(5 -> (500, 501)))),
     LeafNode()
   )
+  println(t.children.head)
   val dot_result = dot(t)
   val graphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
   os.write.over(graphOutputPath, dot_result)
