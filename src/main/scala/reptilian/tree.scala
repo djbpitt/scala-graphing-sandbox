@@ -4,7 +4,7 @@ package reptilian
 import scala.collection.mutable
 import scala.collection.mutable.{ListBuffer, Queue}
 
-// One map entry per witness, from witness id to start and end (inclusive "to") offset in global token array
+// One map entry per witness, from witness id to start and end (exclusive "until") offset in global token array
 type WitnessReadings = Map[String, (Int, Int)] // type alias
 
 sealed trait AlignmentTreeNode // supertype of all nodes
@@ -46,7 +46,7 @@ def show(node: AlignmentTreeNode): Unit =
  * @param root : RootNode
  * @return : String containing dot code for GraphViz
  * */
-def dot(root: BranchingNode): String =
+def dot(root: BranchingNode, token_array: Vector[Token]): String =
   val header: String = "digraph MyGraph {\n\tnode [shape = record]\n\t"
   val footer: String = "\n}"
   var id = 0
@@ -64,7 +64,16 @@ def dot(root: BranchingNode): String =
           edges.append(List(current_node._1, " -> ", id).mkString(" "))
         }
       case (current_id, LeafNode(witness_readings)) =>
-        leaf_nodes.append(List(current_id.toString, " ", witness_readings.keys.mkString(",")).mkString(""))
+        val token_array_pointers = witness_readings(witness_readings.keys.head)
+        val n_values = token_array.slice(token_array_pointers._1, token_array_pointers._2)
+          .map(_.n)
+          .mkString(" ")
+        println(n_values)
+        leaf_nodes.append(List(
+          current_id.toString, "\t",
+          witness_readings.keys.mkString(","), "\t",
+          n_values
+        ).mkString(""))
       case (current_id, StringNode(txt)) =>
         id += 1
         edges.append(List(current_node._1, " -> ", id).mkString(" "))
@@ -75,8 +84,13 @@ def dot(root: BranchingNode): String =
     .map(e => List(e, " [style=filled, fillcolor=pink]").mkString("")).mkString("\n")
   val formatted_leaf_nodes = leaf_nodes
     .map(e =>
-      val split: Array[String] = e.split(" ")
-      List(split(0), " [label=\"", split(0), " (", split(1), ")\"]").mkString("")
+      val split: Array[String] = e.split("\t")
+      List(
+        split(0),
+        " [label=\"", split(0), " (", split(1), ")\"]",
+        " [tooltip=\"", split(2), "\"]",
+        " [style=filled fillcolor=lightblue]"
+      ).mkString("")
     )
     .mkString("\n")
   List(header, edges.mkString("\n\t"), formatted_string_nodes, formatted_leaf_nodes, footer).mkString("\n")
@@ -87,15 +101,21 @@ def tree(witness_count: Int) =
 
 @main
 def build_tree(): Unit =
+  val token_array = Vector(
+    Token("The", "the", 0), Token("red", "red", 0), Token("and", "and", 0), Token("the", "the", 0),
+    Token("black", "black", 0), Token("cat", "cat", 0), Token("#1", "#1", -1), Token("The", "the", 1),
+    Token("black", "black", 1), Token("and", "and", 1), Token("the", "the", 1), Token("red", "red", 1),
+    Token("cat", "cat", 1)
+  )
   val t = tree(3)
   t.children ++= List(
-    LeafNode("w0" -> (100, 101), "w1" -> (200, 201)),
-    BranchingNode(children = ListBuffer(LeafNode("w0" -> (500, 501)), LeafNode("w1" -> (600, 601)))),
-    LeafNode("w0" -> (700, 701), "w1" -> (800, 801)),
-    BranchingNode(children = ListBuffer(LeafNode("w1" -> (900, 901)), LeafNode("w0" -> (1000, 1001)))),
-    LeafNode("w0" -> (1100, 1101), "w1" -> (1200, 1201))
+    LeafNode("w0" -> (0, 1), "w1" -> (7, 8)),
+    BranchingNode(children = ListBuffer(LeafNode("w0" -> (1, 2)), LeafNode("w1" -> (8, 9)))),
+    LeafNode("w0" -> (2, 4), "w1" -> (9, 11)),
+    BranchingNode(children = ListBuffer(LeafNode("w1" -> (4, 5)), LeafNode("w0" -> (11, 12)))),
+    LeafNode("w0" -> (5, 6), "w1" -> (12, 13))
   )
-  val dot_result = dot(t)
+  val dot_result = dot(t, token_array)
   val graphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
   os.write.over(graphOutputPath, dot_result)
   println(dot_result)
