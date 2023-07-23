@@ -47,7 +47,7 @@ def show(node: AlignmentTreeNode): Unit =
  * @return : String containing dot code for GraphViz
  * */
 def dot(root: BranchingNode, token_array: Vector[Token]): String =
-  val header: String = "digraph MyGraph {\n\tnode [shape = record]\n\t"
+  val header: String = "digraph MyGraph {\n\tnode [shape=record, style=filled]\n\t"
   val footer: String = "\n}"
   var id = 0
   val nodes_to_process: mutable.Queue[(Int, AlignmentTreeNode)] = mutable.Queue((id, root))
@@ -81,7 +81,7 @@ def dot(root: BranchingNode, token_array: Vector[Token]): String =
       case _ => ()
     }
   val formatted_string_nodes = string_nodes
-    .map(e => List(e, " [style=filled, fillcolor=pink]").mkString("")).mkString("\n")
+    .map(e => List(e, " [fillcolor=pink]").mkString("")).mkString("\n")
   val formatted_leaf_nodes = leaf_nodes
     .map(e =>
       val split: Array[String] = e.split("\t")
@@ -89,7 +89,7 @@ def dot(root: BranchingNode, token_array: Vector[Token]): String =
         split(0),
         " [label=\"", split(0), " (", split(1), ")\"]",
         " [tooltip=\"", split(2), "\"]",
-        " [style=filled fillcolor=lightblue]"
+        " [fillcolor=lightblue]"
       ).mkString("")
     )
     .mkString("\n")
