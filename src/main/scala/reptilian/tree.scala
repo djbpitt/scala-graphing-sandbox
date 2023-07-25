@@ -124,8 +124,8 @@ def create_alignment_table(root: BranchingNode, token_array: Vector[Token], sigl
         "table, tr, th, td {border: 1px black solid; border-collapse: collapse;}" +
           " th, td {padding: 4px 3px 3px 3px;} " +
           "td:first-child {text-align: right;}" +
-          ".aligned {background-color: lightpink; } " +
-          ".unaligned {background-color: lightgreen}")
+          ".aligned {background-color: palegoldenrod; } " +
+          ".unaligned {background-color: lightgray}")
     ),
     body(
       h1("Alignment"),
@@ -157,7 +157,10 @@ def create_alignment_table(root: BranchingNode, token_array: Vector[Token], sigl
                     val pointers = witness_readings
                       .head
                       ._2
-                    token_array.slice(pointers._1, pointers._2).map(_.n).mkString(" ")
+                    token_array
+                      .slice(pointers._1, pointers._2)
+                      .map(_.n)
+                      .mkString(" ")
                   }
                   case _ => td("Oops")
                 }.toSeq
