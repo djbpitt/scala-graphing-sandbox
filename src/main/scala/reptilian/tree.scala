@@ -3,6 +3,7 @@ package reptilian
 
 import scala.collection.mutable
 import scala.collection.mutable.{ListBuffer, Queue}
+import scalatags.Text.all.*
 
 // One map entry per witness, from witness id to start and end (exclusive "until") offset in global token array
 type WitnessReadings = Map[String, (Int, Int)] // type alias
@@ -113,6 +114,64 @@ def dot(root: BranchingNode, token_array: Vector[Token]): String =
     .map(e => List(e, " [fillcolor=lightgreen]").mkString("")).mkString("\n")
   List(header, edges.mkString("\n\t"), formatted_string_nodes, formatted_leaf_nodes, formatted_variation_nodes, footer).mkString("\n")
 
+
+def create_alignment_table(root: BranchingNode, token_array: Vector[Token], sigla: List[String]) = {
+  val htmlBoilerplate = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
+  htmlBoilerplate + html(xmlns := "http://www.w3.org/1999/xhtml")(
+    head(
+      tag("title")("Alignments"),
+      tag("style")(
+        "table, tr, th, td {border: 1px black solid; border-collapse: collapse;}" +
+          " th, td {padding: 4px 3px 3px 3px;} " +
+          "td:first-child {text-align: right;}" +
+          ".aligned {background-color: lightpink; } " +
+          ".unaligned {background-color: lightgreen}")
+    ),
+    body(
+      h1("Alignment"),
+      table(
+        tr(
+          th("Alignment", br, "node", br, "number"),
+          th("Block type"),
+          for (i <- sigla) yield th(i)
+        ),
+        for ((child, index) <- root.children
+          .zipWithIndex
+          .toSeq)
+        yield tr(`class` := (if child.getClass.getSimpleName == "ReadingNode" then "aligned" else "unaligned"))(
+          td(index + 1),
+          child match {
+            case ReadingNode(witness_readings) =>
+              val (_, value) = witness_readings.head
+              val tokens = token_array.slice(value._1, value._2)
+                .map(_.n)
+              Seq[Frag](
+                td("Aligned"),
+                td(colspan := s"${sigla.size}")(tokens.mkString(" "))
+              )
+            case VariationNode(children) =>
+              val alignment = td("Unaligned")
+              val readings = children
+                .map {
+                  case ReadingNode(witness_readings) => td {
+                    val pointers = witness_readings
+                      .head
+                      ._2
+                    token_array.slice(pointers._1, pointers._2).map(_.n).mkString(" ")
+                  }
+                  case _ => td("Oops")
+                }.toSeq
+              Seq[Frag](
+                alignment, readings
+              )
+            case _ => ???
+          }
+        )
+      )
+    )
+  )
+}
+
 def tree(witness_count: Int) =
   val root = BranchingNode()
   root
@@ -136,7 +195,12 @@ def build_tree(): Unit =
   val dot_result = dot(t, token_array)
   val graphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
   os.write.over(graphOutputPath, dot_result)
-  println(dot_result)
+
+  val sigla = List("w0", "w1")
+  val html_output = create_alignment_table(t, token_array, sigla)
+  val outputPath = os.pwd / "src" / "main" / "output" / "alignment.xhtml"
+  os.write.over(outputPath, html_output)
+
 
 /* Sample data
 w0: The black and the red cat
