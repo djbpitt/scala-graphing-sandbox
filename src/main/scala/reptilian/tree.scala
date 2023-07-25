@@ -68,7 +68,6 @@ def dot(root: BranchingNode, token_array: Vector[Token]): String =
         val n_values = token_array.slice(token_array_pointers._1, token_array_pointers._2)
           .map(_.n)
           .mkString(" ")
-        println(n_values)
         leaf_nodes.append(List(
           current_id.toString, "\t",
           witness_readings.keys.mkString(","), "\t",
