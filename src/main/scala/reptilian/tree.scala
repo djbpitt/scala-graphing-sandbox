@@ -86,7 +86,7 @@ def dot(root: BranchingNode, token_array: Vector[Token]): String =
       val split: Array[String] = e.split("\t")
       List(
         split(0),
-        " [label=\"", split(0), " (", split(1), ")\"]",
+        " [label=\"", split(0), "|", split(1), "\"]",
         " [tooltip=\"", split(2), "\"]",
         " [fillcolor=lightblue]"
       ).mkString("")
