@@ -9,11 +9,18 @@ type WitnessReadings = Map[String, (Int, Int)] // type alias
 
 sealed trait AlignmentTreeNode // supertype of all nodes
 
+/** BranchingNode
+ *
+ * Has ordered children, at least some of which are branching nodes
+ * (cf. VariationNode, which has only leaf-node children)
+ * */
 final case class BranchingNode(children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
+
+final case class VariationNode(children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
 
 final case class StringNode(txt: String = "unspecified mistake") extends AlignmentTreeNode
 
-final case class LeafNode(witness_readings: WitnessReadings) extends AlignmentTreeNode
+final case class ReadingNode(witness_readings: WitnessReadings) extends AlignmentTreeNode
 
 /** Custom constructor to simplify creation of LeafNode
  *
@@ -23,19 +30,20 @@ final case class LeafNode(witness_readings: WitnessReadings) extends AlignmentTr
  *    LeafNode(1 -> (2, 3), 4 -> (5, 6))
  * Catch and report empty parameter, which is always a mistake because leaf nodes cannot be empty
  * */
-object LeafNode {
+object ReadingNode {
   def apply(m: (String, (Int, Int))*): AlignmentTreeNode =
     if m.isEmpty then
       StringNode("Empty leaf node not allowed")
     else
-      LeafNode(m.toMap)
+      ReadingNode(m.toMap)
 }
 
+// Temporary; eventually the alignment graph will have no unexpanded nodes
 final case class UnexpandedNode(witness_readings: WitnessReadings) extends AlignmentTreeNode
 
 def show(node: AlignmentTreeNode): Unit =
   node match {
-    case LeafNode(witness_readings) => println(witness_readings)
+    case ReadingNode(witness_readings) => println(witness_readings)
     case BranchingNode(children) => println(children)
     case UnexpandedNode(witness_readings) => println(witness_readings)
     case StringNode(txt) => println(txt) // To report errors
@@ -54,6 +62,7 @@ def dot(root: BranchingNode, token_array: Vector[Token]): String =
   val edges = ListBuffer[String]() // Not List because we append to maintain order
   val string_nodes = ListBuffer[String]() // Store node attributes where needed
   val leaf_nodes = ListBuffer[String]()
+  val variation_nodes = ListBuffer[String]()
   while nodes_to_process.nonEmpty do
     val current_node = nodes_to_process.dequeue()
     current_node match {
@@ -61,9 +70,16 @@ def dot(root: BranchingNode, token_array: Vector[Token]): String =
         for i <- children do {
           id += 1
           nodes_to_process.enqueue((id, i))
-          edges.append(List(current_node._1, " -> ", id).mkString(" "))
+          edges.append(List(current_id, " -> ", id).mkString(" "))
         }
-      case (current_id, LeafNode(witness_readings)) =>
+      case (current_id, VariationNode(children)) =>
+        for i <- children do {
+          id += 1
+          nodes_to_process.enqueue((id, i))
+          edges.append(List(current_id, " -> ", id).mkString(" "))
+          variation_nodes.append(current_id.toString)
+        }
+      case (current_id, ReadingNode(witness_readings)) =>
         val token_array_pointers = witness_readings(witness_readings.keys.head)
         val n_values = token_array.slice(token_array_pointers._1, token_array_pointers._2)
           .map(_.n)
@@ -75,7 +91,7 @@ def dot(root: BranchingNode, token_array: Vector[Token]): String =
         ).mkString(""))
       case (current_id, StringNode(txt)) =>
         id += 1
-        edges.append(List(current_node._1, " -> ", id).mkString(" "))
+        edges.append(List(current_id, " -> ", id).mkString(" "))
         string_nodes.append(id.toString)
       case _ => ()
     }
@@ -92,7 +108,9 @@ def dot(root: BranchingNode, token_array: Vector[Token]): String =
       ).mkString("")
     )
     .mkString("\n")
-  List(header, edges.mkString("\n\t"), formatted_string_nodes, formatted_leaf_nodes, footer).mkString("\n")
+  val formatted_variation_nodes = variation_nodes
+    .map(e => List(e, " [fillcolor=lightgreen]").mkString("")).mkString("\n")
+  List(header, edges.mkString("\n\t"), formatted_string_nodes, formatted_leaf_nodes, formatted_variation_nodes, footer).mkString("\n")
 
 def tree(witness_count: Int) =
   val root = BranchingNode()
@@ -108,11 +126,11 @@ def build_tree(): Unit =
   )
   val t = tree(3)
   t.children ++= List(
-    LeafNode("w0" -> (0, 1), "w1" -> (7, 8)),
-    BranchingNode(children = ListBuffer(LeafNode("w0" -> (1, 2)), LeafNode("w1" -> (8, 9)))),
-    LeafNode("w0" -> (2, 4), "w1" -> (9, 11)),
-    BranchingNode(children = ListBuffer(LeafNode("w1" -> (4, 5)), LeafNode("w0" -> (11, 12)))),
-    LeafNode("w0" -> (5, 6), "w1" -> (12, 13))
+    ReadingNode("w0" -> (0, 1), "w1" -> (7, 8)),
+    VariationNode(children = ListBuffer(ReadingNode("w0" -> (1, 2)), ReadingNode("w1" -> (8, 9)))),
+    ReadingNode("w0" -> (2, 4), "w1" -> (9, 11)),
+    VariationNode(children = ListBuffer(ReadingNode("w1" -> (4, 5)), ReadingNode("w0" -> (11, 12)))),
+    ReadingNode("w0" -> (5, 6), "w1" -> (12, 13))
   )
   val dot_result = dot(t, token_array)
   val graphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
