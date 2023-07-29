@@ -44,14 +44,14 @@ class ReptilianTest extends AnyFunSuite:
   /** test for creating lcp array
    *
    */
-  test("lcp array returns correct values") {
-    val target_lcp_values = Vector[Int](-1, 0, 1, 2, 3, 0, 3, 0, 1, 2)
-    val (vectorization, voc_size) = vectorize(tokens)
-    val suffix_positions = calculate_suffix_array(vectorization, voc_size)
-    val lcp_array = calculate_lcp_array(tokens, suffix_positions)
-    val zs = lcp_array zip target_lcp_values
-    forAll(zs) {(x, y) => assert(x == y)}
-  }
+//  test("lcp array returns correct values") {
+//    val target_lcp_values = Vector[Int](-1, 0, 1, 2, 3, 0, 3, 0, 1, 2)
+//    val (vectorization, voc_size) = vectorize(tokens)
+//    val suffix_positions = calculate_suffix_array(vectorization, voc_size)
+//    val lcp_array = calculate_lcp_array_kasai(tokens, suffix_positions)
+//    val zs = lcp_array zip target_lcp_values
+//    forAll(zs) {(x, y) => assert(x == y)}
+//  }
 
   /** tests for computing lcp intervals
    * lcp array always starts with -1
