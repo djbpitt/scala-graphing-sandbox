@@ -4,6 +4,7 @@ import org.scalatest.*
 import org.scalatest.funsuite.AnyFunSuite
 import scala.collection.immutable.List
 import scala.collection.mutable.ListBuffer
+import org.scalactic.Prettifier.default
 
 class TreeTest extends AnyFunSuite:
     private val token_array = Vector(
@@ -23,34 +24,34 @@ class TreeTest extends AnyFunSuite:
     private val sigla = List("w0", "w1")
 
     test("Create dot file") {
-      val dot_result = dot(t, token_array)
+      val result = dot(t, token_array)
       val expected = """digraph MyGraph {
-        node [shape=record, style=filled]
+  node [shape=record, style=filled]
 
-      0  ->  1
-        0  ->  2
-        0  ->  3
-        0  ->  4
-        0  ->  5
-        2  ->  6
-        2  ->  7
-        4  ->  8
-        4  ->  9
+0  ->  1
+  0  ->  2
+  0  ->  3
+  0  ->  4
+  0  ->  5
+  2  ->  6
+  2  ->  7
+  4  ->  8
+  4  ->  9
 
-      1 [label="1|w0,w1"] [tooltip="the"] [fillcolor=lightblue]
-      3 [label="3|w0,w1"] [tooltip="and the"] [fillcolor=lightblue]
-      5 [label="5|w0,w1"] [tooltip="cat"] [fillcolor=lightblue]
-      6 [label="6|w0"] [tooltip="red"] [fillcolor=lightblue]
-      7 [label="7|w1"] [tooltip="black"] [fillcolor=lightblue]
-      8 [label="8|w1"] [tooltip="black"] [fillcolor=lightblue]
-      9 [label="9|w0"] [tooltip="red"] [fillcolor=lightblue]
-      2 [fillcolor=lightgreen]
-      2 [fillcolor=lightgreen]
-      4 [fillcolor=lightgreen]
-      4 [fillcolor=lightgreen]
+1 [label="1|w0,w1"] [tooltip="the"] [fillcolor=lightblue]
+3 [label="3|w0,w1"] [tooltip="and the"] [fillcolor=lightblue]
+5 [label="5|w0,w1"] [tooltip="cat"] [fillcolor=lightblue]
+6 [label="6|w0"] [tooltip="red"] [fillcolor=lightblue]
+7 [label="7|w1"] [tooltip="black"] [fillcolor=lightblue]
+8 [label="8|w1"] [tooltip="black"] [fillcolor=lightblue]
+9 [label="9|w0"] [tooltip="red"] [fillcolor=lightblue]
+2 [fillcolor=lightgreen]
+2 [fillcolor=lightgreen]
+4 [fillcolor=lightgreen]
+4 [fillcolor=lightgreen]
 
-      }"""
-      assert(dot_result == dot_result)
+}"""
+      assert(result.replaceAll("[\\t ]+", " ") == expected.replaceAll("[\\t ]+", " "))
     }
 
     test("Create HTML file") {
