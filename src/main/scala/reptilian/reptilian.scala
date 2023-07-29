@@ -279,14 +279,14 @@ def htmlify(token_array: Vector[Token], longest_full_depth_nonrepeating_blocks: 
   val htmlBoilerplate = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
   htmlBoilerplate + html(xmlns := "http://www.w3.org/1999/xhtml")(
     head(
-      tag("title")("Alignments"),
+      tag("title")("Aligned nodes in traversal graph"),
       tag("style")(
         "table, tr, th, td {border: 1px black solid; border-collapse: collapse;}" +
           " th, td {padding: 3px;} " +
           "td:first-child, td:nth-child(2) {text-align: right;}")
     ),
     body(
-      h1("Alignment"),
+      h1("Aligned nodes in traversal graph"),
       table(
         tr(
           th("Alignment", br, "node", br, "number"),
@@ -361,7 +361,7 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   //  val set_of_non_transposed_node_ids = find_optimal_alignment(graph).toSet
   val set_of_non_transposed_node_ids = Set[Int]()
 
-  val alignment = find_optimal_alignment(graph)
+  val alignment = find_optimal_alignment(graph) // Int identifiers of full-depth blocks
 
   // Diagnostic: visualize traversal graph
   val result = graph_to_dot(graph, block_texts, set_of_non_transposed_node_ids)
@@ -373,5 +373,5 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val alignment_blocks = longest_full_depth_nonrepeating_blocks
     .filter(e => alignment_as_set.contains(e.instances.head))
   val output = htmlify(token_array, alignment_blocks)
-  val outputPath = os.pwd / "src" / "main" / "output" / "alignment.xhtml"
+  val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
   os.write.over(outputPath, output)
