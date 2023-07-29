@@ -178,21 +178,3 @@ def create_alignment_table(root: BranchingNode, token_array: Vector[Token], sigl
 def tree(witness_count: Int) =
   val root = BranchingNode()
   root
-
-/* Sample data
-w0: The black and the red cat
-w1: The red and the black cat
-
-Blocks:
-
-The (w0, w1)
-red (w0) ~ black (w1)
-and the (w0, w1)
-black (w1) ~ red (w0)
-cat (w0, w1)
-
-Token array:
-
-"The", "red", "and", "the", "black", "cat", "#1", "The", "black", "and", "the", "red", "cat"
-
-* */
