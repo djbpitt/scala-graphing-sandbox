@@ -375,3 +375,13 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val output = htmlify(token_array, alignment_blocks)
   val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
   os.write.over(outputPath, output)
+
+  val reading_nodes = blocks_to_nodes(alignment_blocks)
+  val root = tree(witness_count = witness_strings.size)
+  root.children ++= reading_nodes
+  val alignment_tree = dot(root, token_array)
+  val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
+  os.write.over(alignmentGraphOutputPath, alignment_tree)
+
+
+

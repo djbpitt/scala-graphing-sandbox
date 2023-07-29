@@ -9,7 +9,7 @@ class CreateAlignmentTest extends AnyFunSuite:
 
   test("Map from FullDepthBlock to ReadingNode") {
     val result = fullDepthBlock_to_ReadingNode(fdb)
-    val expected = Map("w0" -> (0,2), "w1" -> (4,6), "w2" -> (8,10))
+    val expected = ReadingNode("w0" -> (0,2), "w1" -> (4,6), "w2" -> (8,10))
     assert(result == expected)
   }
 

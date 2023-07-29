@@ -86,9 +86,10 @@ def dot(root: BranchingNode, token_array: Vector[Token]): String =
         val n_values = token_array.slice(token_array_pointers._1, token_array_pointers._2)
           .map(_.n)
           .mkString(" ")
+          .replaceAll("\"", "\\\\\"") // Escape quotation mark in dot file property value
         leaf_nodes.append(List(
           current_id.toString, "\t",
-          witness_readings.keys.mkString(","), "\t",
+          witness_readings.toSeq.sorted.map(_._1).mkString(","), "\t",
           n_values
         ).mkString(""))
       case (current_id, StringNode(txt)) =>
