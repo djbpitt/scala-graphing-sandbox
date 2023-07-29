@@ -179,32 +179,6 @@ def tree(witness_count: Int) =
   val root = BranchingNode()
   root
 
-@main
-def build_tree(): Unit =
-  val token_array = Vector(
-    Token("The", "the", 0), Token("red", "red", 0), Token("and", "and", 0), Token("the", "the", 0),
-    Token("black", "black", 0), Token("cat", "cat", 0), Token("#1", "#1", -1), Token("The", "the", 1),
-    Token("black", "black", 1), Token("and", "and", 1), Token("the", "the", 1), Token("red", "red", 1),
-    Token("cat", "cat", 1)
-  )
-  val t = tree(3)
-  t.children ++= List(
-    ReadingNode("w0" -> (0, 1), "w1" -> (7, 8)),
-    VariationNode(children = ListBuffer(ReadingNode("w0" -> (1, 2)), ReadingNode("w1" -> (8, 9)))),
-    ReadingNode("w0" -> (2, 4), "w1" -> (9, 11)),
-    VariationNode(children = ListBuffer(ReadingNode("w1" -> (4, 5)), ReadingNode("w0" -> (11, 12)))),
-    ReadingNode("w0" -> (5, 6), "w1" -> (12, 13))
-  )
-  val dot_result = dot(t, token_array)
-  val graphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
-  os.write.over(graphOutputPath, dot_result)
-
-  val sigla = List("w0", "w1")
-  val html_output = create_alignment_table(t, token_array, sigla)
-  val outputPath = os.pwd / "src" / "main" / "output" / "alignment.xhtml"
-  os.write.over(outputPath, html_output)
-
-
 /* Sample data
 w0: The black and the red cat
 w1: The red and the black cat
