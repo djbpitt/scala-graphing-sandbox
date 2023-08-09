@@ -378,7 +378,24 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
 
   val reading_nodes = blocks_to_nodes(alignment_blocks)
   val root = tree(witness_count = witness_strings.size)
-  root.children ++= reading_nodes.toList.sortBy(_.witness_readings("w0")._1) // Sort reading nodes in token order
+  val sorted_reading_nodes = reading_nodes // Sort reading nodes in token order
+    .toList
+    .sortBy(_.witness_readings("w0")._1)
+  val sigla = sorted_reading_nodes.head.witness_readings.keys // Humiliating temporary step
+  /* For each sliding pair of reading nodes create an unexpanded node with witness readings
+  *   that point from each siglum to a slice from the end of the first reading node to the
+  *   start of the second. */
+  val unaligned_intermediates = sorted_reading_nodes
+    .sliding(2)
+    .map(pair =>
+      val map_entries = sigla
+        .map(siglum => siglum -> (pair.head.witness_readings(siglum)(1), pair(1).witness_readings(siglum)(0)))
+        .toMap
+      UnexpandedNode(map_entries)
+    )
+
+  println(unaligned_intermediates.toList)
+  root.children ++= reading_nodes
   val alignment_tree = dot(root, token_array)
   val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
   os.write.over(alignmentGraphOutputPath, alignment_tree)
