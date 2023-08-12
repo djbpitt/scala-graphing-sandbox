@@ -65,6 +65,7 @@ def dot(root: BranchingNode, token_array: Vector[Token]): String =
   val string_nodes = ListBuffer[String]() // Store node attributes where needed
   val leaf_nodes = ListBuffer[String]()
   val variation_nodes = ListBuffer[String]()
+  val unexpanded_nodes = ListBuffer[String]()
   while nodes_to_process.nonEmpty do
     val current_node = nodes_to_process.dequeue()
     current_node match {
@@ -92,6 +93,13 @@ def dot(root: BranchingNode, token_array: Vector[Token]): String =
           witness_readings.toSeq.sorted.map(_._1).mkString(","), "\t",
           n_values
         ).mkString(""))
+      case (current_id, UnexpandedNode(witness_readings)) =>
+        id += 1
+        unexpanded_nodes.append(List(
+          current_id.toString, "\t",
+          "unexpanded", "\t",
+          "unexpanded"
+        ).mkString(" "))
       case (current_id, StringNode(txt)) =>
         id += 1
         edges.append(List(current_id, " -> ", id).mkString(" "))
@@ -113,7 +121,26 @@ def dot(root: BranchingNode, token_array: Vector[Token]): String =
     .mkString("\n")
   val formatted_variation_nodes = variation_nodes
     .map(e => List(e, " [fillcolor=lightgreen]").mkString("")).mkString("\n")
-  List(header, edges.mkString("\n\t"), formatted_string_nodes, formatted_leaf_nodes, formatted_variation_nodes, footer).mkString("\n")
+  val formatted_unexpanded_nodes = unexpanded_nodes
+    .map(e =>
+      val split: Array[String] = e.split("\t")
+      List(
+        split(0),
+        " [label=\"", split(0), "|", split(1), "\"]",
+        " [tooltip=\"", split(2), "\"]",
+        " [fillcolor=goldenrod]"
+      ).mkString("")
+    )
+    .mkString("\n")
+  List(
+    header, 
+    edges.mkString("\n\t"), 
+    formatted_string_nodes, 
+    formatted_leaf_nodes, 
+    formatted_variation_nodes, 
+    formatted_unexpanded_nodes, 
+    footer
+  ).mkString("\n")
 
 
 def create_alignment_table(root: BranchingNode, token_array: Vector[Token], sigla: List[String]) = {
