@@ -300,7 +300,7 @@ def find_optimal_alignment(graph: Graph[Int, WDiEdge]) = // specify return type?
   //
   // Return single BeamOption, representing (one) best alignment
   // TODO: Restore temporarily disabled unit tests
-  val beam_max = 5 // TODO: could be adaptable, e.g., x% of possible options
+  val beam_max = 35 // TODO: could be adaptable, e.g., x% of possible options
   val start = BeamOption(path = List(-1), score = 0)
   var beam: Vector[BeamOption] = Vector(start) // initialize beam to hold just start node (zero tokens)
 
