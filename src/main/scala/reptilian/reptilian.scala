@@ -275,39 +275,6 @@ def remove_overlapping_blocks(full_depth_blocks: List[FullDepthBlock]): Iterable
     .map(fdblocks => fdblocks.maxBy(_.length))
 
 
-def htmlify(token_array: Vector[Token], longest_full_depth_nonrepeating_blocks: Iterable[FullDepthBlock]) = {
-  val htmlBoilerplate = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
-  htmlBoilerplate + html(xmlns := "http://www.w3.org/1999/xhtml")(
-    head(
-      tag("title")("Aligned nodes in traversal graph"),
-      tag("style")(
-        "table, tr, th, td {border: 1px black solid; border-collapse: collapse;}" +
-          " th, td {padding: 3px;} " +
-          "td:first-child, td:nth-child(2) {text-align: right;}")
-    ),
-    body(
-      h1("Aligned nodes in traversal graph"),
-      table(
-        tr(
-          th("Alignment", br, "node", br, "number"),
-          th("Traversal", br, "node", br, "number"),
-          th("Block type"),
-          th("Block")
-        ),
-        for ((block, index) <- longest_full_depth_nonrepeating_blocks
-          .toSeq
-          .sortBy(_.instances(0))
-          .zipWithIndex) yield tr(
-          td(s"$index"),
-          td(block.instances(0)),
-          td("Aligned"),
-          td(s"${block.show(token_array)}")
-        )
-      )
-    )
-  )
-}
-
 def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
   val (vectorization, _) = vectorize(token_array)
   val suffix_array = create_suffix_array(vectorization)
