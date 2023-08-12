@@ -368,20 +368,16 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val graphOutputPath = os.pwd / "src" / "main" / "output" / "traversal.dot"
   os.write.over(graphOutputPath, result) // Create HTML output and write to specified path
 
-  // Output directory must already exist
   val alignment_as_set = alignment.toSet
   val alignment_blocks = longest_full_depth_nonrepeating_blocks
     .filter(e => alignment_as_set.contains(e.instances.head))
-  val output = htmlify(token_array, alignment_blocks)
-  val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
-  os.write.over(outputPath, output)
 
   val reading_nodes = blocks_to_nodes(alignment_blocks)
   val root = tree(witness_count = witness_strings.size)
   val sorted_reading_nodes = reading_nodes // Sort reading nodes in token order
     .toVector
     .sortBy(_.witness_readings("w0")._1)
-  val sigla = sorted_reading_nodes.head.witness_readings.keys // Humiliating temporary step
+  val sigla = sorted_reading_nodes.head.witness_readings.keys.toList // Humiliating temporary step
   /* For each sliding pair of reading nodes create an unexpanded node with witness readings
   *   that point from each siglum to a slice from the end of the first reading node to the
   *   start of the second. */
@@ -402,5 +398,6 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
   os.write.over(alignmentGraphOutputPath, alignment_tree)
 
-
-
+  val output = create_alignment_table(root, token_array, sigla)
+  val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
+  os.write.over(outputPath, output)

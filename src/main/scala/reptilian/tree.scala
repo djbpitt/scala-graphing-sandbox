@@ -98,7 +98,7 @@ def dot(root: BranchingNode, token_array: Vector[Token]): String =
         unexpanded_nodes.append(List(
           current_id.toString, "\t",
           "unexpanded", "\t",
-          "unexpanded"
+          witness_readings.toString
         ).mkString(" "))
       case (current_id, StringNode(txt)) =>
         id += 1
@@ -133,27 +133,30 @@ def dot(root: BranchingNode, token_array: Vector[Token]): String =
     )
     .mkString("\n")
   List(
-    header, 
-    edges.mkString("\n\t"), 
-    formatted_string_nodes, 
-    formatted_leaf_nodes, 
-    formatted_variation_nodes, 
-    formatted_unexpanded_nodes, 
+    header,
+    edges.mkString("\n\t"),
+    formatted_string_nodes,
+    formatted_leaf_nodes,
+    formatted_variation_nodes,
+    formatted_unexpanded_nodes,
     footer
   ).mkString("\n")
 
 
 def create_alignment_table(root: BranchingNode, token_array: Vector[Token], sigla: List[String]) = {
+  val sorted_sigla = sigla.sorted
   val htmlBoilerplate = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
   htmlBoilerplate + html(xmlns := "http://www.w3.org/1999/xhtml")(
     head(
       tag("title")("Alignments"),
       tag("style")(
         "table, tr, th, td {border: 1px black solid; border-collapse: collapse;}" +
-          " th, td {padding: 4px 3px 3px 3px;} " +
-          "td:first-child {text-align: right;}" +
-          ".aligned {background-color: palegoldenrod; } " +
-          ".unaligned {background-color: lightgray}")
+          " th, td {padding: 4px 3px 3px 3px; } " +
+          "td:first-child {text-align: right; }" +
+          ".aligned {background-color: lightblue; } " +
+          ".unexpanded {background-color: palegoldenrod; } " +
+          ".unaligned {background-color: lightgray; }" +
+          "tr:first-child {background-color: lightgray;}")
     ),
     body(
       h1("Alignment"),
@@ -161,12 +164,16 @@ def create_alignment_table(root: BranchingNode, token_array: Vector[Token], sigl
         tr(
           th("Alignment", br, "node", br, "number"),
           th("Block type"),
-          for (i <- sigla) yield th(i)
+          for (i <- sorted_sigla) yield th(i)
         ),
         for ((child, index) <- root.children
           .zipWithIndex
           .toSeq)
-        yield tr(`class` := (if child.getClass.getSimpleName == "ReadingNode" then "aligned" else "unaligned"))(
+        yield tr(`class` := (child.getClass.getSimpleName match {
+          case "ReadingNode" => "aligned"
+          case "UnexpandedNode" => "unexpanded"
+          case _ => "unaligned"
+        }))(
           td(index + 1),
           child match {
             case ReadingNode(witness_readings) =>
@@ -192,6 +199,20 @@ def create_alignment_table(root: BranchingNode, token_array: Vector[Token], sigl
                   }
                   case _ => td("Oops")
                 }.toSeq
+              Seq[Frag](
+                alignment, readings
+              )
+            case UnexpandedNode(witness_readings) =>
+              val alignment = td("Unexpanded")
+              val readings =
+                for i <- sorted_sigla yield
+                  val start = witness_readings(i)._1
+                  val end = witness_readings(i)._2
+                  td(token_array
+                    .slice(start, end)
+                    .map(_.t)
+                    .mkString(" ")
+                  )
               Seq[Frag](
                 alignment, readings
               )
