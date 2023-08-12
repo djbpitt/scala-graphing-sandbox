@@ -356,6 +356,19 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
         .toMap
       UnexpandedNode(map_entries)
     )
+  // Used to check for unaligned leading or trailing tokens
+  // Possibly unnecessary traversal of token array
+  // Can we find the first and last tokens of each witness without a separate traversal?
+  val boundary_tokens =
+    token_array
+      .map(_.t)
+      .zipWithIndex
+      .filter(e => e._1.contains(" #"))
+      .map(_._2)
+  val first_tokens = Vector(0) ++ boundary_tokens.map(_ + 1)
+  val last_tokens = boundary_tokens.map(_ - 1) ++ Vector(token_array.size - 1)
+
+
   val reading_and_intermediate_nodes = sorted_reading_nodes
     .zip(unaligned_intermediates)
     .flatMap(_.toList) ++ List(sorted_reading_nodes.last)
