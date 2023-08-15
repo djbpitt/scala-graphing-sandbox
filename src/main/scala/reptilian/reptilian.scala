@@ -354,7 +354,7 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
       val map_entries = sigla
         .map(siglum => siglum -> (pair.head.witness_readings(siglum)(1), pair(1).witness_readings(siglum)(0)))
         .toMap
-      UnexpandedNode(map_entries)
+      UnexpandedNode(map_entries.filterNot(e => e._2._1 == e._2._2))
     )
   // Used to check for unaligned leading or trailing tokens
   // Possibly unnecessary traversal of token array
@@ -405,10 +405,12 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   new_children.appendAll(List(trailing_unexpanded).flatten)
   root = BranchingNode(new_children)
 
+  println(root.children(2))
+
   val alignment_tree = dot(root, token_array)
   val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
   os.write.over(alignmentGraphOutputPath, alignment_tree)
 
-  val output = create_alignment_table(root, token_array, sigla)
-  val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
-  os.write.over(outputPath, output)
+//  val output = create_alignment_table(root, token_array, sigla)
+//  val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
+//  os.write.over(outputPath, output)
