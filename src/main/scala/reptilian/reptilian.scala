@@ -5,7 +5,7 @@ import os.Path
 import scala.annotation.unused
 import scala.collection.immutable.VectorMap
 import scala.collection.{IndexedSeqView, mutable}
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.util.matching.Regex
 import scalatags.Text.all.*
 
@@ -340,7 +340,7 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
     .filter(e => alignment_as_set.contains(e.instances.head))
 
   val reading_nodes = blocks_to_nodes(alignment_blocks)
-  val root = tree(witness_count = witness_strings.size)
+  var root = tree(witness_count = witness_strings.size)
   val sorted_reading_nodes = reading_nodes // Sort reading nodes in token order
     .toVector
     .sortBy(_.witness_readings("w0")._1)
@@ -367,13 +367,44 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
       .map(_._2)
   val first_tokens = Vector(0) ++ boundary_tokens.map(_ + 1)
   val last_tokens = boundary_tokens.map(_ - 1) ++ Vector(token_array.size - 1)
-
-
+  val leading_tokens = sigla
+    .sorted
+    .zipWithIndex
+    .map(e => e._1 -> (first_tokens(e._2), sorted_reading_nodes.head.witness_readings(e._1)(0)))
+    .toMap
+  val leading_deltas: Boolean = leading_tokens
+    .values
+    .map(e => e._2 - e._1)
+    .sum != 0
+  val leading_unexpanded: Option[UnexpandedNode] =
+    if leading_deltas then
+      Some(UnexpandedNode(leading_tokens))
+    else
+      None
+  val trailing_tokens = sigla
+    .sorted
+    .zipWithIndex
+    .map(e => e._1 -> (sorted_reading_nodes.last.witness_readings(e._1)(1), last_tokens(e._2)))
+    .toMap
+  val trailing_deltas: Boolean = trailing_tokens
+    .values
+    .map(e => e._2 + 1 - e._1) // Range points *after* last token, so add 1
+    .sum != 0
+  val trailing_unexpanded: Option[UnexpandedNode] =
+    if trailing_deltas then
+      Some(UnexpandedNode(trailing_tokens))
+    else
+      None
   val reading_and_intermediate_nodes = sorted_reading_nodes
     .zip(unaligned_intermediates)
     .flatMap(_.toList) ++ List(sorted_reading_nodes.last)
 
-  root.children ++= reading_and_intermediate_nodes
+  val new_children: ListBuffer[AlignmentTreeNode] =
+    ListBuffer(leading_unexpanded).flatten
+  new_children.appendAll(reading_and_intermediate_nodes)
+  new_children.appendAll(List(trailing_unexpanded).flatten)
+  root = BranchingNode(new_children)
+
   val alignment_tree = dot(root, token_array)
   val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
   os.write.over(alignmentGraphOutputPath, alignment_tree)
