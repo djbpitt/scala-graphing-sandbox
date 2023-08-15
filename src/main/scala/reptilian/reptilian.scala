@@ -405,12 +405,10 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   new_children.appendAll(List(trailing_unexpanded).flatten)
   root = BranchingNode(new_children)
 
-  println(root.children(2))
-
   val alignment_tree = dot(root, token_array)
   val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
   os.write.over(alignmentGraphOutputPath, alignment_tree)
 
-//  val output = create_alignment_table(root, token_array, sigla)
-//  val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
-//  os.write.over(outputPath, output)
+  val output = create_alignment_table(root, token_array, sigla)
+  val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
+  os.write.over(outputPath, output)

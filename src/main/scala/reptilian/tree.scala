@@ -206,13 +206,16 @@ def create_alignment_table(root: BranchingNode, token_array: Vector[Token], sigl
               val alignment = td("Unexpanded")
               val readings =
                 for i <- sorted_sigla yield
-                  val start = witness_readings(i)._1
-                  val end = witness_readings(i)._2
-                  td(token_array
-                    .slice(start, end)
-                    .map(_.t)
-                    .mkString(" ")
-                  )
+                  if witness_readings contains i then
+                    val start = witness_readings(i)._1
+                    val end = witness_readings(i)._2
+                    td(token_array
+                      .slice(start, end)
+                      .map(_.t)
+                      .mkString(" ")
+                    )
+                  else
+                    td(raw("&#xa0;"))
               Seq[Frag](
                 alignment, readings
               )
