@@ -8,6 +8,7 @@ import scala.collection.{IndexedSeqView, mutable}
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.util.matching.Regex
 import scalatags.Text.all.*
+import util.chaining.scalaUtilChainingOps
 
 /** Token as complex object
  *
@@ -292,7 +293,7 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
     .map(_.sorted)
   val annoying_interim_variable = (block_start_positions lazyZip block_lengths)
     .map((starts, length) => FullDepthBlock(starts.toVector, length))
-  remove_overlapping_blocks(annoying_interim_variable)
+  (blocks, suffix_array, remove_overlapping_blocks(annoying_interim_variable))
 
 
 def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token]): Map[Int, String] =
@@ -319,7 +320,7 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val witness_strings = read_data(path_to_darwin) // One string per witness
   implicit val token_array: Vector[Token] = tokenize(tokenizer)(witness_strings)
   // Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
-  val longest_full_depth_nonrepeating_blocks = create_aligned_blocks(token_array, witness_strings.size)
+  val (all_blocks, suffix_array, longest_full_depth_nonrepeating_blocks) = create_aligned_blocks(token_array, witness_strings.size)
   val block_texts: Map[Int, String] = block_text_by_id(longest_full_depth_nonrepeating_blocks, token_array)
 
   // create navigation graph and filter out transposed nodes
@@ -399,11 +400,30 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
     .zip(unaligned_intermediates)
     .flatMap(_.toList) ++ List(sorted_reading_nodes.last)
 
+  val all_block_ranges = all_blocks
+    .map(
+      (b: Block) =>
+        (suffix_array.slice(b.start, b.end).toList, b.length)
+    )
+    .map(e => e._1.map(f => (f, f + e._2)))
+//  all_block_ranges.foreach(println)
+
   val new_children: ListBuffer[AlignmentTreeNode] =
-    ListBuffer(leading_unexpanded).flatten
-  new_children.appendAll(reading_and_intermediate_nodes)
-  new_children.appendAll(List(trailing_unexpanded).flatten)
-  root = RootNode(new_children)
+      ListBuffer(leading_unexpanded).flatten
+    new_children.appendAll(reading_and_intermediate_nodes)
+    new_children.appendAll(List(trailing_unexpanded).flatten)
+    root = RootNode(new_children)
+
+  val newer_children =
+    new_children.map {
+      case e: UnexpandedNode =>
+        val node_ranges = e.witness_readings.values
+        all_block_ranges.filter(_.size == node_ranges.size)
+      case e: ReadingNode => "R"
+      case _ => "Oops" // Shouldn't happen
+    }
+
+  newer_children.foreach(println)
 
   val alignment_tree = dot(root, token_array)
   val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"

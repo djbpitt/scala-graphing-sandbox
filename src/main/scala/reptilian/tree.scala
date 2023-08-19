@@ -51,6 +51,7 @@ def show(node: AlignmentTreeNode): Unit =
     case StringNode(txt) => println(txt) // To report errors
   }
 
+
 /** Create GraphViz dot representation of tree
  *
  * @param root : RootNode
