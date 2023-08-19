@@ -10,12 +10,12 @@ type WitnessReadings = Map[String, (Int, Int)] // type alias
 
 sealed trait AlignmentTreeNode // supertype of all nodes
 
-/** BranchingNode
+/** RootNode
  *
  * Has ordered children, at least some of which are branching nodes
  * (cf. VariationNode, which has only leaf-node children)
  * */
-final case class BranchingNode(children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
+final case class RootNode(children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
 
 final case class VariationNode(children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
 
@@ -45,7 +45,7 @@ final case class UnexpandedNode(witness_readings: WitnessReadings) extends Align
 def show(node: AlignmentTreeNode): Unit =
   node match {
     case ReadingNode(witness_readings) => println(witness_readings)
-    case BranchingNode(children) => println(children)
+    case RootNode(children) => println(children)
     case VariationNode(children) => println(children)
     case UnexpandedNode(witness_readings) => println(witness_readings)
     case StringNode(txt) => println(txt) // To report errors
@@ -56,7 +56,7 @@ def show(node: AlignmentTreeNode): Unit =
  * @param root : RootNode
  * @return : String containing dot code for GraphViz
  * */
-def dot(root: BranchingNode, token_array: Vector[Token]): String =
+def dot(root: RootNode, token_array: Vector[Token]): String =
   val header: String = "digraph MyGraph {\n\tnode [shape=record, style=filled]\n\t"
   val footer: String = "\n}"
   var id = 0
@@ -69,7 +69,7 @@ def dot(root: BranchingNode, token_array: Vector[Token]): String =
   while nodes_to_process.nonEmpty do
     val current_node = nodes_to_process.dequeue()
     current_node match {
-      case (current_id, BranchingNode(children)) =>
+      case (current_id, RootNode(children)) =>
         for i <- children do {
           id += 1
           nodes_to_process.enqueue((id, i))
@@ -143,7 +143,7 @@ def dot(root: BranchingNode, token_array: Vector[Token]): String =
   ).mkString("\n")
 
 
-def create_alignment_table(root: BranchingNode, token_array: Vector[Token], sigla: List[String]) = {
+def create_alignment_table(root: RootNode, token_array: Vector[Token], sigla: List[String]) = {
   val sorted_sigla = sigla.sorted
   val htmlBoilerplate = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
   htmlBoilerplate + html(xmlns := "http://www.w3.org/1999/xhtml")(
@@ -228,5 +228,5 @@ def create_alignment_table(root: BranchingNode, token_array: Vector[Token], sigl
 }
 
 def tree(witness_count: Int) =
-  val root = BranchingNode()
+  val root = RootNode()
   root

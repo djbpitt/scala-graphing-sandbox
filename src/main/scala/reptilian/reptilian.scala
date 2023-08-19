@@ -403,7 +403,7 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
     ListBuffer(leading_unexpanded).flatten
   new_children.appendAll(reading_and_intermediate_nodes)
   new_children.appendAll(List(trailing_unexpanded).flatten)
-  root = BranchingNode(new_children)
+  root = RootNode(new_children)
 
   val alignment_tree = dot(root, token_array)
   val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
