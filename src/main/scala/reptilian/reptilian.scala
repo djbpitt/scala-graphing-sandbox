@@ -9,6 +9,7 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.util.matching.Regex
 import scalatags.Text.all.*
 import util.chaining.scalaUtilChainingOps
+import de.sciss.fingertree._
 
 /** Token as complex object
  *
@@ -322,6 +323,18 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   // Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
   val (all_blocks, suffix_array, longest_full_depth_nonrepeating_blocks) = create_aligned_blocks(token_array, witness_strings.size)
   val block_texts: Map[Int, String] = block_text_by_id(longest_full_depth_nonrepeating_blocks, token_array)
+
+  // put all_blocks into a finger tree
+  // work in progress
+  val sq = RangedSeq(
+    (1685, 1750) -> "Bach",
+    (1866, 1925) -> "Satie",
+    (1883, 1947) -> "Russolo",
+    (1883, 1965) -> "Varèse",
+    (1910, 1995) -> "Schaeffer",
+    (1912, 1992) -> "Cage"
+  )(_._1, Ordering.Int)
+
 
   // create navigation graph and filter out transposed nodes
   val graph = create_traversal_graph(longest_full_depth_nonrepeating_blocks.toVector)
