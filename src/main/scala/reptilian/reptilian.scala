@@ -329,11 +329,9 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   extension (sq: RangedSeq[((Int, Int), String), Int])
     def containedRange(interval: (Int, Int)): Iterator[((Int, Int), String)] =
       val (iLo, iHi) = interval
-      sq.iterator.filter(e =>
-        println(e._1._1)
-        println(e._1._2)
-        e._1._1 >= iLo && e._1._2 <= iHi
-      )
+      sq.iterator
+        .dropWhile(e => e._1._1 < iLo)
+        .takeWhile(e => e._1._2 <= iHi)
 
   val sq = RangedSeq(
     (1685, 1750) -> "Bach",
@@ -362,7 +360,7 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   print("Results: ")
   println(composer_names)
 
-  println(sq.containedRange((1900, 1930)).toList)
+  println(sq.containedRange((1900 -> 1930)).toList)
 
   // create navigation graph and filter out transposed nodes
   val graph = create_traversal_graph(longest_full_depth_nonrepeating_blocks.toVector)
