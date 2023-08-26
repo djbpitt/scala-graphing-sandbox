@@ -326,23 +326,19 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
 
   // put all_blocks into a finger tree
   // work in progress
-  extension (sq: RangedSeq[((Int, Int), String), Int])
-    def containedRange(interval: (Int, Int)): Iterator[((Int, Int), String)] =
-      val (iLo, iHi) = interval
-      sq.iterator
-        .dropWhile(e => e._1._1 < iLo)
-        .takeWhile(e => e._1._2 <= iHi)
 
-  val sq = RangedSeq(
+  val sq = myRangedSeq(
     (1685, 1750) -> "Bach",
     (1866, 1925) -> "Satie",
     (1883, 1947) -> "Russolo",
     (1883, 1965) -> "Varèse",
-    (1910, 1995) -> "Schaeffer",
+    (1900, 1995) -> "Schaeffer",
     (1910, 1922) -> "Platypus",
     (1911, 1923) -> "Echidna",
-    (1912, 1992) -> "Cage"
+    (1912, 1992) -> "Cage",
+    (1933, 1935) -> "Dekker"
   )(_._1, Ordering.Int)
+
 
 //  def filterOverlaps(interval: (P, P)): Iterator[Elem] = {
 //    val (iLo, iHi) = interval
@@ -355,12 +351,11 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   implicit class Names(it: Iterator[(_, _)]) {
     def names: String = it.map(_._2).mkString(", ")
   }
-  val composer_names = sq.filterOverlaps(1900 -> 1930).names  // were alive during these years: Varèse, Russolo
+//  val composer_names = sq.filterOverlaps(1900 -> 1930).names  // were alive during these years: Varèse, Russolo
 
   print("Results: ")
-  println(composer_names)
-
-  println(sq.containedRange((1900 -> 1930)).toList)
+//  println(composer_names)
+  println(sq.filterContains(1900 -> 1930))
 
   // create navigation graph and filter out transposed nodes
   val graph = create_traversal_graph(longest_full_depth_nonrepeating_blocks.toVector)

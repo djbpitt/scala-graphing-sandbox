@@ -16,14 +16,16 @@ package reptilian
  * contact@sciss.de
  */
 
-import de.sciss.fingertree._
+import de.sciss.fingertree.*
+import reptilian.myRangedSeq.Anno
 
 import scala.annotation.tailrec
 
 object myRangedSeq {
   def empty[Elem, P](implicit view: Elem => (P, P), ordering: Ordering[P]): myRangedSeq[Elem, P] =
     new Impl(view, ordering) {
-      protected val tree: FingerTree[Anno[P], Elem] = FingerTree.empty
+      // Remove "protected" annotation
+      val tree: FingerTree[Anno[P], Elem] = FingerTree.empty
     }
 
   def apply[Elem, P](xs: Elem*)(implicit view: Elem => (P, P), ordering: Ordering[P]): myRangedSeq[Elem, P] = {
@@ -37,7 +39,8 @@ object myRangedSeq {
     extends myRangedSeq[Elem, P] with Measure[Elem, Anno[P]] {
     seq =>
 
-    protected val tree: FingerTree[Anno[P], Elem]   // making this a val helps in debugger
+    // Remove "protected" annotation
+    val tree: FingerTree[Anno[P], Elem]   // making this a val helps in debugger
 
     // ---- measure ----
 
@@ -57,7 +60,8 @@ object myRangedSeq {
     // ---- finger-tree-like ----
 
     protected def wrap(_tree: FT[Elem, P]): myRangedSeq[Elem, P] = new Impl(view, ordering) {
-      protected val tree: FT[Elem, P] = _tree
+      // Remove "protected" annotation
+      val tree: FT[Elem, P] = _tree
     }
 
     // ---- ranged-seq ----
@@ -127,6 +131,18 @@ object myRangedSeq {
       val until      = tree.takeWhile(isGteqStart(iLo))
       new IncludesIterator(until, iHi)
     }
+
+    def filterContains(interval: (P, P)): Set[Elem] =
+      val (iLo, iHi) = interval
+      val until_lo = tree.takeWhile(isGteqStart(iLo))
+      val lo = new OverlapsIterator(until_lo, iLo)
+      val until_hi = tree.takeWhile(isGteqStart(iHi))
+      val hi = new OverlapsIterator(until_hi, iHi)
+      val hi_to_set = hi.toSet
+      val lo_to_set = lo.toSet
+      lo_to_set.intersect(hi_to_set)
+
+
 
     def filterOverlaps(interval: (P, P)): Iterator[Elem] = {
       val (iLo, iHi) = interval
@@ -255,9 +271,21 @@ sealed trait myRangedSeq[Elem, P] extends FingerTreeLike[Option[(P, P)], Elem, m
    * An element contains the point if its interval start is less than or equal to that point
    * and its interval stop is greater than that point.
    *
-   * @param point  the intersection point
+   * @param interval  the intersection point
    * @return       the filtered tree having only elements which contain the point
    */
+
+  def filterContains(interval: (P, P)): Set[Elem]
+
+  /** Filters the tree to contain only those elements that are contains by a given
+   * range. An interval contains the range if its start is less than or equal to the
+   * start position and its interval stap is greater than or equal to its stop position.
+   * Example: (10, 20) contains (13, 15) because 10 < 13 and 20 > 15.
+   *
+   * @param point  the query (container) interval
+   * @return          set of elements from the filtered tree having only elements contained by the interval
+   */
+
   def intersect(point: P): Iterator[Elem]
 
   /** Returns the total interval covered by the sequence, or `None` if the range is empty */
@@ -266,4 +294,8 @@ sealed trait myRangedSeq[Elem, P] extends FingerTreeLike[Option[(P, P)], Elem, m
   def includes(point: P): Boolean
   def includes(interval: (P, P)): Boolean
   def overlaps(interval: (P, P)): Boolean
+
+  // Our changes
+  override def tree: FingerTree[Anno[P], Elem]
+
 }
