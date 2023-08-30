@@ -18,6 +18,7 @@ package reptilian
 
 import de.sciss.fingertree.*
 import reptilian.myRangedSeq.Anno
+import ujson.IndexedValue.False
 
 import scala.annotation.tailrec
 
@@ -126,21 +127,32 @@ object myRangedSeq {
         case _ => None
       }
 
-    def filterIncludes(interval: (P, P)): Iterator[Elem] = {
+    def filterIncludes(interval: (P, P)): Iterator[Elem] =
       val (iLo, iHi) = interval
       val until      = tree.takeWhile(isGteqStart(iLo))
       new IncludesIterator(until, iHi)
-    }
 
-    def filterContains(interval: (P, P)): Set[Elem] =
+    def takeUntil[V, A](pred: V => Boolean, tree: FingerTree[V, A])(implicit m: Measure[A, V]): FingerTree[V, A] =
+      def negate(pred: V => Boolean): V => Boolean =
+        (x: V) => !pred(x)
+      tree.takeWhile(negate(pred))
+
+    def dropUntil[V, A](pred: V => Boolean, tree: FingerTree[V, A])(implicit m: Measure[A, V]): FingerTree[V, A] =
+      def negate(pred: V => Boolean): V => Boolean =
+        (x: V) => !pred(x)
+      tree.dropWhile(negate(pred))
+
+    def filterContains(interval: (P, P)): Iterator[Elem] =
       val (iLo, iHi) = interval
-      val until_lo = tree.takeWhile(isGteqStart(iLo))
-      val lo = new OverlapsIterator(until_lo, iLo)
-      val until_hi = tree.takeWhile(isGteqStart(iHi))
-      val hi = new OverlapsIterator(until_hi, iHi)
-      val hi_to_set = hi.toSet
-      val lo_to_set = lo.toSet
-      lo_to_set.intersect(hi_to_set)
+      val until = takeUntil(isGteqStart(iHi), tree)
+      new IncludesIterator2(until, iLo)
+//      val until_lo = tree.takeWhile(isGteqStart(iLo))
+//      val lo = new OverlapsIterator(until_lo, iLo)
+//      val until_hi = tree.takeWhile(isGteqStart(iHi))
+//      val hi = new OverlapsIterator(until_hi, iHi)
+//      val hi_to_set = hi.toSet
+//      val lo_to_set = lo.toSet
+//      lo_to_set.intersect(hi_to_set)
 
 
 
@@ -172,6 +184,10 @@ object myRangedSeq {
       protected def name = "includes"
     }
 
+    private final class IncludesIterator2(init: FingerTree[Anno[P], Elem], iLo: P) extends InRangeIterator2(init) {
+      protected def dropPred(v: Anno[P]): Boolean = isGtStop(iLo)(v)
+      protected def name = "includes2"
+    }
     private sealed abstract class InRangeIterator(init: FingerTree[Anno[P], Elem]) extends Iterator[Elem] {
       override def toString: String =
         if (hasNext) s"myRangedSeq $name-iterator@${hashCode().toHexString}" else "empty iterator"
@@ -181,6 +197,30 @@ object myRangedSeq {
 
       private def findNext(xs: FingerTree[Anno[P], Elem]): FingerTree.ViewLeft[Anno[P], Elem] =
         xs.dropWhile(dropPred).viewLeft
+
+      private var nextValue = findNext(init)
+
+      final def hasNext: Boolean = !nextValue.isEmpty
+
+      final def next(): Elem = nextValue match {
+        case FingerTree.ViewLeftCons(head, tail) =>
+          nextValue = findNext(tail)
+          head
+
+        case FingerTree.ViewNil() => throw new NoSuchElementException(s"next on $this")
+      }
+    }
+
+    private sealed abstract class InRangeIterator2(init: FingerTree[Anno[P], Elem]) extends Iterator[Elem] {
+      override def toString: String =
+        if (hasNext) s"myRangedSeq $name-iterator@${hashCode().toHexString}" else "empty iterator"
+
+      protected def dropPred(v: Anno[P]): Boolean
+
+      protected def name: String
+
+      private def findNext(xs: FingerTree[Anno[P], Elem]): FingerTree.ViewLeft[Anno[P], Elem] =
+        dropUntil(dropPred, xs).viewLeft
 
       private var nextValue = findNext(init)
 
@@ -275,11 +315,11 @@ sealed trait myRangedSeq[Elem, P] extends FingerTreeLike[Option[(P, P)], Elem, m
    * @return       the filtered tree having only elements which contain the point
    */
 
-  def filterContains(interval: (P, P)): Set[Elem]
+  def filterContains(interval: (P, P)): Iterator[Elem]
 
   /** Filters the tree to contain only those elements that are contains by a given
    * range. An interval contains the range if its start is less than or equal to the
-   * start position and its interval stap is greater than or equal to its stop position.
+   * start position and its interval stop is greater than or equal to its stop position.
    * Example: (10, 20) contains (13, 15) because 10 < 13 and 20 > 15.
    *
    * @param point  the query (container) interval

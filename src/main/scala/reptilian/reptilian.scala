@@ -353,9 +353,12 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   }
 //  val composer_names = sq.filterOverlaps(1900 -> 1930).names  // were alive during these years: Varèse, Russolo
 
-  print("Results: ")
+  print("Results of includes: ")
+  println(sq.filterIncludes(1900 -> 1930).toList)
+  print("Results of contains: ")
 //  println(composer_names)
-  println(sq.filterContains(1900 -> 1930))
+  println(sq.filterContains(1900 -> 1930).toList)
+
 
   // create navigation graph and filter out transposed nodes
   val graph = create_traversal_graph(longest_full_depth_nonrepeating_blocks.toVector)
