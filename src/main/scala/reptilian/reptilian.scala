@@ -336,7 +336,8 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
     (1910, 1922) -> "Platypus",
     (1911, 1923) -> "Echidna",
     (1912, 1992) -> "Cage",
-    (1933, 1935) -> "Dekker"
+    (1905, 1935) -> "Dekker",
+    (1935, 1945) -> "van Zundert"
   )(_._1, Ordering.Int)
 
 

@@ -134,8 +134,10 @@ object myRangedSeq {
 
     def takeUntil[V, A](pred: V => Boolean, tree: FingerTree[V, A])(implicit m: Measure[A, V]): FingerTree[V, A] =
       def negate(pred: V => Boolean): V => Boolean =
-        (x: V) => !pred(x)
-      tree.takeWhile(negate(pred))
+        (x: V) =>
+          println(x)
+          pred(x)
+      tree.dropWhile(negate(pred))
 
     def dropUntil[V, A](pred: V => Boolean, tree: FingerTree[V, A])(implicit m: Measure[A, V]): FingerTree[V, A] =
       def negate(pred: V => Boolean): V => Boolean =
@@ -143,8 +145,14 @@ object myRangedSeq {
       tree.dropWhile(negate(pred))
 
     def filterContains(interval: (P, P)): Iterator[Elem] =
+      println("Inside filterContains(); value of parameter 'tree': ")
+      println(tree)
       val (iLo, iHi) = interval
-      val until = takeUntil(isGteqStart(iHi), tree)
+      println("Lo and Hi: ")
+      println((iLo, iHi))
+      val until = takeUntil(isGtStart(iLo), tree)
+      println("Value of 'until': ")
+      println(until)
       new IncludesIterator2(until, iLo)
 //      val until_lo = tree.takeWhile(isGteqStart(iLo))
 //      val lo = new OverlapsIterator(until_lo, iLo)
