@@ -32,7 +32,12 @@ case class OpenBlock(start: Int, length: Int)
  *               width = end - start (number of instances)
  *               if one per witness, block is full-depth, but could be repetition within a single witness
  */
-case class Block(start: Int, end: Int, length: Int)
+case class Block(start: Int, end: Int, length: Int):
+  def instanceStartOffsets(implicit suffix_array: Array[Int]): Vector[Int] =
+    suffix_array
+      .slice(this.start, this.end)
+      .toVector
+
 
 /** Full depth block
  *
@@ -321,7 +326,8 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val witness_strings = read_data(path_to_darwin) // One string per witness
   implicit val token_array: Vector[Token] = tokenize(tokenizer)(witness_strings)
   // Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
-  val (all_blocks, suffix_array, longest_full_depth_nonrepeating_blocks) = create_aligned_blocks(token_array, witness_strings.size)
+  val (all_blocks, tmp_suffix_array, longest_full_depth_nonrepeating_blocks) = create_aligned_blocks(token_array, witness_strings.size)
+  implicit val suffix_array: Array[Int] = tmp_suffix_array
   val block_texts: Map[Int, String] = block_text_by_id(longest_full_depth_nonrepeating_blocks, token_array)
 
   // put all_blocks into a finger tree
@@ -363,6 +369,21 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val contains = sq.filterContains(min -> max).asInstanceOf[Iterator[((Int, Int), _)]]
   print("Results of contains: ")
   println(contains.toList)
+
+  val blockList = all_blocks
+    .flatMap(e => e.instanceStartOffsets
+      .map(f => ((f, f + e.length), e)))
+  println(blockList.slice(0, 5))
+  // RESUME HERE
+  // Goal is to create RangedSeq of all blocks and use to process unaligned ranges
+  // Each (start, end) in token_array points to a block; witness association can be looked up
+
+//  val blockRangeSeq = myRangedSeq(all_blocks
+//    .map(e => e
+//      .instanceStartOffsets
+//      .map(f => (f, f + e.length) -> e)
+//    )
+//  )(_._1, Ordering.Int)
 
   // create navigation graph and filter out transposed nodes
   val graph = create_traversal_graph(longest_full_depth_nonrepeating_blocks.toVector)
