@@ -360,8 +360,7 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
 
   val min = 1900
   val max = 1930
-  val containsLowerBounded = sq.filterContains(min -> max)
-  val contains = containsLowerBounded.filter(e => e._1._2 <= max)
+  val contains = sq.filterContains(min -> max).asInstanceOf[Iterator[((Int, Int), _)]]
   print("Results of contains: ")
   println(contains.toList)
 
