@@ -141,15 +141,12 @@ object myRangedSeq {
     def filterContains(interval: (P, P)): Iterator[Elem] =
       val (iLo, iHi) = interval
       val lowerBoundLow = dropUntil(isGtStart(iLo), tree) // keep only if interval start >= iLo (= dropWhileNot!)
-      println("Value of 'lowerBoundLow': ")
-      println(lowerBoundLow)
-      val upperBoundLow = takeUntil(isGtStart(iHi), lowerBoundLow)
-      println(upperBoundLow)
-//      val until2 = takeUntil(isGtStart(iHi), until) // take until start value is greater than argument
-//      println("Value of 'until2': ")
-//      println(until2)
+      val upperBoundLow = takeUntil(isGtStart(iHi), lowerBoundLow) // interval start must be less than iHi
+      // println(upperBoundLow.head.asInstanceOf[((Int, Int), _)]._1._2)
+      upperBoundLow.iterator
 
-      new IncludesIterator2(lowerBoundLow, iHi)
+
+//      new IncludesIterator2(upperBoundLow, iHi)
 //      val until_lo = tree.takeWhile(isGteqStart(iLo))
 //      val lo = new OverlapsIterator(until_lo, iLo)
 //      val until_hi = tree.takeWhile(isGteqStart(iHi))
@@ -189,7 +186,7 @@ object myRangedSeq {
     }
 
     private final class IncludesIterator2(init: FingerTree[Anno[P], Elem], iHi: P) extends InRangeIterator2(init) {
-      protected def dropPred(v: Anno[P]): Boolean = !isGteqStop(iHi)(v)
+      protected def dropPred(v: Anno[P]): Boolean = isLtStop(iHi)(v)
       protected def name = "includes2"
     }
     private sealed abstract class InRangeIterator(init: FingerTree[Anno[P], Elem]) extends Iterator[Elem] {
@@ -223,8 +220,9 @@ object myRangedSeq {
 
       protected def name: String
 
+      // Differs from original InRangeIterator by replacing dropWhile with dropUntil
       private def findNext(xs: FingerTree[Anno[P], Elem]): FingerTree.ViewLeft[Anno[P], Elem] =
-        dropUntil(dropPred, xs).viewLeft
+        xs.takeWhile(dropPred).viewLeft
 
       private var nextValue = findNext(init)
 
