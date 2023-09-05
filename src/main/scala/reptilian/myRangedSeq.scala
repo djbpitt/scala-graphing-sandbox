@@ -176,10 +176,6 @@ object myRangedSeq {
       protected def name = "includes"
     }
 
-    private final class IncludesIterator2(init: FingerTree[Anno[P], Elem], iHi: P) extends InRangeIterator2(init) {
-      protected def dropPred(v: Anno[P]): Boolean = isLtStop(iHi)(v)
-      protected def name = "includes2"
-    }
     private sealed abstract class InRangeIterator(init: FingerTree[Anno[P], Elem]) extends Iterator[Elem] {
       override def toString: String =
         if (hasNext) s"myRangedSeq $name-iterator@${hashCode().toHexString}" else "empty iterator"
@@ -189,31 +185,6 @@ object myRangedSeq {
 
       private def findNext(xs: FingerTree[Anno[P], Elem]): FingerTree.ViewLeft[Anno[P], Elem] =
         xs.dropWhile(dropPred).viewLeft
-
-      private var nextValue = findNext(init)
-
-      final def hasNext: Boolean = !nextValue.isEmpty
-
-      final def next(): Elem = nextValue match {
-        case FingerTree.ViewLeftCons(head, tail) =>
-          nextValue = findNext(tail)
-          head
-
-        case FingerTree.ViewNil() => throw new NoSuchElementException(s"next on $this")
-      }
-    }
-
-    private sealed abstract class InRangeIterator2(init: FingerTree[Anno[P], Elem]) extends Iterator[Elem] {
-      override def toString: String =
-        if (hasNext) s"myRangedSeq $name-iterator@${hashCode().toHexString}" else "empty iterator"
-
-      protected def dropPred(v: Anno[P]): Boolean
-
-      protected def name: String
-
-      // Differs from original InRangeIterator by replacing dropWhile with dropUntil
-      private def findNext(xs: FingerTree[Anno[P], Elem]): FingerTree.ViewLeft[Anno[P], Elem] =
-        xs.takeWhile(dropPred).viewLeft
 
       private var nextValue = findNext(init)
 
