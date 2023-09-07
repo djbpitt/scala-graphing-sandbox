@@ -138,15 +138,21 @@ object myRangedSeq {
     def takeUntil[V, A](pred: V => Boolean, tree: FingerTree[V, A])(implicit m: Measure[A, V]): FingerTree[V, A] =
       tree.takeWhile(pred)
 
-    def filterContains(interval: (P, P)): Iterator[Any] =
+    def filterContains(interval: (P, P))(implicit ordering: Ordering[P]): Iterator[Elem] =
       val (iLo, iHi) = interval
       val lowerBoundLow = dropUntil(isGtStart(iLo), tree) // keep only if interval start >= iLo (= dropWhileNot!)
       val upperBoundLow = takeUntil(isGtStart(iHi), lowerBoundLow) // interval start must be less than iHi
       // println(upperBoundLow.head.asInstanceOf[((Int, Int), _)]._1._2)
       upperBoundLow
         .iterator
-        .map(e => e.asInstanceOf[((Int, Int), _)])
-        .filter(e => e._1._2 <= iHi.asInstanceOf[Int])
+        .filter(
+          _ match {
+            case Tuple2((first, second: P), third)
+              if ordering.lteq(second, iHi) =>
+                true
+            case _ => false
+          }
+        )
 
     def filterOverlaps(interval: (P, P)): Iterator[Elem] = {
       val (iLo, iHi) = interval
@@ -282,7 +288,7 @@ sealed trait myRangedSeq[Elem, P] extends FingerTreeLike[Option[(P, P)], Elem, m
    * @return       the filtered tree having only elements which contain the point
    */
 
-  def filterContains(interval: (P, P)): Iterator[Any]
+  def filterContains(interval: (P, P))(implicit ordering: Ordering[P]): Iterator[Elem]
 
   /** Filters the tree to contain only those elements that are contains by a given
    * range. An interval contains the range if its start is less than or equal to the
