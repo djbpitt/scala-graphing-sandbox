@@ -142,17 +142,9 @@ object myRangedSeq {
       val (iLo, iHi) = interval
       val lowerBoundLow = dropUntil(isGtStart(iLo), tree) // keep only if interval start >= iLo (= dropWhileNot!)
       val upperBoundLow = takeUntil(isGtStart(iHi), lowerBoundLow) // interval start must be less than iHi
-      // println(upperBoundLow.head.asInstanceOf[((Int, Int), _)]._1._2)
       upperBoundLow
         .iterator
-        .filter(
-          _ match {
-            case Tuple2((first, second: P), third)
-              if ordering.lteq(second, iHi) =>
-                true
-            case _ => false
-          }
-        )
+        .filter(e => ordering.lteq(view(e)._2, iHi))
 
     def filterOverlaps(interval: (P, P)): Iterator[Elem] = {
       val (iLo, iHi) = interval
