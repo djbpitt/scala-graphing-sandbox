@@ -332,43 +332,33 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
 
   // put all_blocks into a finger tree
   // work in progress
-
-  val sq = myRangedSeq(
-    (1685, 1750) -> "Bach",
-    (1866, 1925) -> "Satie",
-    (1883, 1947) -> "Russolo",
-    (1883, 1965) -> "Varèse",
-    (1900, 1995) -> "Schaeffer",
-    (1910, 1922) -> "Platypus",
-    (1911, 1923) -> "Echidna",
-    (1912, 1992) -> "Cage",
-    (1905, 1935) -> "Dekker",
-    (1930, 1936) -> "Bleeker",
-    (1935, 1945) -> "van Zundert"
-  )(_._1, Ordering.Int)
-
-
-//  def filterOverlaps(interval: (P, P)): Iterator[Elem] = {
-//    val (iLo, iHi) = interval
-//    // (1) keep only those elements whose start is < query_hi
-//    val until = tree.takeWhile(isGtStart(iHi))
-//    // (2) then we need to keep only those whose stop is > query_lo.
-//    new OverlapsIterator(until, iLo)
+//  val sq = myRangedSeq(
+//    (1685, 1750) -> "Bach",
+//    (1866, 1925) -> "Satie",
+//    (1883, 1947) -> "Russolo",
+//    (1883, 1965) -> "Varèse",
+//    (1900, 1995) -> "Schaeffer",
+//    (1910, 1922) -> "Platypus",
+//    (1911, 1923) -> "Echidna",
+//    (1912, 1992) -> "Cage",
+//    (1905, 1935) -> "Dekker",
+//    (1930, 1936) -> "Bleeker",
+//    (1935, 1945) -> "van Zundert"
+//  )(_._1, Ordering.Int)
+//
+//  implicit class Names(it: Iterator[(_, _)]) {
+//    def names: String = it.map(_._2).mkString(", ")
 //  }
-
-  implicit class Names(it: Iterator[(_, _)]) {
-    def names: String = it.map(_._2).mkString(", ")
-  }
 //  val composer_names = sq.filterOverlaps(1900 -> 1930).names  // were alive during these years: Varèse, Russolo
 
 //  print("Results of includes: ")
 //  println(sq.filterIncludes(1900 -> 1930).toList)
-
-  val min = 1900
-  val max = 1930
-  val contains = sq.filterContains(min -> max).asInstanceOf[Iterator[((Int, Int), _)]]
-  print("Results of contains: ")
-  println(contains.toList)
+//
+//  val min = 1900
+//  val max = 1930
+//  val contains = sq.filterContains(min -> max).asInstanceOf[Iterator[((Int, Int), _)]]
+//  print("Results of contains: ")
+//  println(contains.toList)
 
   val blockList = all_blocks
     .flatMap(e => e.instanceStartOffsets
