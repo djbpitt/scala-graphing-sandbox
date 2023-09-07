@@ -33,6 +33,14 @@ case class OpenBlock(start: Int, length: Int)
  *               if one per witness, block is full-depth, but could be repetition within a single witness
  */
 case class Block(start: Int, end: Int, length: Int):
+  /** instanceStartOffsets()
+   *
+   * @param suffix_array  Slicing the suffix array from block start and end (LCP value)
+   *                      selects offsets for block instances in token array
+   *
+   * @return              Vector of token array offsets
+   *
+   * */
   def instanceStartOffsets(implicit suffix_array: Array[Int]): Vector[Int] =
     suffix_array
       .slice(this.start, this.end)
@@ -360,20 +368,13 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
 //  print("Results of contains: ")
 //  println(contains.toList)
 
-  val blockList = all_blocks
-    .flatMap(e => e.instanceStartOffsets
-      .map(f => ((f, f + e.length), e)))
-  println(blockList.slice(0, 5))
-  // RESUME HERE
-  // Goal is to create RangedSeq of all blocks and use to process unaligned ranges
-  // Each (start, end) in token_array points to a block; witness association can be looked up
+  val blockList = all_blocks // First create list of all blocks
+    .flatMap(e => e.instanceStartOffsets // start offsets of block instances in token array
+      .map(f => ((f, f + e.length), e))) // start and stop offsets plus original block object
 
-//  val blockRangeSeq = myRangedSeq(all_blocks
-//    .map(e => e
-//      .instanceStartOffsets
-//      .map(f => (f, f + e.length) -> e)
-//    )
-//  )(_._1, Ordering.Int)
+  // Treat list of blocks as varargs (type ascription), which constructor requires
+  val blockRangeSeq = myRangedSeq(blockList: _*)(_._1, Ordering.Int)
+  println(blockRangeSeq.tree)
 
   // create navigation graph and filter out transposed nodes
   val graph = create_traversal_graph(longest_full_depth_nonrepeating_blocks.toVector)
