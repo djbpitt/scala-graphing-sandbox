@@ -138,7 +138,18 @@ object myRangedSeq {
     def takeUntil[V, A](pred: V => Boolean, tree: FingerTree[V, A])(implicit m: Measure[A, V]): FingerTree[V, A] =
       tree.takeWhile(pred)
 
-    def filterContains(interval: (P, P))(implicit ordering: Ordering[P]): Iterator[Elem] =
+    /** Retain blocks that are contained by specified input interval
+     *
+     *  Example: a block (10, 20) is contained by an input interval (9, 21)
+     *
+     *  1. Use tree operation to keep only blocks that begin at or after input interval start
+     *  2. Use tree operation to keep only blocks that do not start after input interval end
+     *  3. Iterate and compare to keep only blocks that end before or at input interval end
+     *
+     *  Step #2 is informationally redundant because it’s subsumed by step #3, but we keep it
+     *  under the assumption that the tree operation (2) is faster than the iteration (3).
+     * */
+    def filterContains(interval: (P, P)): Iterator[Elem] =
       val (iLo, iHi) = interval
       val lowerBoundLow = dropUntil(isGtStart(iLo), tree) // keep only if interval start >= iLo (= dropWhileNot!)
       val upperBoundLow = takeUntil(isGtStart(iHi), lowerBoundLow) // interval start must be less than iHi
@@ -280,7 +291,7 @@ sealed trait myRangedSeq[Elem, P] extends FingerTreeLike[Option[(P, P)], Elem, m
    * @return       the filtered tree having only elements which contain the point
    */
 
-  def filterContains(interval: (P, P))(implicit ordering: Ordering[P]): Iterator[Elem]
+  def filterContains(interval: (P, P)): Iterator[Elem]
 
   /** Filters the tree to contain only those elements that are contains by a given
    * range. An interval contains the range if its start is less than or equal to the
