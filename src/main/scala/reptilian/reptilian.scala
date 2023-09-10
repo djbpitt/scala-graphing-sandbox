@@ -5,18 +5,7 @@ import os.Path
 import scala.collection.immutable.VectorMap
 import scala.collection.{IndexedSeqView, mutable}
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-import scala.util.matching.Regex
-import scalatags.Text.all.*
-
-/** Token as complex object
- *
- * @param t Raw token, which may include trailing whitespace
- * @param n Normalized token, e.g., lower-case and trim
- * @param w Witness identifier, zero-based
- *
- *          Tokenization and normalization are under user control (to be implement)
- */
-case class Token(t: String, n: String, w: Int)
+import scala.util.matching.Regex // Create tokenization regex here but tokenize in tokenization.scala
 
 case class OpenBlock(start: Int, length: Int)
 
@@ -73,70 +62,6 @@ def read_data(path_to_data: Path): List[String] =
     .toList
     .map(os.read)
 
-/** Used as partially applied function to create tokenizer
- *
- * @param token_pattern Regex matching individual tokens
- * @param witness_data  Individual witness as string
- * @return List of strings for single witness
- */
-def make_tokenizer(token_pattern: Regex)(witness_data: String) =
-  token_pattern.findAllIn(witness_data).toList
-
-/** Normalize witness data
- *
- * @param witness_data String with data for individual witness
- * @return Input string in all lower case and strip trailing whitespace
- *
- *         TODO: Allow user to specify normalization rules
- *         TODO: Implement complex object with separate t (text) and n (normalized) properties and build vector mapping
- *         from normalized properties.
- */
-def normalize(witness_data: String): String =
-  witness_data.toLowerCase.trim
-
-/** Return token array as single vector with token separators
- *
- * Token separators are unique and sequential
- *
- * @param token_lists list of list of strings with one inner list per witness
- * @return Vector[String] with unique separators inserted between witnesses
- */
-def create_token_array(token_lists: List[List[String]]): Vector[String] =
-  (token_lists
-    .head ++ token_lists
-    .tail
-    .zipWithIndex
-    .flatMap((e, index) => List(s" #$index ") ++ e)
-    ).toVector
-
-/** Create mapping from tokens to witnesses
- *
- * @param token_lists (one inner list per witness)
- * @return Vector[Int] with zero-based witness number for each token
- *
- *         Insert -1 as witness separator because all values must be Int
- *         and witnesses begin at 0
- */
-def create_token_witness_mapping(token_lists: List[List[String]]): Vector[Int] =
-  val buffer: ArrayBuffer[Int] = ArrayBuffer[Int]()
-  buffer.appendAll(Array.fill(token_lists.head.length)(0))
-  token_lists.tail
-    .zipWithIndex
-    .foreach {
-      (tokens, index) =>
-        buffer.append(-1)
-        buffer.appendAll(Array.fill(tokens.length)(index + 1))
-    }
-  buffer.toVector
-
-/** Create sorted map from tokens to integers
- *
- * @param token_array All tokens in all witnesses (includes duplicates)
- * @return Map from tokens to integers, where integers correspond to alphabet order of tokens
- *
- *         Map from token strings to integers because suffix array requires integers.
- *         Array instead of vector because third-party library requires array
- */
 def vectorize(token_array: Vector[Token]): (Array[Int], Int) =
   val voc = token_array
     .map(_.n)
@@ -260,20 +185,6 @@ def create_blocks(LCP_array: Vector[Int]): List[Block] =
     if (interval.length > 0)
       closedIntervals += Block(interval.start, LCP_array.length - 1, interval.length)
   closedIntervals.toList
-
-
-/** Create token array as sequence of complex Token objects
- *
- * @param tokenizer Built from regex by partially applied function
- * @return Function that creates array of complex Token objects
- */
-def tokenize(tokenizer: String => List[String]) =
-  ((plain_witnesses: List[String]) =>
-    plain_witnesses
-      .map(tokenizer) // List of one list of strings per witness
-    ).andThen(e => create_token_array(e) zip create_token_witness_mapping(e)) // TODO: lists instead of vectors
-    .andThen(_.map(e => Token(e(0), normalize(e(0)), e(1))))
-
 
 /** Remove shorter embedded blocks
  *
@@ -443,16 +354,16 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
    * Graphviz dot file
    * HTML alignment table
   * */
-  val alignment_tree = dot(root, token_array)
+  val alignment_tree_as_dot = dot(root, token_array)
   val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
-  os.write.over(alignmentGraphOutputPath, alignment_tree)
+  os.write.over(alignmentGraphOutputPath, alignment_tree_as_dot)
 
   val output = create_alignment_table(root, token_array, sigla)
   val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
   os.write.over(outputPath, output)
 
   // Diagnostic: visualize traversal graph
-  val result = traversal_graph_to_dot(graph, block_texts, set_of_non_transposed_node_ids)
+  val traversal_graph_as_dot = traversal_graph_to_dot(graph, block_texts, set_of_non_transposed_node_ids)
   val graphOutputPath = os.pwd / "src" / "main" / "output" / "traversal.dot"
-  os.write.over(graphOutputPath, result) // Create HTML output and write to specified path
+  os.write.over(graphOutputPath, traversal_graph_as_dot) // Create HTML output and write to specified path
 
