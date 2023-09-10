@@ -2,14 +2,11 @@ package reptilian
 
 import os.Path
 
-import scala.annotation.unused
 import scala.collection.immutable.VectorMap
 import scala.collection.{IndexedSeqView, mutable}
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.util.matching.Regex
 import scalatags.Text.all.*
-import util.chaining.scalaUtilChainingOps
-import de.sciss.fingertree._
 
 /** Token as complex object
  *
@@ -354,11 +351,6 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
 
   val alignment = find_optimal_alignment(graph) // Int identifiers of full-depth blocks
 
-  // Diagnostic: visualize traversal graph
-  val result = traversal_graph_to_dot(graph, block_texts, set_of_non_transposed_node_ids)
-  val graphOutputPath = os.pwd / "src" / "main" / "output" / "traversal.dot"
-  os.write.over(graphOutputPath, result) // Create HTML output and write to specified path
-
   val alignment_as_set = alignment.toSet
   val alignment_blocks = longest_full_depth_nonrepeating_blocks
     .filter(e => alignment_as_set.contains(e.instances.head))
@@ -458,3 +450,9 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val output = create_alignment_table(root, token_array, sigla)
   val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
   os.write.over(outputPath, output)
+
+  // Diagnostic: visualize traversal graph
+  val result = traversal_graph_to_dot(graph, block_texts, set_of_non_transposed_node_ids)
+  val graphOutputPath = os.pwd / "src" / "main" / "output" / "traversal.dot"
+  os.write.over(graphOutputPath, result) // Create HTML output and write to specified path
+
