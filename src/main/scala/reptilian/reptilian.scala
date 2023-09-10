@@ -344,7 +344,7 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
 
   // Treat list of blocks as varargs (type ascription), which constructor requires
   val blockRangeSeq = myRangedSeq(blockList: _*)(_._1, Ordering.Int)
-  println(blockRangeSeq.tree)
+  // println(blockRangeSeq.tree)
 
   // create navigation graph and filter out transposed nodes
   val graph = create_traversal_graph(longest_full_depth_nonrepeating_blocks.toVector)
@@ -355,7 +355,7 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   val alignment = find_optimal_alignment(graph) // Int identifiers of full-depth blocks
 
   // Diagnostic: visualize traversal graph
-  val result = graph_to_dot(graph, block_texts, set_of_non_transposed_node_ids)
+  val result = traversal_graph_to_dot(graph, block_texts, set_of_non_transposed_node_ids)
   val graphOutputPath = os.pwd / "src" / "main" / "output" / "traversal.dot"
   os.write.over(graphOutputPath, result) // Create HTML output and write to specified path
 
