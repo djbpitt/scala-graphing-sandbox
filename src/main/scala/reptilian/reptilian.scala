@@ -2,9 +2,7 @@ package reptilian
 
 import os.Path
 
-import scala.collection.immutable.VectorMap
-import scala.collection.{IndexedSeqView, mutable}
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ListBuffer
 import scala.util.matching.Regex // Create tokenization regex here but tokenize in tokenization.scala
 
 /** Read data files from supplied path to directory (one file per witness)
