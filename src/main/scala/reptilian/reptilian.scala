@@ -40,13 +40,7 @@ def read_data(path_to_data: Path): List[String] =
   implicit val suffix_array: Array[Int] = tmp_suffix_array
   val block_texts: Map[Int, String] = block_text_by_id(longest_full_depth_nonrepeating_blocks, token_array)
 
-  val blockList = all_blocks // First create list of all blocks
-    .flatMap(e => e.instanceStartOffsets // start offsets of block instances in token array
-      .map(f => ((f, f + e.length), e))) // start and stop offsets plus original block object
-
-  // Treat list of blocks as varargs (type ascription), which constructor requires
-  val blockRangeSeq = myRangedSeq(blockList: _*)(_._1, Ordering.Int)
-  // println(blockRangeSeq.tree)
+  val blockRangeSeq = createRangedSeq(all_blocks) // Finger tree
 
   // create navigation graph and filter out transposed nodes
   val graph = create_traversal_graph(longest_full_depth_nonrepeating_blocks.toVector)
