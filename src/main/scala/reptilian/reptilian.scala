@@ -338,36 +338,6 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
   implicit val suffix_array: Array[Int] = tmp_suffix_array
   val block_texts: Map[Int, String] = block_text_by_id(longest_full_depth_nonrepeating_blocks, token_array)
 
-  // put all_blocks into a finger tree
-  // work in progress
-//  val sq = myRangedSeq(
-//    (1685, 1750) -> "Bach",
-//    (1866, 1925) -> "Satie",
-//    (1883, 1947) -> "Russolo",
-//    (1883, 1965) -> "Varèse",
-//    (1900, 1995) -> "Schaeffer",
-//    (1910, 1922) -> "Platypus",
-//    (1911, 1923) -> "Echidna",
-//    (1912, 1992) -> "Cage",
-//    (1905, 1935) -> "Dekker",
-//    (1930, 1936) -> "Bleeker",
-//    (1935, 1945) -> "van Zundert"
-//  )(_._1, Ordering.Int)
-//
-//  implicit class Names(it: Iterator[(_, _)]) {
-//    def names: String = it.map(_._2).mkString(", ")
-//  }
-//  val composer_names = sq.filterOverlaps(1900 -> 1930).names  // were alive during these years: Varèse, Russolo
-
-//  print("Results of includes: ")
-//  println(sq.filterIncludes(1900 -> 1930).toList)
-//
-//  val min = 1900
-//  val max = 1930
-//  val contains = sq.filterContains(min -> max).asInstanceOf[Iterator[((Int, Int), _)]]
-//  print("Results of contains: ")
-//  println(contains.toList)
-
   val blockList = all_blocks // First create list of all blocks
     .flatMap(e => e.instanceStartOffsets // start offsets of block instances in token array
       .map(f => ((f, f + e.length), e))) // start and stop offsets plus original block object
@@ -476,8 +446,11 @@ def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token
       case _ => "Oops" // Shouldn't happen
     }
 
-//  newer_children.foreach(println)
-
+  /** Create views of tree
+   *
+   * Graphviz dot file
+   * HTML alignment table
+  * */
   val alignment_tree = dot(root, token_array)
   val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
   os.write.over(alignmentGraphOutputPath, alignment_tree)
