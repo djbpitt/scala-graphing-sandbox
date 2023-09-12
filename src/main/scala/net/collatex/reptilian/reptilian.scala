@@ -46,10 +46,17 @@ def readData(pathToData: Path): List[String] =
   //  val setOfNonTransposedNodeIds = findOptimalAlignment(graph).toSet
   val setOfNonTransposedNodeIds = Set[Int]()
 
-  val alignment = findOptimalAlignment(graph) // Int identifiers of full-depth blocks
+  val alignment: List[Int] = findOptimalAlignment(graph) // Int identifiers of full-depth blocks
 
-  val alignmentAsSet = alignment.toSet
-  val alignmentBlocks = longestFullDepthNonrepeatingBlocks
+  // RESUME HERE: Move most of the following code to subsidiary modules
+  // Be attentive to what we need to process further within the main module
+
+  /** Use Int representation from alignment to create iterable of full-depth blocks
+   *
+   * Convert alignment from list to set for speedier filtering
+   * */
+  val alignmentAsSet: Set[Int] = alignment.toSet
+  val alignmentBlocks: Iterable[FullDepthBlock] = longestFullDepthNonrepeatingBlocks
     .filter(e => alignmentAsSet.contains(e.instances.head))
 
   val readingNodes = blocksToNodes(alignmentBlocks)
