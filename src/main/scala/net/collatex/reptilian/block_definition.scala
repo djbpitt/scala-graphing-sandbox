@@ -12,14 +12,14 @@ package net.collatex.reptilian
 case class Block(start: Int, end: Int, length: Int):
   /** instanceStartOffsets()
    *
-   * @param suffix_array  Slicing the suffix array from block start and end (LCP value)
+   * @param suffixArray  Slicing the suffix array from block start and end (LCP value)
    *                      selects offsets for block instances in token array
    *
    * @return              Vector of token array offsets
    *
    * */
-  def instanceStartOffsets(implicit suffix_array: Array[Int]): Vector[Int] =
-    suffix_array
+  def instanceStartOffsets(implicit suffixArray: Array[Int]): Vector[Int] =
+    suffixArray
       .slice(this.start, this.end)
       .toVector
 

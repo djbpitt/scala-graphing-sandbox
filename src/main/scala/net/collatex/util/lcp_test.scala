@@ -1,10 +1,12 @@
-package net.collatex.reptilian
+package net.collatex.util
 
 import org.hammerlab.suffixes.dc3.make as calculate_suffix_array
 
 import scalatags.Text.all.raw
 
 import scala.util.matching.Regex
+
+import net.collatex.reptilian.{makeTokenizer, tokenize, vectorize, calculateLcpArrayKasai}
 
 @main def testMain(): Unit =
 
@@ -30,14 +32,14 @@ import scala.util.matching.Regex
   val tokenizer = makeTokenizer(token_pattern)
 
   val token_array = tokenize(tokenizer)(witnesses01)
-//  println(token_array)
+  //  println(tokenArray)
 
   val (vectorization, voc_size) = vectorize(token_array)
   val suffix_array = calculate_suffix_array(vectorization, voc_size)
-  val lcp_array1 = calculate_lcp_array_kasai(token_array.map(_.n), suffix_array)
-//  println(suffix_array)
-//  println(lcp_array)
-//  println(vectorization.mkString(" "))
+  val lcp_array1 = calculateLcpArrayKasai(token_array.map(_.n), suffix_array)
+  //  println(suffixArray)
+  //  println(lcp_array)
+  //  println(vectorization.mkString(" "))
 
   // Dump suffix array and lcp array with initial tokens
   suffix_array
@@ -47,15 +49,15 @@ import scala.util.matching.Regex
     .zipWithIndex
     .foreach((string, index) => println(s"$string : $index : ${lcp_array1(index)}"))
 
-//  val blocks = createAlignedBlocks(token_array, 6)
+//  val blocks = createAlignedBlocks(tokenArray, 6)
 //  blocks.foreach(println)
 //  blocks
-//    .map(_.show(token_array))
+//    .map(_.show(tokenArray))
 //    .foreach(println)
 
-  // Represent blocks as token string
+// Represent blocks as token string
 //  val blocks_slice_tokens = blocks
-//    .map(e => token_array.slice(suffix_array(e.start), suffix_array(e.start) + e.length))
+//    .map(e => tokenArray.slice(suffixArray(e.start), suffixArray(e.start) + e.length))
 //  val block_count = blocks
 //    .map(e => e.end - e.start + 1)
 //  println("Start dump blocks within the slice")

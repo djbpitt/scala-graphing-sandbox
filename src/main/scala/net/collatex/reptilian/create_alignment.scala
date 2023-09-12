@@ -9,12 +9,12 @@ package net.collatex.reptilian
 
 def blocksToNodes(blocks: Iterable[FullDepthBlock]): Iterable[ReadingNode] =
   blocks
-    .map(fullDepthBlock_to_ReadingNode)
-def fullDepthBlock_to_ReadingNode(block: FullDepthBlock): ReadingNode =
+    .map(fullDepthBlockToReadingNode)
+def fullDepthBlockToReadingNode(block: FullDepthBlock): ReadingNode =
   val readings = block.instances
     .zipWithIndex
-    .map((start, witness_no) =>
-      "w" + witness_no.toString -> Tuple2(start, start + block.length))
+    .map((start, witnessNo) =>
+      "w" + witnessNo.toString -> Tuple2(start, start + block.length))
     .toMap
   ReadingNode(readings)
 

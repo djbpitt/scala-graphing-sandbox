@@ -45,14 +45,14 @@ val blocks: Vector[FullDepthBlock] = Vector(
 
 class MajorityOrderTest extends AnyFunSuite:
   test("create graph from blocks") {
-    val result = compute_nodes_for_graph(blocks)
+    val result = computeNodesForGraph(blocks)
     assert(result ==
       Graph(192, 225, 4, 101, 229, 38, 134, 198, 39, 104, 43, 172, 142, 146, 243, 212, 184, 60, 188, 93, 31))
   }
 
 
   test("compute edges for witness") {
-    val result = compute_edges_for_witness(blocks, 0)
+    val result = computeEdgesForWitness(blocks, 0)
     assert(result ==
       Vector(
         4 ~> 31,
@@ -81,11 +81,11 @@ class MajorityOrderTest extends AnyFunSuite:
   }
 
   test("compute weighted edges") {
-    val result = compute_weighted_edges(
+    val result = computeWeightedEdges(
       Vector(
-        compute_edges_for_witness(blocks, 0),
-        compute_edges_for_witness(blocks, 1),
-        compute_edges_for_witness(blocks, 4)
+        computeEdgesForWitness(blocks, 0),
+        computeEdgesForWitness(blocks, 1),
+        computeEdgesForWitness(blocks, 4)
       )
     )
     val expected = Vector(
@@ -135,15 +135,15 @@ class MajorityOrderTest extends AnyFunSuite:
   test("find potential next path steps") {
     val g = createTraversalGraph(blocks)
     val b1 = BeamOption(path = List(38, 31, 4, -1), score = 10) // one option
-    val result1 = score_all_options(g, b1)
+    val result1 = scoreAllOptions(g, b1)
     val expect1 = Vector(BeamOption(List(43, 38, 31, 4, -1), score = 11))
     assert(result1 == expect1)
     val b2 = BeamOption(path = List(-2, -1), score = 20) // at end, no options
-    val result2 = score_all_options(g, b2)
+    val result2 = scoreAllOptions(g, b2)
     val expect2 = Vector(BeamOption(List(-2, -1), score = 20))
     assert(result2 == expect2)
     val b3 = BeamOption(path = List(31, 4, -1), score = 20) // two options
-    val result3 = score_all_options(g, b3)
+    val result3 = scoreAllOptions(g, b3)
     val expect3 = Vector(BeamOption(List(38, 31, 4, -1), 21), BeamOption(List(39, 31, 4, -1), 21))
     assert(result3 == expect3)
   }
@@ -161,7 +161,7 @@ class MajorityOrderTest extends AnyFunSuite:
   }
 
   test(testName = "create edges by block") {
-    val result = compute_block_order_for_witnesses(blocks)
+    val result = computeBlockOrderForWitnesses(blocks)
       .map(_.map(_.instances.head))
     val expected = Vector(
       Vector(4, 31, 38, 39, 43, 60, 93, 101, 104, 134, 142, 146, 172, 184, 188, 192, 198, 212, 225, 229, 243),
@@ -174,8 +174,8 @@ class MajorityOrderTest extends AnyFunSuite:
   }
 
   test(testName = "compute block offsets in all witnesses") {
-    val result = (compute_block_order_for_witnesses
-      andThen compute_block_offsets_in_all_witnesses)(blocks)
+    val result = (computeBlockOrderForWitnesses
+      andThen computeBlockOffsetsInAllWitnesses)(blocks)
     val expected = List(
       (101, ArrayBuffer(7, 7, 7, 7, 7, 7)),
       (142, ArrayBuffer(10, 10, 10, 10, 10, 10)),
@@ -203,16 +203,16 @@ class MajorityOrderTest extends AnyFunSuite:
   }
 
   test("create outgoing edges") {
-    val block_order_for_witnesses = compute_block_order_for_witnesses(blocks)
-    val block_offsets_in_all_witnesses = compute_block_offsets_in_all_witnesses(block_order_for_witnesses)
-    val result = create_outgoing_edges(blocks, block_order_for_witnesses, block_offsets_in_all_witnesses)
+    val block_order_for_witnesses = computeBlockOrderForWitnesses(blocks)
+    val block_offsets_in_all_witnesses = computeBlockOffsetsInAllWitnesses(block_order_for_witnesses)
+    val result = createOutgoingEdges(blocks, block_order_for_witnesses, block_offsets_in_all_witnesses)
     assert(result == result) // FIXME: Compare to real expected
   }
 
-  test("create_outgoing_edges_for_block") {
-    val block_order_for_witnesses = compute_block_order_for_witnesses(blocks)
-    val block_offsets_in_all_witnesses = compute_block_offsets_in_all_witnesses(block_order_for_witnesses)
-    val result = blocks.map(e => create_outgoing_edges_for_block(e, block_order_for_witnesses, block_offsets_in_all_witnesses))
+  test("createOutgoingEdgesForBlock") {
+    val block_order_for_witnesses = computeBlockOrderForWitnesses(blocks)
+    val block_offsets_in_all_witnesses = computeBlockOffsetsInAllWitnesses(block_order_for_witnesses)
+    val result = blocks.map(e => createOutgoingEdgesForBlock(e, block_order_for_witnesses, block_offsets_in_all_witnesses))
     result.foreach(println)
     assert(result == result)
   }

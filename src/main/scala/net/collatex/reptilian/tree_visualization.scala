@@ -10,59 +10,59 @@ import scala.collection.mutable.ListBuffer
  * @param root : RootNode
  * @return : String containing dot code for GraphViz
  * */
-def dot(root: RootNode, token_array: Vector[Token]): String =
+def dot(root: RootNode, tokenArray: Vector[Token]): String =
   val header: String = "digraph MyGraph {\n\tnode [shape=record, style=filled]\n\t"
   val footer: String = "\n}"
   var id = 0
-  val nodes_to_process: mutable.Queue[(Int, AlignmentTreeNode)] = mutable.Queue((id, root))
+  val nodesToProcess: mutable.Queue[(Int, AlignmentTreeNode)] = mutable.Queue((id, root))
   val edges = ListBuffer[String]() // Not List because we append to maintain order
-  val string_nodes = ListBuffer[String]() // Store node attributes where needed
-  val leaf_nodes = ListBuffer[String]()
-  val variation_nodes = ListBuffer[String]()
-  val unexpanded_nodes = ListBuffer[String]()
-  while nodes_to_process.nonEmpty do
-    val current_node = nodes_to_process.dequeue()
-    current_node match {
-      case (current_id, RootNode(children)) =>
+  val stringNodes = ListBuffer[String]() // Store node attributes where needed
+  val leafNodes = ListBuffer[String]()
+  val variationNodes = ListBuffer[String]()
+  val unexpandedNodes = ListBuffer[String]()
+  while nodesToProcess.nonEmpty do
+    val currentNode = nodesToProcess.dequeue()
+    currentNode match {
+      case (currentId, RootNode(children)) =>
         for i <- children do {
           id += 1
-          nodes_to_process.enqueue((id, i))
-          edges.append(List(current_id, " -> ", id).mkString(" "))
+          nodesToProcess.enqueue((id, i))
+          edges.append(List(currentId, " -> ", id).mkString(" "))
         }
-      case (current_id, VariationNode(children)) =>
+      case (currentId, VariationNode(children)) =>
         for i <- children do {
           id += 1
-          nodes_to_process.enqueue((id, i))
-          edges.append(List(current_id, " -> ", id).mkString(" "))
-          variation_nodes.append(current_id.toString)
+          nodesToProcess.enqueue((id, i))
+          edges.append(List(currentId, " -> ", id).mkString(" "))
+          variationNodes.append(currentId.toString)
         }
-      case (current_id, ReadingNode(witness_readings)) =>
-        val token_array_pointers = witness_readings(witness_readings.keys.head)
-        val n_values = token_array.slice(token_array_pointers._1, token_array_pointers._2)
+      case (currentId, ReadingNode(witnessReadings)) =>
+        val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
+        val nValues = tokenArray.slice(tokenArrayPointers._1, tokenArrayPointers._2)
           .map(_.n)
           .mkString(" ")
           .replaceAll("\"", "\\\\\"") // Escape quotation mark in dot file property value
-        leaf_nodes.append(List(
-          current_id.toString, "\t",
-          witness_readings.toSeq.sorted.map(_._1).mkString(","), "\t",
-          n_values
+        leafNodes.append(List(
+          currentId.toString, "\t",
+          witnessReadings.toSeq.sorted.map(_._1).mkString(","), "\t",
+          nValues
         ).mkString(""))
-      case (current_id, UnexpandedNode(witness_readings)) =>
+      case (currentId, UnexpandedNode(witnessReadings)) =>
         id += 1
-        unexpanded_nodes.append(List(
-          current_id.toString, "\t",
+        unexpandedNodes.append(List(
+          currentId.toString, "\t",
           "unexpanded", "\t",
-          witness_readings.toString
+          witnessReadings.toString
         ).mkString(" "))
-      case (current_id, StringNode(txt)) =>
+      case (currentId, StringNode(txt)) =>
         id += 1
-        edges.append(List(current_id, " -> ", id).mkString(" "))
-        string_nodes.append(id.toString)
+        edges.append(List(currentId, " -> ", id).mkString(" "))
+        stringNodes.append(id.toString)
       case _ => ()
     }
-  val formatted_string_nodes = string_nodes
+  val formattedStringNodes = stringNodes
     .map(e => List(e, " [fillcolor=pink]").mkString("")).mkString("\n")
-  val formatted_leaf_nodes = leaf_nodes
+  val formattedLeafNodes = leafNodes
     .map(e =>
       val split: Array[String] = e.split("\t")
       List(
@@ -73,9 +73,9 @@ def dot(root: RootNode, token_array: Vector[Token]): String =
       ).mkString("")
     )
     .mkString("\n")
-  val formatted_variation_nodes = variation_nodes
+  val formattedVariationNodes = variationNodes
     .map(e => List(e, " [fillcolor=lightgreen]").mkString("")).mkString("\n")
-  val formatted_unexpanded_nodes = unexpanded_nodes
+  val formattedUnexpandedNodes = unexpandedNodes
     .map(e =>
       val split: Array[String] = e.split("\t")
       List(
@@ -89,16 +89,16 @@ def dot(root: RootNode, token_array: Vector[Token]): String =
   List(
     header,
     edges.mkString("\n\t"),
-    formatted_string_nodes,
-    formatted_leaf_nodes,
-    formatted_variation_nodes,
-    formatted_unexpanded_nodes,
+    formattedStringNodes,
+    formattedLeafNodes,
+    formattedVariationNodes,
+    formattedUnexpandedNodes,
     footer
   ).mkString("\n")
 
 
-def createAlignmentTable(root: RootNode, token_array: Vector[Token], sigla: List[String]) = {
-  val sorted_sigla = sigla.sorted
+def createAlignmentTable(root: RootNode, tokenArray: Vector[Token], sigla: List[String]) = {
+  val sortedSigla = sigla.sorted
   val htmlBoilerplate = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
   htmlBoilerplate + html(xmlns := "http://www.w3.org/1999/xhtml")(
     head(
@@ -118,7 +118,7 @@ def createAlignmentTable(root: RootNode, token_array: Vector[Token], sigla: List
         tr(
           th("Alignment", br, "node", br, "number"),
           th("Block type"),
-          for (i <- sorted_sigla) yield th(i)
+          for (i <- sortedSigla) yield th(i)
         ),
         for ((child, index) <- root.children
           .zipWithIndex
@@ -130,9 +130,9 @@ def createAlignmentTable(root: RootNode, token_array: Vector[Token], sigla: List
         }))(
           td(index + 1),
           child match {
-            case ReadingNode(witness_readings) =>
-              val (_, value) = witness_readings.head
-              val tokens = token_array.slice(value._1, value._2)
+            case ReadingNode(witnessReadings) =>
+              val (_, value) = witnessReadings.head
+              val tokens = tokenArray.slice(value._1, value._2)
                 .map(_.n)
               Seq[Frag](
                 td("Aligned"),
@@ -142,11 +142,11 @@ def createAlignmentTable(root: RootNode, token_array: Vector[Token], sigla: List
               val alignment = td("Unaligned")
               val readings = children
                 .map {
-                  case ReadingNode(witness_readings) => td {
-                    val pointers = witness_readings
+                  case ReadingNode(witnessReadings) => td {
+                    val pointers = witnessReadings
                       .head
                       ._2
-                    token_array
+                    tokenArray
                       .slice(pointers._1, pointers._2)
                       .map(_.n)
                       .mkString(" ")
@@ -156,14 +156,14 @@ def createAlignmentTable(root: RootNode, token_array: Vector[Token], sigla: List
               Seq[Frag](
                 alignment, readings
               )
-            case UnexpandedNode(witness_readings) =>
+            case UnexpandedNode(witnessReadings) =>
               val alignment = td("Unexpanded")
               val readings =
-                for i <- sorted_sigla yield
-                  if witness_readings contains i then
-                    val start = witness_readings(i)._1
-                    val end = witness_readings(i)._2
-                    td(token_array
+                for i <- sortedSigla yield
+                  if witnessReadings contains i then
+                    val start = witnessReadings(i)._1
+                    val end = witnessReadings(i)._2
+                    td(tokenArray
                       .slice(start, end)
                       .map(_.t)
                       .mkString(" ")

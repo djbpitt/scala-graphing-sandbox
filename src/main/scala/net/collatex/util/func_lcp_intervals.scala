@@ -1,4 +1,6 @@
-package net.collatex.reptilian
+package net.collatex.util
+
+import net.collatex.reptilian.Block
 
 // lets try to implement it in a functional style
 // work in progress

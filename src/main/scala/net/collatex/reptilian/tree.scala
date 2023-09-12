@@ -44,10 +44,10 @@ final case class UnexpandedNode(witnessReadings: WitnessReadings) extends Alignm
 
 def show(node: AlignmentTreeNode): Unit =
   node match {
-    case ReadingNode(witness_readings) => println(witness_readings)
+    case ReadingNode(witnessReadings) => println(witnessReadings)
     case RootNode(children) => println(children)
     case VariationNode(children) => println(children)
-    case UnexpandedNode(witness_readings) => println(witness_readings)
+    case UnexpandedNode(witnessReadings) => println(witnessReadings)
     case StringNode(txt) => println(txt) // To report errors
   }
 

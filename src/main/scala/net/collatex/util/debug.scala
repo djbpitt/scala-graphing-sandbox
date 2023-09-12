@@ -1,4 +1,6 @@
-package net.collatex.reptilian
+package net.collatex.util
+
+import net.collatex.reptilian.Token
 
 
 /** *Dump suffix array and lcp array with initial tokens */
@@ -11,5 +13,5 @@ def dump_suffix_array(suffix_array: Array[Int], lcp_array: Vector[Int], token_ar
     .zipWithIndex
     .map((string, index) => s"$string : $index : ${lcp_array(index)}\n")
   // Diagnostic: save suffix array and lcp array information
-  val sa_output_path = os.pwd / "src" / "main" / "output" / "suffix_array.txt"
+  val sa_output_path = os.pwd / "src" / "main" / "output" / "suffixArray.txt"
   os.write.over(sa_output_path, suffix_array_output)

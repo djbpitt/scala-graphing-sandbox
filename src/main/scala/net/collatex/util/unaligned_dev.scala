@@ -1,4 +1,4 @@
-package net.collatex.reptilian
+package net.collatex.util
 
 import smile.clustering.{HierarchicalClustering, hclust}
 import smile.data.DataFrame
@@ -39,13 +39,13 @@ enum NodeTypes:
 /*
  * Functions to manipulate unaligned nodes
  * */
-def read_json_data: List[UnalignedFragment] =
-  val datafile_path = os.pwd / "src" / "main" / "data" / "unaligned_data.json"
-  val fileContents = os.read(datafile_path)
+def readJsonData: List[UnalignedFragment] =
+  val datafilePath = os.pwd / "src" / "main" / "data" / "unaligned_data.json"
+  val fileContents = os.read(datafilePath)
   val darwin = read[List[UnalignedFragment]](fileContents)
   darwin
 
-def vectorize_readings(node: UnalignedFragment): Array[Array[Double]] =
+def vectorizeReadings(node: UnalignedFragment): Array[Array[Double]] =
   /*
   * WinsorScaler requires DataFrame[Double], but clustering requires Array[Array[Double]], so we:
   *   1) vectorize
@@ -53,39 +53,39 @@ def vectorize_readings(node: UnalignedFragment): Array[Array[Double]] =
   *   3) scale (still a DataFrame)
   *   4) convert to Array[Array[Double]] and return
   * */
-  val list_bags_of_readings = node
+  val listBagsOfReadings = node
     .readings
     .map(reading => pimpString(reading.mkString(" "))) // normal string doesn't have .bag() method
     // NB: filter has to be set to empty string, and not to None, for no obvious reason
     .map(_.bag(filter = "", stemmer = None)) // By default filter removes stopwords and stemmer stems, so turn those off
   // calculate combined keys of bags; vectorization requires all words, even those not present in a reading
-  val terms = list_bags_of_readings
+  val terms = listBagsOfReadings
     .map(_.keySet)
     .reduce(_ union _)
     .toArray
     .sorted
-  val array_of_vectors = list_bags_of_readings
+  val arrayOfVectors = listBagsOfReadings
     .map(smile.nlp.vectorize(terms, _))
     .toArray
-  val df = DataFrame.of(array_of_vectors)
+  val df = DataFrame.of(arrayOfVectors)
   val scaler = WinsorScaler.fit(df, 0.05, 0.95)
   val transformed = scaler(df)
-  val df_array = transformed.toArray()
-  df_array
+  val dfArray = transformed.toArray()
+  dfArray
 
-def cluster_readings(data: Array[Array[Double]]): List[ClusterInfo] =
+def clusterReadings(data: Array[Array[Double]]): List[ClusterInfo] =
   val clustering = hclust(data, "ward")
   // data.length = number of vectors = number of witnesses, needed to construct ClusterInfo object
   (clustering.tree zip clustering.height)
     .map(e => ClusterInfo.of(e(0)(0), e(0)(1), e(1), data.length))
     .toList
 
-@main def unaligned_dev(): Unit =
-  val darwin: List[UnalignedFragment] = read_json_data
+@main def unalignedDev(): Unit =
+  val darwin: List[UnalignedFragment] = readJsonData
   // we know there's only one, so we could have told it to find the first
   //   and then skipped the foreach()
   darwin.filter(_.nodeno == 1146)
-    .map(node => node -> (vectorize_readings andThen cluster_readings)(node)) // list of tuples
+    .map(node => node -> (vectorizeReadings andThen clusterReadings)(node)) // list of tuples
     .toMap // map object (key -> value pairs)
     .foreach {
       (node, clusters) => println(s"${node.nodeno}:$clusters")

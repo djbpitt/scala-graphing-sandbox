@@ -1,6 +1,6 @@
 package net.collatex.reptilian
 
-def createRangedSeq(all_blocks: List[Block])(implicit suffix_array: Array[Int]) =
+def createRangedSeq(all_blocks: List[Block])(implicit suffixArray: Array[Int]) =
   val blockList = all_blocks // First create list of all blocks
     .flatMap(e => e.instanceStartOffsets // start offsets of block instances in token array
       .map(f => ((f, f + e.length), e))) // start and stop offsets plus original block object
