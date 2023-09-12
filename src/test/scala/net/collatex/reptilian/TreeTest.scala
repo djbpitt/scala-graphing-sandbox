@@ -13,7 +13,7 @@ class TreeTest extends AnyFunSuite:
       Token("black", "black", 1), Token("and", "and", 1), Token("the", "the", 1), Token("red", "red", 1),
       Token("cat", "cat", 1)
     )
-    private val t = tree(3)
+    private val t = RootNode()
     t.children ++= List(
       ReadingNode("w0" -> (0, 1), "w1" -> (7, 8)),
       VariationNode(children = ListBuffer(ReadingNode("w0" -> (1, 2)), ReadingNode("w1" -> (8, 9)))),
