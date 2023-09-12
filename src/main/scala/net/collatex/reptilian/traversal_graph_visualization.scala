@@ -11,7 +11,7 @@ import scalax.collection.io.dot.*
 import scalax.collection.io.dot.implicits.toId
 import scalax.collection.io.dot.implicits.toNodeId
 
-def traversal_graph_to_dot(g: Graph[Int, WDiEdge], b: Map[Int, String], path_nodes: Set[Int]) =
+def traversalGraphToDot(g: Graph[Int, WDiEdge], b: Map[Int, String], path_nodes: Set[Int]) =
   val root = DotRootGraph(
     directed = true,
     id = Some("MyDot"),

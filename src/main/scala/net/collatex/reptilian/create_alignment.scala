@@ -7,7 +7,7 @@ package net.collatex.reptilian
  * Will need to deal with non-full-depth locations in the alignment
  * */
 
-def blocks_to_nodes(blocks: Iterable[FullDepthBlock]): Iterable[ReadingNode] =
+def blocksToNodes(blocks: Iterable[FullDepthBlock]): Iterable[ReadingNode] =
   blocks
     .map(fullDepthBlock_to_ReadingNode)
 def fullDepthBlock_to_ReadingNode(block: FullDepthBlock): ReadingNode =

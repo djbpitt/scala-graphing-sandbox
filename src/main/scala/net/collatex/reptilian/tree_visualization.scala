@@ -97,7 +97,7 @@ def dot(root: RootNode, token_array: Vector[Token]): String =
   ).mkString("\n")
 
 
-def create_alignment_table(root: RootNode, token_array: Vector[Token], sigla: List[String]) = {
+def createAlignmentTable(root: RootNode, token_array: Vector[Token], sigla: List[String]) = {
   val sorted_sigla = sigla.sorted
   val htmlBoilerplate = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
   htmlBoilerplate + html(xmlns := "http://www.w3.org/1999/xhtml")(

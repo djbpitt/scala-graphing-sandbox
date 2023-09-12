@@ -258,7 +258,7 @@ def create_outgoing_edges(
   edges
 
 
-def create_traversal_graph(blocks: Vector[FullDepthBlock]) =
+def createTraversalGraph(blocks: Vector[FullDepthBlock]) =
   val witness_count = blocks(0).instances.length
   val start_block = FullDepthBlock(instances = Vector.fill(witness_count)(-1), length = 1) // fake first (start) block
   val end_block = FullDepthBlock(instances = Vector.fill(witness_count)(end_node_id), length = 1)
@@ -292,7 +292,7 @@ def score_all_options(graph: Graph[Int, WDiEdge], current: BeamOption): Vector[B
       .map(e => BeamOption(path = e.to :: current.path, score = current.score + e.weight))
 
 
-def find_optimal_alignment(graph: Graph[Int, WDiEdge]) = // specify return type?
+def findOptimalAlignment(graph: Graph[Int, WDiEdge]) = // specify return type?
   // Call score_all_options() to … er … score all options for each item on beam
   //
   // If number of new options is smaller than beam size, assign all options to new beam

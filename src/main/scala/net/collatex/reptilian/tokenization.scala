@@ -19,7 +19,7 @@ case class Token(t: String, n: String, w: Int)
  * @param witness_data  Individual witness as string
  * @return List of strings for single witness
  */
-def make_tokenizer(token_pattern: Regex)(witness_data: String) =
+def makeTokenizer(token_pattern: Regex)(witness_data: String) =
   token_pattern.findAllIn(witness_data).toList
 
 /** Normalize witness data

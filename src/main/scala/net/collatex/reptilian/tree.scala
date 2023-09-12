@@ -21,7 +21,7 @@ final case class VariationNode(children: ListBuffer[AlignmentTreeNode] = ListBuf
 
 final case class StringNode(txt: String = "unspecified mistake") extends AlignmentTreeNode
 
-final case class ReadingNode(witness_readings: WitnessReadings) extends AlignmentTreeNode
+final case class ReadingNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode
 
 /** Custom constructor to simplify creation of LeafNode
  *
@@ -40,7 +40,7 @@ object ReadingNode {
 }
 
 // Temporary; eventually the alignment graph will have no unexpanded nodes
-final case class UnexpandedNode(witness_readings: WitnessReadings) extends AlignmentTreeNode
+final case class UnexpandedNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode
 
 def show(node: AlignmentTreeNode): Unit =
   node match {
@@ -51,6 +51,6 @@ def show(node: AlignmentTreeNode): Unit =
     case StringNode(txt) => println(txt) // To report errors
   }
 
-def tree(witness_count: Int) =
+def tree(witnessCount: Int) =
   val root = RootNode()
   root

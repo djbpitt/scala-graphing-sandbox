@@ -103,7 +103,7 @@ class ReptilianTest extends AnyFunSuite:
     val input = List[String]("a a2", "b b2", "c c2")
     // prepare tokenizer
     val token_pattern: Regex = raw"\w+\s*|\W+".r // From CollateX Python, syntax adjusted for Scala
-    val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
+    val tokenizer = makeTokenizer(token_pattern) // Tokenizer function with user-supplied regex
     // create List[List[Str]] (one inner list per witness)
     val tokenized_input = input.map(tokenizer)
     val result = create_token_witness_mapping(tokenized_input)

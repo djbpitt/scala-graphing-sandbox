@@ -27,7 +27,7 @@ import scala.util.matching.Regex
   )
 
   val token_pattern: Regex = raw"(\w+|[^\w\s])\s*".r // From CollateX Python, syntax adjusted for Scala
-  val tokenizer = make_tokenizer(token_pattern)
+  val tokenizer = makeTokenizer(token_pattern)
 
   val token_array = tokenize(tokenizer)(witnesses01)
 //  println(token_array)
@@ -47,7 +47,7 @@ import scala.util.matching.Regex
     .zipWithIndex
     .foreach((string, index) => println(s"$string : $index : ${lcp_array1(index)}"))
 
-//  val blocks = create_aligned_blocks(token_array, 6)
+//  val blocks = createAlignedBlocks(token_array, 6)
 //  blocks.foreach(println)
 //  blocks
 //    .map(_.show(token_array))

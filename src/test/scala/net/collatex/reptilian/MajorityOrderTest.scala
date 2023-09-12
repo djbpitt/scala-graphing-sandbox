@@ -118,7 +118,7 @@ class MajorityOrderTest extends AnyFunSuite:
   }
 
   test("create traversal graph") {
-    val result = create_traversal_graph(blocks)
+    val result = createTraversalGraph(blocks)
     // note: the weights om the edges are not checked in this assert!
     assert(result ==
       Graph(-1, 2147483647, 4, 31, 38, 39, 43, 60, 93, 101, 104, 134, 142,
@@ -133,7 +133,7 @@ class MajorityOrderTest extends AnyFunSuite:
   }
 
   test("find potential next path steps") {
-    val g = create_traversal_graph(blocks)
+    val g = createTraversalGraph(blocks)
     val b1 = BeamOption(path = List(38, 31, 4, -1), score = 10) // one option
     val result1 = score_all_options(g, b1)
     val expect1 = Vector(BeamOption(List(43, 38, 31, 4, -1), score = 11))
@@ -156,7 +156,7 @@ class MajorityOrderTest extends AnyFunSuite:
       FullDepthBlock(Vector(5, 8), 1),
       FullDepthBlock(Vector(6, 12), 1)
     )
-    val result1 = create_traversal_graph(blocks1)
+    val result1 = createTraversalGraph(blocks1)
     assert(result1 == result1)
   }
 
@@ -218,8 +218,8 @@ class MajorityOrderTest extends AnyFunSuite:
   }
 
   //  test("create dot file") {
-  //    val g = create_traversal_graph(blocks)
-  //    val result = traversal_graph_to_dot(g, blocks)
+  //    val g = createTraversalGraph(blocks)
+  //    val result = traversalGraphToDot(g, blocks)
   //    assert(result == result)
   //    val outputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
   //    os.write.over(outputPath, result)

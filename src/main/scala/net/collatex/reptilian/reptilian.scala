@@ -7,11 +7,11 @@ import scala.util.matching.Regex // Create tokenization regex here but tokenize 
 
 /** Read data files from supplied path to directory (one file per witness)
  *
- * @param path_to_data os.Path object that points to data directory
+ * @param pathToData os.Path object that points to data directory
  * @return Indexed sequence of lists of strings (token lists)
  */
-def read_data(path_to_data: Path): List[String] =
-  os.walk(path = path_to_data, skip = _.last.startsWith(".")) // exclude hidden files
+def readData(pathToData: Path): List[String] =
+  os.walk(path = pathToData, skip = _.last.startsWith(".")) // exclude hidden files
     .sorted
     .toList
     .map(os.read)
@@ -20,117 +20,117 @@ def read_data(path_to_data: Path): List[String] =
   // Prepare tokenizer (partially applied function)
   // NB: Sequences of non-word characters (except spaces) are entire tokens
   // Unlike in CollateX Python, punctuation characters are their own tokens
-  val token_pattern: Regex = raw"(\w+|[^\w\s])\s*".r
-  val tokenizer = make_tokenizer(token_pattern) // Tokenizer function with user-supplied regex
+  val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
+  val tokenizer = makeTokenizer(tokenPattern) // Tokenizer function with user-supplied regex
   // Prepare data (List[String])
-  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin"
-  //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "darwin_small" // no skip edge; direct transposition
-  // val path_to_darwin = os.pwd / "src" / "main" / "data" / "cats"
+  val pathToDarwin = os.pwd / "src" / "main" / "data" / "darwin"
+  //  val pathToDarwin = os.pwd / "src" / "main" / "data" / "darwin_small" // no skip edge; direct transposition
+  // val pathToDarwin = os.pwd / "src" / "main" / "data" / "cats"
   // Small skip edge test examples
-  //  val path_to_darwin = os.pwd / "src" / "main" / "data" / "no_skip_cats" // no skip edge; direct transposition
-  // val path_to_darwin = os.pwd / "src" / "main" / "data" / "one_skip_cats" // one skip edge
-  // val path_to_darwin = os.pwd / "src" / "main" / "data" / "two_skip_cats" // two (parallel) skip edges
+  //  val pathToDarwin = os.pwd / "src" / "main" / "data" / "no_skip_cats" // no skip edge; direct transposition
+  // val pathToDarwin = os.pwd / "src" / "main" / "data" / "one_skip_cats" // one skip edge
+  // val pathToDarwin = os.pwd / "src" / "main" / "data" / "two_skip_cats" // two (parallel) skip edges
   // End of skip edge test examples
-  val witness_strings = read_data(path_to_darwin) // One string per witness
-  implicit val token_array: Vector[Token] = tokenize(tokenizer)(witness_strings)
+  val witnessStrings = readData(pathToDarwin) // One string per witness
+  implicit val tokenArray: Vector[Token] = tokenize(tokenizer)(witnessStrings)
   // Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
-  val (all_blocks, tmp_suffix_array, longest_full_depth_nonrepeating_blocks) = create_aligned_blocks(token_array, witness_strings.size)
-  implicit val suffix_array: Array[Int] = tmp_suffix_array
-  val block_texts: Map[Int, String] = block_text_by_id(longest_full_depth_nonrepeating_blocks, token_array)
+  val (allBlocks, tmpSuffixArray, longestFullDepthNonrepeatingBlocks) = createAlignedBlocks(tokenArray, witnessStrings.size)
+  implicit val suffixArray: Array[Int] = tmpSuffixArray
+  val blockTexts: Map[Int, String] = blockTextById(longestFullDepthNonrepeatingBlocks, tokenArray)
 
-  val blockRangeSeq = createRangedSeq(all_blocks) // Finger tree
+  val blockRangeSeq = createRangedSeq(allBlocks) // Finger tree
 
   // create navigation graph and filter out transposed nodes
-  val graph = create_traversal_graph(longest_full_depth_nonrepeating_blocks.toVector)
+  val graph = createTraversalGraph(longestFullDepthNonrepeatingBlocks.toVector)
 
-  //  val set_of_non_transposed_node_ids = find_optimal_alignment(graph).toSet
-  val set_of_non_transposed_node_ids = Set[Int]()
+  //  val setOfNonTransposedNodeIds = findOptimalAlignment(graph).toSet
+  val setOfNonTransposedNodeIds = Set[Int]()
 
-  val alignment = find_optimal_alignment(graph) // Int identifiers of full-depth blocks
+  val alignment = findOptimalAlignment(graph) // Int identifiers of full-depth blocks
 
-  val alignment_as_set = alignment.toSet
-  val alignment_blocks = longest_full_depth_nonrepeating_blocks
-    .filter(e => alignment_as_set.contains(e.instances.head))
+  val alignmentAsSet = alignment.toSet
+  val alignmentBlocks = longestFullDepthNonrepeatingBlocks
+    .filter(e => alignmentAsSet.contains(e.instances.head))
 
-  val reading_nodes = blocks_to_nodes(alignment_blocks)
-  var root = tree(witness_count = witness_strings.size)
-  val sorted_reading_nodes = reading_nodes // Sort reading nodes in token order
+  val readingNodes = blocksToNodes(alignmentBlocks)
+  var root = tree(witnessCount = witnessStrings.size)
+  val sortedReadingNodes = readingNodes // Sort reading nodes in token order
     .toVector
-    .sortBy(_.witness_readings("w0")._1)
-  val sigla = sorted_reading_nodes.head.witness_readings.keys.toList // Humiliating temporary step
+    .sortBy(_.witnessReadings("w0")._1)
+  val sigla = sortedReadingNodes.head.witnessReadings.keys.toList // Humiliating temporary step
   /* For each sliding pair of reading nodes create an unexpanded node with witness readings
   *   that point from each siglum to a slice from the end of the first reading node to the
   *   start of the second. */
-  val unaligned_intermediates = sorted_reading_nodes
+  val unalignedIntermediates = sortedReadingNodes
     .sliding(2)
     .map(pair =>
-      val map_entries = sigla
-        .map(siglum => siglum -> (pair.head.witness_readings(siglum)(1), pair(1).witness_readings(siglum)(0)))
+      val mapEntries = sigla
+        .map(siglum => siglum -> (pair.head.witnessReadings(siglum)(1), pair(1).witnessReadings(siglum)(0)))
         .toMap
-      UnexpandedNode(map_entries.filterNot(e => e._2._1 == e._2._2))
+      UnexpandedNode(mapEntries.filterNot(e => e._2._1 == e._2._2))
     )
   // Used to check for unaligned leading or trailing tokens
   // Possibly unnecessary traversal of token array
   // Can we find the first and last tokens of each witness without a separate traversal?
-  val boundary_tokens =
-    token_array
+  val boundaryTokens =
+    tokenArray
       .map(_.t)
       .zipWithIndex
       .filter(e => e._1.contains(" #"))
       .map(_._2)
-  val first_tokens = Vector(0) ++ boundary_tokens.map(_ + 1)
-  val last_tokens = boundary_tokens.map(_ - 1) ++ Vector(token_array.size - 1)
-  val leading_tokens = sigla
+  val firstTokens = Vector(0) ++ boundaryTokens.map(_ + 1)
+  val lastTokens = boundaryTokens.map(_ - 1) ++ Vector(tokenArray.size - 1)
+  val leadingTokens = sigla
     .sorted
     .zipWithIndex
-    .map(e => e._1 -> (first_tokens(e._2), sorted_reading_nodes.head.witness_readings(e._1)(0)))
+    .map(e => e._1 -> (firstTokens(e._2), sortedReadingNodes.head.witnessReadings(e._1)(0)))
     .toMap
-  val leading_deltas: Boolean = leading_tokens
+  val leadingDeltas: Boolean = leadingTokens
     .values
     .map(e => e._2 - e._1)
     .sum != 0
-  val leading_unexpanded: Option[UnexpandedNode] =
-    if leading_deltas then
-      Some(UnexpandedNode(leading_tokens))
+  val leadingUnexpanded: Option[UnexpandedNode] =
+    if leadingDeltas then
+      Some(UnexpandedNode(leadingTokens))
     else
       None
-  val trailing_tokens = sigla
+  val trailingTokens = sigla
     .sorted
     .zipWithIndex
-    .map(e => e._1 -> (sorted_reading_nodes.last.witness_readings(e._1)(1), last_tokens(e._2)))
+    .map(e => e._1 -> (sortedReadingNodes.last.witnessReadings(e._1)(1), lastTokens(e._2)))
     .toMap
-  val trailing_deltas: Boolean = trailing_tokens
+  val trailingDeltas: Boolean = trailingTokens
     .values
     .map(e => e._2 + 1 - e._1) // Range points *after* last token, so add 1
     .sum != 0
-  val trailing_unexpanded: Option[UnexpandedNode] =
-    if trailing_deltas then
-      Some(UnexpandedNode(trailing_tokens))
+  val trailingUnexpanded: Option[UnexpandedNode] =
+    if trailingDeltas then
+      Some(UnexpandedNode(trailingTokens))
     else
       None
-  val reading_and_intermediate_nodes = sorted_reading_nodes
-    .zip(unaligned_intermediates)
-    .flatMap(_.toList) ++ List(sorted_reading_nodes.last)
+  val readingAndIntermediateNodes = sortedReadingNodes
+    .zip(unalignedIntermediates)
+    .flatMap(_.toList) ++ List(sortedReadingNodes.last)
 
-  val all_block_ranges = all_blocks
+  val allBlockRanges = allBlocks
     .map(
       (b: Block) =>
-        (suffix_array.slice(b.start, b.end).toList, b.length)
+        (suffixArray.slice(b.start, b.end).toList, b.length)
     )
     .map(e => e._1.map(f => (f, f + e._2)))
-//  all_block_ranges.foreach(println)
+//  allBlockRanges.foreach(println)
 
-  val new_children: ListBuffer[AlignmentTreeNode] =
-      ListBuffer(leading_unexpanded).flatten
-    new_children.appendAll(reading_and_intermediate_nodes)
-    new_children.appendAll(List(trailing_unexpanded).flatten)
-    root = RootNode(new_children)
+  val newChildren: ListBuffer[AlignmentTreeNode] =
+      ListBuffer(leadingUnexpanded).flatten
+    newChildren.appendAll(readingAndIntermediateNodes)
+    newChildren.appendAll(List(trailingUnexpanded).flatten)
+    root = RootNode(newChildren)
 
-  val newer_children =
-    new_children.map {
+  val newerChildren =
+    newChildren.map {
       case e: UnexpandedNode =>
-        val node_ranges = e.witness_readings.values
-        all_block_ranges.filter(_.size == node_ranges.size)
+        val nodeRanges = e.witnessReadings.values
+        allBlockRanges.filter(_.size == nodeRanges.size)
       case e: ReadingNode => "R"
       case _ => "Oops" // Shouldn't happen
     }
@@ -140,16 +140,16 @@ def read_data(path_to_data: Path): List[String] =
    * Graphviz dot file
    * HTML alignment table
   * */
-  val alignment_tree_as_dot = dot(root, token_array)
+  val alignmentTreeAsDot = dot(root, tokenArray)
   val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
-  os.write.over(alignmentGraphOutputPath, alignment_tree_as_dot)
+  os.write.over(alignmentGraphOutputPath, alignmentTreeAsDot)
 
-  val output = create_alignment_table(root, token_array, sigla)
+  val output = createAlignmentTable(root, tokenArray, sigla)
   val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
   os.write.over(outputPath, output)
 
   // Diagnostic: visualize traversal graph
-  val traversal_graph_as_dot = traversal_graph_to_dot(graph, block_texts, set_of_non_transposed_node_ids)
+  val traversalGraphAsDot = traversalGraphToDot(graph, blockTexts, setOfNonTransposedNodeIds)
   val graphOutputPath = os.pwd / "src" / "main" / "output" / "traversal.dot"
-  os.write.over(graphOutputPath, traversal_graph_as_dot) // Create HTML output and write to specified path
+  os.write.over(graphOutputPath, traversalGraphAsDot) // Create HTML output and write to specified path
 

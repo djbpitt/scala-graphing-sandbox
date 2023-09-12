@@ -139,7 +139,7 @@ def remove_overlapping_blocks(full_depth_blocks: List[FullDepthBlock]): Iterable
     .map(fdblocks => fdblocks.maxBy(_.length))
 
 
-def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
+def createAlignedBlocks(token_array: Vector[Token], witness_count: Int) =
   val (vectorization, _) = vectorize(token_array)
   val suffix_array = create_suffix_array(vectorization)
   val lcp_array = calculate_lcp_array_kasai(token_array.map(_.n), suffix_array)
@@ -159,7 +159,7 @@ def create_aligned_blocks(token_array: Vector[Token], witness_count: Int) =
   (blocks, suffix_array, remove_overlapping_blocks(annoying_interim_variable))
 
 
-def block_text_by_id(blocks: Iterable[FullDepthBlock], token_array: Vector[Token]): Map[Int, String] =
+def blockTextById(blocks: Iterable[FullDepthBlock], token_array: Vector[Token]): Map[Int, String] =
   blocks
     .map(e => e.instances(0) -> e.show(token_array))
     .toMap
