@@ -1,4 +1,4 @@
-package reptilian
+package net.collatex.reptilian
 
 
 /** Create directed graph

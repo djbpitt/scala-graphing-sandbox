@@ -1,4 +1,4 @@
-package reptilian
+package net.collatex.reptilian
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.matching.Regex

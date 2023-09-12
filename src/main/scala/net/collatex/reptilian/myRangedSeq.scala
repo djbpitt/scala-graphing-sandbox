@@ -1,4 +1,4 @@
-package reptilian
+package net.collatex.reptilian
 /*
  * Copied from Hanns Holger Rutz's FingerTree library (LGPL 2.1+)
  *   and modified
@@ -17,7 +17,7 @@ package reptilian
  */
 
 import de.sciss.fingertree.*
-import reptilian.myRangedSeq.Anno
+import net.collatex.reptilian.myRangedSeq.Anno
 import ujson.IndexedValue.False
 
 import scala.annotation.tailrec

@@ -1,4 +1,4 @@
-package reptilian
+package net.collatex.reptilian
 
 // lets try to implement it in a functional style
 // work in progress

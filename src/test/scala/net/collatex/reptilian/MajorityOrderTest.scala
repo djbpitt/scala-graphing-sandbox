@@ -1,4 +1,4 @@
-package reptilian
+package net.collatex.reptilian
 
 
 import org.scalatest.funsuite.AnyFunSuite

@@ -1,4 +1,4 @@
-package reptilian
+package net.collatex.reptilian
 
 def createRangedSeq(all_blocks: List[Block])(implicit suffix_array: Array[Int]) =
   val blockList = all_blocks // First create list of all blocks

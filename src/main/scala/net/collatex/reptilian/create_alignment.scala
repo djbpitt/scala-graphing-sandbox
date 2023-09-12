@@ -1,4 +1,4 @@
-package reptilian
+package net.collatex.reptilian
 
 /** Input is Vector[Int], representing FullDepthBlock instances
  * Output is Vector[AlignmentNode], where the nodes are all of

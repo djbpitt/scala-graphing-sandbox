@@ -1,4 +1,4 @@
-package reptilian
+package net.collatex.reptilian
 
 import org.hammerlab.suffixes.dc3.make as calculate_suffix_array
 

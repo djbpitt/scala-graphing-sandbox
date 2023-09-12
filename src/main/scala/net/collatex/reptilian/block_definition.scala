@@ -1,4 +1,4 @@
-package reptilian
+package net.collatex.reptilian
 
 /** Block is an lcp interval
  *

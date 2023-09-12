@@ -1,4 +1,4 @@
-package reptilian
+package net.collatex.reptilian
 
 
 /** *Dump suffix array and lcp array with initial tokens */

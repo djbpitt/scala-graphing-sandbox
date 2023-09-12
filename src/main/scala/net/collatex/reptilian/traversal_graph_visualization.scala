@@ -1,4 +1,4 @@
-package reptilian
+package net.collatex.reptilian
 
 import scalax.collection.GraphEdge
 import scalax.collection.GraphEdge.DiEdge
