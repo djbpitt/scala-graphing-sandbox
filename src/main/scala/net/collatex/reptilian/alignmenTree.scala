@@ -51,10 +51,6 @@ def show(node: AlignmentTreeNode): Unit =
     case StringNode(txt) => println(txt) // To report errors
   }
 
-def tree(witnessCount: Int) =
-  val root = RootNode()
-  root
-
 /** Input is Vector[Int], representing FullDepthBlock instances
  * Output is Vector[AlignmentNode], where the nodes are all of
  * type ReadingNode

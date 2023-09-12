@@ -53,7 +53,7 @@ def readData(pathToData: Path): List[String] =
     .filter(e => alignmentAsSet.contains(e.instances.head))
 
   val readingNodes = blocksToNodes(alignmentBlocks)
-  var root = tree(witnessCount = witnessStrings.size)
+  var root = RootNode()
   val sortedReadingNodes = readingNodes // Sort reading nodes in token order
     .toVector
     .sortBy(_.witnessReadings("w0")._1)
