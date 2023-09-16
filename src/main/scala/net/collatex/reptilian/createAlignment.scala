@@ -258,12 +258,13 @@ def createOutgoingEdges(
   edges
 
 
-def createTraversalGraph(blocks: Vector[FullDepthBlock]) =
-  val witnessCount = blocks(0).instances.length
+def createTraversalGraph(blocks: Iterable[FullDepthBlock]) =
+  val localBlocks = blocks.toVector
+  val witnessCount =localBlocks(0).instances.length
   val startBlock = FullDepthBlock(instances = Vector.fill(witnessCount)(-1), length = 1) // fake first (start) block
   val endBlock = FullDepthBlock(instances = Vector.fill(witnessCount)(endNodeId), length = 1)
   // end node first to we can use blocks.tail to compute outgoing edges
-  val blocksForGraph = Vector(endBlock) ++ blocks ++ Vector(startBlock)
+  val blocksForGraph = Vector(endBlock) ++ localBlocks ++ Vector(startBlock)
   val g = computeNodesForGraph(blocksForGraph)
   val blockOrderForWitnesses = computeBlockOrderForWitnesses(blocksForGraph)
   val blockOffsets = computeBlockOffsetsInAllWitnesses(blockOrderForWitnesses)

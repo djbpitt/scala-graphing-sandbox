@@ -41,7 +41,7 @@ def readData(pathToData: Path): List[String] =
   val blockRangeSeq = createRangedSeq(allBlocks) // Finger tree
 
   // create navigation graph and filter out transposed nodes
-  val graph = createTraversalGraph(longestFullDepthNonrepeatingBlocks.toVector)
+  val graph = createTraversalGraph(longestFullDepthNonrepeatingBlocks)
 
 
   val alignment: List[Int] = findOptimalAlignment(graph) // Int identifiers of full-depth blocks
@@ -148,4 +148,5 @@ def readData(pathToData: Path): List[String] =
   val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
   os.write.over(outputPath, output)
 
+  // Diagnostic (temporary)
   visualizeTraversalGraph(graph, blockTexts, alignmentBlocksSet)
