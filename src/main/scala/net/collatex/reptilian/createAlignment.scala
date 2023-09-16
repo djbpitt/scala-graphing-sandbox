@@ -313,4 +313,18 @@ def findOptimalAlignment(graph: Graph[Int, WDiEdge]) = // specify return type?
 
   beam.minBy(_.score * -1).path.reverse // Exit once all options on the beam end at the end node
 
+/** Use Int representation from alignment to create iterable of full-depth blocks
+ *
+ * Convert alignment from list to set for speedier filtering
+ * Filter all full-depth blocks to keep only those in optimal alignment
+ * */
+
+
+def alignmentBlocksAsSet(alignment: List[Int]): Set[Int] =
+  alignment.toSet
+
+def alignmentIntsToBlocks(alignment: Set[Int], blocks: Iterable[FullDepthBlock]): Iterable[FullDepthBlock] =
+  val alignmentBlocks: Iterable[FullDepthBlock] = blocks
+    .filter(e => alignment.contains(e.instances.head))
+  alignmentBlocks
 

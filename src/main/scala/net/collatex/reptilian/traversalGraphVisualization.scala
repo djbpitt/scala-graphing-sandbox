@@ -11,7 +11,7 @@ import scalax.collection.io.dot.*
 import scalax.collection.io.dot.implicits.toId
 import scalax.collection.io.dot.implicits.toNodeId
 
-def traversalGraphToDot(g: Graph[Int, WDiEdge], b: Map[Int, String], pathNodes: Set[Int]) =
+def traversalGraphToDot(g: Graph[Int, WDiEdge], b: Map[Int, String], pathNodes: Set[Int]=Set.empty[Int]) =
   val root = DotRootGraph(
     directed = true,
     id = Some("MyDot"),
@@ -49,3 +49,10 @@ def traversalGraphToDot(g: Graph[Int, WDiEdge], b: Map[Int, String], pathNodes: 
 
   val dot = g.toDot(root, edgeTransformer, cNodeTransformer = Some(nodeTransformer))
   dot
+
+// Diagnostic: visualize traversal graph
+def visualizeTraversalGraph(graph: Graph[Int, WDiEdge], blockTexts: Map[Int, String], alignmentNodes: Set[Int]): Unit =
+  val traversalGraphAsDot = traversalGraphToDot(graph, blockTexts, alignmentNodes)
+  val graphOutputPath = os.pwd / "src" / "main" / "output" / "traversal.dot"
+  os.write.over(graphOutputPath, traversalGraphAsDot) // Create SVG output and write to specified path
+

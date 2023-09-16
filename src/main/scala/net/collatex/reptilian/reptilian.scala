@@ -43,21 +43,14 @@ def readData(pathToData: Path): List[String] =
   // create navigation graph and filter out transposed nodes
   val graph = createTraversalGraph(longestFullDepthNonrepeatingBlocks.toVector)
 
-  //  val setOfNonTransposedNodeIds = findOptimalAlignment(graph).toSet
-  val setOfNonTransposedNodeIds = Set[Int]()
 
   val alignment: List[Int] = findOptimalAlignment(graph) // Int identifiers of full-depth blocks
+  val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment: List[Int])
+  val alignmentBlocks: Iterable[FullDepthBlock] = alignmentIntsToBlocks(alignmentBlocksSet, longestFullDepthNonrepeatingBlocks)
+
 
   // RESUME HERE: Move most of the following code to subsidiary modules
   // Be attentive to what we need to process further within the main module
-
-  /** Use Int representation from alignment to create iterable of full-depth blocks
-   *
-   * Convert alignment from list to set for speedier filtering
-   * */
-  val alignmentAsSet: Set[Int] = alignment.toSet
-  val alignmentBlocks: Iterable[FullDepthBlock] = longestFullDepthNonrepeatingBlocks
-    .filter(e => alignmentAsSet.contains(e.instances.head))
 
   val readingNodes = blocksToNodes(alignmentBlocks)
   var root = RootNode()
@@ -155,8 +148,4 @@ def readData(pathToData: Path): List[String] =
   val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
   os.write.over(outputPath, output)
 
-  // Diagnostic: visualize traversal graph
-  val traversalGraphAsDot = traversalGraphToDot(graph, blockTexts, setOfNonTransposedNodeIds)
-  val graphOutputPath = os.pwd / "src" / "main" / "output" / "traversal.dot"
-  os.write.over(graphOutputPath, traversalGraphAsDot) // Create HTML output and write to specified path
-
+  visualizeTraversalGraph(graph, blockTexts, alignmentBlocksSet)
