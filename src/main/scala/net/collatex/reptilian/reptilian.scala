@@ -18,8 +18,8 @@ def readData(pathToData: Path): List[String] =
 
 @main def main(): Unit =
   /** Select data */
-  // val pathToDarwin = os.pwd / "src" / "main" / "data" / "darwin"
-  val pathToDarwin = os.pwd / "src" / "main" / "data" / "darwin_small" // no skip edge; direct transposition
+  val pathToDarwin = os.pwd / "src" / "main" / "data" / "darwin"
+  // val pathToDarwin = os.pwd / "src" / "main" / "data" / "darwin_small" // no skip edge; direct transposition
   // val pathToDarwin = os.pwd / "src" / "main" / "data" / "cats"
   // val pathToDarwin = os.pwd / "src" / "main" / "data" / "no_skip_cats" // no skip edge; direct transposition
   // val pathToDarwin = os.pwd / "src" / "main" / "data" / "one_skip_cats" // one skip edge

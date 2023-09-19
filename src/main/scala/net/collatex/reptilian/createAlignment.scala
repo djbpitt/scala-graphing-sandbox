@@ -229,10 +229,6 @@ def createOutgoingEdgesForBlock(
         nonTransposedFollowingNodes
           .map(e => computeDeltas(tokenArrayOffsetsOfSource, e).sum)
       val closestNonTransposedFollowingNode =
-        print("Neighbors: ")
-        println(neighborEdges)
-        print("Non-transposed following nodes: ")
-        println(nonTransposedFollowingNodes)
         nonTransposedFollowingNodes
           .zip(positiveDeltas)
           .minBy(_._2)
