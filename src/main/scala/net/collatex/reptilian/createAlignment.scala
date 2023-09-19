@@ -416,6 +416,19 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
   newChildren.appendAll(List(trailingUnexpanded).flatten)
   root = RootNode(newChildren)
 
+  /** RESUME HERE
+   *
+   * Replace unexpanded nodes:
+   *
+   * 1. If full depth (but not all witnesses), replace with reading nodes
+   * 2. Otherwise replace with variation nodes (perhaps initially as unexpanded to check?)
+   *
+   * Question: Expand recursively on initial pass or separate into multiple passes
+   *
+   * 1. Separate passes are easier to develop and debug
+   * 2. Recursive expansion is more efficient
+   * */
+
   val newerChildren =
     newChildren.map {
       case e: UnexpandedNode =>
