@@ -9,16 +9,11 @@ package net.collatex.reptilian
  * Edges weighted by number of witnesses that share order (1 < n < witnessCount)
  */
 
-import scalax.collection.GraphEdge
-import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef.EdgeAssoc
 import scalax.collection.edge.Implicits.edge2WDiEdgeAssoc
 import scalax.collection.mutable.Graph
 import scalax.collection.config.CoreConfig
 import scalax.collection.edge.WDiEdge
-import scalax.collection.io.dot.*
-import scalax.collection.io.dot.implicits.toId
-import scalax.collection.io.dot.implicits.toNodeId
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
