@@ -64,7 +64,7 @@ protected def computeEdgesForWitness(blocks: Vector[FullDepthBlock], w: Int): Ve
     .map((edge, _) => edge)
   val sortedBlocks = blocks.sortBy(_.instances(w))
   edges ++ Vector(-1 ~> edges.head.from % sortedBlocks.head.length,
-    edges.last.to ~> -2 % 0)
+    edges.last.to ~> Int.MaxValue % 0)
 
 protected def computeNodesForGraph(blocks: Vector[FullDepthBlock]) =
   val nodeIdentifiers: Vector[Int] =
@@ -219,6 +219,7 @@ def createOutgoingEdgesForBlock(
           .instances
           .zip(source)
           .map((e, f) => e - f)
+
       val nonTransposedFollowingNodes =
         allFollowingNodesForWitness0
           .filter(e => computeDeltas(tokenArrayOffsetsOfSource, e)
@@ -228,6 +229,10 @@ def createOutgoingEdgesForBlock(
         nonTransposedFollowingNodes
           .map(e => computeDeltas(tokenArrayOffsetsOfSource, e).sum)
       val closestNonTransposedFollowingNode =
+        print("Neighbors: ")
+        println(neighborEdges)
+        print("Non-transposed following nodes: ")
+        println(nonTransposedFollowingNodes)
         nonTransposedFollowingNodes
           .zip(positiveDeltas)
           .minBy(_._2)

@@ -2,7 +2,6 @@ package net.collatex.reptilian
 
 
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers.*
 import org.scalatest.*
 import Assertions.*
 import Inspectors.*
@@ -13,7 +12,6 @@ import scalax.collection.edge.Implicits.edge2WDiEdgeAssoc
 import scalax.collection.edge.WDiEdge
 
 import scala.collection.mutable.ArrayBuffer
-import scala.util.matching.Regex
 
 /** Set up fixtures
  *
@@ -75,7 +73,7 @@ class MajorityOrderTest extends AnyFunSuite:
         225 ~> 229,
         229 ~> 243,
         -1 ~> 4,
-        243 ~> -2
+        243 ~> Int.MaxValue
       )
     )
   }
@@ -111,7 +109,7 @@ class MajorityOrderTest extends AnyFunSuite:
       212 ~> 225 % 2,
       225 ~> 229 % 13,
       229 ~> 243 % 17,
-      243 ~> -2 % 0
+      243 ~> Int.MaxValue % 0
     )
     assert(result.sortBy(e => e.from) == expected)
     assert(result.sortBy(e => e.from).map(_.weight) == expected.map(_.weight))
@@ -119,7 +117,7 @@ class MajorityOrderTest extends AnyFunSuite:
 
   test("create traversal graph") {
     val result = createTraversalGraph(blocks)
-    // note: the weights om the edges are not checked in this assert!
+    // note: the weights on the edges are not checked in this assert!
     assert(result ==
       Graph(-1, 2147483647, 4, 31, 38, 39, 43, 60, 93, 101, 104, 134, 142,
         146, 172, 184, 188, 192, 198, 212, 225, 229, 243,
@@ -138,13 +136,13 @@ class MajorityOrderTest extends AnyFunSuite:
     val result1 = scoreAllOptions(g, b1)
     val expect1 = Vector(BeamOption(List(43, 38, 31, 4, -1), score = 11))
     assert(result1 == expect1)
-    val b2 = BeamOption(path = List(-2, -1), score = 20) // at end, no options
+    val b2 = BeamOption(path = List(Int.MaxValue, -1), score = 20) // at end, no options
     val result2 = scoreAllOptions(g, b2)
-    val expect2 = Vector(BeamOption(List(-2, -1), score = 20))
+    val expect2 = Vector()
     assert(result2 == expect2)
     val b3 = BeamOption(path = List(31, 4, -1), score = 20) // two options
     val result3 = scoreAllOptions(g, b3)
-    val expect3 = Vector(BeamOption(List(38, 31, 4, -1), 21), BeamOption(List(39, 31, 4, -1), 21))
+    val expect3 = Vector(BeamOption(List(39, 31, 4, -1), 21.0), BeamOption(List(38, 31, 4, -1), 21.0))
     assert(result3 == expect3)
   }
 
@@ -213,7 +211,6 @@ class MajorityOrderTest extends AnyFunSuite:
     val block_order_for_witnesses = computeBlockOrderForWitnesses(blocks)
     val block_offsets_in_all_witnesses = computeBlockOffsetsInAllWitnesses(block_order_for_witnesses)
     val result = blocks.map(e => createOutgoingEdgesForBlock(e, block_order_for_witnesses, block_offsets_in_all_witnesses))
-    result.foreach(println)
     assert(result == result)
   }
 
