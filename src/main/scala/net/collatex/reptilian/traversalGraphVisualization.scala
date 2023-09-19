@@ -51,7 +51,11 @@ def traversalGraphToDot(g: Graph[Int, WDiEdge], b: Map[Int, String], pathNodes: 
   dot
 
 // Diagnostic: visualize traversal graph
-def visualizeTraversalGraph(graph: Graph[Int, WDiEdge], blockTexts: Map[Int, String], alignmentNodes: Set[Int]): Unit =
+def visualizeTraversalGraph(
+                             graph: Graph[Int, WDiEdge], 
+                             blockTexts: Map[Int, String], 
+                             alignmentNodes: Set[Int]
+                           ): Unit =
   val traversalGraphAsDot = traversalGraphToDot(graph, blockTexts, alignmentNodes)
   val graphOutputPath = os.pwd / "src" / "main" / "output" / "traversal.dot"
   os.write.over(graphOutputPath, traversalGraphAsDot) // Create SVG output and write to specified path

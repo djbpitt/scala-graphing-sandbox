@@ -16,30 +16,31 @@ import scala.collection.mutable.ArrayBuffer
 /** Set up fixtures
  *
  * blocks copied from first paragraph of six Darwin witnesses
+ * longestFullDepthNonrepeatingBlocks
  */
 val blocks: Vector[FullDepthBlock] = Vector(
-  FullDepthBlock(Vector(104, 363, 621, 883, 1142, 1394), 29),
-  FullDepthBlock(Vector(243, 501, 759, 1022, 1274, 1524), 17),
-  FullDepthBlock(Vector(212, 470, 728, 991, 1245, 1495), 12),
-  FullDepthBlock(Vector(134, 393, 651, 913, 1172, 1424), 7),
-  FullDepthBlock(Vector(142, 400, 658, 920, 1179, 1432), 2),
-  FullDepthBlock(Vector(38, 298, 556, 818, 1082, 1331), 1),
-  FullDepthBlock(Vector(39, 299, 557, 819, 1079, 1332), 3),
-  FullDepthBlock(Vector(31, 292, 550, 812, 1073, 1325), 6),
-  FullDepthBlock(Vector(188, 446, 704, 966, 1221, 1471), 3),
-  FullDepthBlock(Vector(43, 302, 560, 822, 1083, 1335), 16),
-  FullDepthBlock(Vector(101, 360, 618, 880, 1140, 1392), 2),
-  FullDepthBlock(Vector(60, 319, 577, 839, 1101, 1353), 31),
-  FullDepthBlock(Vector(192, 450, 708, 970, 1225, 1475), 6),
-  FullDepthBlock(Vector(184, 442, 700, 962, 1219, 1469), 2),
-  FullDepthBlock(Vector(146, 404, 662, 924, 1183, 1433), 25),
-  FullDepthBlock(Vector(4, 265, 523, 785, 1047, 1299), 26),
-  FullDepthBlock(Vector(172, 430, 688, 950, 1208, 1458), 11),
-  FullDepthBlock(Vector(198, 456, 714, 977, 1232, 1482), 12),
-  FullDepthBlock(Vector(229, 487, 745, 1008, 1261, 1511), 13),
-  FullDepthBlock(Vector(225, 483, 741, 1004, 1258, 1508), 2),
-  FullDepthBlock(Vector(93, 352, 610, 872, 1132, 1384), 7)
-)
+  FullDepthBlock(Vector(104, 363, 621, 883, 1142, 1394),29),
+  FullDepthBlock(Vector(243, 501, 759, 1022, 1274, 1524),17),
+  FullDepthBlock(Vector(212, 470, 728, 991, 1245, 1495),12),
+  FullDepthBlock(Vector(134, 393, 651, 913, 1172, 1424),7),
+  FullDepthBlock(Vector(142, 400, 658, 920, 1179, 1432),2),
+  FullDepthBlock(Vector(38, 298, 556, 818, 1082, 1331),1),
+  FullDepthBlock(Vector(39, 299, 557, 819, 1079, 1332),3),
+  FullDepthBlock(Vector(31, 292, 550, 812, 1073, 1325),6),
+  FullDepthBlock(Vector(188, 446, 704, 966, 1221, 1471),3),
+  FullDepthBlock(Vector(43, 302, 560, 822, 1083, 1335),16),
+  FullDepthBlock(Vector(101, 360, 618, 880, 1140, 1392),2),
+  FullDepthBlock(Vector(60, 319, 577, 839, 1101, 1353),31),
+  FullDepthBlock(Vector(192, 450, 708, 970, 1225, 1475),6),
+  FullDepthBlock(Vector(184, 442, 700, 962, 1219, 1469),2),
+  FullDepthBlock(Vector(146, 404, 662, 924, 1183, 1433),25),
+  FullDepthBlock(Vector(4, 265, 523, 785, 1047, 1299),26),
+  FullDepthBlock(Vector(172, 430, 688, 950, 1208, 1458),11),
+  FullDepthBlock(Vector(198, 456, 714, 977, 1232, 1482),12),
+  FullDepthBlock(Vector(229, 487, 745, 1008, 1261, 1511),13),
+  FullDepthBlock(Vector(225, 483, 741, 1004, 1258, 1508),2),
+  FullDepthBlock(Vector(93, 352, 610, 872, 1132, 1384),7))
+
 
 class MajorityOrderTest extends AnyFunSuite:
   test("create graph from blocks") {
@@ -118,6 +119,7 @@ class MajorityOrderTest extends AnyFunSuite:
   test("create traversal graph") {
     val result = createTraversalGraph(blocks)
     // note: the weights on the edges are not checked in this assert!
+
     assert(result ==
       Graph(-1, 2147483647, 4, 31, 38, 39, 43, 60, 93, 101, 104, 134, 142,
         146, 172, 184, 188, 192, 198, 212, 225, 229, 243,
@@ -198,20 +200,6 @@ class MajorityOrderTest extends AnyFunSuite:
       (39, ArrayBuffer(3, 3, 3, 3, 2, 3))
     ).toMap
     assert(result == expected)
-  }
-
-  test("create outgoing edges") {
-    val block_order_for_witnesses = computeBlockOrderForWitnesses(blocks)
-    val block_offsets_in_all_witnesses = computeBlockOffsetsInAllWitnesses(block_order_for_witnesses)
-    val result = createOutgoingEdges(blocks, block_order_for_witnesses, block_offsets_in_all_witnesses)
-    assert(result == result) // FIXME: Compare to real expected
-  }
-
-  test("createOutgoingEdgesForBlock") {
-    val block_order_for_witnesses = computeBlockOrderForWitnesses(blocks)
-    val block_offsets_in_all_witnesses = computeBlockOffsetsInAllWitnesses(block_order_for_witnesses)
-    val result = blocks.map(e => createOutgoingEdgesForBlock(e, block_order_for_witnesses, block_offsets_in_all_witnesses))
-    assert(result == result)
   }
 
   //  test("create dot file") {
