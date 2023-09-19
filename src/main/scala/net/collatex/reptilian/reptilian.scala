@@ -17,31 +17,37 @@ def readData(pathToData: Path): List[String] =
     .map(os.read)
 
 @main def main(): Unit =
-  // Prepare tokenizer (partially applied function)
-  // NB: Sequences of non-word characters (except spaces) are entire tokens
-  // Unlike in CollateX Python, punctuation characters are their own tokens
-  val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
-  val tokenizer = makeTokenizer(tokenPattern) // Tokenizer function with user-supplied regex
-  // Prepare data (List[String])
+  /** Select data */
   val pathToDarwin = os.pwd / "src" / "main" / "data" / "darwin"
   //  val pathToDarwin = os.pwd / "src" / "main" / "data" / "darwin_small" // no skip edge; direct transposition
   // val pathToDarwin = os.pwd / "src" / "main" / "data" / "cats"
-  // Small skip edge test examples
   //  val pathToDarwin = os.pwd / "src" / "main" / "data" / "no_skip_cats" // no skip edge; direct transposition
   // val pathToDarwin = os.pwd / "src" / "main" / "data" / "one_skip_cats" // one skip edge
   // val pathToDarwin = os.pwd / "src" / "main" / "data" / "two_skip_cats" // two (parallel) skip edges
-  // End of skip edge test examples
+
+  /** Prepare tokenizer
+   *
+   * Sequences of non-word characters (except spaces) are entire tokens
+   * Unlike in CollateX Python, punctuation characters are their own tokens
+   */
+  val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
+  val tokenizer = makeTokenizer(tokenPattern) // Tokenizer function with user-supplied regex
+
+  /** Read data into token array */
   val witnessStrings = readData(pathToDarwin) // One string per witness
   implicit val tokenArray: Vector[Token] = tokenize(tokenizer)(witnessStrings)
-  // End of input section
-  // Create alignment tree (sigla used for alignment table)
+
+  /** Create alignment tree
+   *
+   * Sigla used for alignment table
+   */
   val (root: RootNode, sigla: List[String]) = createAlignment(witnessStrings)
 
   /** Create views of tree
    *
    * Graphviz dot file
    * HTML alignment table
-  * */
+   */
   val alignmentTreeAsDot = dot(root, tokenArray)
   val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
   os.write.over(alignmentGraphOutputPath, alignmentTreeAsDot)
