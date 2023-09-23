@@ -14,8 +14,10 @@ import scalax.collection.edge.Implicits.edge2WDiEdgeAssoc
 import scalax.collection.mutable.Graph
 import scalax.collection.config.CoreConfig
 import scalax.collection.edge.WDiEdge
+import sun.security.util.BitArray
 
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable
+import scala.collection.mutable.{ArrayBuffer, BitSet, ListBuffer}
 
 val endNodeId = Integer.MAX_VALUE  // End-node uses maximum possible integer value (i.e., inconveniently large value)
 implicit val myConfig: CoreConfig = CoreConfig()
@@ -332,17 +334,25 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
 
   val blockTexts: Map[Int, String] = blockTextById(longestFullDepthNonrepeatingBlocks, tokenArray)
 
-  val blockRangeSeq = createRangedSeq(allBlocks) // Finger tree
-
   // create navigation graph and filter out transposed nodes
   val graph = createTraversalGraph(longestFullDepthNonrepeatingBlocks)
 
   val alignment: List[Int] = findOptimalAlignment(graph) // Int identifiers of full-depth blocks
   val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment: List[Int])
   val alignmentBlocks: Iterable[FullDepthBlock] = alignmentIntsToBlocks(alignmentBlocksSet, longestFullDepthNonrepeatingBlocks)
-
-
   val readingNodes = blocksToNodes(alignmentBlocks)
+
+  /** Create BitSet of tokens placed from full-depth non-repeating blocks */
+  val fullDepthBlocksAsRanges = readingNodes.flatMap(_.witnessReadings.values).map(e => Range(e._1, e._2))
+  val bitarray = mutable.BitSet.empty
+  def addRangeToBitArray(b: mutable.BitSet, r: Range): Unit =
+    b.addAll(r)
+  fullDepthBlocksAsRanges.foreach(e => addRangeToBitArray(bitarray, e))
+
+  /* Create fingertree to navigate unexpanded nodes */
+  val blockRangeSeq = createRangedSeq(allBlocks) // Finger tree
+
+
   var root = RootNode()
   val sortedReadingNodes = readingNodes // Sort reading nodes in token order
     .toVector
