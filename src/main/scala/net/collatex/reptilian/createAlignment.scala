@@ -350,6 +350,9 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
   fullDepthBlocksAsRanges.foreach(e => addRangeToBitArray(bitarray, e))
 
   /* Create fingertree to navigate unexpanded nodes */
+  println(alignmentBlocks.slice(0, 10))
+  println(alignmentBlocks.size)
+  println(allBlocks.size)
   val blockRangeSeq = createRangedSeq(allBlocks) // Finger tree
 
 
@@ -437,6 +440,10 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
    *
    * 1. Separate passes are easier to develop and debug
    * 2. Recursive expansion is more efficient
+   *
+   * Next step: bitarray records tokens of full-depth non-repeating blocks placed on first
+   * pass. Use that information to filter out those blocks plus block instances of subblocks
+   * when we create figner tree.
    * */
 
   val newerChildren =
