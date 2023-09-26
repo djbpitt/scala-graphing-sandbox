@@ -350,9 +350,6 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
   fullDepthBlocksAsRanges.foreach(e => addRangeToBitArray(bitarray, e))
 
   /* Create fingertree to navigate unexpanded nodes */
-  println(alignmentBlocks.slice(0, 10))
-  println(alignmentBlocks.size)
-  println(allBlocks.size)
   val blockRangeSeq = createRangedSeq(allBlocks) // Finger tree
 
 
@@ -443,14 +440,30 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
    *
    * Next step: bitarray records tokens of full-depth non-repeating blocks placed on first
    * pass. Use that information to filter out those blocks plus block instances of subblocks
-   * when we create figner tree.
+   * when we create finger tree.
    * */
 
   val newerChildren =
     newChildren.map {
       case e: UnexpandedNode =>
-        val nodeRanges = e.witnessReadings.values
-        allBlockRanges.filter(_.size == nodeRanges.size)
+        // Create localTokenArray, where LocalToken objects include global token offset
+        val localTokenArray = e
+          .witnessReadings
+          .map((_, tokenRange) =>
+            for i <- tokenRange._1 to tokenRange._2 yield
+              LocalToken(
+                t = tokenArray(i).t,
+                n = tokenArray(i).n,
+                w = tokenArray(i).w,
+                g = i))
+          .flatten
+          .toVector
+        // Identify local blocks
+        val (allLocalBlocks, tmpLocalSuffixArray, longestFullDepthNonrepeatingLocalBlocks) =
+          createAlignedBlocks(localTokenArray, e.witnessReadings.size)
+        // Diagnostic (temporary) output
+        println(localTokenArray)
+        "U"
       case e: ReadingNode => "R"
       case _ => "Oops" // Shouldn't happen
     }
