@@ -222,15 +222,17 @@ def createOutgoingEdgesForBlock(
           .filter(e => computeDeltas(tokenArrayOffsetsOfSource, e)
             .map(_.sign)
             .forall(_ == 1))
-      val positiveDeltas =
-        nonTransposedFollowingNodes
-          .map(e => computeDeltas(tokenArrayOffsetsOfSource, e).sum)
-      val closestNonTransposedFollowingNode =
-        nonTransposedFollowingNodes
-          .zip(positiveDeltas)
-          .minBy(_._2)
-          ._1
-      Vector(WDiEdge(tokenArrayOffsetsOfSource.head, closestNonTransposedFollowingNode.instances.head)(2))
+      if nonTransposedFollowingNodes.nonEmpty then
+        val positiveDeltas =
+          nonTransposedFollowingNodes
+            .map(e => computeDeltas(tokenArrayOffsetsOfSource, e).sum)
+        val closestNonTransposedFollowingNode =
+          nonTransposedFollowingNodes
+            .zip(positiveDeltas)
+            .minBy(_._2)
+            ._1
+        Vector(WDiEdge(tokenArrayOffsetsOfSource.head, closestNonTransposedFollowingNode.instances.head)(2))
+      else Vector.empty[WDiEdge[Int]]
   val allEdges = neighborEdges ++ skipEdges
   allEdges
 
@@ -257,8 +259,9 @@ def createOutgoingEdges(
 
 
 def createTraversalGraph(blocks: Iterable[FullDepthBlock]) =
+  println(blocks)
   val localBlocks = blocks.toVector
-  val witnessCount =localBlocks(0).instances.length
+  val witnessCount = localBlocks(0).instances.length
   val startBlock = FullDepthBlock(instances = Vector.fill(witnessCount)(-1), length = 1) // fake first (start) block
   val endBlock = FullDepthBlock(instances = Vector.fill(witnessCount)(endNodeId), length = 1)
   // end node first to we can use blocks.tail to compute outgoing edges
@@ -458,11 +461,16 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
                 g = i))
           .flatten
           .toVector
-        // Identify local blocks
+        // Identify local blocks, including longest full-depth non-repeating blocks
         val (allLocalBlocks, tmpLocalSuffixArray, longestFullDepthNonrepeatingLocalBlocks) =
           createAlignedBlocks(localTokenArray, e.witnessReadings.size)
         // Diagnostic (temporary) output
-        println(localTokenArray)
+        if longestFullDepthNonrepeatingLocalBlocks.nonEmpty then
+          val localTraversalGraph =
+            createTraversalGraph(longestFullDepthNonrepeatingLocalBlocks)
+          println(localTraversalGraph)
+        else 
+          println("No blocks so traversal graph")
         "U"
       case e: ReadingNode => "R"
       case _ => "Oops" // Shouldn't happen
