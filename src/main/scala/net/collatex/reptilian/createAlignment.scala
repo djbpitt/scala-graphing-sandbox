@@ -259,7 +259,7 @@ def createOutgoingEdges(
 
 
 def createTraversalGraph(blocks: Iterable[FullDepthBlock]) =
-  println(blocks)
+//  println(blocks)
   val localBlocks = blocks.toVector
   val witnessCount = localBlocks(0).instances.length
   val startBlock = FullDepthBlock(instances = Vector.fill(witnessCount)(-1), length = 1) // fake first (start) block
@@ -464,22 +464,24 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
         // Identify local blocks, including longest full-depth non-repeating blocks
         val (allLocalBlocks, tmpLocalSuffixArray, longestFullDepthNonrepeatingLocalBlocks) =
           createAlignedBlocks(localTokenArray, e.witnessReadings.size)
-        // Diagnostic (temporary) output
         if longestFullDepthNonrepeatingLocalBlocks.nonEmpty then
           val localTraversalGraph =
             createTraversalGraph(longestFullDepthNonrepeatingLocalBlocks)
-          println(localTraversalGraph)
+//          println(localTraversalGraph)
           val localAlignment: List[Int] = findOptimalAlignment(localTraversalGraph) // Int identifiers of full-depth blocks
           val localAlignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(localAlignment: List[Int])
           val localAlignmentBlocks: Iterable[FullDepthBlock] = alignmentIntsToBlocks(localAlignmentBlocksSet, longestFullDepthNonrepeatingLocalBlocks)
+          // Find new local reading nodes
+          // Must have new unexpanded between them
+          // May have new unexpanded nodes before or after
           val localReadingNodes = blocksToNodes(localAlignmentBlocks)
-          println(localReadingNodes)
+          localReadingNodes
         else
-          println("No blocks so traversal graph")
-        "U"
-      case e: ReadingNode => "R"
-      case _ => "Oops" // Shouldn't happen
+          List(StringNode("Cannot create traversal"))
+      case e: ReadingNode => List(e)
+      case _ => List(StringNode("Shouldn't happen")) // Shouldn't happen
     }
+  root = RootNode(newerChildren.flatten)
   // Diagnostic (temporary)
   visualizeTraversalGraph(graph, blockTexts, alignmentBlocksSet)
 

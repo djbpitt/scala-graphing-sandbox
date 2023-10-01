@@ -173,7 +173,12 @@ def createAlignmentTable(root: RootNode, tokenArray: Vector[Token], sigla: List[
               Seq[Frag](
                 alignment, readings
               )
-            case _ => ???
+            case StringNode(text) =>
+              val alignment = td("String")
+              val readings = td("String")
+              Seq[Frag](
+                alignment, readings
+              )
           }
         )
       )

@@ -106,7 +106,7 @@ class ReptilianTest extends AnyFunSuite:
     val tokenizer = makeTokenizer(token_pattern) // Tokenizer function with user-supplied regex
     // create List[List[Str]] (one inner list per witness)
     val tokenized_input = input.map(tokenizer)
-    val result = createGokenWitnessMapping(tokenized_input)
+    val result = createTokenWitnessMapping(tokenized_input)
     assert(result == Vector(0, 0, -1, 1, 1, -1, 2, 2))
   }
 

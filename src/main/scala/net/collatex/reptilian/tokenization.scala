@@ -72,7 +72,7 @@ def createTokenArray(tokenLists: List[List[String]]): Vector[String] =
  *         Insert -1 as witness separator because all values must be Int
  *         and witnesses begin at 0
  */
-def createGokenWitnessMapping(tokenLists: List[List[String]]): Vector[Int] =
+def createTokenWitnessMapping(tokenLists: List[List[String]]): Vector[Int] =
   val buffer: ArrayBuffer[Int] = ArrayBuffer[Int]()
   buffer.appendAll(Array.fill(tokenLists.head.length)(0))
   tokenLists.tail
@@ -88,7 +88,7 @@ def tokenize(tokenizer: String => List[String]) =
   ((plainWitnesses: List[String]) =>
     plainWitnesses
       .map(tokenizer) // List of one list of strings per witness
-    ).andThen(e => createTokenArray(e) zip createGokenWitnessMapping(e))
+    ).andThen(e => createTokenArray(e) zip createTokenWitnessMapping(e))
     .andThen(_.map(e => Token(e(0), normalize(e(0)), e(1))))
 
 
