@@ -285,7 +285,7 @@ def createTraversalGraph(blocks: Iterable[FullDepthBlock]) =
 def scoreAllOptions(graph: Graph[Int, WDiEdge], current: BeamOption): Vector[BeamOption] =
   // supply outer (our Int value) to retrieve complex inner
   val currentLast: Int = current.path.head
-  if currentLast == -2 then
+  if currentLast == Int.MaxValue then
     Vector(current)
   else
     (graph get currentLast)
@@ -469,7 +469,12 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
           val localTraversalGraph =
             createTraversalGraph(longestFullDepthNonrepeatingLocalBlocks)
           println(localTraversalGraph)
-        else 
+          val localAlignment: List[Int] = findOptimalAlignment(localTraversalGraph) // Int identifiers of full-depth blocks
+          val localAlignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(localAlignment: List[Int])
+          val localAlignmentBlocks: Iterable[FullDepthBlock] = alignmentIntsToBlocks(localAlignmentBlocksSet, longestFullDepthNonrepeatingLocalBlocks)
+          val localReadingNodes = blocksToNodes(localAlignmentBlocks)
+          println(localReadingNodes)
+        else
           println("No blocks so traversal graph")
         "U"
       case e: ReadingNode => "R"
