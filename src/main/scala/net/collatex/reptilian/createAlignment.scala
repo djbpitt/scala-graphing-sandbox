@@ -381,15 +381,12 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
     .filter(e => e._1.contains(" #"))
     .map(_._2)
   val firstTokens = Vector(0) ++ boundaryTokens.map(_ + 1)
-  println(firstTokens.map(tokenArray(_).t))
   val lastTokens = boundaryTokens.map(_ - 1) ++ Vector(tokenArray.size - 1)
   val leadingTokens = sigla
     .sorted
     .zipWithIndex
     .map(e => e._1 -> (firstTokens(e._2), sortedReadingNodes.head.witnessReadings(e._1)(0)))
     .toMap
-  print("leadingTokens: ")
-  println(leadingTokens)
   val leadingDeltas: Boolean = leadingTokens
     .values
     .map(e => e._2 - e._1)
@@ -486,9 +483,7 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
           val localSortedReadingNodes = localReadingNodes
             .toVector
             .sortBy(_.witnessReadings("w0")._1)
-          println(e)
-          println(localSortedReadingNodes)
-          VariationNode(children = ListBuffer.from(localSortedReadingNodes))
+          ExpandedNode(children = ListBuffer.from(localSortedReadingNodes))
         else
           StringNode("Cannot create traversal")
       case e: ReadingNode => e

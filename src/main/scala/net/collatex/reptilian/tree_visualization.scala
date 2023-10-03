@@ -20,6 +20,7 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
   val leafNodes = ListBuffer[String]()
   val variationNodes = ListBuffer[String]()
   val unexpandedNodes = ListBuffer[String]()
+  val expandedNodes = ListBuffer[String]()
   while nodesToProcess.nonEmpty do
     val currentNode = nodesToProcess.dequeue()
     currentNode match {
@@ -54,6 +55,17 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
           "unexpanded", "\t",
           witnessReadings.toString
         ).mkString(" "))
+      case (currentId, ExpandedNode(children)) =>
+        for i <- children do {
+          id += 1
+          nodesToProcess.enqueue((id, i))
+          edges.append(List(currentId, " -> ", id).mkString(" "))
+          expandedNodes.append(List(
+            currentId.toString, "\t",
+            "expanded", "\t",
+            "placeholder"
+          ).mkString(" "))
+        }
       case (currentId, StringNode(txt)) =>
         id += 1
         edges.append(List(currentId, " -> ", id).mkString(" "))
@@ -61,7 +73,8 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
       case _ => ()
     }
   val formattedStringNodes = stringNodes
-    .map(e => List(e, " [fillcolor=pink]").mkString("")).mkString("\n")
+    .map(e => List(e, " [fillcolor=pink]").mkString(""))
+    .mkString("\n")
   val formattedLeafNodes = leafNodes
     .map(e =>
       val split: Array[String] = e.split("\t")
@@ -84,8 +97,19 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
         " [tooltip=\"", split(2), "\"]",
         " [fillcolor=goldenrod]"
       ).mkString("")
+    ).mkString("\n")
+  val formattedExpandedNodes = expandedNodes
+    .map(e =>
+      val split: Array[String] = e.split("\t")
+      List(
+        split(0),
+        " [label=\"", split(0), "|", split(1), "\"]",
+        " [tooltip=\"", split(2), "\"]",
+        " [fillcolor=plum]"
+      ).mkString("")
     )
     .mkString("\n")
+
   List(
     header,
     edges.mkString("\n\t"),
@@ -93,6 +117,7 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
     formattedLeafNodes,
     formattedVariationNodes,
     formattedUnexpandedNodes,
+    formattedExpandedNodes,
     footer
   ).mkString("\n")
 
@@ -110,6 +135,7 @@ def createAlignmentTable(root: RootNode, tokenArray: Vector[Token], sigla: List[
           ".aligned {background-color: lightblue; } " +
           ".unexpanded {background-color: palegoldenrod; } " +
           ".unaligned {background-color: lightgray; }" +
+          ".expanded {background-color: pink; }" +
           "tr:first-child {background-color: lightgray;}")
     ),
     body(
@@ -170,6 +196,24 @@ def createAlignmentTable(root: RootNode, tokenArray: Vector[Token], sigla: List[
                     )
                   else
                     td(raw("&#xa0;"))
+              Seq[Frag](
+                alignment, readings
+              )
+            case ExpandedNode(children) =>
+              val alignment = td("Expanded")
+              val readings = children
+                .map {
+                  case ReadingNode(witnessReadings) => td {
+                    val pointers = witnessReadings
+                      .head
+                      ._2
+                    tokenArray
+                      .slice(pointers._1, pointers._2)
+                      .map(_.n)
+                      .mkString(" ")
+                  }
+                  case _ => td("Oops")
+                }.toSeq
               Seq[Frag](
                 alignment, readings
               )

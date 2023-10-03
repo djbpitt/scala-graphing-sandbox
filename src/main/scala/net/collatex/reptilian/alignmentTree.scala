@@ -41,6 +41,11 @@ object ReadingNode {
 
 // Temporary; eventually the alignment graph will have no unexpanded nodes
 final case class UnexpandedNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode
+// When we expand an UnexpandedNode we replace it with an ExpandedNode
+// UnexpandedNode cannot have children (it has WitnessReadings instead)
+// ExpandedNode must have children
+final case class ExpandedNode(children: ListBuffer[AlignmentTreeNode] = 
+                              ListBuffer.empty) extends AlignmentTreeNode
 
 def show(node: AlignmentTreeNode): Unit =
   node match {
