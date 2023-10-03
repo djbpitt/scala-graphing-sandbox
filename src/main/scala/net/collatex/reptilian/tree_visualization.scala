@@ -11,7 +11,7 @@ import scala.collection.mutable.ListBuffer
  * @return : String containing dot code for GraphViz
  * */
 def dot(root: RootNode, tokenArray: Vector[Token]): String =
-  val header: String = "digraph MyGraph {\n\tnode [shape=record, style=filled]\n\t"
+  val header: String = "digraph MyGraph {\nranksep=3.0\n\tnode [shape=record, style=filled]\n\t"
   val footer: String = "\n}"
   var id = 0
   val nodesToProcess: mutable.Queue[(Int, AlignmentTreeNode)] = mutable.Queue((id, root))
