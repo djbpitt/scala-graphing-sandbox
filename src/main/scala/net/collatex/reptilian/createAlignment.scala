@@ -375,19 +375,21 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
   // Used to check for unaligned leading or trailing tokens
   // Possibly unnecessary traversal of token array
   // Can we find the first and last tokens of each witness without a separate traversal?
-  val boundaryTokens =
-  tokenArray
+  val boundaryTokens = tokenArray
     .map(_.t)
     .zipWithIndex
     .filter(e => e._1.contains(" #"))
     .map(_._2)
   val firstTokens = Vector(0) ++ boundaryTokens.map(_ + 1)
+  println(firstTokens.map(tokenArray(_).t))
   val lastTokens = boundaryTokens.map(_ - 1) ++ Vector(tokenArray.size - 1)
   val leadingTokens = sigla
     .sorted
     .zipWithIndex
     .map(e => e._1 -> (firstTokens(e._2), sortedReadingNodes.head.witnessReadings(e._1)(0)))
     .toMap
+  print("leadingTokens: ")
+  println(leadingTokens)
   val leadingDeltas: Boolean = leadingTokens
     .values
     .map(e => e._2 - e._1)
@@ -453,7 +455,7 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
         val localTokenArray = e
           .witnessReadings
           .map((_, tokenRange) =>
-            for i <- tokenRange._1 to tokenRange._2 yield
+            for i <- tokenRange._1 until tokenRange._2 yield
               LocalToken(
                 t = tokenArray(i).t,
                 n = tokenArray(i).n,
@@ -470,18 +472,29 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
 //          println(localTraversalGraph)
           val localAlignment: List[Int] = findOptimalAlignment(localTraversalGraph) // Int identifiers of full-depth blocks
           val localAlignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(localAlignment: List[Int])
-          val localAlignmentBlocks: Iterable[FullDepthBlock] = alignmentIntsToBlocks(localAlignmentBlocksSet, longestFullDepthNonrepeatingLocalBlocks)
+          val localAlignmentBlocks: Iterable[FullDepthBlock] =
+            alignmentIntsToBlocks(localAlignmentBlocksSet, longestFullDepthNonrepeatingLocalBlocks)
           // Find new local reading nodes
           // Must have new unexpanded between them
           // May have new unexpanded nodes before or after
-          val localReadingNodes = blocksToNodes(localAlignmentBlocks)
-          localReadingNodes
+          val localRemappedAlignmentBlocks = localAlignmentBlocks
+            .map(e =>
+              val globalOffsets: Vector[Int] = e.instances.map(f => localTokenArray(f).g).sorted
+              FullDepthBlock(instances = globalOffsets, length = e.length)
+            )
+          val localReadingNodes = blocksToNodes(localRemappedAlignmentBlocks)
+          val localSortedReadingNodes = localReadingNodes
+            .toVector
+            .sortBy(_.witnessReadings("w0")._1)
+          println(e)
+          println(localSortedReadingNodes)
+          VariationNode(children = ListBuffer.from(localSortedReadingNodes))
         else
-          List(StringNode("Cannot create traversal"))
-      case e: ReadingNode => List(e)
-      case _ => List(StringNode("Shouldn't happen")) // Shouldn't happen
+          StringNode("Cannot create traversal")
+      case e: ReadingNode => e
+      case _ => StringNode("Shouldn't happen") // Shouldn't happen
     }
-  root = RootNode(newerChildren.flatten)
+  root = RootNode(newerChildren)
   // Diagnostic (temporary)
   visualizeTraversalGraph(graph, blockTexts, alignmentBlocksSet)
 
