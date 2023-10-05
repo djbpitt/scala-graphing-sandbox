@@ -52,11 +52,12 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
         )
       case (currentId, UnexpandedNode(witnessReadings)) =>
         id += 1
-        unexpandedNodes.append(List(
-          currentId.toString, "\t",
-          "unexpanded", "\t",
-          witnessReadings.toString
-        ).mkString(" "))
+        unexpandedNodes.append(
+          s"""${currentId.toString}
+             | [label=\"${currentId.toString}|unexpanded\"
+             | tooltip=\"${witnessReadings.toString}\"
+             | fillcolor=\"goldenrod\"]""".stripMargin.replaceAll("\n", "")
+        )
       case (currentId, ExpandedNode(children)) =>
         for i <- children do {
           id += 1
@@ -78,16 +79,6 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
     }
   val formattedVariationNodes = variationNodes
     .map(e => List(e, " [fillcolor=lightgreen]").mkString("")).mkString("\n")
-  val formattedUnexpandedNodes = unexpandedNodes
-    .map(e =>
-      val split: Array[String] = e.split("\t")
-      List(
-        split(0),
-        " [label=\"", split(0), "|", split(1), "\"]",
-        " [tooltip=\"", split(2), "\"]",
-        " [fillcolor=goldenrod]"
-      ).mkString("")
-    ).mkString("\n")
   val formattedExpandedNodes = expandedNodes
     .map(e =>
       val split: Array[String] = e.split("\t")
@@ -105,7 +96,7 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
     stringNodes.mkString("\n"),
     readingNodes.mkString("\n"),
     formattedVariationNodes,
-    formattedUnexpandedNodes,
+    unexpandedNodes.mkString("\n"),
     formattedExpandedNodes,
     footer
   ).mkString("\n")
