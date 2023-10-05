@@ -2,6 +2,7 @@ package net.collatex.reptilian
 
 import scalatags.Text.all.*
 
+import scala.collection.immutable.ListMap
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
@@ -58,38 +59,28 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
              | tooltip=\"${witnessReadings.toString}\"
              | fillcolor=\"goldenrod\"]""".stripMargin.replaceAll("\n", "")
         )
-      case (currentId, ExpandedNode(children)) =>
-        for i <- children do {
+      case (currentId, ExpandedNode(witnessReadings, children)) =>
+        for i <- children do
           id += 1
           nodesToProcess.enqueue((id, i))
           edges.append(List(currentId, " -> ", id).mkString(" "))
-          expandedNodes.append(List(
-            currentId.toString, "\t",
-            "expanded", "\t",
-            "placeholder"
-          ).mkString(" "))
-        }
+          expandedNodes.append(
+            s"""${currentId.toString}
+               | [label=\"${currentId.toString}|expanded\"
+               | tooltip=\"${ListMap(witnessReadings.toSeq.sortBy(_._1):_*)}\"
+               | fillcolor=\"plum\"]""".stripMargin.replaceAll("\n", "")
+          )
       case (currentId, StringNode(txt)) =>
         id += 1
         edges.append(List(currentId, " -> ", id).mkString(" "))
         stringNodes.append(
           s"${id.toString} [tooltip=\"$txt\" fillcolor=\"pink\"]"
         )
-      case _ => ()
+
     }
   val formattedVariationNodes = variationNodes
     .map(e => List(e, " [fillcolor=lightgreen]").mkString("")).mkString("\n")
-  val formattedExpandedNodes = expandedNodes
-    .map(e =>
-      val split: Array[String] = e.split("\t")
-      List(
-        split(0),
-        " [label=\"", split(0), "|", split(1), "\"]",
-        " [tooltip=\"", split(2), "\"]",
-        " [fillcolor=plum]"
-      ).mkString("")
-    )
-    .mkString("\n")
+
   List(
     header,
     edges.mkString("\n\t"),
@@ -97,7 +88,7 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
     readingNodes.mkString("\n"),
     formattedVariationNodes,
     unexpandedNodes.mkString("\n"),
-    formattedExpandedNodes,
+    expandedNodes.mkString("\n"),
     footer
   ).mkString("\n")
 
@@ -179,7 +170,7 @@ def createAlignmentTable(root: RootNode, tokenArray: Vector[Token], sigla: List[
               Seq[Frag](
                 alignment, readings
               )
-            case ExpandedNode(children) =>
+            case ExpandedNode(witnessReadings, children) =>
               val alignment = td("Expanded")
               val readings = children
                 .map {

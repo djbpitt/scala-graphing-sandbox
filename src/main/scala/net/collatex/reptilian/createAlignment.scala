@@ -483,7 +483,7 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
           val localSortedReadingNodes = localReadingNodes
             .toVector
             .sortBy(_.witnessReadings("w0")._1)
-          ExpandedNode(children = ListBuffer.from(localSortedReadingNodes))
+          ExpandedNode(witnessReadings = e.witnessReadings, children = ListBuffer.from(localSortedReadingNodes))
         else
           StringNode("Cannot create traversal")
       case e: ReadingNode => e

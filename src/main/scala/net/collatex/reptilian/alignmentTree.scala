@@ -44,7 +44,7 @@ final case class UnexpandedNode(witnessReadings: WitnessReadings) extends Alignm
 // When we expand an UnexpandedNode we replace it with an ExpandedNode
 // UnexpandedNode cannot have children (it has WitnessReadings instead)
 // ExpandedNode must have children
-final case class ExpandedNode(children: ListBuffer[AlignmentTreeNode] = 
+final case class ExpandedNode(witnessReadings: WitnessReadings, children: ListBuffer[AlignmentTreeNode] = 
                               ListBuffer.empty) extends AlignmentTreeNode
 
 def show(node: AlignmentTreeNode): Unit =
