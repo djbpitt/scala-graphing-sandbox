@@ -16,8 +16,9 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
   var id = 0
   val nodesToProcess: mutable.Queue[(Int, AlignmentTreeNode)] = mutable.Queue((id, root))
   val edges = ListBuffer[String]() // Not List because we append to maintain order
-  val stringNodes = ListBuffer[String]() // Store node attributes where needed
-  val leafNodes = ListBuffer[String]()
+  // Strings in dot format for all but the root node
+  val stringNodes = ListBuffer[String]()
+  val readingNodes = ListBuffer[String]()
   val variationNodes = ListBuffer[String]()
   val unexpandedNodes = ListBuffer[String]()
   val expandedNodes = ListBuffer[String]()
@@ -43,11 +44,12 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
           .map(_.n)
           .mkString(" ")
           .replaceAll("\"", "\\\\\"") // Escape quotation mark in dot file property value
-        leafNodes.append(List(
-          currentId.toString, "\t",
-          witnessReadings.toSeq.sorted.map(_._1).mkString(","), "\t",
-          nValues
-        ).mkString(""))
+        readingNodes.append(
+          s"""${currentId.toString}
+             | [label=\"${currentId.toString}|${witnessReadings.toSeq.sorted.map(_._1).mkString(",")}\"
+             | tooltip=\"$nValues\"
+             | fillcolor=\"lightblue\"]""".stripMargin.replaceAll("\n", "")
+        )
       case (currentId, UnexpandedNode(witnessReadings)) =>
         id += 1
         unexpandedNodes.append(List(
@@ -75,17 +77,6 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
   val formattedStringNodes = stringNodes
     .map(e => List(e, " [fillcolor=pink]").mkString(""))
     .mkString("\n")
-  val formattedLeafNodes = leafNodes
-    .map(e =>
-      val split: Array[String] = e.split("\t")
-      List(
-        split(0),
-        " [label=\"", split(0), "|", split(1), "\"]",
-        " [tooltip=\"", split(2), "\"]",
-        " [fillcolor=lightblue]"
-      ).mkString("")
-    )
-    .mkString("\n")
   val formattedVariationNodes = variationNodes
     .map(e => List(e, " [fillcolor=lightgreen]").mkString("")).mkString("\n")
   val formattedUnexpandedNodes = unexpandedNodes
@@ -109,12 +100,11 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
       ).mkString("")
     )
     .mkString("\n")
-
   List(
     header,
     edges.mkString("\n\t"),
     formattedStringNodes,
-    formattedLeafNodes,
+    readingNodes.mkString("\n"),
     formattedVariationNodes,
     formattedUnexpandedNodes,
     formattedExpandedNodes,
