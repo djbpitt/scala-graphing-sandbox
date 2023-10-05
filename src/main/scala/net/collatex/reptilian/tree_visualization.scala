@@ -71,12 +71,11 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
       case (currentId, StringNode(txt)) =>
         id += 1
         edges.append(List(currentId, " -> ", id).mkString(" "))
-        stringNodes.append(id.toString)
+        stringNodes.append(
+          s"${id.toString} [tooltip=\"$txt\" fillcolor=\"pink\"]"
+        )
       case _ => ()
     }
-  val formattedStringNodes = stringNodes
-    .map(e => List(e, " [fillcolor=pink]").mkString(""))
-    .mkString("\n")
   val formattedVariationNodes = variationNodes
     .map(e => List(e, " [fillcolor=lightgreen]").mkString("")).mkString("\n")
   val formattedUnexpandedNodes = unexpandedNodes
@@ -103,7 +102,7 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
   List(
     header,
     edges.mkString("\n\t"),
-    formattedStringNodes,
+    stringNodes.mkString("\n"),
     readingNodes.mkString("\n"),
     formattedVariationNodes,
     formattedUnexpandedNodes,
