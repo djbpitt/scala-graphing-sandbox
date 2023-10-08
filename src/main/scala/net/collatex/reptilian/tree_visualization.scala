@@ -77,10 +77,8 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
                | fillcolor=\"plum\"]""".stripMargin.replaceAll("\n", "")
           )
       case (currentId, StringNode(txt)) =>
-        id += 1
-        edges.append(List(currentId, " -> ", id).mkString(" "))
         stringNodes.append(
-          s"${id.toString} [tooltip=\"$txt\" fillcolor=\"pink\"]"
+          s"${currentId.toString} [tooltip=\"$txt\" fillcolor=\"pink\"]"
         )
 
     }

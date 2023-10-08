@@ -466,7 +466,6 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
         if longestFullDepthNonrepeatingLocalBlocks.nonEmpty then
           val localTraversalGraph =
             createTraversalGraph(longestFullDepthNonrepeatingLocalBlocks)
-//          println(localTraversalGraph)
           val localAlignment: List[Int] = findOptimalAlignment(localTraversalGraph) // Int identifiers of full-depth blocks
           val localAlignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(localAlignment: List[Int])
           val localAlignmentBlocks: Iterable[FullDepthBlock] =
