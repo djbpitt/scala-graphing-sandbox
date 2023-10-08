@@ -133,6 +133,7 @@ def createAlignmentTable(root: RootNode, tokenArray: Vector[Token], sigla: List[
         }))(
           td(index + 1),
           child match {
+            case RootNode(_) => throw RuntimeException("Root node cannot be a child of any other node")
             case ReadingNode(witnessReadings) =>
               val (_, value) = witnessReadings.head
               val tokens = tokenArray.slice(value._1, value._2)

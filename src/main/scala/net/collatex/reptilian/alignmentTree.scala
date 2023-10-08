@@ -66,6 +66,7 @@ def show(node: AlignmentTreeNode): Unit =
     case RootNode(children) => println(children)
     case VariationNode(children) => println(children)
     case UnexpandedNode(witnessReadings) => println(witnessReadings)
+    case ExpandedNode(witnessReadings, children) => println(witnessReadings)
     case StringNode(txt) => println(txt) // To report errors
   }
 
