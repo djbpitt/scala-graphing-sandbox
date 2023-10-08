@@ -1,6 +1,6 @@
 package net.collatex.reptilian
 
-
+import scala.collection.immutable.ListMap
 import scala.collection.mutable
 import scala.collection.mutable.{ListBuffer, Queue}
 import scalatags.Text.all.*
@@ -9,6 +9,20 @@ import scalatags.Text.all.*
 type WitnessReadings = Map[String, (Int, Int)] // type alias
 
 sealed trait AlignmentTreeNode // supertype of all nodes
+
+/** Some alignment tree nodes that must have witness readings inherit this trait
+ *
+ * The trait 1) requires witness readings and 2) creates a human-readable rendering
+ *
+ * Expanded and unexpanded nodes render format witness readings as a ListMap in dot
+ * Reading nodes also have witness readings but do not use a ListMap visualization,
+ *   and therefore do not inherit this trait
+ * */
+trait FormatWitnessReadings {
+  def witnessReadings: WitnessReadings
+  def formatWitnessReadings: String =
+      s"${ListMap(witnessReadings.toSeq.sortBy(_._1): _*)}"
+}
 
 /** RootNode
  *
@@ -40,13 +54,12 @@ object ReadingNode {
 }
 
 // Temporary; eventually the alignment graph will have no unexpanded nodes
-final case class UnexpandedNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode
+final case class UnexpandedNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode with FormatWitnessReadings
 // When we expand an UnexpandedNode we replace it with an ExpandedNode
-// UnexpandedNode cannot have children (it has WitnessReadings instead)
+// UnexpandedNode cannot have children (it has only WitnessReadings)
 // ExpandedNode must have children
-final case class ExpandedNode(witnessReadings: WitnessReadings, children: ListBuffer[AlignmentTreeNode] = 
-                              ListBuffer.empty) extends AlignmentTreeNode
-
+case class ExpandedNode(witnessReadings: WitnessReadings, children: ListBuffer[AlignmentTreeNode] =
+                              ListBuffer.empty) extends AlignmentTreeNode with FormatWitnessReadings
 def show(node: AlignmentTreeNode): Unit =
   node match {
     case ReadingNode(witnessReadings) => println(witnessReadings)

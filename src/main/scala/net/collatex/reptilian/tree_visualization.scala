@@ -51,23 +51,29 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
              | tooltip=\"$nValues\"
              | fillcolor=\"lightblue\"]""".stripMargin.replaceAll("\n", "")
         )
-      case (currentId, UnexpandedNode(witnessReadings)) =>
+      case (currentId, n: UnexpandedNode) =>
         id += 1
         unexpandedNodes.append(
           s"""${currentId.toString}
              | [label=\"${currentId.toString}|unexpanded\"
-             | tooltip=\"${witnessReadings.toString}\"
+             | tooltip=\"${n.formatWitnessReadings}\"
              | fillcolor=\"goldenrod\"]""".stripMargin.replaceAll("\n", "")
         )
-      case (currentId, ExpandedNode(witnessReadings, children)) =>
-        for i <- children do
+      case (currentId, n: ExpandedNode) =>
+        for i <- n.children do
           id += 1
           nodesToProcess.enqueue((id, i))
           edges.append(List(currentId, " -> ", id).mkString(" "))
+//          expandedNodes.append(
+//            s"""${currentId.toString}
+//               | [label=\"${currentId.toString}|expanded\"
+//               | tooltip=\"${ListMap(witnessReadings.toSeq.sortBy(_._1):_*)}\"
+//               | fillcolor=\"plum\"]""".stripMargin.replaceAll("\n", "")
+//          )
           expandedNodes.append(
             s"""${currentId.toString}
                | [label=\"${currentId.toString}|expanded\"
-               | tooltip=\"${ListMap(witnessReadings.toSeq.sortBy(_._1):_*)}\"
+               | tooltip=\"${n.formatWitnessReadings}\"
                | fillcolor=\"plum\"]""".stripMargin.replaceAll("\n", "")
           )
       case (currentId, StringNode(txt)) =>
