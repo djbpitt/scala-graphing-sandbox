@@ -343,7 +343,7 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
   val alignment: List[Int] = findOptimalAlignment(graph) // Int identifiers of full-depth blocks
   val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment: List[Int])
   val alignmentBlocks: Iterable[FullDepthBlock] = alignmentIntsToBlocks(alignmentBlocksSet, longestFullDepthNonrepeatingBlocks)
-  val readingNodes = blocksToNodes(alignmentBlocks)
+  val readingNodes = blocksToNodes(alignmentBlocks, tokenArray)
 
   /** Create BitSet of tokens placed from full-depth non-repeating blocks */
   val fullDepthBlocksAsRanges = readingNodes.flatMap(_.witnessReadings.values).map(e => Range(e._1, e._2))
@@ -478,10 +478,23 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
               val globalOffsets: Vector[Int] = e.instances.map(f => localTokenArray(f).g).sorted
               FullDepthBlock(instances = globalOffsets, length = e.length)
             )
-          val localReadingNodes = blocksToNodes(localRemappedAlignmentBlocks)
+          val localReadingNodes = blocksToNodes(localRemappedAlignmentBlocks, tokenArray)
+          val localSigla = e.witnessReadings.keys.toSeq.sorted
+          if localSigla.head == "w3" then
+            println(e.formatWitnessReadings)
+            println(localReadingNodes)
+            println(localRemappedAlignmentBlocks)
           val localSortedReadingNodes = localReadingNodes
             .toVector
-            .sortBy(_.witnessReadings("w0")._1)
+            .sortBy(_.witnessReadings(localSigla.head)._1)
+          val localUnalignedIntermediates = localSortedReadingNodes
+            .sliding(2)
+            .map(pair =>
+              val mapEntries = localSigla
+                .map(siglum => siglum -> (pair.head.witnessReadings(siglum)(1), pair(1).witnessReadings(siglum)(0)))
+                .toMap
+              UnexpandedNode(mapEntries.filterNot(e => e._2._1 == e._2._2))
+            )
           ExpandedNode(witnessReadings = e.witnessReadings, children = ListBuffer.from(localSortedReadingNodes))
         else
           StringNode("Cannot create traversal")
