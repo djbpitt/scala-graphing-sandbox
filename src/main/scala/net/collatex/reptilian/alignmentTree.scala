@@ -35,7 +35,7 @@ final case class VariationNode(children: ListBuffer[AlignmentTreeNode] = ListBuf
 
 final case class StringNode(txt: String = "unspecified mistake") extends AlignmentTreeNode
 
-final case class ReadingNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode
+final case class ReadingNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode with FormatWitnessReadings
 
 /** Custom constructor to simplify creation of LeafNode
  *

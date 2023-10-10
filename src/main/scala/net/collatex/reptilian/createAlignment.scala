@@ -19,7 +19,7 @@ import sun.security.util.BitArray
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, BitSet, ListBuffer}
 
-val endNodeId = Integer.MAX_VALUE  // End-node uses maximum possible integer value (i.e., inconveniently large value)
+val endNodeId = Integer.MAX_VALUE // End-node uses maximum possible integer value (i.e., inconveniently large value)
 implicit val myConfig: CoreConfig = CoreConfig()
 
 /** https://stackoverflow.com/questions/28254447/is-there-a-scala-java-equivalent-of-python-3s-collections-counter
@@ -116,11 +116,11 @@ protected def computeBlockOffsetsInAllWitnesses(blockOrders: Vector[Vector[FullD
 
 /** Identify transposition edges
  *
- * @param edge          weighted directed edge
+ * @param edge         weighted directed edge
  * @param blockOffsets map from block identifier to offsets in all witnesses
- * @return              boolean
+ * @return boolean
  *
- * Edges for all witnesses must point forward
+ *         Edges for all witnesses must point forward
  * */
 def checkForCycles(edge: WDiEdge[Int], blockOffsets: Map[Int, ArrayBuffer[Int]]): Boolean =
   val from = edge.from
@@ -207,8 +207,8 @@ def createOutgoingEdgesForBlock(
 
       /**
        *
-       * @param source: Offsets into token array for source node
-       * @param target: Target node (offsets are instances property of target)
+       * @param source : Offsets into token array for source node
+       * @param target : Target node (offsets are instances property of target)
        * @return Deltas as Vector[Int] (target - source matrix subtraction)
        */
       def computeDeltas(source: Vector[Int], target: FullDepthBlock): Vector[Int] =
@@ -239,19 +239,18 @@ def createOutgoingEdgesForBlock(
 
 /** createOutgoingEdges
  *
- * @param blocks                    : vector of full-depth blocks
+ * @param blocks                 : vector of full-depth blocks
  * @param blockOrderForWitnesses : vector of vectors of full-depth blocks, each sorted by a witness
- * @param blockOffsets             : map from block identifier to array buffer of positions of block in all witnesses
- *
- * @return                          : vector of directed edges
- *                                  Filter out backwards edges to remove cycles
- *                                  TODO: Weight edges, all weights are currently set to 1
+ * @param blockOffsets           : map from block identifier to array buffer of positions of block in all witnesses
+ * @return : vector of directed edges
+ *         Filter out backwards edges to remove cycles
+ *         TODO: Weight edges, all weights are currently set to 1
  */
 def createOutgoingEdges(
                          blocks: Vector[FullDepthBlock],
                          blockOrderForWitnesses: Vector[Vector[FullDepthBlock]],
                          blockOffsets: Map[Int, ArrayBuffer[Int]]
-                         ) =
+                       ) =
   val edges = blocks
     .tail // End node is first block in vector and has no outgoing edges, so exclude
     .flatMap(e => createOutgoingEdgesForBlock(e, blockOrderForWitnesses, blockOffsets))
@@ -259,7 +258,7 @@ def createOutgoingEdges(
 
 
 def createTraversalGraph(blocks: Iterable[FullDepthBlock]) =
-//  println(blocks)
+  //  println(blocks)
   val localBlocks = blocks.toVector
   val witnessCount = localBlocks(0).instances.length
   val startBlock = FullDepthBlock(instances = Vector.fill(witnessCount)(-1), length = 1) // fake first (start) block
@@ -348,8 +347,10 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
   /** Create BitSet of tokens placed from full-depth non-repeating blocks */
   val fullDepthBlocksAsRanges = readingNodes.flatMap(_.witnessReadings.values).map(e => Range(e._1, e._2))
   val bitarray = mutable.BitSet.empty
+
   def addRangeToBitArray(b: mutable.BitSet, r: Range): Unit =
     b.addAll(r)
+
   fullDepthBlocksAsRanges.foreach(e => addRangeToBitArray(bitarray, e))
 
   /* Create fingertree to navigate unexpanded nodes */
@@ -480,22 +481,36 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
             )
           val localReadingNodes = blocksToNodes(localRemappedAlignmentBlocks, tokenArray)
           val localSigla = e.witnessReadings.keys.toSeq.sorted
-          if localSigla.head == "w3" then
-            println(e.formatWitnessReadings)
-            println(localReadingNodes)
-            println(localRemappedAlignmentBlocks)
           val localSortedReadingNodes = localReadingNodes
             .toVector
             .sortBy(_.witnessReadings(localSigla.head)._1)
-          val localUnalignedIntermediates = localSortedReadingNodes
-            .sliding(2)
-            .map(pair =>
-              val mapEntries = localSigla
-                .map(siglum => siglum -> (pair.head.witnessReadings(siglum)(1), pair(1).witnessReadings(siglum)(0)))
-                .toMap
-              UnexpandedNode(mapEntries.filterNot(e => e._2._1 == e._2._2))
-            )
-          ExpandedNode(witnessReadings = e.witnessReadings, children = ListBuffer.from(localSortedReadingNodes))
+          val localUnalignedIntermediates: Vector[UnexpandedNode] =
+            if localSortedReadingNodes.size < 2 then
+              Vector[UnexpandedNode]()
+            else
+              localSortedReadingNodes
+                .sliding(2)
+                .map(pair =>
+                  val mapEntries = localSigla
+                    .map(siglum => siglum -> (pair.head.witnessReadings(siglum)(1), pair(1).witnessReadings(siglum)(0)))
+                    .toMap
+                  UnexpandedNode(mapEntries.filterNot(e => e._2._1 == e._2._2))
+                ).toVector
+          // Find sigla shared by all reading and unexpanded children and sort by smallest
+          // Not all children will have the same sigla
+          // We know that there may be sigla in two reading nodes that are not present in an intermediate unexpanded node
+          // We don’t yet know whether the opposite can happen
+          val sharedSigla = localUnalignedIntermediates.map(_.witnessReadings.keySet).foldLeft(localSigla.toSet)(_.intersect(_))
+          print(sharedSigla)
+          val localSortedNodes =
+            if sharedSigla.isEmpty
+            then
+              localSortedReadingNodes
+            else
+              val firstSharedSiglum = sharedSigla.head
+              (localSortedReadingNodes ++ localUnalignedIntermediates)
+                .sortBy(e => e.witnessReadings(firstSharedSiglum))
+          ExpandedNode(witnessReadings = e.witnessReadings, children = ListBuffer.from(localSortedNodes))
         else
           StringNode("Cannot create traversal")
       case e: ReadingNode => e
