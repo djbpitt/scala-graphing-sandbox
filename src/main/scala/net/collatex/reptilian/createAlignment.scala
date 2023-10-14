@@ -147,7 +147,6 @@ def createOutgoingEdgesForBlock(
       .map((value, index) => blockOrderForWitnesses(index)(value + 1 min blockOffsets.size - 1).instances.head)
       .distinct
       .toVector
-    //  println(blockOffsets(id))
     val neighborEdges: Vector[WDiEdge[Int]] =
       neighborTargets
         .map(e => WDiEdge(id, e)(1))
@@ -501,7 +500,6 @@ def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[To
           // We know that there may be sigla in two reading nodes that are not present in an intermediate unexpanded node
           // We don’t yet know whether the opposite can happen
           val sharedSigla = localUnalignedIntermediates.map(_.witnessReadings.keySet).foldLeft(localSigla.toSet)(_.intersect(_))
-          print(sharedSigla)
           val localSortedNodes =
             if sharedSigla.isEmpty
             then
