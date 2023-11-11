@@ -11,6 +11,11 @@ import scala.collection.mutable.Map
 // This method transform an alignment on the global level of the fullest depth blocks
 // into an alignment tree by splitting
 
+// Instead of providing an iterable of reading nodes representing the result of a global alignment
+// it would be better if this method get supplied a reading with a single range for each witness that has
+// yet to be align and that it then calls the suffix array, traversal graph code it self 
+// Basically an inverse of the current control flow.
+
 def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], blockTexts: immutable.Map[Int, String], graph: Graph[Int, WDiEdge], alignmentBlocksSet: Set[Int], readingNodes: Iterable[ReadingNode]) = {
   // var root = RootNode()
 
