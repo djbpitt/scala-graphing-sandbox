@@ -8,6 +8,9 @@ import scala.collection.{immutable, mutable}
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Map
 
+// This method transform an alignment on the global level of the fullest depth blocks
+// into an alignment tree by splitting
+
 def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], blockTexts: immutable.Map[Int, String], graph: Graph[Int, WDiEdge], alignmentBlocksSet: Set[Int], readingNodes: Iterable[ReadingNode]) = {
   // var root = RootNode()
 
@@ -26,16 +29,27 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
   // go over the tokens and assign the lowest and the highest to the map
   // token doesn't know it's position
   // use indices
-  for (token_index <- tokenArray.indices)
-    val token = tokenArray(token_index)
+  for (tokenIndex <- tokenArray.indices)
+    val token = tokenArray(tokenIndex)
     if token.w != -1 then
-      val tuple = witnessRanges.getOrElse(token.w, (token_index, token_index))
+      val tuple = witnessRanges.getOrElse(token.w, (tokenIndex, tokenIndex))
       val minimum = tuple._1
-      val maximum = token_index
+      val maximum = tokenIndex
       witnessRanges.put(token.w, (minimum, maximum))
 
   println(witnessRanges)
 
+  // weird enough the readingNodes do not seem to be sorted.
+  val sortedReadingNodes = readingNodes // Sort reading nodes in token order
+    .toVector
+    .sortBy(_.witnessReadings("w0")._1)
+
+  // inspect the reading to make sure they are sufficient to take the next step
+  for (readingNode <- sortedReadingNodes)
+    println(readingNode)
+
+
+  // return a fake result for now. This will cause an exception, but that is ok for now.
   (Nil, Nil)
 }
 
@@ -50,9 +64,6 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
 //
 //
 //
-//  val sortedReadingNodes = readingNodes // Sort reading nodes in token order
-//    .toVector
-//    .sortBy(_.witnessReadings("w0")._1)
 //  val sigla = sortedReadingNodes.head.witnessReadings.keys.toList // Humiliating temporary step
 //  /* For each sliding pair of reading nodes create an unexpanded node with witness readings
 //  *   that point from each siglum to a slice from the end of the first reading node to the
