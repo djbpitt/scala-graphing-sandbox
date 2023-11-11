@@ -53,6 +53,14 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
   for (readingNode <- sortedReadingNodes)
     println(readingNode)
 
+  // take the first reading node from the sorted reading nodes
+
+  // split the root reading node based on the end position for each witness of the first reading node
+  // of the alignment.
+  // That splits the root reading node into two reading nodes.
+  // split the first returned reading node again, now by the start position for each witness of the first
+  // sorted reading node.
+
 
   // return a fake result for now. This will cause an exception, but that is ok for now.
   (Nil, Nil)
