@@ -39,8 +39,6 @@ def split_reading_node(current: ReadingNode, position_to_split: immutable.Map[St
 }
 
 def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], blockTexts: immutable.Map[Int, String], graph: Graph[Int, WDiEdge], alignmentBlocksSet: Set[Int], readingNodes: Iterable[ReadingNode]) = {
-  // var root = RootNode()
-
   // The RootNode should have the full range of each of the witness tokens on it.
   // RootNode is too final of a designation. We can only call it that after doing multiple splits.
   // hmm maybe we start with an UnexpandedNode... No, it has no ranges on it. Only Reading have ranges on it
@@ -51,7 +49,7 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
   // If we store the lowest and highest token for each witness in a map we are there
   // To store it in a reading node we have to store in a (String, (Int, Int)
   // which is not as expressive as a (String, (Token, Token) or even better (Witness, (Token, Token))
-  val witnessRanges: mutable.Map[Int, (Int, Int)] = mutable.Map.empty
+  val witnessRanges: mutable.Map[String, (Int, Int)] = mutable.Map.empty
 
   // go over the tokens and assign the lowest and the highest to the map
   // token doesn't know it's position
@@ -59,12 +57,13 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
   for (tokenIndex <- tokenArray.indices)
     val token = tokenArray(tokenIndex)
     if token.w != -1 then
-      val tuple = witnessRanges.getOrElse(token.w, (tokenIndex, tokenIndex))
+      val tuple = witnessRanges.getOrElse(token.w.toString, (tokenIndex, tokenIndex))
       val minimum = tuple._1
       val maximum = tokenIndex
-      witnessRanges.put(token.w, (minimum, maximum))
+      witnessRanges.put(token.w.toString, (minimum, maximum))
 
   println(witnessRanges)
+  val root = ReadingNode(witnessRanges.toMap)
 
   // weird enough the readingNodes do not seem to be sorted.
   val sortedReadingNodes = readingNodes // Sort reading nodes in token order
@@ -72,10 +71,12 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
     .sortBy(_.witnessReadings("w0")._1)
 
   // inspect the reading to make sure they are sufficient to take the next step
-  for (readingNode <- sortedReadingNodes)
-    println(readingNode)
+  // for (readingNode <- sortedReadingNodes)
+  //   println(readingNode)
 
-  // take the first reading node from the sorted reading nodes
+  // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
+  val firstReadingNode = sortedReadingNodes.head
+  println(firstReadingNode)
 
   // split the root reading node based on the end position for each witness of the first reading node
   // of the alignment.
