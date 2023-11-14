@@ -3,6 +3,7 @@ package net.collatex.reptilian
 import scalax.collection.edge.WDiEdge
 import scalax.collection.mutable.Graph
 
+import scala.annotation.tailrec
 import scala.collection.{immutable, mutable}
 import scala.collection.mutable.Map
 
@@ -41,6 +42,7 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
   val sortedReadingNodes = readingNodes // Sort reading nodes in token order
     .toVector
     .sortBy(_.witnessReadings("w0")._1)
+    .toList
 
   // inspect the reading to make sure they are sufficient to take the next step
   // for (readingNode <- sortedReadingNodes)
@@ -81,31 +83,42 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
   println(root)
 
 
-  // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
-  val firstReadingNode = sortedReadingNodes.head
-  println("Witness intervals of the first block of the alignment")
-  println(firstReadingNode)
 
-  // split the root reading node based on the end position for each witness of the first reading node
-  // of the alignment.
-  // That splits the root reading node into two reading nodes.
-  val tempSplit = split_reading_node(root, firstReadingNode.witnessReadings.map((k, v) => k -> v._2))
-  // split the first returned reading node again, now by the start position for each witness of the first
-  // sorted reading node.
-  val tempSplit2 = split_reading_node(tempSplit._1, firstReadingNode.witnessReadings.map((k, v) => k -> v._1))
+  @tailrec
+  def recursiveBuildAlignmentTreeLevel(treeReadingNode: ReadingNode, remainingAlignment: List[ReadingNode]): Unit = {
+    // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
+    val firstReadingNode = remainingAlignment.head
+    // println("Witness intervals of the first block of the alignment")
+    // println(firstReadingNode)
 
-  // the undecided part needs to be checked further. It can be further aligned, this represents
-  // going deeper into the
-  val undecidedPart = tempSplit2._1
-  println("Witness intervals before the first full depth alignment block, could be aligned further")
-  println(undecidedPart)
+    // split the root reading node based on the end position for each witness of the first reading node
+    // of the alignment.
+    // That splits the root reading node into two reading nodes.
+    val tempSplit = split_reading_node(treeReadingNode, firstReadingNode.witnessReadings.map((k, v) => k -> v._2))
+    // split the first returned reading node again, now by the start position for each witness of the first
+    // sorted reading node.
+    val tempSplit2 = split_reading_node(tempSplit._1, firstReadingNode.witnessReadings.map((k, v) => k -> v._1))
 
-  // this part has to be split further recursively
-  val remainder = tempSplit._2
-  println("Witness intervals of the remainder of the root node, that need to be further split into nodes")
-  println(remainder)
+    // the undecided part needs to be checked further. It can be further aligned, this represents
+    // going deeper into the
+    val undecidedPart = tempSplit2._1
+    println("Witness intervals before the first full depth alignment block, could be aligned further")
+    println(undecidedPart)
 
+    println("Aligned witness intervals")
+    println(firstReadingNode)
 
+    // this part has to be split further recursively
+    val remainder = tempSplit._2
+    //    println("Witness intervals of the remainder of the root node, that need to be further split into nodes")
+    //    println(remainder)
+    //
+
+    if remainingAlignment.tail.nonEmpty then
+      recursiveBuildAlignmentTreeLevel(remainder, remainingAlignment.tail)
+  }
+
+  recursiveBuildAlignmentTreeLevel(root, sortedReadingNodes)
 
   // return a fake result for now. This will cause an exception, but that is ok for now.
   (Nil, Nil)
