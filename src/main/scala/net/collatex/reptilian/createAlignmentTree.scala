@@ -28,7 +28,7 @@ def split_reading_node(current: ReadingNode, position_to_split: immutable.Map[St
     val splitValue = position_to_split.getOrElse(k, -1)
     // the splitValue should be > v._1 (start value)
     // the splitValue should be <= v._2 (end value)
-    val ranges2 = k -> (splitValue+1, v._2)
+    val ranges2 = k -> (splitValue, v._2)
     ranges2
   )
 
@@ -64,6 +64,7 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
   // If we store the lowest and highest token for each witness in a map we are there
   // To store it in a reading node we have to store in a (String, (Int, Int)
   // which is not as expressive as a (String, (Token, Token) or even better (Witness, (Token, Token))
+  // Hmmm WitnessReading second value is exclusive end of the range
   val witnessRanges: mutable.Map[String, (Int, Int)] = mutable.Map.empty
 
   // go over the tokens and assign the lowest and the highest to the map
@@ -75,7 +76,7 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
       val tuple = witnessRanges.getOrElse(sigla(token.w), (tokenIndex, tokenIndex))
       val minimum = tuple._1
       val maximum = tokenIndex
-      witnessRanges.put(sigla(token.w), (minimum, maximum))
+      witnessRanges.put(sigla(token.w), (minimum, maximum+1)) // +1 is for exclusive end
 
   val root = ReadingNode(witnessRanges.toMap)
   println(root)
@@ -90,7 +91,7 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
   // That splits the root reading node into two reading nodes.
   val split1 = split_reading_node(root, firstReadingNode.witnessReadings.map((k, v) => k -> v._2))
   println(split1._1)
-
+  println(split1._2)
 
   // split the first returned reading node again, now by the start position for each witness of the first
   // sorted reading node.
