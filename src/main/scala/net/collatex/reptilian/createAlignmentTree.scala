@@ -1,11 +1,9 @@
 package net.collatex.reptilian
 
-import net.collatex.reptilian.{AlignmentTreeNode, Block, ExpandedNode, FullDepthBlock, LocalToken, ReadingNode, RootNode, StringNode, Token, UnexpandedNode}
 import scalax.collection.edge.WDiEdge
 import scalax.collection.mutable.Graph
 
 import scala.collection.{immutable, mutable}
-import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Map
 
 // This method transform an alignment on the global level of the fullest depth blocks
@@ -79,22 +77,34 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
       witnessRanges.put(sigla(token.w), (minimum, maximum+1)) // +1 is for exclusive end
 
   val root = ReadingNode(witnessRanges.toMap)
+  println("Witness intervals on the root node of the alignment tree")
   println(root)
 
 
   // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
   val firstReadingNode = sortedReadingNodes.head
+  println("Witness intervals of the first block of the alignment")
   println(firstReadingNode)
 
   // split the root reading node based on the end position for each witness of the first reading node
   // of the alignment.
   // That splits the root reading node into two reading nodes.
-  val split1 = split_reading_node(root, firstReadingNode.witnessReadings.map((k, v) => k -> v._2))
-  println(split1._1)
-  println(split1._2)
-
+  val tempSplit = split_reading_node(root, firstReadingNode.witnessReadings.map((k, v) => k -> v._2))
   // split the first returned reading node again, now by the start position for each witness of the first
   // sorted reading node.
+  val tempSplit2 = split_reading_node(tempSplit._1, firstReadingNode.witnessReadings.map((k, v) => k -> v._1))
+
+  // the undecided part needs to be checked further. It can be further aligned, this represents
+  // going deeper into the
+  val undecidedPart = tempSplit2._1
+  println("Witness intervals before the first full depth alignment block, could be aligned further")
+  println(undecidedPart)
+
+  // this part has to be split further recursively
+  val remainder = tempSplit._2
+  println("Witness intervals of the remainder of the root node, that need to be further split into nodes")
+  println(remainder)
+
 
 
   // return a fake result for now. This will cause an exception, but that is ok for now.
