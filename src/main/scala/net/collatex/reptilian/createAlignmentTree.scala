@@ -16,6 +16,28 @@ import scala.collection.mutable.Map
 // yet to be align and that it then calls the suffix array, traversal graph code it self 
 // Basically an inverse of the current control flow.
 
+def split_reading_node(current: ReadingNode, position_to_split: immutable.Map[String, Int]): (ReadingNode, ReadingNode) = {
+  val changedMap = current.witnessReadings.map((k, v) =>
+    val splitValue = position_to_split.getOrElse(k, -1)
+    // the splitValue should be > v._1 (start value)
+    // the splitValue should be <= v._2 (end value)
+    val ranges1 = k -> (v._1, splitValue)
+    ranges1
+  )
+  val changedMap2 = current.witnessReadings.map((k, v) =>
+    val splitValue = position_to_split.getOrElse(k, -1)
+    // the splitValue should be > v._1 (start value)
+    // the splitValue should be <= v._2 (end value)
+    val ranges2 = k -> (splitValue+1, v._2)
+    ranges2
+  )
+
+  // note: we need filter out all the witnesses that have an empty range after the split
+  // note: if the whole map is empty we need return a special kind of return value. Could be an EmptyReadingNode
+  val result: (ReadingNode, ReadingNode) = (ReadingNode(changedMap), ReadingNode(changedMap2))
+  result
+}
+
 def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], blockTexts: immutable.Map[Int, String], graph: Graph[Int, WDiEdge], alignmentBlocksSet: Set[Int], readingNodes: Iterable[ReadingNode]) = {
   // var root = RootNode()
 
