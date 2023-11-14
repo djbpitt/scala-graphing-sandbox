@@ -17,14 +17,14 @@ import scala.collection.mutable.Map
 def split_reading_node(current: ReadingNode, position_to_split: immutable.Map[String, Int]): (ReadingNode, ReadingNode) = {
   val changedMap = current.witnessReadings.map((k, v) =>
     val splitValue = position_to_split.getOrElse(k, -1)
-    // the splitValue should be > v._1 (start value)
+    // the splitValue should be >= v._1 (start value)
     // the splitValue should be <= v._2 (end value)
     val ranges1 = k -> (v._1, splitValue)
     ranges1
   )
   val changedMap2 = current.witnessReadings.map((k, v) =>
     val splitValue = position_to_split.getOrElse(k, -1)
-    // the splitValue should be > v._1 (start value)
+    // the splitValue should be >= v._1 (start value)
     // the splitValue should be <= v._2 (end value)
     val ranges2 = k -> (splitValue, v._2)
     ranges2
