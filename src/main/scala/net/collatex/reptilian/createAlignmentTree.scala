@@ -48,7 +48,7 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
 
   // Figure out the sigla
   val sigla = sortedReadingNodes.head.witnessReadings.keys.toList.sorted // Humiliating temporary step
-  println(sigla)
+  // println(sigla)
 
 
 
