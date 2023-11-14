@@ -39,6 +39,19 @@ def split_reading_node(current: ReadingNode, position_to_split: immutable.Map[St
 }
 
 def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], blockTexts: immutable.Map[Int, String], graph: Graph[Int, WDiEdge], alignmentBlocksSet: Set[Int], readingNodes: Iterable[ReadingNode]) = {
+  // weird enough the readingNodes do not seem to be sorted.
+  val sortedReadingNodes = readingNodes // Sort reading nodes in token order
+    .toVector
+    .sortBy(_.witnessReadings("w0")._1)
+
+  // Figure out the sigla
+  val sigla = sortedReadingNodes.head.witnessReadings.keys.toList // Humiliating temporary step
+
+  // inspect the reading to make sure they are sufficient to take the next step
+  // for (readingNode <- sortedReadingNodes)
+  //   println(readingNode)
+
+
   // The RootNode should have the full range of each of the witness tokens on it.
   // RootNode is too final of a designation. We can only call it that after doing multiple splits.
   // hmm maybe we start with an UnexpandedNode... No, it has no ranges on it. Only Reading have ranges on it
@@ -57,22 +70,14 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
   for (tokenIndex <- tokenArray.indices)
     val token = tokenArray(tokenIndex)
     if token.w != -1 then
-      val tuple = witnessRanges.getOrElse(token.w.toString, (tokenIndex, tokenIndex))
+      val tuple = witnessRanges.getOrElse(sigla(token.w), (tokenIndex, tokenIndex))
       val minimum = tuple._1
       val maximum = tokenIndex
-      witnessRanges.put(token.w.toString, (minimum, maximum))
+      witnessRanges.put(sigla(token.w), (minimum, maximum))
 
-  println(witnessRanges)
   val root = ReadingNode(witnessRanges.toMap)
+  println(root)
 
-  // weird enough the readingNodes do not seem to be sorted.
-  val sortedReadingNodes = readingNodes // Sort reading nodes in token order
-    .toVector
-    .sortBy(_.witnessReadings("w0")._1)
-
-  // inspect the reading to make sure they are sufficient to take the next step
-  // for (readingNode <- sortedReadingNodes)
-  //   println(readingNode)
 
   // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
   val firstReadingNode = sortedReadingNodes.head
@@ -100,7 +105,6 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
 //
 //
 //
-//  val sigla = sortedReadingNodes.head.witnessReadings.keys.toList // Humiliating temporary step
 //  /* For each sliding pair of reading nodes create an unexpanded node with witness readings
 //  *   that point from each siglum to a slice from the end of the first reading node to the
 //  *   start of the second. */
