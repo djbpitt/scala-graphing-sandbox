@@ -44,12 +44,14 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
     .toVector
     .sortBy(_.witnessReadings("w0")._1)
 
-  // Figure out the sigla
-  val sigla = sortedReadingNodes.head.witnessReadings.keys.toList // Humiliating temporary step
-
   // inspect the reading to make sure they are sufficient to take the next step
   // for (readingNode <- sortedReadingNodes)
   //   println(readingNode)
+
+  // Figure out the sigla
+  val sigla = sortedReadingNodes.head.witnessReadings.keys.toList.sorted // Humiliating temporary step
+  println(sigla)
+
 
 
   // The RootNode should have the full range of each of the witness tokens on it.
@@ -86,6 +88,10 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
   // split the root reading node based on the end position for each witness of the first reading node
   // of the alignment.
   // That splits the root reading node into two reading nodes.
+  val split1 = split_reading_node(root, firstReadingNode.witnessReadings.map((k, v) => k -> v._2))
+  println(split1._1)
+
+
   // split the first returned reading node again, now by the start position for each witness of the first
   // sorted reading node.
 
