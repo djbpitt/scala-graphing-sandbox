@@ -330,31 +330,5 @@ def alignmentIntsToBlocks(alignment: Set[Int], blocks: Iterable[FullDepthBlock])
 
 // Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
 def createAlignment(witnessStrings: List[String])(implicit tokenArray: Vector[Token]) =
-  val (allBlocks, tmpSuffixArray, longestFullDepthNonrepeatingBlocks) = createAlignedBlocks(tokenArray, witnessStrings.size)
-  implicit val suffixArray: Array[Int] = tmpSuffixArray
-
-  val blockTexts: Map[Int, String] = blockTextById(longestFullDepthNonrepeatingBlocks, tokenArray)
-
-  // create navigation graph and filter out transposed nodes
-  val graph = createTraversalGraph(longestFullDepthNonrepeatingBlocks)
-
-  val alignment: List[Int] = findOptimalAlignment(graph) // Int identifiers of full-depth blocks
-  val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment: List[Int])
-  val alignmentBlocks: Iterable[FullDepthBlock] = alignmentIntsToBlocks(alignmentBlocksSet, longestFullDepthNonrepeatingBlocks)
-  val readingNodes = blocksToNodes(alignmentBlocks, tokenArray)
-
-  /** Create BitSet of tokens placed from full-depth non-repeating blocks */
-  val fullDepthBlocksAsRanges = readingNodes.flatMap(_.witnessReadings.values).map(e => Range(e._1, e._2))
-  val bitarray = mutable.BitSet.empty
-
-  def addRangeToBitArray(b: mutable.BitSet, r: Range): Unit =
-    b.addAll(r)
-
-  fullDepthBlocksAsRanges.foreach(e => addRangeToBitArray(bitarray, e))
-
-  /* Create fingertree to navigate unexpanded nodes */
-  val blockRangeSeq = createRangedSeq(allBlocks) // Finger tree
-
-
-  createAlignmentTree(tokenArray, allBlocks, blockTexts, graph, alignmentBlocksSet, readingNodes)
+  createAlignmentTree(tokenArray, witnessStrings.size)
 

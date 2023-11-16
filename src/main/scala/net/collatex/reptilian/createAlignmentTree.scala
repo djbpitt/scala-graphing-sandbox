@@ -38,7 +38,21 @@ def split_reading_node(current: ReadingNode, position_to_split: immutable.Map[St
   result
 }
 
-def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], blockTexts: immutable.Map[Int, String], graph: Graph[Int, WDiEdge], alignmentBlocksSet: Set[Int], readingNodes: Iterable[ReadingNode]) = {
+def createAlignmentTree(tokenArray: Vector[Token], witnessCount: Int) = {
+  // find the full depth blocks for the alignment
+  val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(tokenArray, witnessCount)
+  // implicit val suffixArray: Array[Int] = tmpSuffixArray
+
+  //  val blockTexts: Map[Int, String] = blockTextById(longestFullDepthNonRepeatingBlocks, tokenArray)
+
+  // create navigation graph and filter out transposed nodes
+  val graph = createTraversalGraph(longestFullDepthNonRepeatingBlocks)
+
+  val alignment: List[Int] = findOptimalAlignment(graph) // Int identifiers of full-depth blocks
+  val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment: List[Int])
+  val alignmentBlocks: Iterable[FullDepthBlock] = alignmentIntsToBlocks(alignmentBlocksSet, longestFullDepthNonRepeatingBlocks)
+  val readingNodes = blocksToNodes(alignmentBlocks, tokenArray)
+
   // weird enough the readingNodes do not seem to be sorted.
   val sortedReadingNodes = readingNodes // Sort reading nodes in token order
     .toVector
@@ -52,7 +66,6 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
   // Figure out the sigla
   val sigla = sortedReadingNodes.head.witnessReadings.keys.toList.sorted // Humiliating temporary step
   // println(sigla)
-
 
 
   // The RootNode should have the full range of each of the witness tokens on it.
@@ -137,7 +150,7 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
   recursiveBuildAlignmentTreeLevel(root, sortedReadingNodes)
 
   // return a fake result for now. This will cause an exception, but that is ok for now.
-  (Nil, Nil)
+  (RootNode(), sigla)
 }
 
 //
