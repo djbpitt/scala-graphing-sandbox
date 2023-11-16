@@ -38,7 +38,8 @@ def split_reading_node(current: ReadingNode, position_to_split: immutable.Map[St
   result
 }
 
-def createAlignmentTree(tokenArray: Vector[Token], witnessCount: Int) = {
+
+def alignTokenArray(tokenArray: Vector[Token], witnessCount: Int) = {
   // find the full depth blocks for the alignment
   val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(tokenArray, witnessCount)
   // implicit val suffixArray: Array[Int] = tmpSuffixArray
@@ -58,6 +59,11 @@ def createAlignmentTree(tokenArray: Vector[Token], witnessCount: Int) = {
     .toVector
     .sortBy(_.witnessReadings("w0")._1)
     .toList
+  sortedReadingNodes
+}
+
+def createAlignmentTree(tokenArray: Vector[Token], witnessCount: Int) = {
+  val sortedReadingNodes: immutable.List[ReadingNode] = alignTokenArray(tokenArray, witnessCount)
 
   // inspect the reading to make sure they are sufficient to take the next step
   // for (readingNode <- sortedReadingNodes)
