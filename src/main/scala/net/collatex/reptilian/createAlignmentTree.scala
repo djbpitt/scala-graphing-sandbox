@@ -115,6 +115,21 @@ def createAlignmentTree(tokenArray: Vector[Token], allBlocks: List[Block], block
     //    println(remainder)
     //
 
+    // try to alignment the undecided part
+
+    // make the tokenArray smaller. cut out the part that is unaligned.
+    // We have witness count hard code here.
+//    val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(tokenArray, 6)
+//
+//    // create navigation graph and filter out transposed nodes
+//    val graph = createTraversalGraph(longestFullDepthNonRepeatingBlocks)
+//
+//    val alignment: List[Int] = findOptimalAlignment(graph) // Int identifiers of full-depth blocks
+//    val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment: List[Int])
+//    val alignmentBlocks: Iterable[FullDepthBlock] = alignmentIntsToBlocks(alignmentBlocksSet, longestFullDepthNonRepeatingBlocks)
+//    val readingNodes = blocksToNodes(alignmentBlocks, tokenArray)
+
+
     if remainingAlignment.tail.nonEmpty then
       recursiveBuildAlignmentTreeLevel(remainder, remainingAlignment.tail)
   }
