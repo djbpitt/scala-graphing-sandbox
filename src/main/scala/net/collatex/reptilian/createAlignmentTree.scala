@@ -16,11 +16,14 @@ import scala.collection.mutable.Map
 // Basically an inverse of the current control flow.
 
 def split_reading_node(current: ReadingNode, position_to_split: immutable.Map[String, Int]): (ReadingNode, ReadingNode) = {
-  // note: we filter out all the witnesses that have an empty range after the split
+  // For witness ranges, last value is exclusive
+  // We filter out all the witnesses that have an empty range after the split
+  // TODO: Simplify duplicate code
   val changedMap = current.witnessReadings.map((k, v) =>
-    val splitValue = position_to_split.getOrElse(k, -1)
-    // the splitValue should be >= v._1 (start value)
-    // the splitValue should be <= v._2 (end value)
+    val splitValue = position_to_split.getOrElse(k, -1) // Default value (temporarily) to avoid Option
+    // Not yet checking for valid call; more defensive would be:
+    //  the splitValue should be >= v._1 (start value)
+    //  the splitValue should be <= v._2 (end value)
     val ranges1 = k -> (v._1, splitValue)
     ranges1
   ).filter((_, v) => v._1 != v._2)
@@ -33,7 +36,7 @@ def split_reading_node(current: ReadingNode, position_to_split: immutable.Map[St
     ranges2
   ).filter((_, v) => v._1 != v._2)
 
-  // note: if the whole map is empty we need return a special kind of return value. Could be an EmptyReadingNode
+  // TODO: if the whole map is empty we should return a special type, e.g., EmptyReadingNode
   val result: (ReadingNode, ReadingNode) = (ReadingNode(changedMap), ReadingNode(changedMap2))
   result
 }
@@ -41,20 +44,24 @@ def split_reading_node(current: ReadingNode, position_to_split: immutable.Map[St
 
 def alignTokenArray(tokenArray: Vector[Token], witnessCount: Int) = {
   // find the full depth blocks for the alignment
+  // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
+  // ??: Modify createAlignedBlocks() not to return unused values
+  // ??: Count witnesses (via separators) instead of passing in count
+  // TODO: Simplify where we need single token array and where we need witness-set metadata
   val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(tokenArray, witnessCount)
-  // implicit val suffixArray: Array[Int] = tmpSuffixArray
-
-  //  val blockTexts: Map[Int, String] = blockTextById(longestFullDepthNonRepeatingBlocks, tokenArray)
 
   // create navigation graph and filter out transposed nodes
   val graph = createTraversalGraph(longestFullDepthNonRepeatingBlocks)
 
   val alignment: List[Int] = findOptimalAlignment(graph) // Int identifiers of full-depth blocks
-  val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment: List[Int])
+  val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment: List[Int]) // We lose the sorting here
   val alignmentBlocks: Iterable[FullDepthBlock] = alignmentIntsToBlocks(alignmentBlocksSet, longestFullDepthNonRepeatingBlocks)
   val readingNodes = blocksToNodes(alignmentBlocks, tokenArray)
 
-  // weird enough the readingNodes do not seem to be sorted.
+  // We need to restore the sorting that we destroyed when we created the set
+  // Called repeatedly, so there is always a w0, although not always the same one
+  //   (tokens know their global witness membership, so we can recover original witness membership when needed)
+  // TODO: Remove hard-coded witness identifier
   val sortedReadingNodes = readingNodes // Sort reading nodes in token order
     .toVector
     .sortBy(_.witnessReadings("w0")._1)
@@ -63,79 +70,71 @@ def alignTokenArray(tokenArray: Vector[Token], witnessCount: Int) = {
 }
 
 def createAlignmentTree(tokenArray: Vector[Token], witnessCount: Int) = {
+  // Housekeeping; TODO: Think about witness-set metadata
   val sortedReadingNodes: immutable.List[ReadingNode] = alignTokenArray(tokenArray, witnessCount)
-
-  // inspect the reading to make sure they are sufficient to take the next step
-  // for (readingNode <- sortedReadingNodes)
-  //   println(readingNode)
-
-  // Figure out the sigla
   val sigla = sortedReadingNodes.head.witnessReadings.keys.toList.sorted // Humiliating temporary step
-  // println(sigla)
 
-
-  // The RootNode should have the full range of each of the witness tokens on it.
-  // RootNode is too final of a designation. We can only call it that after doing multiple splits.
-  // hmm maybe we start with an UnexpandedNode... No, it has no ranges on it. Only Reading have ranges on it
-  // that makes the root nodes more like a reading node ...
-  // I need to know all the witnesses and their ranges. Where to get that info from?
-  // The token array has that information but it is a bit hidden.
-  // Traverse over the tokenArray and get the highest token position for each witness.
-  // If we store the lowest and highest token for each witness in a map we are there
-  // To store it in a reading node we have to store in a (String, (Int, Int)
-  // which is not as expressive as a (String, (Token, Token) or even better (Witness, (Token, Token))
-  // Hmmm WitnessReading second value is exclusive end of the range
+  // The working space should have witnesses and ranges (like a ReadingNode in our original type system)
+  // Traverse over tokenArray and get the first and last token position for each witness to get full range.
+  // To store it in a reading node we have to store in a (String, (Int, Int)), that is,
+  //   (Witness identifier, (Token offset, Token offset)) (use type alias, which is more self-documenting?)
+  //   NB: WitnessReading second value is exclusive end of the range, so the second Int isn’t necessarily a
+  //     token offset
+  // NB: We are embarrassed by the mutable map (and by other things, such has having to scan token array)
   val witnessRanges: mutable.Map[String, (Int, Int)] = mutable.Map.empty
 
   // go over the tokens and assign the lowest and the highest to the map
-  // token doesn't know it's position
-  // use indices
+  // token doesn't know its position in a specific witness, so use indices
+  // TODO: Could be simplified if the routine knew the token length of the witnesses
   for (tokenIndex <- tokenArray.indices)
     val token = tokenArray(tokenIndex)
-    if token.w != -1 then
+    if token.w != -1 then // witness separators have witness identifier values of -1
       val tuple = witnessRanges.getOrElse(sigla(token.w), (tokenIndex, tokenIndex))
       val minimum = tuple._1
       val maximum = tokenIndex
-      witnessRanges.put(sigla(token.w), (minimum, maximum+1)) // +1 is for exclusive end
+      witnessRanges.put(sigla(token.w), (minimum, maximum + 1)) // +1 is for exclusive end
 
   val root = ReadingNode(witnessRanges.toMap)
-  println("Witness intervals on the root node of the alignment tree")
-  println(root)
-
-
+//  println("Witness intervals on the root node of the alignment tree")
+//  println(root)
 
   @tailrec
   def recursiveBuildAlignmentTreeLevel(treeReadingNode: ReadingNode, remainingAlignment: List[ReadingNode]): Unit = {
+    // TODO: Should return new root node, but currently just reports to screen
+    // On first run, treeReadingNode contains full token ranges and remainingAlignment contains all sortedReadingNodes
     // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
     val firstReadingNode = remainingAlignment.head
     // println("Witness intervals of the first block of the alignment")
     // println(firstReadingNode)
 
-    // split the root reading node based on the end position for each witness of the first reading node
-    // of the alignment.
-    // That splits the root reading node into two reading nodes.
+    // split treeReadingNode based on the end position for each witness of the first reading node of the alignment.
+    // That splits the root reading node into aligned block plus optional leading non-block tokens
+    // TODO: map() creates a new map; would a map view be better (we use the value only once)? Would using a
+    //   map view instead of a map require changing the signature of split_reading_node()?
+    // TODO: split_reading_node() returns a tuple, which we could unpack
+    // Splits on end of aligned block, so:
+    //   First item contains block (empty only at end) preceded by optional leading unaligned stuff
+    //   Second item contains optional stuff after the block, which will be the input into the recursion
+    //   Recursion knows to end when remainingAlignment parameter is an empty list
     val tempSplit = split_reading_node(treeReadingNode, firstReadingNode.witnessReadings.map((k, v) => k -> v._2))
     // split the first returned reading node again, now by the start position for each witness of the first
     // sorted reading node.
     val tempSplit2 = split_reading_node(tempSplit._1, firstReadingNode.witnessReadings.map((k, v) => k -> v._1))
 
-    // the undecided part needs to be checked further. It can be further aligned, this represents
-    // going deeper into the
+    // The undecided part (unaligned stuff before block) could be empty or could hold data, in which case it may
+    //   have partial alignment, variation, …. 
+    // TODO: Currently we just report the undecided part, but we need to process it.
     val undecidedPart = tempSplit2._1
     println("Witness intervals before the first full depth alignment block, could be aligned further")
     println(undecidedPart)
-
     println("Aligned witness intervals")
     println(firstReadingNode)
 
     // this part has to be split further recursively
     val remainder = tempSplit._2
-    //    println("Witness intervals of the remainder of the root node, that need to be further split into nodes")
-    //    println(remainder)
-    //
 
-    // try to alignment the undecided part
-
+    // TODO: try to align undecided part by creating new token array and calling the function above
+    // The following is not yet implemented. We also are not yet handling unaligned stuff at the very end
     // make the tokenArray smaller. cut out the part that is unaligned.
     // We have witness count hard code here.
 //    val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(tokenArray, 6)
@@ -153,22 +152,14 @@ def createAlignmentTree(tokenArray: Vector[Token], witnessCount: Int) = {
       recursiveBuildAlignmentTreeLevel(remainder, remainingAlignment.tail)
   }
 
+  // Start recursion 
   recursiveBuildAlignmentTreeLevel(root, sortedReadingNodes)
 
-  // return a fake result for now. This will cause an exception, but that is ok for now.
+  // return a fake result for now. This will raise an exception, but that is ok for now.
   (RootNode(), sigla)
 }
 
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
+// Old code
 //
 //  /* For each sliding pair of reading nodes create an unexpanded node with witness readings
 //  *   that point from each siglum to a slice from the end of the first reading node to the
