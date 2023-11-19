@@ -99,7 +99,7 @@ def createAlignmentTree(tokenArray: Vector[Token], witnessCount: Int) = {
 //  println(root)
 
   @tailrec
-  def recursiveBuildAlignmentTreeLevel(result: ListBuffer[AlignmentTreeNode], treeReadingNode: ReadingNode, remainingAlignment: List[ReadingNode]): Unit = {
+  def recursiveBuildAlignmentTreeLevel(result: ListBuffer[AlignmentTreeNode], treeReadingNode: ReadingNode, remainingAlignment: List[ReadingNode]): RootNode = {
     // TODO: Should return new root node, but currently just reports to screen
     // On first run, treeReadingNode contains full token ranges and remainingAlignment contains all sortedReadingNodes
     // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
@@ -151,13 +151,17 @@ def createAlignmentTree(tokenArray: Vector[Token], witnessCount: Int) = {
 
     if remainingAlignment.tail.nonEmpty then
       recursiveBuildAlignmentTreeLevel(result, remainder, remainingAlignment.tail)
+    else
+      // The alignment results are all processed, we end the recursion.
+      val rootNode = RootNode(result)
+      rootNode
   }
 
   // Start recursion 
-  recursiveBuildAlignmentTreeLevel(ListBuffer(), root, sortedReadingNodes)
+  val rootNode = recursiveBuildAlignmentTreeLevel(ListBuffer(), root, sortedReadingNodes)
 
   // return a fake result for now. This will raise an exception, but that is ok for now.
-  (RootNode(), sigla)
+  (rootNode, sigla)
 }
 
 // Old code
