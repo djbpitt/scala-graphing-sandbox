@@ -125,8 +125,11 @@ def createAlignmentTree(tokenArray: Vector[Token], witnessCount: Int) = {
     //   have partial alignment, variation, …. 
     // TODO: Currently we just report the undecided part, but we need to process it.
     val undecidedPart = tempSplit2._1
+    // NOTE: This segment could be optional, empty.
     println("Witness intervals before the first full depth alignment block, could be aligned further")
     println(undecidedPart)
+    result += UnexpandedNode(undecidedPart.witnessReadings)
+
     println("Aligned witness intervals")
     println(firstReadingNode)
     result += firstReadingNode
