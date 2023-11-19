@@ -5,7 +5,7 @@ import scalax.collection.mutable.Graph
 
 import scala.annotation.tailrec
 import scala.collection.{immutable, mutable}
-import scala.collection.mutable.Map
+import scala.collection.mutable.{ListBuffer, Map}
 
 // This method transform an alignment on the global level of the fullest depth blocks
 // into an alignment tree by splitting
@@ -99,7 +99,7 @@ def createAlignmentTree(tokenArray: Vector[Token], witnessCount: Int) = {
 //  println(root)
 
   @tailrec
-  def recursiveBuildAlignmentTreeLevel(treeReadingNode: ReadingNode, remainingAlignment: List[ReadingNode]): Unit = {
+  def recursiveBuildAlignmentTreeLevel(result: ListBuffer[AlignmentTreeNode], treeReadingNode: ReadingNode, remainingAlignment: List[ReadingNode]): Unit = {
     // TODO: Should return new root node, but currently just reports to screen
     // On first run, treeReadingNode contains full token ranges and remainingAlignment contains all sortedReadingNodes
     // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
@@ -129,6 +129,7 @@ def createAlignmentTree(tokenArray: Vector[Token], witnessCount: Int) = {
     println(undecidedPart)
     println("Aligned witness intervals")
     println(firstReadingNode)
+    result += firstReadingNode
 
     // this part has to be split further recursively
     val remainder = tempSplit._2
@@ -149,11 +150,11 @@ def createAlignmentTree(tokenArray: Vector[Token], witnessCount: Int) = {
 
 
     if remainingAlignment.tail.nonEmpty then
-      recursiveBuildAlignmentTreeLevel(remainder, remainingAlignment.tail)
+      recursiveBuildAlignmentTreeLevel(result, remainder, remainingAlignment.tail)
   }
 
   // Start recursion 
-  recursiveBuildAlignmentTreeLevel(root, sortedReadingNodes)
+  recursiveBuildAlignmentTreeLevel(ListBuffer(), root, sortedReadingNodes)
 
   // return a fake result for now. This will raise an exception, but that is ok for now.
   (RootNode(), sigla)
