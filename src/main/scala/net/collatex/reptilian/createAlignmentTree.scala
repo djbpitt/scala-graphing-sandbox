@@ -42,12 +42,13 @@ def split_reading_node(current: ReadingNode, position_to_split: immutable.Map[St
 }
 
 
-def alignTokenArray(tokenArray: Vector[Token], witnessCount: Int) = {
+def alignTokenArray(tokenArray: Vector[Token], sigla: List[String]) = {
   // find the full depth blocks for the alignment
   // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
   // ??: Modify createAlignedBlocks() not to return unused values
   // ??: Count witnesses (via separators) instead of passing in count
   // TODO: Simplify where we need single token array and where we need witness-set metadata
+  val witnessCount = sigla.size
   val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(tokenArray, witnessCount)
 
   // create navigation graph and filter out transposed nodes
@@ -56,23 +57,21 @@ def alignTokenArray(tokenArray: Vector[Token], witnessCount: Int) = {
   val alignment: List[Int] = findOptimalAlignment(graph) // Int identifiers of full-depth blocks
   val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment: List[Int]) // We lose the sorting here
   val alignmentBlocks: Iterable[FullDepthBlock] = alignmentIntsToBlocks(alignmentBlocksSet, longestFullDepthNonRepeatingBlocks)
-  val readingNodes = blocksToNodes(alignmentBlocks, tokenArray)
-
+  val readingNodes = blocksToNodes(alignmentBlocks, tokenArray, sigla)
   // We need to restore the sorting that we destroyed when we created the set
   // Called repeatedly, so there is always a w0, although not always the same one
   //   (tokens know their global witness membership, so we can recover original witness membership when needed)
-  // TODO: Remove hard-coded witness identifier
   val sortedReadingNodes = readingNodes // Sort reading nodes in token order
     .toVector
-    .sortBy(_.witnessReadings("w0")._1)
+    .sortBy(_.witnessReadings(sigla.head)._1)
     .toList
   sortedReadingNodes
 }
 
-def createAlignmentTree(tokenArray: Vector[Token], witnessCount: Int) = {
+def createAlignmentTree(tokenArray: Vector[Token], sigla: List[String]): ExpandedNode = {
   // Housekeeping; TODO: Think about witness-set metadata
-  val sortedReadingNodes: immutable.List[ReadingNode] = alignTokenArray(tokenArray, witnessCount)
-  val sigla = sortedReadingNodes.head.witnessReadings.keys.toList.sorted // Humiliating temporary step
+  val witnessCount: Int = sigla.size
+  val sortedReadingNodes: immutable.List[ReadingNode] = alignTokenArray(tokenArray, sigla)
 
   // The working space should have witnesses and ranges (like a ReadingNode in our original type system)
   // Traverse over tokenArray and get the first and last token position for each witness to get full range.
@@ -127,12 +126,7 @@ def createAlignmentTree(tokenArray: Vector[Token], witnessCount: Int) = {
     // TODO: Currently we just report the undecided part, but we need to process it.
     val undecidedPart = tempSplit2._1
     // NOTE: This segment could be optional, empty.
-    println("Witness intervals before the first full depth alignment block, could be aligned further")
-    println(undecidedPart)
     result += UnexpandedNode(undecidedPart.witnessReadings)
-
-    println("Aligned witness intervals")
-    println(firstReadingNode)
     result += firstReadingNode
 
     // this part has to be split further recursively
@@ -164,7 +158,7 @@ def createAlignmentTree(tokenArray: Vector[Token], witnessCount: Int) = {
   // Start recursion 
   val rootNode = recursiveBuildAlignmentTreeLevel(ListBuffer(), root, sortedReadingNodes)
 
-  (rootNode, sigla)
+  rootNode
 }
 
 // Old code

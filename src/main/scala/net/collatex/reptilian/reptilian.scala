@@ -8,13 +8,13 @@ import scala.util.matching.Regex // Create tokenization regex here but tokenize 
 /** Read data files from supplied path to directory (one file per witness)
  *
  * @param pathToData os.Path object that points to data directory
- * @return Indexed sequence of lists of strings (token lists)
+ * @return List of tuples of 1) abbreviated filename and 2) string (token lists)
  */
-def readData(pathToData: Path): List[String] =
+def readData(pathToData: Path): List[(String, String)] =
   os.walk(path = pathToData, skip = _.last.startsWith(".")) // exclude hidden files
     .sorted
     .toList
-    .map(os.read)
+    .map(e => (e.last, os.read(e)))
 
 @main def main(): Unit =
   /** Select data */
@@ -34,14 +34,16 @@ def readData(pathToData: Path): List[String] =
   val tokenizer = makeTokenizer(tokenPattern) // Tokenizer function with user-supplied regex
 
   /** Read data into token array */
-  val witnessStrings = readData(pathToDarwin) // One string per witness
+  val witnessInputInfo: List[(String, String)] = readData(pathToDarwin) // One string per witness
+  val witnessStrings: List[String] = witnessInputInfo.map(_._2)
+  val sigla: List[String] = witnessInputInfo.map(_._1)
   implicit val tokenArray: Vector[Token] = tokenize(tokenizer)(witnessStrings)
 
   /** Create alignment tree
    *
    * Sigla used for alignment table
    */
-  val (root: ExpandedNode, sigla: List[String]) = createAlignment(witnessStrings)
+  val root: ExpandedNode = createAlignment(witnessStrings, sigla)
 
   /** Create views of tree
    *

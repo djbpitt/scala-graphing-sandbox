@@ -16,7 +16,7 @@ trait TokenProperties {
  * @param n Normalized token, e.g., lower-case and trim
  * @param w Witness identifier, zero-based
  *
- *          Tokenization and normalization are under user control (to be implement)
+ *          Tokenization and normalization are under user control (to be implemented)
  */
 case class Token(t: String, n: String, w: Int) extends TokenProperties
 

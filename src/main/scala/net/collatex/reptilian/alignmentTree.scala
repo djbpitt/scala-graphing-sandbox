@@ -77,13 +77,13 @@ def show(node: AlignmentTreeNode): Unit =
  * Will need to deal with non-full-depth locations in the alignment
  * */
 
-def blocksToNodes(blocks: Iterable[FullDepthBlock], tokenArray: Vector[Token]): Iterable[ReadingNode] =
+def blocksToNodes(blocks: Iterable[FullDepthBlock], tokenArray: Vector[Token], sigla: List[String]): Iterable[ReadingNode] =
   blocks
-    .map(e => fullDepthBlockToReadingNode(e, tokenArray))
-def fullDepthBlockToReadingNode(block: FullDepthBlock, tokenArray: Vector[Token]): ReadingNode =
+    .map(e => fullDepthBlockToReadingNode(e, tokenArray, sigla))
+def fullDepthBlockToReadingNode(block: FullDepthBlock, tokenArray: Vector[Token], sigla: List[String]): ReadingNode =
   val readings = block.instances
     .map(e =>
-      s"w${tokenArray(e).w}" -> (e, e + block.length))
+      sigla(tokenArray(e).w) -> (e, e + block.length))
     .toMap
   ReadingNode(readings)
 
