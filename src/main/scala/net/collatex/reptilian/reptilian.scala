@@ -41,7 +41,7 @@ def readData(pathToData: Path): List[String] =
    *
    * Sigla used for alignment table
    */
-  val (root: RootNode, sigla: List[String]) = createAlignment(witnessStrings)
+  val (root: ExpandedNode, sigla: List[String]) = createAlignment(witnessStrings)
 
   /** Create views of tree
    *

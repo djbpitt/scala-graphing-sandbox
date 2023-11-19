@@ -11,7 +11,7 @@ import scala.collection.mutable.ListBuffer
  * @param root : RootNode
  * @return : String containing dot code for GraphViz
  * */
-def dot(root: RootNode, tokenArray: Vector[Token]): String =
+def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
   val header: String = "digraph MyGraph {\nranksep=3.0\n\tnode [shape=record, style=filled]\n\t"
   val footer: String = "\n}"
   var id = 0
@@ -26,12 +26,6 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
   while nodesToProcess.nonEmpty do
     val currentNode = nodesToProcess.dequeue()
     currentNode match {
-      case (currentId, RootNode(children)) =>
-        for i <- children do {
-          id += 1
-          nodesToProcess.enqueue((id, i))
-          edges.append(List(currentId, " -> ", id).mkString(" "))
-        }
       case (currentId, VariationNode(children)) =>
         for i <- children do {
           id += 1
@@ -97,7 +91,7 @@ def dot(root: RootNode, tokenArray: Vector[Token]): String =
   ).mkString("\n")
 
 
-def createAlignmentTable(root: RootNode, tokenArray: Vector[Token], sigla: List[String]) = {
+def createAlignmentTable(root: ExpandedNode, tokenArray: Vector[Token], sigla: List[String]) = {
   val sortedSigla = sigla.sorted
   val htmlBoilerplate = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
   htmlBoilerplate + html(xmlns := "http://www.w3.org/1999/xhtml")(
@@ -131,7 +125,6 @@ def createAlignmentTable(root: RootNode, tokenArray: Vector[Token], sigla: List[
         }))(
           td(index + 1),
           child match {
-            case RootNode(_) => throw RuntimeException("Root node cannot be a child of any other node")
             case ReadingNode(witnessReadings) =>
               val (_, value) = witnessReadings.head
               val tokens = tokenArray.slice(value._1, value._2)

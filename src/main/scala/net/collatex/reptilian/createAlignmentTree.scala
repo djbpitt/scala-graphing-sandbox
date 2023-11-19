@@ -93,13 +93,14 @@ def createAlignmentTree(tokenArray: Vector[Token], witnessCount: Int) = {
       val minimum = tuple._1
       val maximum = tokenIndex
       witnessRanges.put(sigla(token.w), (minimum, maximum + 1)) // +1 is for exclusive end
-
-  val root = ReadingNode(witnessRanges.toMap)
+  // mutable map is local to the function, to convert to immutable before return
+  val witnessReadings = witnessRanges.toMap
+  val root = ReadingNode(witnessReadings)
 //  println("Witness intervals on the root node of the alignment tree")
 //  println(root)
 
   @tailrec
-  def recursiveBuildAlignmentTreeLevel(result: ListBuffer[AlignmentTreeNode], treeReadingNode: ReadingNode, remainingAlignment: List[ReadingNode]): RootNode = {
+  def recursiveBuildAlignmentTreeLevel(result: ListBuffer[AlignmentTreeNode], treeReadingNode: ReadingNode, remainingAlignment: List[ReadingNode]): ExpandedNode = {
     // TODO: Should return new root node, but currently just reports to screen
     // On first run, treeReadingNode contains full token ranges and remainingAlignment contains all sortedReadingNodes
     // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
@@ -156,14 +157,13 @@ def createAlignmentTree(tokenArray: Vector[Token], witnessCount: Int) = {
       recursiveBuildAlignmentTreeLevel(result, remainder, remainingAlignment.tail)
     else
       // The alignment results are all processed, we end the recursion.
-      val rootNode = RootNode(result)
+      val rootNode = ExpandedNode(children=result, witnessReadings=witnessReadings)
       rootNode
   }
 
   // Start recursion 
   val rootNode = recursiveBuildAlignmentTreeLevel(ListBuffer(), root, sortedReadingNodes)
 
-  // return a fake result for now. This will raise an exception, but that is ok for now.
   (rootNode, sigla)
 }
 

@@ -24,12 +24,15 @@ trait FormatWitnessReadings {
       s"${ListMap(witnessReadings.toSeq.sortBy(_._1): _*)}"
 }
 
-/** RootNode
+/** ExpandedNode
  *
- * Has ordered children, at least some of which are branching nodes
- * (cf. VariationNode, which has only leaf-node children)
- * */
-final case class RootNode(children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
+ * Include root node, which is no longer a separate subtype
+ *
+ * @param witnessReadings map from siglum to token range
+ * @param children ListBuffer of alignment-tree nodes
+ */
+final case class ExpandedNode(witnessReadings: WitnessReadings, children: ListBuffer[AlignmentTreeNode] =
+ListBuffer.empty) extends AlignmentTreeNode with FormatWitnessReadings
 
 final case class VariationNode(children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
 
@@ -58,12 +61,9 @@ final case class UnexpandedNode(witnessReadings: WitnessReadings) extends Alignm
 // When we expand an UnexpandedNode we replace it with an ExpandedNode
 // UnexpandedNode cannot have children (it has only WitnessReadings)
 // ExpandedNode must have children
-case class ExpandedNode(witnessReadings: WitnessReadings, children: ListBuffer[AlignmentTreeNode] =
-                              ListBuffer.empty) extends AlignmentTreeNode with FormatWitnessReadings
 def show(node: AlignmentTreeNode): Unit =
   node match {
     case ReadingNode(witnessReadings) => println(witnessReadings)
-    case RootNode(children) => println(children)
     case VariationNode(children) => println(children)
     case UnexpandedNode(witnessReadings) => println(witnessReadings)
     case ExpandedNode(witnessReadings, children) => println(witnessReadings)
