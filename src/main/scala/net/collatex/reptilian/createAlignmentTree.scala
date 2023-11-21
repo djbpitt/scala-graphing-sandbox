@@ -42,13 +42,16 @@ def split_reading_node(current: ReadingNode, position_to_split: immutable.Map[St
 }
 
 
-def alignTokenArray(tokenArray: Vector[Token], sigla: List[String]) = {
+def alignTokenArray(tokenArray: Vector[Token], sigla: List[String], selection: ReadingNode) = {
   // find the full depth blocks for the alignment
   // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
   // ??: Modify createAlignedBlocks() not to return unused values
   // ??: Count witnesses (via separators) instead of passing in count
   // TODO: Simplify where we need single token array and where we need witness-set metadata
   val witnessCount = sigla.size
+
+  // TODO: create a local token array based on the selection!
+
   val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(tokenArray, witnessCount)
 
   // create navigation graph and filter out transposed nodes
@@ -69,10 +72,6 @@ def alignTokenArray(tokenArray: Vector[Token], sigla: List[String]) = {
 }
 
 def createAlignmentTree(tokenArray: Vector[Token], sigla: List[String]): ExpandedNode = {
-  // Housekeeping; TODO: Think about witness-set metadata
-  val witnessCount: Int = sigla.size
-  val sortedReadingNodes: immutable.List[ReadingNode] = alignTokenArray(tokenArray, sigla)
-
   // The working space should have witnesses and ranges (like a ReadingNode in our original type system)
   // Traverse over tokenArray and get the first and last token position for each witness to get full range.
   // To store it in a reading node we have to store in a (String, (Int, Int)), that is,
@@ -80,6 +79,7 @@ def createAlignmentTree(tokenArray: Vector[Token], sigla: List[String]): Expande
   //   NB: WitnessReading second value is exclusive end of the range, so the second Int isn’t necessarily a
   //     token offset
   // NB: We are embarrassed by the mutable map (and by other things, such has having to scan token array)
+  // Housekeeping; TODO: Think about witness-set metadata
   val witnessRanges: mutable.Map[String, (Int, Int)] = mutable.Map.empty
 
   // go over the tokens and assign the lowest and the highest to the map
@@ -94,9 +94,11 @@ def createAlignmentTree(tokenArray: Vector[Token], sigla: List[String]): Expande
       witnessRanges.put(sigla(token.w), (minimum, maximum + 1)) // +1 is for exclusive end
   // mutable map is local to the function, to convert to immutable before return
   val witnessReadings = witnessRanges.toMap
-  val root = ReadingNode(witnessReadings)
-//  println("Witness intervals on the root node of the alignment tree")
-//  println(root)
+
+  val globalReadingNode = ReadingNode(witnessReadings)
+  //  println("Witness intervals on the root node of the alignment tree")
+  //  println(globalReadingNode)
+
 
   @tailrec
   def recursiveBuildAlignmentTreeLevel(result: ListBuffer[AlignmentTreeNode], treeReadingNode: ReadingNode, remainingAlignment: List[ReadingNode]): ExpandedNode = {
@@ -136,15 +138,9 @@ def createAlignmentTree(tokenArray: Vector[Token], sigla: List[String]): Expande
     // The following is not yet implemented. We also are not yet handling unaligned stuff at the very end
     // make the tokenArray smaller. cut out the part that is unaligned.
     // We have witness count hard code here.
-//    val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(tokenArray, 6)
-//
-//    // create navigation graph and filter out transposed nodes
-//    val graph = createTraversalGraph(longestFullDepthNonRepeatingBlocks)
-//
-//    val alignment: List[Int] = findOptimalAlignment(graph) // Int identifiers of full-depth blocks
-//    val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment: List[Int])
-//    val alignmentBlocks: Iterable[FullDepthBlock] = alignmentIntsToBlocks(alignmentBlocksSet, longestFullDepthNonRepeatingBlocks)
-//    val readingNodes = blocksToNodes(alignmentBlocks, tokenArray)
+
+    // TODO: align the undecided part, root should become the new selection
+    // alignTokenArray(tokenArray, sigla, root)
 
 
     if remainingAlignment.tail.nonEmpty then
@@ -155,8 +151,9 @@ def createAlignmentTree(tokenArray: Vector[Token], sigla: List[String]): Expande
       rootNode
   }
 
-  // Start recursion 
-  val rootNode = recursiveBuildAlignmentTreeLevel(ListBuffer(), root, sortedReadingNodes)
+  // Start recursion
+  val sortedReadingNodes: immutable.List[ReadingNode] = alignTokenArray(tokenArray, sigla, globalReadingNode)
+  val rootNode = recursiveBuildAlignmentTreeLevel(ListBuffer(), globalReadingNode, sortedReadingNodes)
 
   rootNode
 }
