@@ -48,25 +48,36 @@ def alignTokenArray(tokenArray: Vector[Token], sigla: List[String], selection: R
   // ??: Modify createAlignedBlocks() not to return unused values
   // ??: Count witnesses (via separators) instead of passing in count
   // TODO: Simplify where we need single token array and where we need witness-set metadata
-  val witnessCount = sigla.size
+  val witnessCount = selection.witnessReadings.size
 
-  // TODO: create a local token array based on the selection!
-
-  val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(tokenArray, witnessCount)
-
+  // Create a local token array by filtering the global one according to the selection
+  // Selection comes in unsorted, so sort by siglum first
+  val localTokenArraybyWitness = {
+    val orderedWitnessReadings = for siglum <- sigla yield selection.witnessReadings(siglum) 
+    for r <- orderedWitnessReadings yield tokenArray.slice(r._1, r._2)
+  }
+  val localTokenArray = localTokenArraybyWitness.head ++
+    localTokenArraybyWitness
+      .tail
+      .zipWithIndex
+      .flatMap((e, index) => Vector(Token(t=s" #$index ", n=s" #$index ", w=index, g=index)) ++ e)
+  val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(localTokenArray, witnessCount)
+  
   // create navigation graph and filter out transposed nodes
   val graph = createTraversalGraph(longestFullDepthNonRepeatingBlocks)
 
   val alignment: List[Int] = findOptimalAlignment(graph) // Int identifiers of full-depth blocks
   val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment: List[Int]) // We lose the sorting here
-  val alignmentBlocks: Iterable[FullDepthBlock] = alignmentIntsToBlocks(alignmentBlocksSet, longestFullDepthNonRepeatingBlocks)
+  val alignmentBlocks: Iterable[FullDepthBlock] =
+    alignmentIntsToBlocks(alignmentBlocksSet, longestFullDepthNonRepeatingBlocks)
   val readingNodes = blocksToNodes(alignmentBlocks, tokenArray, sigla)
   // We need to restore the sorting that we destroyed when we created the set
   // Called repeatedly, so there is always a w0, although not always the same one
   //   (tokens know their global witness membership, so we can recover original witness membership when needed)
+  val siglumForSorting = readingNodes.head.witnessReadings.keys.head
   val sortedReadingNodes = readingNodes // Sort reading nodes in token order
     .toVector
-    .sortBy(_.witnessReadings(sigla.head)._1)
+    .sortBy(_.witnessReadings(siglumForSorting)._1)
     .toList
   sortedReadingNodes
 }
