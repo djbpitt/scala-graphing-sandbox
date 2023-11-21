@@ -3,32 +3,16 @@ package net.collatex.reptilian
 import scala.collection.mutable.ArrayBuffer
 import scala.util.matching.Regex
 
-/** Properties shared by Token and LocalToken */
-trait TokenProperties {
-  def t: String
-
-  def n: String
-  def w: Int
-}
 /** Token as complex object
  *
  * @param t Raw token, which may include trailing whitespace
  * @param n Normalized token, e.g., lower-case and trim
  * @param w Witness identifier, zero-based
+ * @param g Offset of token in global token array
  *
  *          Tokenization and normalization are under user control (to be implemented)
  */
-case class Token(t: String, n: String, w: Int) extends TokenProperties
-
-/** Local token has t, n, w, and offset position in original token array
- *
- * @param t Raw token, which may include trailing whitespace
- * @param n Normalized token, e.g., lower-case and trim
- * @param w Witness identifier, zero-based
- * @param g Offset into global token array
- *
- */
-case class LocalToken(t: String, n: String, w: Int, g: Int) extends TokenProperties
+case class Token(t: String, n: String, w: Int, g: Int)
 
 /** Used as partially applied function to create tokenizer
  *
@@ -84,11 +68,16 @@ def createTokenWitnessMapping(tokenLists: List[List[String]]): Vector[Int] =
     }
   buffer.toVector
 
+// https://stackoverflow.com/questions/1664439/can-i-zip-more-than-two-lists-together-in-scala
+// https://stackoverflow.com/questions/30984124/zipping-two-arrays-together-with-index-in-scala
 def tokenize(tokenizer: String => List[String]) =
   ((plainWitnesses: List[String]) =>
     plainWitnesses
       .map(tokenizer) // List of one list of strings per witness
-    ).andThen(e => createTokenArray(e) zip createTokenWitnessMapping(e))
-    .andThen(_.map(e => Token(e(0), normalize(e(0)), e(1))))
+    ).andThen(e => createTokenArray(e)
+      .zip(createTokenWitnessMapping(e))
+      .zipWithIndex
+      .map { case ((a, b), i) => (a, b, i) }
+      .map((a, b, i) => Token(t=a, n=normalize(a), w=b, g=i)))
 
 

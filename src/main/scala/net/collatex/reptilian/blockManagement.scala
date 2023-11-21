@@ -4,7 +4,7 @@ import scala.collection.{IndexedSeqView, mutable}
 import scala.collection.immutable.VectorMap
 import scala.collection.mutable.ArrayBuffer
 
-def vectorize(tokenArray: Vector[TokenProperties]): (Array[Int], Int) =
+def vectorize(tokenArray: Vector[Token]): (Array[Int], Int) =
   val voc = tokenArray
     .map(_.n)
     .distinct
@@ -75,7 +75,7 @@ def calculateLcpArrayKasai(txt: Vector[String], suffixArray: Array[Int]): Vector
   lcp.toVector
 }
 
-def findWitnessesOfBlock(suffixArray: Array[Int], tokenArray: Vector[TokenProperties])(block: Block) =
+def findWitnessesOfBlock(suffixArray: Array[Int], tokenArray: Vector[Token])(block: Block) =
   val witnesses: Array[Int] = suffixArray
     .slice(block.start, block.end + 1)
     .map(tokenArray(_).w)
@@ -139,7 +139,7 @@ def removeOverlappingBlocks(fullDepthBlocks: List[FullDepthBlock]): Iterable[Ful
     .map(fdBlocks => fdBlocks.maxBy(_.length))
 
 
-def createAlignedBlocks(tokenArray: Vector[TokenProperties], witnessCount: Int) =
+def createAlignedBlocks(tokenArray: Vector[Token], witnessCount: Int) =
   val (vectorization, _) = vectorize(tokenArray)
   val suffixArray = createSuffixArray(vectorization)
   val lcpArray = calculateLcpArrayKasai(tokenArray.map(_.n), suffixArray)
