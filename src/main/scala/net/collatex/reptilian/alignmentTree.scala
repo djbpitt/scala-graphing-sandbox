@@ -34,7 +34,7 @@ trait FormatWitnessReadings {
 final case class ExpandedNode(witnessReadings: WitnessReadings, children: ListBuffer[AlignmentTreeNode] =
 ListBuffer.empty) extends AlignmentTreeNode with FormatWitnessReadings
 
-final case class VariationNode(children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty) extends AlignmentTreeNode
+final case class VariationNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode
 
 final case class StringNode(txt: String = "unspecified mistake") extends AlignmentTreeNode
 

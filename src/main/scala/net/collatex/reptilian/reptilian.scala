@@ -50,9 +50,9 @@ def readData(pathToData: Path): List[(String, String)] =
    * Graphviz dot file
    * HTML alignment table
    */
-  val alignmentTreeAsDot = dot(root, tokenArray)
-  val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
-  os.write.over(alignmentGraphOutputPath, alignmentTreeAsDot)
+//  val alignmentTreeAsDot = dot(root, tokenArray)
+//  val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
+//  os.write.over(alignmentGraphOutputPath, alignmentTreeAsDot)
 
   val output = createAlignmentTable(root, tokenArray, sigla)
   val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"

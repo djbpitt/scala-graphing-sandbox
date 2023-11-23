@@ -53,7 +53,7 @@ def alignTokenArray(tokenArray: Vector[Token], sigla: List[String], selection: R
   // Create a local token array by filtering the global one according to the selection
   // Selection comes in unsorted, so sort by siglum first
   val localTokenArraybyWitness = {
-    val orderedWitnessReadings = for siglum <- sigla yield selection.witnessReadings(siglum) 
+    val orderedWitnessReadings = for siglum <- selection.witnessReadings.keys.toSeq.sorted yield selection.witnessReadings(siglum)
     for r <- orderedWitnessReadings yield tokenArray.slice(r._1, r._2)
   }
   val localTokenArray = localTokenArraybyWitness.head ++
@@ -62,24 +62,26 @@ def alignTokenArray(tokenArray: Vector[Token], sigla: List[String], selection: R
       .zipWithIndex
       .flatMap((e, index) => Vector(Token(t=s" #$index ", n=s" #$index ", w=index, g=index)) ++ e)
   val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(localTokenArray, witnessCount)
-  
-  // create navigation graph and filter out transposed nodes
-  val graph = createTraversalGraph(longestFullDepthNonRepeatingBlocks)
+  if longestFullDepthNonRepeatingBlocks.isEmpty
+    then List()
+  else
+    // create navigation graph and filter out transposed nodes
+    val graph = createTraversalGraph(longestFullDepthNonRepeatingBlocks)
 
-  val alignment: List[Int] = findOptimalAlignment(graph) // Int identifiers of full-depth blocks
-  val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment: List[Int]) // We lose the sorting here
-  val alignmentBlocks: Iterable[FullDepthBlock] =
-    alignmentIntsToBlocks(alignmentBlocksSet, longestFullDepthNonRepeatingBlocks)
-  val readingNodes = blocksToNodes(alignmentBlocks, tokenArray, sigla)
-  // We need to restore the sorting that we destroyed when we created the set
-  // Called repeatedly, so there is always a w0, although not always the same one
-  //   (tokens know their global witness membership, so we can recover original witness membership when needed)
-  val siglumForSorting = readingNodes.head.witnessReadings.keys.head
-  val sortedReadingNodes = readingNodes // Sort reading nodes in token order
-    .toVector
-    .sortBy(_.witnessReadings(siglumForSorting)._1)
-    .toList
-  sortedReadingNodes
+    val alignment: List[Int] = findOptimalAlignment(graph) // Int identifiers of full-depth blocks
+    val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment: List[Int]) // We lose the sorting here
+    val alignmentBlocks: Iterable[FullDepthBlock] =
+      alignmentIntsToBlocks(alignmentBlocksSet, longestFullDepthNonRepeatingBlocks)
+    val readingNodes = blocksToNodes(alignmentBlocks, tokenArray, sigla)
+    // We need to restore the sorting that we destroyed when we created the set
+    // Called repeatedly, so there is always a w0, although not always the same one
+    //   (tokens know their global witness membership, so we can recover original witness membership when needed)
+    val siglumForSorting = readingNodes.head.witnessReadings.keys.head
+    val sortedReadingNodes = readingNodes // Sort reading nodes in token order
+      .toVector
+      .sortBy(_.witnessReadings(siglumForSorting)._1)
+      .toList
+    sortedReadingNodes
 }
 
 def createAlignmentTree(tokenArray: Vector[Token], sigla: List[String]): ExpandedNode = {
@@ -139,7 +141,12 @@ def createAlignmentTree(tokenArray: Vector[Token], sigla: List[String]): Expande
     // TODO: Currently we just report the undecided part, but we need to process it.
     val undecidedPart = tempSplit2._1
     // NOTE: This segment could be optional, empty.
-    result += UnexpandedNode(undecidedPart.witnessReadings)
+    // println(undecidedPart.witnessReadings)
+    val blocks = alignTokenArray(tokenArray, sigla, undecidedPart)
+    if blocks.isEmpty
+      then result += VariationNode(undecidedPart.witnessReadings)
+    else
+      result += UnexpandedNode(undecidedPart.witnessReadings)
     result += firstReadingNode
 
     // this part has to be split further recursively
@@ -152,7 +159,6 @@ def createAlignmentTree(tokenArray: Vector[Token], sigla: List[String]): Expande
 
     // TODO: align the undecided part, root should become the new selection
     // alignTokenArray(tokenArray, sigla, root)
-
 
     if remainingAlignment.tail.nonEmpty then
       recursiveBuildAlignmentTreeLevel(result, remainder, remainingAlignment.tail)
@@ -168,6 +174,39 @@ def createAlignmentTree(tokenArray: Vector[Token], sigla: List[String]): Expande
 
   rootNode
 }
+
+@tailrec
+def innerRecursiveBuildAlignmentTreeLevel(result: ListBuffer[AlignmentTreeNode],
+                                          treeReadingNode: ReadingNode,
+                                          remainingAlignment: List[ReadingNode],
+                                          ): ExpandedNode = {
+  val firstReadingNode = remainingAlignment.head
+  // Splits on end of aligned block, so:
+  //   First item contains block (empty only at end) preceded by optional leading unaligned stuff
+  //   Second item contains optional stuff after the block, which will be the input into the recursion
+  //   Recursion knows to end when remainingAlignment parameter is an empty list
+  val tempSplit = split_reading_node(treeReadingNode, firstReadingNode.witnessReadings.map((k, v) => k -> v._2))
+  // split the first returned reading node again, now by the start position for each witness of the first
+  // sorted reading node.
+  val tempSplit2 = split_reading_node(tempSplit._1, firstReadingNode.witnessReadings.map((k, v) => k -> v._1))
+
+  // The undecided part (unaligned stuff before block) could be empty or could hold data, in which case it may
+  //   have partial alignment, variation, ….
+  val undecidedPart = tempSplit2._1
+  result += UnexpandedNode(undecidedPart.witnessReadings)
+  result += firstReadingNode
+
+  // this part has to be split further recursively
+  val remainder = tempSplit._2
+
+  if remainingAlignment.tail.nonEmpty then
+    innerRecursiveBuildAlignmentTreeLevel(result, remainder, remainingAlignment.tail)
+  else
+    // The alignment results are all processed, we end the recursion.
+    val rootNode = ExpandedNode(children = result, witnessReadings = treeReadingNode.witnessReadings)
+    rootNode
+}
+
 
 // Old code
 //
