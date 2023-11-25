@@ -112,82 +112,31 @@ def createAlignmentTree(tokenArray: Vector[Token], sigla: List[String]): Expande
   //  println("Witness intervals on the root node of the alignment tree")
   //  println(globalReadingNode)
 
-
-  @tailrec
-  def recursiveBuildAlignmentTreeLevel(
-                                        result: ListBuffer[AlignmentTreeNode], 
-                                        treeReadingNode: ReadingNode, remainingAlignment: 
-                                        List[ReadingNode]
-                                      ): ExpandedNode = {
-    // TODO: Should return new root node, but currently just reports to screen
-    // On first run, treeReadingNode contains full token ranges and remainingAlignment contains all sortedReadingNodes
-    // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
-    val firstReadingNode = remainingAlignment.head
-    // println("Witness intervals of the first block of the alignment")
-    // println(firstReadingNode)
-
-    // split treeReadingNode based on the end position for each witness of the first reading node of the alignment.
-    // That splits the root reading node into aligned block plus optional leading non-block tokens
-    // TODO: map() creates a new map; would a map view be better (we use the value only once)? Would using a
-    //   map view instead of a map require changing the signature of split_reading_node()?
-    // TODO: split_reading_node() returns a tuple, which we could unpack
-    // Splits on end of aligned block, so:
-    //   First item contains block (empty only at end) preceded by optional leading unaligned stuff
-    //   Second item contains optional stuff after the block, which will be the input into the recursion
-    //   Recursion knows to end when remainingAlignment parameter is an empty list
-    val tempSplit = split_reading_node(treeReadingNode, firstReadingNode.witnessReadings.map((k, v) => k -> v._2))
-    // split the first returned reading node again, now by the start position for each witness of the first
-    // sorted reading node.
-    val tempSplit2 = split_reading_node(tempSplit._1, firstReadingNode.witnessReadings.map((k, v) => k -> v._1))
-
-    // The undecided part (unaligned stuff before block) could be empty or could hold data, in which case it may
-    //   have partial alignment, variation, …. 
-    // TODO: Currently we just report the undecided part, but we need to process it.
-    val undecidedPart = tempSplit2._1
-    // NOTE: This segment could be optional, empty.
-    // println(undecidedPart.witnessReadings)
-    val blocks = alignTokenArray(tokenArray, sigla, undecidedPart)
-    if blocks.isEmpty
-    then result += VariationNode(undecidedPart.witnessReadings)
-    else {
-      val nodeToExpand = ExpandedNode(undecidedPart.witnessReadings)
-      // Here we will expand nodeToExpand
-      result += nodeToExpand
-    }
-    result += firstReadingNode
-
-    // this part has to be split further recursively
-    val remainder = tempSplit._2
-
-    // TODO: try to align undecided part by creating new token array and calling the function above
-    // The following is not yet implemented. We also are not yet handling unaligned stuff at the very end
-    // make the tokenArray smaller. cut out the part that is unaligned.
-    // We have witness count hard code here.
-
-    // TODO: align the undecided part, root should become the new selection
-    // alignTokenArray(tokenArray, sigla, root)
-
-    if remainingAlignment.tail.nonEmpty then
-      recursiveBuildAlignmentTreeLevel(result, remainder, remainingAlignment.tail)
-    else
-      // The alignment results are all processed, we end the recursion.
-      val rootNode = ExpandedNode(children = result, witnessReadings = witnessReadings)
-      rootNode
-  }
-
   // Start recursion
   val sortedReadingNodes: immutable.List[ReadingNode] = alignTokenArray(tokenArray, sigla, globalReadingNode)
-  val rootNode = recursiveBuildAlignmentTreeLevel(ListBuffer(), globalReadingNode, sortedReadingNodes)
+  val rootNode = recursiveBuildAlignmentTreeLevel(ListBuffer(), globalReadingNode, sortedReadingNodes, tokenArray, sigla)
 
   rootNode
 }
 
 @tailrec
-def innerRecursiveBuildAlignmentTreeLevel(result: ListBuffer[AlignmentTreeNode],
-                                          treeReadingNode: ReadingNode,
-                                          remainingAlignment: List[ReadingNode],
-                                         ): ExpandedNode = {
+def recursiveBuildAlignmentTreeLevel(result: ListBuffer[AlignmentTreeNode],
+                                     treeReadingNode: ReadingNode,
+                                     remainingAlignment: List[ReadingNode],
+                                     tokenArray: Vector[Token],
+                                     sigla: List[String]
+                                    ): ExpandedNode = {
+  // On first run, treeReadingNode contains full token ranges and remainingAlignment contains all sortedReadingNodes
+  // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
   val firstReadingNode = remainingAlignment.head
+  // println("Witness intervals of the first block of the alignment")
+  // println(firstReadingNode)
+
+  // split treeReadingNode based on the end position for each witness of the first reading node of the alignment.
+  // That splits the root reading node into aligned block plus optional leading non-block tokens
+  // TODO: map() creates a new map; would a map view be better (we use the value only once)? Would using a
+  //   map view instead of a map require changing the signature of split_reading_node()?
+  // TODO: split_reading_node() returns a tuple, which we could unpack
   // Splits on end of aligned block, so:
   //   First item contains block (empty only at end) preceded by optional leading unaligned stuff
   //   Second item contains optional stuff after the block, which will be the input into the recursion
@@ -199,15 +148,33 @@ def innerRecursiveBuildAlignmentTreeLevel(result: ListBuffer[AlignmentTreeNode],
 
   // The undecided part (unaligned stuff before block) could be empty or could hold data, in which case it may
   //   have partial alignment, variation, ….
+  // TODO: Currently we just report the undecided part, but we need to process it.
   val undecidedPart = tempSplit2._1
-  result += UnexpandedNode(undecidedPart.witnessReadings)
+  // NOTE: This segment could be optional, empty.
+  // println(undecidedPart.witnessReadings)
+  val blocks = alignTokenArray(tokenArray, sigla, undecidedPart)
+  if blocks.isEmpty
+  then result += VariationNode(undecidedPart.witnessReadings)
+  else {
+    val nodeToExpand = ExpandedNode(undecidedPart.witnessReadings)
+    // Here we will expand nodeToExpand
+    result += nodeToExpand
+  }
   result += firstReadingNode
 
   // this part has to be split further recursively
   val remainder = tempSplit._2
 
+  // TODO: try to align undecided part by creating new token array and calling the function above
+  // The following is not yet implemented. We also are not yet handling unaligned stuff at the very end
+  // make the tokenArray smaller. cut out the part that is unaligned.
+  // We have witness count hard code here.
+
+  // TODO: align the undecided part, root should become the new selection
+  // alignTokenArray(tokenArray, sigla, root)
+
   if remainingAlignment.tail.nonEmpty then
-    innerRecursiveBuildAlignmentTreeLevel(result, remainder, remainingAlignment.tail)
+    recursiveBuildAlignmentTreeLevel(result, remainder, remainingAlignment.tail, tokenArray, sigla)
   else
     // The alignment results are all processed, we end the recursion.
     val rootNode = ExpandedNode(children = result, witnessReadings = treeReadingNode.witnessReadings)
