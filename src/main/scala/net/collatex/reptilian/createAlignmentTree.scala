@@ -113,10 +113,27 @@ def createAlignmentTree(tokenArray: Vector[Token], sigla: List[String]): Expande
   //  println(globalReadingNode)
 
   // Start recursion
-  val sortedReadingNodes: immutable.List[ReadingNode] = alignTokenArray(tokenArray, sigla, globalReadingNode)
+  val sortedReadingNodes: immutable.List[ReadingNode] = alignTokenArray(tokenArray, sigla, selection = globalReadingNode)
   val rootNode = recursiveBuildAlignmentTreeLevel(ListBuffer(), globalReadingNode, sortedReadingNodes, tokenArray, sigla)
 
   rootNode
+}
+
+def setupNodeExpansion(tokenArray: Vector[Token], sigla: List[String], selection: ReadingNode) = {
+  val blocks = alignTokenArray(tokenArray, sigla, selection)
+  if blocks.isEmpty
+  then ExpandedNode( // no blocks, so the single child is a VariationNode
+    witnessReadings = selection.witnessReadings,
+    children = ListBuffer(VariationNode(witnessReadings = selection.witnessReadings))
+  )
+  else // blocks, so children are a sequence of one or more nodes of possibly different types
+    val expansion = recursiveBuildAlignmentTreeLevel(
+      result = ListBuffer(),
+      treeReadingNode = selection,
+      remainingAlignment = blocks,
+      tokenArray = tokenArray,
+      sigla = sigla)
+    expansion
 }
 
 @tailrec
@@ -152,26 +169,12 @@ def recursiveBuildAlignmentTreeLevel(result: ListBuffer[AlignmentTreeNode],
   val undecidedPart = tempSplit2._1
   // NOTE: This segment could be optional, empty.
   // println(undecidedPart.witnessReadings)
-  val blocks = alignTokenArray(tokenArray, sigla, undecidedPart)
-  if blocks.isEmpty
-  then result += VariationNode(undecidedPart.witnessReadings)
-  else {
-    val nodeToExpand = ExpandedNode(undecidedPart.witnessReadings)
-    // Here we will expand nodeToExpand
-    result += nodeToExpand
-  }
+  if undecidedPart.witnessReadings.nonEmpty then
+    result += setupNodeExpansion(tokenArray, sigla, undecidedPart)
   result += firstReadingNode
 
   // this part has to be split further recursively
   val remainder = tempSplit._2
-
-  // TODO: try to align undecided part by creating new token array and calling the function above
-  // The following is not yet implemented. We also are not yet handling unaligned stuff at the very end
-  // make the tokenArray smaller. cut out the part that is unaligned.
-  // We have witness count hard code here.
-
-  // TODO: align the undecided part, root should become the new selection
-  // alignTokenArray(tokenArray, sigla, root)
 
   if remainingAlignment.tail.nonEmpty then
     recursiveBuildAlignmentTreeLevel(result, remainder, remainingAlignment.tail, tokenArray, sigla)
