@@ -60,10 +60,10 @@ def alignTokenArray(tokenArray: Vector[Token], sigla: List[String], selection: R
     localTokenArraybyWitness
       .tail
       .zipWithIndex
-      .flatMap((e, index) => Vector(Token(t=s" #$index ", n=s" #$index ", w=index, g=index)) ++ e)
+      .flatMap((e, index) => Vector(Token(t = s" #$index ", n = s" #$index ", w = index, g = index)) ++ e)
   val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(localTokenArray, witnessCount)
   if longestFullDepthNonRepeatingBlocks.isEmpty
-    then List()
+  then List()
   else
     // create navigation graph and filter out transposed nodes
     val graph = createTraversalGraph(longestFullDepthNonRepeatingBlocks)
@@ -114,7 +114,11 @@ def createAlignmentTree(tokenArray: Vector[Token], sigla: List[String]): Expande
 
 
   @tailrec
-  def recursiveBuildAlignmentTreeLevel(result: ListBuffer[AlignmentTreeNode], treeReadingNode: ReadingNode, remainingAlignment: List[ReadingNode]): ExpandedNode = {
+  def recursiveBuildAlignmentTreeLevel(
+                                        result: ListBuffer[AlignmentTreeNode], 
+                                        treeReadingNode: ReadingNode, remainingAlignment: 
+                                        List[ReadingNode]
+                                      ): ExpandedNode = {
     // TODO: Should return new root node, but currently just reports to screen
     // On first run, treeReadingNode contains full token ranges and remainingAlignment contains all sortedReadingNodes
     // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
@@ -144,9 +148,12 @@ def createAlignmentTree(tokenArray: Vector[Token], sigla: List[String]): Expande
     // println(undecidedPart.witnessReadings)
     val blocks = alignTokenArray(tokenArray, sigla, undecidedPart)
     if blocks.isEmpty
-      then result += VariationNode(undecidedPart.witnessReadings)
-    else
-      result += UnexpandedNode(undecidedPart.witnessReadings)
+    then result += VariationNode(undecidedPart.witnessReadings)
+    else {
+      val nodeToExpand = ExpandedNode(undecidedPart.witnessReadings)
+      // Here we will expand nodeToExpand
+      result += nodeToExpand
+    }
     result += firstReadingNode
 
     // this part has to be split further recursively
@@ -164,7 +171,7 @@ def createAlignmentTree(tokenArray: Vector[Token], sigla: List[String]): Expande
       recursiveBuildAlignmentTreeLevel(result, remainder, remainingAlignment.tail)
     else
       // The alignment results are all processed, we end the recursion.
-      val rootNode = ExpandedNode(children=result, witnessReadings=witnessReadings)
+      val rootNode = ExpandedNode(children = result, witnessReadings = witnessReadings)
       rootNode
   }
 
@@ -179,7 +186,7 @@ def createAlignmentTree(tokenArray: Vector[Token], sigla: List[String]): Expande
 def innerRecursiveBuildAlignmentTreeLevel(result: ListBuffer[AlignmentTreeNode],
                                           treeReadingNode: ReadingNode,
                                           remainingAlignment: List[ReadingNode],
-                                          ): ExpandedNode = {
+                                         ): ExpandedNode = {
   val firstReadingNode = remainingAlignment.head
   // Splits on end of aligned block, so:
   //   First item contains block (empty only at end) preceded by optional leading unaligned stuff

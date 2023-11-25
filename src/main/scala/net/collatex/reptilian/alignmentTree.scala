@@ -56,6 +56,26 @@ object ReadingNode {
       ReadingNode(m.toMap)
 }
 
+/** Indel node
+ *
+ * Like a ReadingNode in that all witnesses agree,
+ *   except that not all corpus witnesses are present
+ *
+ * @param witnessReadings map from siglum to tuple of start and end offsets
+ *                        into the global token array (end is exclusive)
+ *
+ * Companion object is a convenience constructor (see documentation of
+ *   companion object for ReadingNode, above)
+ */
+final case class IndelNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode with FormatWitnessReadings
+object IndelNode {
+  def apply(m: (String, (Int, Int))*): AlignmentTreeNode =
+    if m.isEmpty then
+      StringNode("Empty leaf node not allowed")
+    else
+      ReadingNode(m.toMap)
+}
+
 // Temporary; eventually the alignment graph will have no unexpanded nodes
 final case class UnexpandedNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode with FormatWitnessReadings
 // When we expand an UnexpandedNode we replace it with an ExpandedNode

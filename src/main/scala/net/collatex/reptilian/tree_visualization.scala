@@ -120,7 +120,7 @@ def createAlignmentTable(root: ExpandedNode, tokenArray: Vector[Token], sigla: L
           .toSeq)
         yield tr(`class` := (child.getClass.getSimpleName match {
           case "ReadingNode" => "aligned"
-          case "UnexpandedNode" => "unexpanded"
+          case "ExpandedNode" => "expanded"
           case _ => "unaligned"
         }))(
           td(index + 1),
@@ -135,6 +135,23 @@ def createAlignmentTable(root: ExpandedNode, tokenArray: Vector[Token], sigla: L
               )
             case VariationNode(witnessReadings) =>
               val alignment = td("Variation")
+              val readings =
+                for i <- sortedSigla yield
+                  if witnessReadings contains i then
+                    val start = witnessReadings(i)._1
+                    val end = witnessReadings(i)._2
+                    td(tokenArray
+                      .slice(start, end)
+                      .map(_.t)
+                      .mkString(" ")
+                    )
+                  else
+                    td(raw("&#xa0;"))
+              Seq[Frag](
+                alignment, readings
+              )
+            case ExpandedNode(witnessReadings, children) =>
+              val alignment = td("Expanded")
               val readings =
                 for i <- sortedSigla yield
                   if witnessReadings contains i then
@@ -167,7 +184,7 @@ def createAlignmentTable(root: ExpandedNode, tokenArray: Vector[Token], sigla: L
               Seq[Frag](
                 alignment, readings
               )
-            case ExpandedNode(witnessReadings, children) =>
+/*            case ExpandedNode(witnessReadings, children) =>
               val alignment = td("Expanded")
               val readings = children
                 .map {
@@ -184,7 +201,7 @@ def createAlignmentTable(root: ExpandedNode, tokenArray: Vector[Token], sigla: L
                 }.toSeq
               Seq[Frag](
                 alignment, readings
-              )
+              )*/
             case StringNode(text) =>
               val alignment = td("String")
               val readings = td("String")
