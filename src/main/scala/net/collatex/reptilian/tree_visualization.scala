@@ -11,84 +11,83 @@ import scala.collection.mutable.ListBuffer
  * @param root : RootNode
  * @return : String containing dot code for GraphViz
  * */
-//def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
-//  val header: String = "digraph MyGraph {\nranksep=3.0\n\tnode [shape=record, style=filled]\n\t"
-//  val footer: String = "\n}"
-//  var id = 0
-//  val nodesToProcess: mutable.Queue[(Int, AlignmentTreeNode)] = mutable.Queue((id, root))
-//  val edges = ListBuffer[String]() // Not List because we append to maintain order
-//  // Strings in dot format for all but the root node
-//  val stringNodes = ListBuffer[String]()
-//  val readingNodes = ListBuffer[String]()
-//  val variationNodes = ListBuffer[String]()
-//  val unexpandedNodes = ListBuffer[String]()
-//  val expandedNodes = ListBuffer[String]()
-//  while nodesToProcess.nonEmpty do
-//    val currentNode = nodesToProcess.dequeue()
-//    currentNode match {
-//      case (currentId, VariationNode(witnessReadings)) =>
-//        for i <- children do {
-//          id += 1
-//          nodesToProcess.enqueue((id, i))
-//          edges.append(List(currentId, " -> ", id).mkString(" "))
-//          variationNodes.append(currentId.toString)
-//        }
-//      case (currentId, ReadingNode(witnessReadings)) =>
-//        val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
-//        val nValues = tokenArray.slice(tokenArrayPointers._1, tokenArrayPointers._2)
-//          .map(_.n)
-//          .mkString(" ")
-//          .replaceAll("\"", "\\\\\"") // Escape quotation mark in dot file property value
-//        readingNodes.append(
-//          s"""${currentId.toString}
-//             | [label=\"${currentId.toString}|${witnessReadings.toSeq.sorted.map(_._1).mkString(",")}\"
-//             | tooltip=\"$nValues\"
-//             | fillcolor=\"lightblue\"]""".stripMargin.replaceAll("\n", "")
-//        )
-//      case (currentId, n: UnexpandedNode) =>
-//        id += 1
-//        unexpandedNodes.append(
-//          s"""${currentId.toString}
-//             | [label=\"${currentId.toString}|unexpanded\"
-//             | tooltip=\"${n.formatWitnessReadings}\"
-//             | fillcolor=\"goldenrod\"]""".stripMargin.replaceAll("\n", "")
-//        )
-//      case (currentId, n: ExpandedNode) =>
-//        for i <- n.children do
-//          id += 1
-//          nodesToProcess.enqueue((id, i))
-//          edges.append(List(currentId, " -> ", id).mkString(" "))
-////          expandedNodes.append(
-////            s"""${currentId.toString}
-////               | [label=\"${currentId.toString}|expanded\"
-////               | tooltip=\"${ListMap(witnessReadings.toSeq.sortBy(_._1):_*)}\"
-////               | fillcolor=\"plum\"]""".stripMargin.replaceAll("\n", "")
-////          )
+def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
+  val header: String = "digraph MyGraph {\nranksep=3.0\n\tnode [shape=record, style=filled]\n\t"
+  val footer: String = "\n}"
+  var id = 0
+  val nodesToProcess: mutable.Queue[(Int, AlignmentTreeNode)] = mutable.Queue((id, root))
+  val edges = ListBuffer[String]() // Not List because we append to maintain order
+  // Strings in dot format for all but the root node
+  val stringNodes = ListBuffer[String]()
+  val readingNodes = ListBuffer[String]()
+  val variationNodes = ListBuffer[String]()
+  val unexpandedNodes = ListBuffer[String]()
+  val expandedNodes = ListBuffer[String]()
+  while nodesToProcess.nonEmpty do
+    val currentNode = nodesToProcess.dequeue()
+    currentNode match {
+      case (currentId, VariationNode(witnessReadings)) =>
+        for (k, v) <- witnessReadings do {
+          id += 1
+          edges.append(List(currentId, " -> ", id).mkString(" "))
+          variationNodes.append(currentId.toString)
+        }
+      case (currentId, ReadingNode(witnessReadings)) =>
+        val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
+        val nValues = tokenArray.slice(tokenArrayPointers._1, tokenArrayPointers._2)
+          .map(_.n)
+          .mkString(" ")
+          .replaceAll("\"", "\\\\\"") // Escape quotation mark in dot file property value
+        readingNodes.append(
+          s"""${currentId.toString}
+             | [label=\"${currentId.toString}|${witnessReadings.toSeq.sorted.map(_._1).mkString(",")}\"
+             | tooltip=\"$nValues\"
+             | fillcolor=\"lightblue\"]""".stripMargin.replaceAll("\n", "")
+        )
+      case (currentId, n: UnexpandedNode) =>
+        id += 1
+        unexpandedNodes.append(
+          s"""${currentId.toString}
+             | [label=\"${currentId.toString}|unexpanded\"
+             | tooltip=\"${n.formatWitnessReadings}\"
+             | fillcolor=\"goldenrod\"]""".stripMargin.replaceAll("\n", "")
+        )
+      case (currentId, n: ExpandedNode) =>
+        for i <- n.children do
+          id += 1
+          nodesToProcess.enqueue((id, i))
+          edges.append(List(currentId, " -> ", id).mkString(" "))
 //          expandedNodes.append(
 //            s"""${currentId.toString}
 //               | [label=\"${currentId.toString}|expanded\"
-//               | tooltip=\"${n.formatWitnessReadings}\"
+//               | tooltip=\"${ListMap(witnessReadings.toSeq.sortBy(_._1):_*)}\"
 //               | fillcolor=\"plum\"]""".stripMargin.replaceAll("\n", "")
 //          )
-//      case (currentId, StringNode(txt)) =>
-//        stringNodes.append(
-//          s"${currentId.toString} [tooltip=\"$txt\" fillcolor=\"pink\"]"
-//        )
-//
-//    }
-//  val formattedVariationNodes = variationNodes
-//    .map(e => List(e, " [fillcolor=lightgreen]").mkString("")).mkString("\n")
-//
-//  List(
-//    header,
-//    edges.mkString("\n\t"),
-//    stringNodes.mkString("\n"),
-//    readingNodes.mkString("\n"),
-//    formattedVariationNodes,
-//    unexpandedNodes.mkString("\n"),
-//    expandedNodes.mkString("\n"),
-//    footer
-//  ).mkString("\n")
+          expandedNodes.append(
+            s"""${currentId.toString}
+               | [label=\"${currentId.toString}|expanded\"
+               | tooltip=\"${n.formatWitnessReadings}\"
+               | fillcolor=\"plum\"]""".stripMargin.replaceAll("\n", "")
+          )
+      case (currentId, StringNode(txt)) =>
+        stringNodes.append(
+          s"${currentId.toString} [tooltip=\"$txt\" fillcolor=\"pink\"]"
+        )
+
+    }
+  val formattedVariationNodes = variationNodes
+    .map(e => List(e, " [fillcolor=lightgreen]").mkString("")).mkString("\n")
+
+  List(
+    header,
+    edges.mkString("\n\t"),
+    stringNodes.mkString("\n"),
+    readingNodes.mkString("\n"),
+    formattedVariationNodes,
+    unexpandedNodes.mkString("\n"),
+    expandedNodes.mkString("\n"),
+    footer
+  ).mkString("\n")
 
 
 def createAlignmentTable(root: ExpandedNode, tokenArray: Vector[Token], sigla: List[String]) = {
