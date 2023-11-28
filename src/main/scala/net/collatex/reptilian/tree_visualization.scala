@@ -30,7 +30,10 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
         for (k, v) <- witnessReadings do {
           id += 1
           edges.append(List(currentId, " -> ", id).mkString(" "))
-          variationNodes.append(currentId.toString)
+          variationNodes.append(
+            s"""${currentId.toString}
+               | [label=\"${currentId.toString}|variation\"]
+               """.stripMargin.replaceAll("\n", ""))
         }
       case (currentId, ReadingNode(witnessReadings)) =>
         val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
@@ -40,7 +43,7 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
           .replaceAll("\"", "\\\\\"") // Escape quotation mark in dot file property value
         readingNodes.append(
           s"""${currentId.toString}
-             | [label=\"${currentId.toString}|${witnessReadings.toSeq.sorted.map(_._1).mkString(",")}\"
+             | [label=\"${currentId.toString}|${witnessReadings.toSeq.sorted.map(_._1).mkString("\\n")}\"
              | tooltip=\"$nValues\"
              | fillcolor=\"lightblue\"]""".stripMargin.replaceAll("\n", "")
         )
