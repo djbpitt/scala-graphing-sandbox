@@ -102,6 +102,7 @@ def blocksToNodes(blocks: Iterable[FullDepthBlock], tokenArray: Vector[Token], s
     .map(e => fullDepthBlockToReadingNode(e, tokenArray, sigla))
 // Convert local alignment offsets to global token-array offsets for the reading node
 def fullDepthBlockToReadingNode(block: FullDepthBlock, tokenArray: Vector[Token], sigla: List[String]): ReadingNode =
+//  println(s"block: $block")
   val readings = block.instances
     .map(e =>
       sigla(tokenArray(e).w) -> (tokenArray(e).g, tokenArray(e).g + block.length))
