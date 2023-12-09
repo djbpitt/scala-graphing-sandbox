@@ -2,9 +2,37 @@ package net.collatex.reptilian
 
 import scalatags.Text.all.*
 
+import scala.annotation.tailrec
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+
+
+/** Wrap text to specified length by inserting newlines
+ *
+ * Could rewrite as reduce with tuple that tracks length of current "line"
+ *
+ * @param textToWrap entire text as String
+ * @param targetLength target length of individual lines
+ * @return string with newlines inserted
+ */
+def wrapTextToWidth(textToWrap: String, targetLength: Int): String = {
+  val words = textToWrap.split("""\s""")
+  @tailrec
+  def nextWord(wordsToWrap: Array[String], acc: Vector[String]): String =
+    val currentWord: Option[String] = wordsToWrap.headOption
+    currentWord match {
+      case None => acc.mkString("""\n""").tail
+      case Some(e) if e.length + acc.last.length <= targetLength =>
+        val newAccLast: String = acc.last + " " + e
+        val newAcc: Vector[String] = acc.dropRight(1) :+ newAccLast
+        nextWord(wordsToWrap.tail, newAcc)
+      case Some(e) => nextWord(wordsToWrap.tail, acc :+ e)
+    }
+  nextWord(wordsToWrap = words, acc = Vector[String](""))
+}
+
+
 
 /** Create GraphViz dot representation of tree
  *
@@ -60,12 +88,12 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
           id += 1
           nodesToProcess.enqueue((id, i))
           edges.append(List(currentId, " -> ", id).mkString(" "))
-//          expandedNodes.append(
-//            s"""${currentId.toString}
-//               | [label=\"${currentId.toString}|expanded\"
-//               | tooltip=\"${ListMap(witnessReadings.toSeq.sortBy(_._1):_*)}\"
-//               | fillcolor=\"plum\"]""".stripMargin.replaceAll("\n", "")
-//          )
+          //          expandedNodes.append(
+          //            s"""${currentId.toString}
+          //               | [label=\"${currentId.toString}|expanded\"
+          //               | tooltip=\"${ListMap(witnessReadings.toSeq.sortBy(_._1):_*)}\"
+          //               | fillcolor=\"plum\"]""".stripMargin.replaceAll("\n", "")
+          //          )
           expandedNodes.append(
             s"""${currentId.toString}
                | [label=\"${currentId.toString}|expanded\"
@@ -186,24 +214,24 @@ def createAlignmentTable(root: ExpandedNode, tokenArray: Vector[Token], sigla: L
               Seq[Frag](
                 alignment, readings
               )
-/*            case ExpandedNode(witnessReadings, children) =>
-              val alignment = td("Expanded")
-              val readings = children
-                .map {
-                  case ReadingNode(witnessReadings) => td {
-                    val pointers = witnessReadings
-                      .head
-                      ._2
-                    tokenArray
-                      .slice(pointers._1, pointers._2)
-                      .map(_.n)
-                      .mkString(" ")
-                  }
-                  case _ => td("Oops")
-                }.toSeq
-              Seq[Frag](
-                alignment, readings
-              )*/
+            /*            case ExpandedNode(witnessReadings, children) =>
+                          val alignment = td("Expanded")
+                          val readings = children
+                            .map {
+                              case ReadingNode(witnessReadings) => td {
+                                val pointers = witnessReadings
+                                  .head
+                                  ._2
+                                tokenArray
+                                  .slice(pointers._1, pointers._2)
+                                  .map(_.n)
+                                  .mkString(" ")
+                              }
+                              case _ => td("Oops")
+                            }.toSeq
+                          Seq[Frag](
+                            alignment, readings
+                          )*/
             case StringNode(text) =>
               val alignment = td("String")
               val readings = td("String")
