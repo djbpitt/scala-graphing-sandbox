@@ -24,7 +24,7 @@ def wrapTextToWidth(textToWrap: String, targetLength: Int): String =
   def nextWord(wordsToWrap: Vector[String], lineBuffer: Vector[String], wordBuffer: WordBuffer): String =
     val currentWord: Option[String] = wordsToWrap.headOption
     currentWord match {
-      case None => (lineBuffer :+ wordBuffer.stringify).mkString("""\l""") + """\l"""
+      case None => (lineBuffer :+ wordBuffer.stringify).mkString(""" \l""") + """ \l"""
       case Some(e) if e.length + wordBuffer.charCount + 1 <= targetLength =>
         nextWord(wordsToWrap.tail, lineBuffer, wordBuffer :+ e)
       case Some(e) => nextWord(wordsToWrap.tail, lineBuffer :+ wordBuffer.stringify, WordBuffer(e))
