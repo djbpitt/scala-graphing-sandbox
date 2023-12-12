@@ -19,17 +19,15 @@ import scala.collection.mutable.ListBuffer
 def wrapTextToWidth(textToWrap: String, targetLength: Int): String = {
   val words = textToWrap.split("""\s""")
   @tailrec
-  def nextWord(wordsToWrap: Array[String], acc: Vector[String]): String =
+  def nextWord(wordsToWrap: Array[String], acc: Vector[String], buffer: String): String =
     val currentWord: Option[String] = wordsToWrap.headOption
     currentWord match {
-      case None => acc.mkString("""\n""").tail
-      case Some(e) if e.length + acc.last.length <= targetLength =>
-        val newAccLast: String = acc.last + " " + e
-        val newAcc: Vector[String] = acc.dropRight(1) :+ newAccLast
-        nextWord(wordsToWrap.tail, newAcc)
-      case Some(e) => nextWord(wordsToWrap.tail, acc :+ e)
+      case None => (acc :+ buffer).mkString("""\n""").tail
+      case Some(e) if e.length + buffer.length <= targetLength =>
+        nextWord(wordsToWrap.tail, acc, buffer + " " + e)
+      case Some(e) => nextWord(wordsToWrap.tail, acc :+ buffer, e)
     }
-  nextWord(wordsToWrap = words, acc = Vector[String](""))
+  nextWord(wordsToWrap = words, acc = Vector[String](), "")
 }
 
 
