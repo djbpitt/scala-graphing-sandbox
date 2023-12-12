@@ -14,12 +14,11 @@ import scala.collection.mutable.ListBuffer
  * 1. All words processed
  * 2. Output would be more than specified line count
  *
- * Could maintain word buffer as Vector[String] and add interword spacing when we stringify
  * Could rewrite as reduce with tuple that tracks length of current "line"
  *
  * @param textToWrap   entire text as String
  * @param targetLineLength target length of individual lines
- * @param targetLineCount truncate with added ellipsis points after this number of lines (defaults to Int.MaxValue)                       
+ * @param targetLineCount truncate with added ellipsis points after this number of lines (defaults to Int.MaxValue)
  * @return string with newlines inserted
  */
 def wrapTextToWidth(textToWrap: String, targetLineLength: Int, targetLineCount: Int = Int.MaxValue): String =
