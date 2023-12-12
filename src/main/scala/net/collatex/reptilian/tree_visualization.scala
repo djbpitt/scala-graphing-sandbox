@@ -10,6 +10,7 @@ import scala.collection.mutable.ListBuffer
 
 /** Wrap text to specified length by inserting newlines
  *
+ * Could maintain word buffer as Vector[String] and add interword spacing when we stringify
  * Could rewrite as reduce with tuple that tracks length of current "line"
  *
  * @param textToWrap entire text as String
@@ -19,15 +20,15 @@ import scala.collection.mutable.ListBuffer
 def wrapTextToWidth(textToWrap: String, targetLength: Int): String = {
   val words = textToWrap.split("""\s""")
   @tailrec
-  def nextWord(wordsToWrap: Array[String], acc: Vector[String], buffer: String): String =
+  def nextWord(wordsToWrap: Array[String], acc: Vector[String], wordBuffer: WordBuffer): String =
     val currentWord: Option[String] = wordsToWrap.headOption
     currentWord match {
-      case None => (acc :+ buffer).mkString("""\n""").tail
-      case Some(e) if e.length + buffer.length <= targetLength =>
-        nextWord(wordsToWrap.tail, acc, buffer + " " + e)
-      case Some(e) => nextWord(wordsToWrap.tail, acc :+ buffer, e)
+      case None => (acc :+ wordBuffer.stringify).mkString("""\n""")
+      case Some(e) if e.length + wordBuffer.charCount <= targetLength =>
+        nextWord(wordsToWrap.tail, acc, wordBuffer :+ e)
+      case Some(e) => nextWord(wordsToWrap.tail, acc :+ wordBuffer.stringify, WordBuffer(Vector(e)))
     }
-  nextWord(wordsToWrap = words, acc = Vector[String](), "")
+  nextWord(wordsToWrap = words, acc = Vector[String](), wordBuffer = WordBuffer(Vector[String]()))
 }
 
 
@@ -241,4 +242,10 @@ def createAlignmentTable(root: ExpandedNode, tokenArray: Vector[Token], sigla: L
       )
     )
   )
+}
+
+case class WordBuffer(words: Vector[String]) {
+  def charCount: Int = words.map(_.length).sum + words.size - 1 // combined size of all words in buffer, plus spaces
+  def :+(newString: String): WordBuffer = WordBuffer(words :+ newString) // append new word to buffer
+  def stringify: String = words.mkString(" ") // combine words into string with space separators
 }

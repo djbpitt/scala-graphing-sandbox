@@ -12,6 +12,6 @@ class TreeVisualizationTest extends AnyFunSuite:
 
   test(testName = "Wrap string to specified length") {
     val result = wrapTextToWidth(string1, 20)
-    val expected = "Lorem ipsum dolor\\nsit amet, consectetur\\nadipiscing elit.\\nMaecenas at tortor\\nblandit, porttitor\\nsapien eu, pharetra\\nerat. Nulla luctus\\nest non efficitur\\nposuere. Vestibulum\\nplacerat magna a\\npretium vehicula.\\nNullam congue\\ncondimentum auctor.\\nSed eu ligula turpis.\\nFusce ut felis\\ncondimentum, lobortis\\nlectus non, ultrices\\nenim. Praesent\\nfaucibus luctus\\nmauris, at suscipit\\ndiam scelerisque at.\\nNunc pretium ornare\\nsapien. Donec in leo\\nat odio viverra\\nefficitur iaculis\\nporttitor elit."
+    val expected = "Lorem ipsum dolor sit\\namet, consectetur\\nadipiscing elit.\\nMaecenas at tortor\\nblandit, porttitor\\nsapien eu, pharetra\\nerat. Nulla luctus\\nest non efficitur\\nposuere. Vestibulum\\nplacerat magna a\\npretium vehicula.\\nNullam congue\\ncondimentum auctor.\\nSed eu ligula turpis.\\nFusce ut felis\\ncondimentum, lobortis\\nlectus non, ultrices\\nenim. Praesent\\nfaucibus luctus\\nmauris, at suscipit\\ndiam scelerisque at.\\nNunc pretium ornare\\nsapien. Donec in leo\\nat odio viverra\\nefficitur iaculis\\nporttitor elit."
     assert(result == expected)
   }
