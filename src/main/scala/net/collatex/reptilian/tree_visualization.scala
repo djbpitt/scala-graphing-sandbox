@@ -10,14 +10,18 @@ import scala.collection.mutable.ListBuffer
 
 /** Wrap text to specified length by inserting newlines
  *
+ * Two exit conditions:
+ * 1. All words processed
+ * 2. Output would be more than specified line count
+ *
  * Could maintain word buffer as Vector[String] and add interword spacing when we stringify
  * Could rewrite as reduce with tuple that tracks length of current "line"
  *
  * @param textToWrap   entire text as String
- * @param targetLength target length of individual lines
+ * @param targetLineLength target length of individual lines
  * @return string with newlines inserted
  */
-def wrapTextToWidth(textToWrap: String, targetLength: Int): String =
+def wrapTextToWidth(textToWrap: String, targetLineLength: Int, targetLineCount: Int): String =
   val words: Vector[String] = textToWrap.split("""\s""").toVector
 
   @tailrec
@@ -25,7 +29,8 @@ def wrapTextToWidth(textToWrap: String, targetLength: Int): String =
     val currentWord: Option[String] = wordsToWrap.headOption
     currentWord match {
       case None => (lineBuffer :+ wordBuffer.stringify).mkString(""" \l""") + """ \l"""
-      case Some(e) if e.length + wordBuffer.charCount + 1 <= targetLength =>
+      case Some(e) if lineBuffer.size > targetLineCount => lineBuffer.mkString("""\l""") + """ … \l"""
+      case Some(e) if e.length + wordBuffer.charCount + 1 <= targetLineLength =>
         nextWord(wordsToWrap.tail, lineBuffer, wordBuffer :+ e)
       case Some(e) => nextWord(wordsToWrap.tail, lineBuffer :+ wordBuffer.stringify, WordBuffer(e))
     }
@@ -64,15 +69,16 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
         }
       case (currentId, ReadingNode(witnessReadings)) =>
         val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
-        val nValues = wrapTextToWidth(tokenArray.slice(tokenArrayPointers._1, tokenArrayPointers._2)
+        val nValues = tokenArray.slice(tokenArrayPointers._1, tokenArrayPointers._2)
           .map(_.n)
           .mkString(" ")
-          .replaceAll("\"", "\\\\\""), targetLength = 60) // Escape quotation mark in dot file property value
+          .replaceAll("\"", "\\\\\"") // Escape quotation mark in dot file property value
+        val formattedNValues = wrapTextToWidth(nValues, targetLineLength = 60, targetLineCount = 8) // Escape quotation mark in dot file property value
 
         readingNodes.append(
           s"""${currentId.toString}
-             | [label=\"${currentId.toString}|$nValues}\"
-             | tooltip=\"${witnessReadings.toSeq.sorted.map(_._1).mkString("\\n")}\"
+             | [label=\"${currentId.toString}|$formattedNValues}\"
+             | tooltip=\"$nValues \\n\\n(${witnessReadings.toSeq.sorted.map(_._1).mkString(", ")})\"
              | fillcolor=\"lightblue\"]""".stripMargin.replaceAll("\n", "")
         )
       case (currentId, n: UnexpandedNode) =>
