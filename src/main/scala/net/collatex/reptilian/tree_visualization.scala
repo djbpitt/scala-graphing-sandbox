@@ -24,7 +24,7 @@ def wrapTextToWidth(textToWrap: String, targetLength: Int): String =
   def nextWord(wordsToWrap: Vector[String], lineBuffer: Vector[String], wordBuffer: WordBuffer): String =
     val currentWord: Option[String] = wordsToWrap.headOption
     currentWord match {
-      case None => (lineBuffer :+ wordBuffer.stringify).mkString("""\n""")
+      case None => (lineBuffer :+ wordBuffer.stringify).mkString("""\l""") + """\l"""
       case Some(e) if e.length + wordBuffer.charCount + 1 <= targetLength =>
         nextWord(wordsToWrap.tail, lineBuffer, wordBuffer :+ e)
       case Some(e) => nextWord(wordsToWrap.tail, lineBuffer :+ wordBuffer.stringify, WordBuffer(e))
@@ -39,7 +39,7 @@ def wrapTextToWidth(textToWrap: String, targetLength: Int): String =
  * @return : String containing dot code for GraphViz
  * */
 def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
-  val header: String = "digraph MyGraph {\nranksep=3.0\n\tnode [shape=record, style=filled]\n\t"
+  val header: String = "digraph MyGraph {\nnode [shape=record, style=filled]\n\t"
   val footer: String = "\n}"
   var id = 0
   val nodesToProcess: mutable.Queue[(Int, AlignmentTreeNode)] = mutable.Queue((id, root))
@@ -64,14 +64,15 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
         }
       case (currentId, ReadingNode(witnessReadings)) =>
         val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
-        val nValues = tokenArray.slice(tokenArrayPointers._1, tokenArrayPointers._2)
+        val nValues = wrapTextToWidth(tokenArray.slice(tokenArrayPointers._1, tokenArrayPointers._2)
           .map(_.n)
           .mkString(" ")
-          .replaceAll("\"", "\\\\\"") // Escape quotation mark in dot file property value
+          .replaceAll("\"", "\\\\\""), targetLength = 60) // Escape quotation mark in dot file property value
+
         readingNodes.append(
           s"""${currentId.toString}
-             | [label=\"${currentId.toString}|${witnessReadings.toSeq.sorted.map(_._1).mkString("\\n")}\"
-             | tooltip=\"$nValues\"
+             | [label=\"${currentId.toString}|$nValues}\"
+             | tooltip=\"${witnessReadings.toSeq.sorted.map(_._1).mkString("\\n")}\"
              | fillcolor=\"lightblue\"]""".stripMargin.replaceAll("\n", "")
         )
       case (currentId, n: UnexpandedNode) =>
