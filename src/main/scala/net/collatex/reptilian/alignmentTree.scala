@@ -73,7 +73,7 @@ object IndelNode {
     if m.isEmpty then
       StringNode("Empty leaf node not allowed")
     else
-      ReadingNode(m.toMap)
+      IndelNode(m.toMap)
 }
 
 // Temporary; eventually the alignment graph will have no unexpanded nodes
@@ -84,6 +84,7 @@ final case class UnexpandedNode(witnessReadings: WitnessReadings) extends Alignm
 def show(node: AlignmentTreeNode): Unit =
   node match {
     case ReadingNode(witnessReadings) => println(witnessReadings)
+    case IndelNode(witnessReadings) => println(witnessReadings)
     case VariationNode(children) => println(children)
     case UnexpandedNode(witnessReadings) => println(witnessReadings)
     case ExpandedNode(witnessReadings, children) => println(witnessReadings)
@@ -108,4 +109,3 @@ def fullDepthBlockToReadingNode(block: FullDepthBlock, tokenArray: Vector[Token]
       sigla(tokenArray(e).w) -> (tokenArray(e).g, tokenArray(e).g + block.length))
     .toMap
   ReadingNode(readings)
-

@@ -52,6 +52,7 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
   // Strings in dot format for all but the root node
   val stringNodes = ListBuffer[String]()
   val readingNodes = ListBuffer[String]()
+  val indelNodes = ListBuffer[String]()
   val variationNodes = ListBuffer[String]()
   val unexpandedNodes = ListBuffer[String]()
   val expandedNodes = ListBuffer[String]()
@@ -67,6 +68,7 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
                | [label=\"${currentId.toString}|variation\"]
                """.stripMargin.replaceAll("\n", ""))
         }
+
       case (currentId, ReadingNode(witnessReadings)) =>
         val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
         val nValues = tokenArray.slice(tokenArrayPointers._1, tokenArrayPointers._2)
@@ -81,6 +83,21 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
              | tooltip=\"$nValues \\n\\n(${witnessReadings.toSeq.sorted.map(_._1).mkString(", ")})\"
              | fillcolor=\"lightblue\"]""".stripMargin.replaceAll("\n", "")
         )
+      case (currentId, IndelNode(witnessReadings)) =>
+        val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
+        val nValues = tokenArray.slice(tokenArrayPointers._1, tokenArrayPointers._2)
+          .map(_.n)
+          .mkString(" ")
+          .replaceAll("\"", "\\\\\"") // Escape quotation mark in dot file property value
+        val formattedNValues = wrapTextToWidth(nValues, targetLineLength = 60, targetLineCount = 8) // Escape quotation mark in dot file property value
+
+        indelNodes.append(
+          s"""${currentId.toString}
+             | [label=\"${currentId.toString}|$formattedNValues}\"
+             | tooltip=\"$nValues \\n\\n(${witnessReadings.toSeq.sorted.map(_._1).mkString(", ")})\"
+             | fillcolor=\"lightgoldenrodyellow\"]""".stripMargin.replaceAll("\n", "")
+        )
+
       case (currentId, n: UnexpandedNode) =>
         id += 1
         unexpandedNodes.append(
@@ -120,6 +137,7 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
     edges.mkString("\n\t"),
     stringNodes.mkString("\n"),
     readingNodes.mkString("\n"),
+    indelNodes.mkString("\n"),
     formattedVariationNodes,
     unexpandedNodes.mkString("\n"),
     expandedNodes.mkString("\n"),

@@ -18,11 +18,12 @@ import scala.collection.mutable.{ListBuffer, Map}
 def split_reading_node(current: ReadingNode, position_to_split: immutable.Map[String, Int]): (ReadingNode, ReadingNode) = {
   // For witness ranges, last value is exclusive
   // We filter out all the witnesses that have an empty range after the split
-//  // TODO: Simplify duplicate code
-//  println(s"current: $current" )
-//  println(s"position_to_split: $position_to_split")
+  //  // TODO: Simplify duplicate code
+  //  println(s"current: $current" )
+  //  println(s"position_to_split: $position_to_split")
   val changedMap = current.witnessReadings.map((k, v) =>
-    val splitValue = position_to_split.getOrElse(k, throw new RuntimeException(s"k = $k, current.witnessReadings = ${current.witnessReadings}, position_to_split = $position_to_split" )) // Default value (temporarily) to avoid Option
+    val splitValue = position_to_split
+      .getOrElse(k, throw new RuntimeException(s"k = $k, current.witnessReadings = ${current.witnessReadings}, position_to_split = $position_to_split")) // Default value (temporarily) to avoid Option
     // Not yet checking for valid call; more defensive would be:
     //  the splitValue should be >= v._1 (start value)
     //  the splitValue should be <= v._2 (end value)
@@ -71,10 +72,10 @@ def alignTokenArray(tokenArray: Vector[Token], sigla: List[String], selection: R
     val graph = createTraversalGraph(longestFullDepthNonRepeatingBlocks)
 
     val alignment: List[Int] = findOptimalAlignment(graph) // Int identifiers of full-depth blocks
-//    println(s"localTokenArray: $localTokenArray")
-//    println(s"graph: $graph")
-//    println(s"longestFullDepthNonRepeatingBlocks: ${longestFullDepthNonRepeatingBlocks}")
-//    println(s"alignment before sorting: $alignment")
+    //    println(s"localTokenArray: $localTokenArray")
+    //    println(s"graph: $graph")
+    //    println(s"longestFullDepthNonRepeatingBlocks: ${longestFullDepthNonRepeatingBlocks}")
+    //    println(s"alignment before sorting: $alignment")
     val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment: List[Int]) // We lose the sorting here
     val alignmentBlocks: Iterable[FullDepthBlock] =
       alignmentIntsToBlocks(alignmentBlocksSet, longestFullDepthNonRepeatingBlocks)
@@ -151,7 +152,7 @@ def recursiveBuildAlignmentTreeLevel(result: ListBuffer[AlignmentTreeNode],
                                     ): ExpandedNode = {
   // On first run, treeReadingNode contains full token ranges and remainingAlignment contains all sortedReadingNodes
   // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
-  val firstReadingNode = remainingAlignment.head
+  val firstReadingNode = remainingAlignment.head // used below to find both real alignment and optional leading "undecided part"
   // println("Witness intervals of the first block of the alignment")
   // println(firstReadingNode)
 
@@ -164,12 +165,12 @@ def recursiveBuildAlignmentTreeLevel(result: ListBuffer[AlignmentTreeNode],
   //   First item contains block (empty only at end) preceded by optional leading unaligned stuff
   //   Second item contains optional stuff after the block, which will be the input into the recursion
   //   Recursion knows to end when remainingAlignment parameter is an empty list
-//  println(firstReadingNode)
-//  println(tokenArray)
+  //  println(firstReadingNode)
+  //  println(tokenArray)
   val tempSplit = split_reading_node(treeReadingNode, firstReadingNode.witnessReadings.map((k, v) => k -> v._2))
   // split the first returned reading node again, now by the start position for each witness of the first
   // sorted reading node.
-//  println(s"tempSplit :  $tempSplit")
+  //  println(s"tempSplit :  $tempSplit")
   val tempSplit2 = split_reading_node(tempSplit._1, firstReadingNode.witnessReadings.map((k, v) => k -> v._1))
 
   // The undecided part (unaligned stuff before block) could be empty or could hold data, in which case it may
@@ -180,7 +181,11 @@ def recursiveBuildAlignmentTreeLevel(result: ListBuffer[AlignmentTreeNode],
   // println(undecidedPart.witnessReadings)
   if undecidedPart.witnessReadings.nonEmpty then
     result += setupNodeExpansion(tokenArray, sigla, undecidedPart)
-  result += firstReadingNode
+  result += {
+    if firstReadingNode.witnessReadings.size == sigla.size then firstReadingNode
+    else IndelNode(witnessReadings = firstReadingNode.witnessReadings)
+  }
+
 
   // this part has to be split further recursively
   val remainder = tempSplit._2
