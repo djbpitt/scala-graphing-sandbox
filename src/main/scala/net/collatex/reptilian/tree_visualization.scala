@@ -16,9 +16,9 @@ import scala.collection.mutable.ListBuffer
  *
  * Could rewrite as reduce with tuple that tracks length of current "line"
  *
- * @param textToWrap   entire text as String
+ * @param textToWrap       entire text as String
  * @param targetLineLength target length of individual lines
- * @param targetLineCount truncate with added ellipsis points after this number of lines (defaults to Int.MaxValue)
+ * @param targetLineCount  truncate with added ellipsis points after this number of lines (defaults to Int.MaxValue)
  * @return string with newlines inserted
  */
 def wrapTextToWidth(textToWrap: String, targetLineLength: Int, targetLineCount: Int = Int.MaxValue): String =
@@ -59,15 +59,25 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
   while nodesToProcess.nonEmpty do
     val currentNode = nodesToProcess.dequeue()
     currentNode match {
+      //      case (currentId, VariationNode(witnessReadings)) =>
+      //        for (k, v) <- witnessReadings do {
+      //          id += 1
+      //          edges.append(List(currentId, " -> ", id).mkString(" "))
+      //          variationNodes.append(
+      //            s"""${currentId.toString}
+      //               | [label=\"${currentId.toString}|variation\"]
+      //               """.stripMargin.replaceAll("\n", ""))
+      //        }
+
       case (currentId, VariationNode(witnessReadings)) =>
-        for (k, v) <- witnessReadings do {
-          id += 1
-          edges.append(List(currentId, " -> ", id).mkString(" "))
-          variationNodes.append(
-            s"""${currentId.toString}
-               | [label=\"${currentId.toString}|variation\"]
-               """.stripMargin.replaceAll("\n", ""))
-        }
+        val allWitnessTexts: String =
+          witnessReadings
+            .map((k, v) => k + ": " + tokenArray.slice(v._1, v._2).map(_.n).mkString(" ")).map(e => wrapTextToWidth(e, 30, 1))
+            .mkString("\\l").replaceAll("\"", "\\\\\"")
+        variationNodes.append(
+          s"""${currentId.toString}
+             | [label=\"${currentId.toString}|$allWitnessTexts\"]
+             """.stripMargin.replaceAll("\n", ""))
 
       case (currentId, ReadingNode(witnessReadings)) =>
         val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
@@ -129,8 +139,6 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
         )
 
     }
-  val formattedVariationNodes = variationNodes
-    .map(e => List(e, " [fillcolor=lightgreen]").mkString("")).mkString("\n")
 
   List(
     header,
@@ -138,7 +146,7 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
     stringNodes.mkString("\n"),
     readingNodes.mkString("\n"),
     indelNodes.mkString("\n"),
-    formattedVariationNodes,
+    variationNodes.mkString("\n"),
     unexpandedNodes.mkString("\n"),
     expandedNodes.mkString("\n"),
     footer
