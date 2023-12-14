@@ -181,11 +181,12 @@ def recursiveBuildAlignmentTreeLevel(result: ListBuffer[AlignmentTreeNode],
   // println(undecidedPart.witnessReadings)
   if undecidedPart.witnessReadings.nonEmpty then
     result += setupNodeExpansion(tokenArray, sigla, undecidedPart)
-  result += {
-    if firstReadingNode.witnessReadings.size == sigla.size then firstReadingNode
-    else IndelNode(witnessReadings = firstReadingNode.witnessReadings)
-  }
-
+  result += (
+    if firstReadingNode.witnessReadings.size == sigla.size then
+      firstReadingNode
+    else
+      IndelNode(witnessReadings = firstReadingNode.witnessReadings)
+    )
 
   // this part has to be split further recursively
   val remainder = tempSplit._2
