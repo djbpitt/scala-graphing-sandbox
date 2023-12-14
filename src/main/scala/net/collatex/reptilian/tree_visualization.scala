@@ -44,7 +44,7 @@ def wrapTextToWidth(textToWrap: String, targetLineLength: Int, targetLineCount: 
  * @return : String containing dot code for GraphViz
  * */
 def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
-  val header: String = "digraph MyGraph {\nnode [shape=record, style=filled]\n\t"
+  val header: String = "digraph MyGraph {\n\tranksep=0.25\n\tnode [shape=record, style=filled]\n\t"
   val footer: String = "\n}"
   var id = 0
   val nodesToProcess: mutable.Queue[(Int, AlignmentTreeNode)] = mutable.Queue((id, root))
