@@ -29,7 +29,7 @@ def wrapTextToWidth(textToWrap: String, targetLineLength: Int, targetLineCount: 
     val currentWord: Option[String] = wordsToWrap.headOption
     currentWord match {
       case None => (lineBuffer :+ wordBuffer.stringify).mkString(""" \l""") + """ \l"""
-      case Some(e) if lineBuffer.size > targetLineCount => lineBuffer.mkString("""\l""") + """ … \l"""
+      case Some(e) if lineBuffer.size == targetLineCount => lineBuffer.mkString("""\l""") + """ … \l"""
       case Some(e) if e.length + wordBuffer.charCount + 1 <= targetLineLength =>
         nextWord(wordsToWrap.tail, lineBuffer, wordBuffer :+ e)
       case Some(e) => nextWord(wordsToWrap.tail, lineBuffer :+ wordBuffer.stringify, WordBuffer(e))
