@@ -194,7 +194,10 @@ def recursiveBuildAlignmentTreeLevel(result: ListBuffer[AlignmentTreeNode],
   if remainingAlignment.tail.nonEmpty then
     recursiveBuildAlignmentTreeLevel(result, remainder, remainingAlignment.tail, tokenArray, sigla)
   else
-    // The alignment results are all processed, we end the recursion.
+    // The alignment results are all processed,so we check for trailing non-aligned content and then end the recursion.
+    // This repeats the treatment as unaligned leading content
+    if tempSplit._2.witnessReadings.nonEmpty then
+      result += setupNodeExpansion(tokenArray, sigla, tempSplit._2)
     val rootNode = ExpandedNode(children = result, witnessReadings = treeReadingNode.witnessReadings)
     rootNode
 }
