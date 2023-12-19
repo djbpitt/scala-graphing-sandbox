@@ -279,10 +279,10 @@ def createAlignmentTable(root: ExpandedNode, tokenArray: Vector[Token], sigla: L
 
 
 def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
-  val header: String = "digraph MyGraph {\n\tranksep=0.25\n\tnode [shape=record, style=filled]\n\t"
+  val header: String = "digraph MyGraph {\n\tranksep=0.25\n\trankjustify=l\n\tnode [shape=record, style=filled]\n\t"
   val footer: String = "\n}"
   var id = 0
-  val nodesToProcess: mutable.Queue[(Int, AlignmentTreeNode)] = mutable.Queue((id, root))
+  var nodesToProcess: List[(Int, AlignmentTreeNode)] = List((id, root)) // Prepend list of children of current node
   val edges = ListBuffer[String]() // Not List because we append to maintain order
   // Strings in dot format for all but the root node
   val stringNodes = ListBuffer[String]()
@@ -291,8 +291,10 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
   val variationNodes = ListBuffer[String]()
   val unexpandedNodes = ListBuffer[String]()
   val expandedNodes = ListBuffer[String]()
+  var lastNodeProcessed: Int = -1 // Initialize with fake start node
   while nodesToProcess.nonEmpty do
-    val currentNode = nodesToProcess.dequeue()
+    val currentNode = nodesToProcess.head
+    nodesToProcess = nodesToProcess.tail
     currentNode match {
       case (currentId, VariationNode(witnessReadings)) =>
         val allWitnessTexts: String =
@@ -303,6 +305,8 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
           s"""${currentId.toString}
              | [label=\"${currentId.toString}|$allWitnessTexts\"]
                """.stripMargin.replaceAll("\n", ""))
+        edges.append(s"$lastNodeProcessed -> $currentId")
+        lastNodeProcessed = currentId
 
       case (currentId, ReadingNode(witnessReadings)) =>
         val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
@@ -318,6 +322,9 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
              | tooltip=\"$nValues \\n\\n(${witnessReadings.toSeq.sorted.map(_._1).mkString(", ")})\"
              | fillcolor=\"lightblue\"]""".stripMargin.replaceAll("\n", "")
         )
+        edges.append(s"$lastNodeProcessed -> $currentId")
+        lastNodeProcessed = currentId
+
       case (currentId, IndelNode(witnessReadings)) =>
         val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
         val nValues = tokenArray.slice(tokenArrayPointers._1, tokenArrayPointers._2)
@@ -332,10 +339,20 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
              | tooltip=\"$nValues \\n\\n(${witnessReadings.toSeq.sorted.map(_._1).mkString(", ")})\"
              | fillcolor=\"lightgoldenrodyellow\"]""".stripMargin.replaceAll("\n", "")
         )
+        edges.append(s"$lastNodeProcessed -> $currentId")
+        lastNodeProcessed = currentId
+
       case (currentId, n: ExpandedNode) =>
-        for i <- n.children do
-          id += 1
-          nodesToProcess.enqueue((id, i)) // Enqueue the children, but no edges and no expanded node in output
+        val newNodesToProcess: List[(Int, AlignmentTreeNode)] =
+          n.children.toVector.map { i =>
+            id += 1
+            (id, i)
+          }.toList
+        nodesToProcess = newNodesToProcess ::: nodesToProcess
+
+//        for i <- n.children do
+//          id += 1
+//          nodesToProcess.enqueue((id, i)) // Enqueue the children, but no edges and no expanded node in output
 //          edges.append(List(currentId, " -> ", id).mkString(" "))
 //          expandedNodes.append(
 //            s"""${currentId.toString}
@@ -362,7 +379,7 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
 
   List(
     header,
-//    edges.mkString("\n\t"),
+    edges.mkString("\n\t"),
     readingNodes.mkString("\n"),
     indelNodes.mkString("\n"),
     variationNodes.mkString("\n"),
