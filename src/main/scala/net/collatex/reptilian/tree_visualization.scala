@@ -277,6 +277,99 @@ def createAlignmentTable(root: ExpandedNode, tokenArray: Vector[Token], sigla: L
   )
 }
 
+
+def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
+  val header: String = "digraph MyGraph {\n\tranksep=0.25\n\tnode [shape=record, style=filled]\n\t"
+  val footer: String = "\n}"
+  var id = 0
+  val nodesToProcess: mutable.Queue[(Int, AlignmentTreeNode)] = mutable.Queue((id, root))
+  val edges = ListBuffer[String]() // Not List because we append to maintain order
+  // Strings in dot format for all but the root node
+  val stringNodes = ListBuffer[String]()
+  val readingNodes = ListBuffer[String]()
+  val indelNodes = ListBuffer[String]()
+  val variationNodes = ListBuffer[String]()
+  val unexpandedNodes = ListBuffer[String]()
+  val expandedNodes = ListBuffer[String]()
+  while nodesToProcess.nonEmpty do
+    val currentNode = nodesToProcess.dequeue()
+    currentNode match {
+      case (currentId, VariationNode(witnessReadings)) =>
+        val allWitnessTexts: String =
+          witnessReadings
+            .map((k, v) => k + ": " + tokenArray.slice(v._1, v._2).map(_.n).mkString(" ")).map(e => wrapTextToWidth(e, 30, 1))
+            .mkString("\\l").replaceAll("\"", "\\\\\"")
+        variationNodes.append(
+          s"""${currentId.toString}
+             | [label=\"${currentId.toString}|$allWitnessTexts\"]
+               """.stripMargin.replaceAll("\n", ""))
+
+      case (currentId, ReadingNode(witnessReadings)) =>
+        val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
+        val nValues = tokenArray.slice(tokenArrayPointers._1, tokenArrayPointers._2)
+          .map(_.n)
+          .mkString(" ")
+          .replaceAll("\"", "\\\\\"") // Escape quotation mark in dot file property value
+        val formattedNValues = wrapTextToWidth(nValues, targetLineLength = 60, targetLineCount = 8) // Escape quotation mark in dot file property value
+
+        readingNodes.append(
+          s"""${currentId.toString}
+             | [label=\"${currentId.toString}|$formattedNValues}\"
+             | tooltip=\"$nValues \\n\\n(${witnessReadings.toSeq.sorted.map(_._1).mkString(", ")})\"
+             | fillcolor=\"lightblue\"]""".stripMargin.replaceAll("\n", "")
+        )
+      case (currentId, IndelNode(witnessReadings)) =>
+        val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
+        val nValues = tokenArray.slice(tokenArrayPointers._1, tokenArrayPointers._2)
+          .map(_.n)
+          .mkString(" ")
+          .replaceAll("\"", "\\\\\"") // Escape quotation mark in dot file property value
+        val formattedNValues = wrapTextToWidth(nValues, targetLineLength = 60, targetLineCount = 8) // Escape quotation mark in dot file property value
+
+        indelNodes.append(
+          s"""${currentId.toString}
+             | [label=\"${currentId.toString}|$formattedNValues}\"
+             | tooltip=\"$nValues \\n\\n(${witnessReadings.toSeq.sorted.map(_._1).mkString(", ")})\"
+             | fillcolor=\"lightgoldenrodyellow\"]""".stripMargin.replaceAll("\n", "")
+        )
+      case (currentId, n: ExpandedNode) =>
+        for i <- n.children do
+          id += 1
+          nodesToProcess.enqueue((id, i)) // Enqueue the children, but no edges and no expanded node in output
+//          edges.append(List(currentId, " -> ", id).mkString(" "))
+//          expandedNodes.append(
+//            s"""${currentId.toString}
+//               | [label=\"${currentId.toString}|expanded\"
+//               | tooltip=\"${n.formatWitnessReadings}\"
+//               | fillcolor=\"plum\"]""".stripMargin.replaceAll("\n", "")
+//          )
+      /* There are no unexpanded nodes; we leave this in so that the compiler won't think we aren't exhaustive */
+      case (currentId, n: UnexpandedNode) =>
+        id += 1
+        unexpandedNodes.append(
+          s"""${currentId.toString}
+             | [label=\"${currentId.toString}|unexpanded\"
+             | tooltip=\"${n.formatWitnessReadings}\"
+             | fillcolor=\"goldenrod\"]""".stripMargin.replaceAll("\n", "")
+        )
+      /* There are no string nodes; we leave this in so that the compiler won't think we aren't exhaustive */
+      case (currentId, StringNode(txt)) =>
+        stringNodes.append(
+          s"${currentId.toString} [tooltip=\"$txt\" fillcolor=\"pink\"]"
+        )
+
+    }
+
+  List(
+    header,
+//    edges.mkString("\n\t"),
+    readingNodes.mkString("\n"),
+    indelNodes.mkString("\n"),
+    variationNodes.mkString("\n"),
+    footer
+  ).mkString("\n")
+
+
 case class WordBuffer(words: Vector[String]) {
   def charCount: Int = words.map(_.length).sum + words.size - 1 // combined size of all words in buffer, plus spaces
 
