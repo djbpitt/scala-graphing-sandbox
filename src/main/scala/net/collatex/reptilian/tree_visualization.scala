@@ -2,8 +2,7 @@ package net.collatex.reptilian
 
 import scalatags.Text.all.*
 
-import scala.annotation.{tailrec, targetName}
-import scala.collection.immutable.ListMap
+import scala.annotation.{tailrec, targetName, unchecked}
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
@@ -29,7 +28,7 @@ def wrapTextToWidth(textToWrap: String, targetLineLength: Int, targetLineCount: 
     val currentWord: Option[String] = wordsToWrap.headOption
     currentWord match {
       case None => (lineBuffer :+ wordBuffer.stringify).mkString(""" \l""") + """ \l"""
-      case Some(e) if lineBuffer.size == targetLineCount => lineBuffer.mkString("""\l""") + """ … \l"""
+      case Some(_) if lineBuffer.size == targetLineCount => lineBuffer.mkString("""\l""") + """ … \l"""
       case Some(e) if e.length + wordBuffer.charCount + 1 <= targetLineLength =>
         nextWord(wordsToWrap.tail, lineBuffer, wordBuffer :+ e)
       case Some(e) => nextWord(wordsToWrap.tail, lineBuffer :+ wordBuffer.stringify, WordBuffer(e))
@@ -314,16 +313,17 @@ def createSingleColumnAlignmentTable(root: ExpandedNode, tokenArray: Vector[Toke
           "tr {vertical-align: top}" +
           ".reading {background-color: lightblue; } " +
           ".indel {background-color: lightgoldenrodyellow; } " +
-          ".variation {background-color: lightgray; }" +
-          "tr:first-child {background-color: lightgray;}")
+          ".variation {background-color: bisque; }" +
+          "tr:first-child {background-color: lightgray;}" +
+          ".missing {background-color: lightgray;}")
     ),
     body(
       h1("Alignment"),
       table(
         tr(
           for (i <- sortedSigla) yield th(i.slice(8, 10)),
-          th("Alignment", br, "node", br, "number"),
-          th("Block type"),
+          th("Node"),
+          th("Type"),
           th("Text")
         ),
         for ((index, child) <- flattenedNodeSeq)
@@ -333,34 +333,45 @@ def createSingleColumnAlignmentTable(root: ExpandedNode, tokenArray: Vector[Toke
             case "VariationNode" => "variation"
             case _ => "unaligned"
           }))(
-            for (i <- sortedSigla) yield td("X"),
-            td(index + 1),
             child match {
               case ReadingNode(witnessReadings) =>
+                val scheme = for (i <- sortedSigla) yield td(" ")
+                val nodeNo = td(index + 1)
                 val (_, value) = witnessReadings.head
                 val tokens = tokenArray.slice(value._1, value._2)
                   .map(_.n)
                 Seq[Frag](
+                  scheme,
+                  nodeNo,
                   td("Reading"),
                   td(colspan := s"${sigla.size}")(tokens.mkString(" "))
                 )
               case IndelNode(witnessReadings) =>
+                val scheme = for (i <- sortedSigla) yield
+                  if witnessReadings contains i then td(" ")
+                  else td(`class` := "missing")(" ")
+                val nodeNo = td(index + 1)
                 val (_, value) = witnessReadings.head
                 val tokens = tokenArray.slice(value._1, value._2)
                   .map(_.n)
                 Seq[Frag](
+                  scheme,
+                  nodeNo,
                   td("Indel"),
                   td(colspan := s"${sigla.size}")(tokens.mkString(" "))
                 )
               case VariationNode(witnessReadings) =>
-                println(child)
+                val scheme = for (i <- sortedSigla) yield
+                  if witnessReadings contains i then td(" ")
+                  else td(`class` := "missing")(" ")
+                val nodeNo = td(index + 1)
                 val alignment = td("Variation")
                 val readings = td(
                   for i <- sortedSigla yield
                     if witnessReadings contains i then
                       val start = witnessReadings(i)._1
                       val end = witnessReadings(i)._2
-                      li(tokenArray
+                      li(em(s"${i.slice(8, 10)}: "), tokenArray
                         .slice(start, end)
                         .map(_.t)
                         .mkString(" ")
@@ -368,7 +379,10 @@ def createSingleColumnAlignmentTable(root: ExpandedNode, tokenArray: Vector[Toke
                     else
                       raw(""))
                 Seq[Frag](
-                  alignment, readings
+                  scheme,
+                  nodeNo,
+                  alignment,
+                  readings
                 )
             }
           )
