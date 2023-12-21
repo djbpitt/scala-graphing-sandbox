@@ -54,9 +54,13 @@ def readData(pathToData: Path): List[(String, String)] =
 //  val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
 //  os.write.over(alignmentGraphOutputPath, alignmentTreeAsDot)
 
-  val flatAlignmentTreeAsDot = flatDot(root, tokenArray)
-  val flatAlignmentTreeOutputPath = os.pwd / "src" / "main" / "output" / "flatAlignment.dot"
-  os.write.over(flatAlignmentTreeOutputPath, flatAlignmentTreeAsDot)
+//  val flatAlignmentTreeAsDot = flatDot(root, tokenArray)
+//  val flatAlignmentTreeOutputPath = os.pwd / "src" / "main" / "output" / "flatAlignment.dot"
+//  os.write.over(flatAlignmentTreeOutputPath, flatAlignmentTreeAsDot)
+
+  val output = createSingleColumnAlignmentTable(root, tokenArray, sigla)
+  val singleColumnOutputPath = os.pwd / "src" / "main" / "output" / "single-column-alignment.xhtml"
+  os.write.over(singleColumnOutputPath, output)
 
 //  val output = createAlignmentTable(root, tokenArray, sigla)
 //  val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
