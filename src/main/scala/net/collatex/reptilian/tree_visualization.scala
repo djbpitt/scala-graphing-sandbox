@@ -2,7 +2,7 @@ package net.collatex.reptilian
 
 import scalatags.Text.all.*
 
-import scala.annotation.tailrec
+import scala.annotation.{tailrec, targetName}
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -280,128 +280,142 @@ def createAlignmentTable(root: ExpandedNode, tokenArray: Vector[Token], sigla: L
 
 def createSingleColumnAlignmentTable(root: ExpandedNode, tokenArray: Vector[Token], sigla: List[String]) = {
   val sortedSigla = sigla.sorted
-  println(sortedSigla)
-  val htmlBoilerplate = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
-  htmlBoilerplate + html(xmlns := "http://www.w3.org/1999/xhtml")(
-    head(
-      tag("title")("Alignments"),
-      tag("style")(
-        "table, tr, th, td {border: 1px black solid; border-collapse: collapse;}" +
-          " th, td {padding: 4px 3px 3px 3px; } " +
-          "td:first-child {text-align: right; }" +
-          ".aligned {background-color: lightblue; } " +
-          ".unexpanded {background-color: palegoldenrod; } " +
-          ".unaligned {background-color: lightgray; }" +
-          ".expanded {background-color: pink; }" +
-          "tr:first-child {background-color: lightgray;}")
-    ),
-    body(
-      h1("Alignment"),
-      table(
-        tr(
-          for (i <- sortedSigla) yield th(i.slice(8, 10)),
-          th("Alignment", br, "node", br, "number"),
-          th("Block type")
-        )
-//        ,
-//        for ((child, index) <- root.children
-//          .zipWithIndex
-//          .toSeq)
-//        yield tr(`class` := (child.getClass.getSimpleName match {
-//          case "ReadingNode" => "aligned"
-//          case "ExpandedNode" => "expanded"
-//          case _ => "unaligned"
-//        }))(
-//          td(index + 1),
-//          child match {
-//            case ReadingNode(witnessReadings) =>
-//              val (_, value) = witnessReadings.head
-//              val tokens = tokenArray.slice(value._1, value._2)
-//                .map(_.n)
-//              Seq[Frag](
-//                td("Aligned"),
-//                td(colspan := s"${sigla.size}")(tokens.mkString(" "))
-//              )
-//            case VariationNode(witnessReadings) =>
-//              val alignment = td("Variation")
-//              val readings =
-//                for i <- sortedSigla yield
-//                  if witnessReadings contains i then
-//                    val start = witnessReadings(i)._1
-//                    val end = witnessReadings(i)._2
-//                    td(tokenArray
-//                      .slice(start, end)
-//                      .map(_.t)
-//                      .mkString(" ")
-//                    )
-//                  else
-//                    td(raw("&#xa0;"))
-//              Seq[Frag](
-//                alignment, readings
-//              )
-//            case ExpandedNode(witnessReadings, children) =>
-//              val alignment = td("Expanded")
-//              val readings =
-//                for i <- sortedSigla yield
-//                  if witnessReadings contains i then
-//                    val start = witnessReadings(i)._1
-//                    val end = witnessReadings(i)._2
-//                    td(tokenArray
-//                      .slice(start, end)
-//                      .map(_.t)
-//                      .mkString(" ")
-//                    )
-//                  else
-//                    td(raw("&#xa0;"))
-//              Seq[Frag](
-//                alignment, readings
-//              )
-//            case UnexpandedNode(witnessReadings) =>
-//              val alignment = td("Unexpanded")
-//              val readings =
-//                for i <- sortedSigla yield
-//                  if witnessReadings contains i then
-//                    val start = witnessReadings(i)._1
-//                    val end = witnessReadings(i)._2
-//                    td(tokenArray
-//                      .slice(start, end)
-//                      .map(_.t)
-//                      .mkString(" ")
-//                    )
-//                  else
-//                    td(raw("&#xa0;"))
-//              Seq[Frag](
-//                alignment, readings
-//              )
-//            /*            case ExpandedNode(witnessReadings, children) =>
-//                          val alignment = td("Expanded")
-//                          val readings = children
-//                            .map {
-//                              case ReadingNode(witnessReadings) => td {
-//                                val pointers = witnessReadings
-//                                  .head
-//                                  ._2
-//                                tokenArray
-//                                  .slice(pointers._1, pointers._2)
-//                                  .map(_.n)
-//                                  .mkString(" ")
-//                              }
-//                              case _ => td("Oops")
-//                            }.toSeq
-//                          Seq[Frag](
-//                            alignment, readings
-//                          )*/
-//            case StringNode(text) =>
-//              val alignment = td("String")
-//              val readings = td("String")
-//              Seq[Frag](
-//                alignment, readings
-//              )
-//          }
-//        )
-      )
-    )
-  )
+  /* Depth-first traversal to produce flat sequence of leaf nodes: reading, indel, variation*/
+  var id = 0
+  val nodesToProcess: List[(Int, AlignmentTreeNode)] = List((id, root)) // Prepend list of children of current node
+  val flattenedNodeSeq =
+    @tailrec
+    def nextNode(inList: List[(Int, AlignmentTreeNode)], outVector: Vector[(Int, AlignmentTreeNode)]): Vector[(Int, AlignmentTreeNode)] =
+      if inList.isEmpty then outVector
+      else
+        val currentNode = inList.head
+        currentNode match
+          case (_, _:ReadingNode) => nextNode(inList.tail, outVector :+ currentNode)
+          case (_, _:IndelNode) => nextNode(inList.tail, outVector :+ currentNode)
+          case (_, _:VariationNode) => nextNode(inList.tail, outVector :+ currentNode)
+          case (_, e:ExpandedNode) =>
+            val newNodesToProcess: List[(Int, AlignmentTreeNode)] =
+              e.children.map { i =>
+                id += 1
+                (id, i)
+              }.toList
+            nextNode(newNodesToProcess ::: inList.tail, outVector)
+    nextNode(nodesToProcess, Vector.empty)
+  flattenedNodeSeq.foreach(println)
+  //    val htmlBoilerplate = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
+  //  htmlBoilerplate + html(xmlns := "http://www.w3.org/1999/xhtml")(
+  //    head(
+  //      tag("title")("Alignments"),
+  //      tag("style")(
+  //        "table, tr, th, td {border: 1px black solid; border-collapse: collapse;}" +
+  //          " th, td {padding: 4px 3px 3px 3px; } " +
+  //          "td:nth-child(7) {text-align: right; }" +
+  //          "tr {vertical-align: top}" +
+  //          ".reading {background-color: lightblue; } " +
+  //          ".indel {background-color: lightgoldenrodyellow; } " +
+  //          ".variation {background-color: lightgray; }" +
+  //          "tr:first-child {background-color: lightgray;}")
+  //    ),
+  //    body(
+  //      h1("Alignment"),
+  //      table(
+  //        tr(
+  //          for (i <- sortedSigla) yield th(i.slice(8, 10)),
+  //          th("Alignment", br, "node", br, "number"),
+  //          th("Block type"),
+  //          th("Text")
+  //        ),
+  //        for ((child, index) <- root.children
+  //          .zipWithIndex
+  //          .toSeq)
+  //        yield tr(`class` := (child.getClass.getSimpleName match {
+  //          case "ReadingNode" => "reading"
+  //          case "IndelNode" => "indel"
+  //          case "VariationNode" => "variation"
+  //          case _ => "unaligned"
+  //        }))(
+  //          for (i <- sortedSigla) yield td("X"),
+  //          td(index + 1),
+  //          child match {
+  //            case ReadingNode(witnessReadings) =>
+  //              val (_, value) = witnessReadings.head
+  //              val tokens = tokenArray.slice(value._1, value._2)
+  //                .map(_.n)
+  //              Seq[Frag](
+  //                td("reading"),
+  //                td(colspan := s"${sigla.size}")(tokens.mkString(" "))
+  //              )
+  //            case IndelNode(witnessReadings) =>
+  //              val (_, value) = witnessReadings.head
+  //              val tokens = tokenArray.slice(value._1, value._2)
+  //                .map(_.n)
+  //              Seq[Frag](
+  //                td("indel"),
+  //                td(colspan := s"${sigla.size}")(tokens.mkString(" "))
+  //              )
+  //            case VariationNode(witnessReadings) =>
+  //              val alignment = td("Variation")
+  //              val readings =
+  //                for i <- sortedSigla yield
+  //                  if witnessReadings contains i then
+  //                    val start = witnessReadings(i)._1
+  //                    val end = witnessReadings(i)._2
+  //                    li(tokenArray
+  //                      .slice(start, end)
+  //                      .map(_.t)
+  //                      .mkString(" ")
+  //                    )
+  //                  else
+  //                    td(raw("&#xa0;"))
+  //              Seq[Frag](
+  //                alignment, ul(readings), readings
+  //              )
+  //            case UnexpandedNode(witnessReadings) =>
+  //              val alignment = td("Unexpanded")
+  //              val readings =
+  //                for i <- sortedSigla yield
+  //                  if witnessReadings contains i then
+  //                    val start = witnessReadings(i)._1
+  //                    val end = witnessReadings(i)._2
+  //                    td(tokenArray
+  //                      .slice(start, end)
+  //                      .map(_.t)
+  //                      .mkString(" ")
+  //                    )
+  //                  else
+  //                    td(raw("&#xa0;"))
+  //              Seq[Frag](
+  //                alignment, readings
+  //              )
+  //            /*            case ExpandedNode(witnessReadings, children) =>
+  //                          val alignment = td("Expanded")
+  //                          val readings = children
+  //                            .map {
+  //                              case ReadingNode(witnessReadings) => td {
+  //                                val pointers = witnessReadings
+  //                                  .head
+  //                                  ._2
+  //                                tokenArray
+  //                                  .slice(pointers._1, pointers._2)
+  //                                  .map(_.n)
+  //                                  .mkString(" ")
+  //                              }
+  //                              case _ => td("Oops")
+  //                            }.toSeq
+  //                          Seq[Frag](
+  //                            alignment, readings
+  //                          )*/
+  //            case StringNode(text) =>
+  //              val alignment = td("String")
+  //              val readings = td("String")
+  //              Seq[Frag](
+  //                alignment, readings
+  //              )
+  //          }
+  //        )
+  //      )
+  //    )
+  //  )
 }
 
 
@@ -477,16 +491,16 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
           }.toList
         nodesToProcess = newNodesToProcess ::: nodesToProcess
 
-//        for i <- n.children do
-//          id += 1
-//          nodesToProcess.enqueue((id, i)) // Enqueue the children, but no edges and no expanded node in output
-//          edges.append(List(currentId, " -> ", id).mkString(" "))
-//          expandedNodes.append(
-//            s"""${currentId.toString}
-//               | [label=\"${currentId.toString}|expanded\"
-//               | tooltip=\"${n.formatWitnessReadings}\"
-//               | fillcolor=\"plum\"]""".stripMargin.replaceAll("\n", "")
-//          )
+      //        for i <- n.children do
+      //          id += 1
+      //          nodesToProcess.enqueue((id, i)) // Enqueue the children, but no edges and no expanded node in output
+      //          edges.append(List(currentId, " -> ", id).mkString(" "))
+      //          expandedNodes.append(
+      //            s"""${currentId.toString}
+      //               | [label=\"${currentId.toString}|expanded\"
+      //               | tooltip=\"${n.formatWitnessReadings}\"
+      //               | fillcolor=\"plum\"]""".stripMargin.replaceAll("\n", "")
+      //          )
       /* There are no unexpanded nodes; we leave this in so that the compiler won't think we aren't exhaustive */
       case (currentId, n: UnexpandedNode) =>
         id += 1
@@ -517,6 +531,7 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
 case class WordBuffer(words: Vector[String]) {
   def charCount: Int = words.map(_.length).sum + words.size - 1 // combined size of all words in buffer, plus spaces
 
+  @targetName("append")
   def :+(newString: String): WordBuffer = WordBuffer(words :+ newString) // append new word to buffer
 
   def stringify: String = words.mkString(" ") // combine words into string with space separators
