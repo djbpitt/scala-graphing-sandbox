@@ -21,3 +21,4 @@ libraryDependencies += ("com.github.haifengl" %% "smile-scala" % "3.0.0")
 libraryDependencies += ("org.scalatest" %% "scalatest" % "3.2.15" % "test")
 libraryDependencies += "com.lihaoyi" %% "scalatags" % "0.12.0"
 libraryDependencies += "de.sciss" %% "fingertree" % "1.5.5"
+libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "2.2.0"
