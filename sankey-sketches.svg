@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 180">
+    <!-- ================================================================ -->
+    <!-- T: mirror the control from the preceding step                    -->
+    <!-- ================================================================ -->
+    <g transform="translate(10, 10)">
+        <path d="M 0,0 
+            L 5,0
+            Q 25,0 30,30
+            T 55,60
+            L 60,60
+            " stroke="blue" fill="none" stroke-width="5"/>
+    </g>
+    <!-- ================================================================ -->
+    <!-- C: cubic, so just one curve with two control points              -->
+    <!-- ================================================================ -->
+    <g transform="translate(110, 10)">
+        <path d="M 0,0
+            L 5,0
+            C 35,0 25,55 55,60
+            L 60,60
+            " stroke="blue" fill="none" stroke-width="5"/>
+    </g>
+</svg>
