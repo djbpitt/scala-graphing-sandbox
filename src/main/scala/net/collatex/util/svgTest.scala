@@ -58,7 +58,7 @@ def computePath(source: AlignmentTreeNode, target: AlignmentTreeNode): Elem =
  */
 val svg: Elem =
   /* Constants */
-  val witW = 10
+  val witW = 6
   val witH = 10
   val verticalNodeSpacing = 3 * witH // height of node plus twice height of node for sigmoid connectors
   val totalWitCount = Sigla.values.size
@@ -89,7 +89,7 @@ val svg: Elem =
                         y={(witH / 2).toString}
                         text-anchor="middle"
                         dominant-baseline="central"
-                        font-size={(witH / 2).toString}>
+                        font-size={(witH / 2.5).toString}>
                     {siglum.drop(1)}
                   </text>)
               })
@@ -107,7 +107,7 @@ val svg: Elem =
                         y={(witH / 2).toString}
                         text-anchor="middle"
                         dominant-baseline="central"
-                        font-size={(witH / 2).toString}>
+                        font-size={(witH / 2.5).toString}>
                     {siglum.drop(1)}
                   </text>)
               })
@@ -123,7 +123,7 @@ val svg: Elem =
                         y={(witH / 2).toString}
                         text-anchor="middle"
                         dominant-baseline="central"
-                        font-size={(witH / 2).toString}>
+                        font-size={(witH / 2.5).toString}>
                     {siglum.toString.drop(1)}
                   </text>)
               })
