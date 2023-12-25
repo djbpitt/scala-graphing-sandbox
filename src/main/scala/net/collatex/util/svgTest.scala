@@ -14,6 +14,10 @@ val witnessToColor: Map[String, String] = Map(
   "w69" -> "dodgerblue",
   "w72" -> "violet"
 )
+
+/* Fake data for testing / demo
+*
+* Includes fake token array (below) because witness readings are grouped, which will matter for variation nodes */
 val nodes: Vector[AlignmentTreeNode] = Vector(
   ReadingNode(witnessReadings = Map("w59" -> (0, 1), "w60" -> (1, 2), "w61" -> (2, 3), "w66" -> (3, 4), "w69" -> (4, 5), "w72" -> (5, 6))),
   IndelNode(witnessReadings = Map("w66" -> (6, 7), "w69" -> (7, 8), "w72" -> (8, 9))),
@@ -23,9 +27,28 @@ val nodes: Vector[AlignmentTreeNode] = Vector(
 // Fake token array enforcing shared raedings for reading and indel nodes
 val tokenArray: Vector[String] = Vector("a", "a", "a", "a", "a", "a", "b", "b", "b", "c", "c", "c", "c", "c", "c")
 
+/** Process single group of shared readings
+ *
+ * Reading nodes have one such group
+ * Indel nodes have two, one of which is a shared absence of readings
+ * Variation nodes have a variable number
+ *
+ * Cells within the group are positioned automatically from a starting offset supplied on invocation:
+ *
+ * For reacing nodes: start at 0
+ * For indel nodes: reading start at 0, absence of readings starts beyond vertical dividing line
+ * For variation nodes: spacing is handled when function is invoked, inserted spacers between groups
+ *
+ * TODO: Process all groups at once (except, perhaps, absence-of-reading groups for indel  nodes) so that
+ *   intergroup spacing can be automated
+ *
+ * @param rdgGrp vector of strings representing sigla
+ * @param pos offset of reading within group
+ * @param witDims map with width and height of cells, used for positioning
+ * @return vector of <rect> and <text> elements, which is flatmapped by caller
+ */
 def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, Int]): Vector[Elem] =
-  val initialRdgs: Vector[String] = rdgGrp
-    .sorted
+
   @tailrec
   def nextRdg(rdgs: Vector[String], pos: Int, acc: Vector[Elem]): Vector[Elem] =
     if rdgs.isEmpty then acc
@@ -34,17 +57,19 @@ def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, I
       val xPos: String = (pos * witDims("w")).toString
       val fill: String = witnessToColor(currentSiglum)
       val newNodes: Vector[Elem] = Vector(
-        <rect x={xPos} y="0" width={witDims("w").toString} height={witDims("h").toString} fill={fill}/>,
+          <rect x={xPos} y="0" width={witDims("w").toString} height={witDims("h").toString} fill={fill}/>,
         <text
-          x={(xPos.toInt + witDims("w") / 2).toString}
-          y={(witDims("h") / 2).toString}
-          text-anchor="middle"
-          dominant-baseline="central"
-          font-size={(witDims("w") * .7).toString}
-        >{currentSiglum.drop(1)}</text>)
+        x={(xPos.toInt + witDims("w") / 2).toString}
+        y={(witDims("h") / 2).toString}
+        text-anchor="middle"
+        dominant-baseline="central"
+        font-size={(witDims("w") * .7).toString}>
+          {currentSiglum.drop(1)}
+        </text>)
       nextRdg(rdgs.tail, pos + 1, acc :++ newNodes)
     }
-  nextRdg(initialRdgs, 0, Vector.empty)
+
+  nextRdg(rdgGrp, pos, Vector.empty) // start at supplied offset position
 
 
 /* Create SVG for output
@@ -82,7 +107,7 @@ val svg: Elem =
               .groupBy((_, offsets) => tokenArray.slice(offsets._1, offsets._2)) // groupo by same reading text
               .map((text, attestations) => attestations.keys.toVector) // keep only sigla
               .toVector
-            val rects: Vector[Elem] = readingGroups.flatMap(e => processReadingGroup(e, 0, witDims))
+            val rects: Vector[Elem] = readingGroups.flatMap(e => processReadingGroup(e.sorted, 0, witDims))
             rects
           case IndelNode(witnessReadings) =>
             val readingRects: Vector[Elem] =
