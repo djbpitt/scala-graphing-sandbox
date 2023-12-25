@@ -89,9 +89,7 @@ val svg: Elem =
                         y={(witH / 2).toString}
                         text-anchor="middle"
                         dominant-baseline="central"
-                        font-size={(witH / 2.5).toString}>
-                    {siglum.drop(1)}
-                  </text>)
+                        font-size={(witH / 2.5).toString}>{siglum.drop(1)}</text>)
               })
           rects
         case IndelNode(witnessReadings) =>
@@ -107,9 +105,7 @@ val svg: Elem =
                         y={(witH / 2).toString}
                         text-anchor="middle"
                         dominant-baseline="central"
-                        font-size={(witH / 2.5).toString}>
-                    {siglum.drop(1)}
-                  </text>)
+                        font-size={(witH / 2.5).toString}>{siglum.drop(1)}</text>)
               })
           val missingRects: Vector[Elem] =
             Sigla.values.filterNot(e => witnessReadings.keySet.contains(e.toString))
@@ -123,9 +119,7 @@ val svg: Elem =
                         y={(witH / 2).toString}
                         text-anchor="middle"
                         dominant-baseline="central"
-                        font-size={(witH / 2.5).toString}>
-                    {siglum.toString.drop(1)}
-                  </text>)
+                        font-size={(witH / 2.5).toString}>{siglum.toString.drop(1)}</text>)
               })
           readingRects :++ missingRects
         case _ => Vector(<rect></rect>)
