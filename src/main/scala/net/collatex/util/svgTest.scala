@@ -40,10 +40,10 @@ val tokenArray: Vector[String] = Vector("a", "a", "a", "a", "a", "a", "b", "b", 
  * For variation nodes: spacing is handled when function is invoked, inserted spacers between groups
  *
  * TODO: Process all groups at once (except, perhaps, absence-of-reading groups for indel  nodes) so that
- *   intergroup spacing can be automated
+ * intergroup spacing can be automated
  *
- * @param rdgGrp vector of strings representing sigla
- * @param pos offset of reading within group
+ * @param rdgGrp  vector of strings representing sigla
+ * @param pos     offset of reading within group
  * @param witDims map with width and height of cells, used for positioning
  * @return vector of <rect> and <text> elements, which is flatmapped by caller
  */
@@ -87,62 +87,46 @@ val svg: Elem =
   val verticalNodeSpacing = 3 * witDims("h") // height of node plus twice height of node for sigmoid connectors
   val allSigla: Set[String] = witnessToColor.keySet // TODO: Derive from nodes, but AlignmentTreeNode doesn't have a witnessReadings property
   val totalWitCount: Int = allSigla.size
+  val verticalRuleXPos: Int = totalWitCount * witDims("w") + witDims("w") / 2
   /* End of constants*/
   /* Vertical line between present and absent witnesses first */
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 180">
     <g transform="translate(10)">
       <line
       transform={"translate(0, -" + ((verticalNodeSpacing - witDims("h")) / 2).toString + ")"}
-      x1={(totalWitCount * witDims("w") + witDims("w") / 2).toString}
+      x1={verticalRuleXPos.toString}
       y1="0"
-      x2={(totalWitCount * witDims("w") + witDims("w") / 2).toString}
+      x2={verticalRuleXPos.toString}
       y2={(nodes.size * verticalNodeSpacing).toString}
       stroke="gray"/>{nodes
       .zipWithIndex
       .map { (n, i) =>
         val translateInstruction = "translate(0, " + (i * verticalNodeSpacing).toString + ")"
         val contents: Vector[Elem] = n match
+          /* Reading node: single group of readings
+          *
+          * TODO: Currently vector of vector of strings, even though there's only one; simplify this (and indel node)
+          * */
           case ReadingNode(witnessReadings) =>
             val readingGroups: Vector[Vector[String]] = witnessReadings // vector of vectors of sigla
               .groupBy((_, offsets) => tokenArray.slice(offsets._1, offsets._2)) // groupo by same reading text
-              .map((text, attestations) => attestations.keys.toVector) // keep only sigla
+              .map((_, attestations) => attestations.keys.toVector) // keep only sigla
               .toVector
             val rects: Vector[Elem] = readingGroups.flatMap(e => processReadingGroup(e.sorted, 0, witDims))
             rects
+          /* Indel node */
           case IndelNode(witnessReadings) =>
-            val readingRects: Vector[Elem] =
-              witnessReadings.keys.toSeq.sorted
-                .zipWithIndex
-                .toVector
-                .flatMap((siglum, offset) => {
-                  val xPos: String = (offset * witDims("w")).toString
-                  val fill: String = witnessToColor(siglum)
-                  Vector(<rect x={xPos} y="0" width={witDims("w").toString} height={witDims("h").toString} fill={fill}/>,
-                    <text x={(xPos.toInt + witDims("w") / 2).toString}
-                          y={(witDims("h") / 2).toString}
-                          text-anchor="middle"
-                          dominant-baseline="central"
-                          font-size={(witDims("w") / 2.5).toString}>
-                      {siglum.drop(1)}
-                    </text>)
-                })
-            val missingRects: Vector[Elem] =
-              allSigla.diff(witnessReadings.keySet).toSeq.sorted
-                .zipWithIndex
-                .toVector
-                .flatMap((siglum, offset) => {
-                  val xPos: String = ((offset + totalWitCount + 1) * witDims("w")).toString // include spacer
-                  val fill: String = witnessToColor(siglum)
-                  Vector(<rect x={xPos} y="0" width={witDims("w").toString} height={witDims("h").toString} fill={fill}/>,
-                    <text x={(xPos.toInt + witDims("w") / 2).toString}
-                          y={(witDims("h") / 2).toString}
-                          text-anchor="middle"
-                          dominant-baseline="central"
-                          font-size={(witDims("h") / 2.5).toString}>
-                      {siglum.drop(1)}
-                    </text>)
-                })
+            // First process single group of readings; coordinate treatment with reading node
+            val readingGroups: Vector[Vector[String]] = witnessReadings // vector of vectors of sigla
+              .groupBy((_, offsets) => tokenArray.slice(offsets._1, offsets._2)) // groupo by same reading text
+              .map((_, attestations) => attestations.keys.toVector) // keep only sigla
+              .toVector
+            val readingRects: Vector[Elem] = readingGroups.flatMap(e => processReadingGroup(e.sorted, 0, witDims))
+            // Augment with single group of missing witnesses
+            val missingGroup: Vector[String] = allSigla.diff(witnessReadings.keySet).toVector.sorted
+            val missingRects: Vector[Elem] = processReadingGroup(missingGroup, totalWitCount + 1, witDims)
             readingRects :++ missingRects
+          /* Placeholder; remove once variation nodes have been handled correctly */
           case _ => Vector(<rect></rect>)
         <g transform={translateInstruction}>
           {contents}
@@ -152,7 +136,7 @@ val svg: Elem =
   </svg>
 
 @main def testSvg(): Unit =
-  val pp = new scala.xml.PrettyPrinter(78, 2)
+  val pp = new scala.xml.PrettyPrinter(78, 4)
   val x = pp.format(svg)
   println(x)
   save("svgTest.svg", svg)
