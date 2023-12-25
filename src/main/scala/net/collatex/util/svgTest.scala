@@ -34,15 +34,14 @@ val tokenArray: Vector[String] = Vector("a", "a", "a", "a", "a", "a", "b", "b", 
  * Variation nodes have a variable number
  *
  * Cells within the group are positioned automatically from a starting offset supplied on invocation:
- *
- * For reacing nodes: start at 0
+ * For reading nodes: start at 0
  * For indel nodes: reading start at 0, absence of readings starts beyond vertical dividing line
- * For variation nodes: spacing is handled when function is invoked, inserted spacers between groups
+ * For variation nodes: spacing is specified when function is called, inserted spacers between groups
  *
  * TODO: Process all groups at once (except, perhaps, absence-of-reading groups for indel  nodes) so that
- * intergroup spacing can be automated
+ *   intergroup spacing can be automated
  *
- * @param rdgGrp  vector of strings representing sigla
+ * @param rdgGrp  vector of strings representing sigla, already sorted into stable order
  * @param pos     offset of reading within group
  * @param witDims map with width and height of cells, used for positioning
  * @return vector of <rect> and <text> elements, which is flatmapped by caller
@@ -74,11 +73,11 @@ def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, I
 
 /* Create SVG for output
  *
- * Input is sequence of nodes
+ * Input is sequence of AlignmentTreeNodes
  * Output has two parts:
  *   1. Sigmoid connections from preceding node to current node (absent for first node)
  *      <g> with <path> children
- *   2. Current node <g> with <rect> children
+ *   2. Current node <g> with <rect> and <text> children
  *
  */
 val svg: Elem =
