@@ -15,35 +15,39 @@ val witnessToColor: Map[String, String] = Map(
   "w72" -> "violet"
 )
 val nodes: Vector[AlignmentTreeNode] = Vector(
-  ReadingNode(witnessReadings = Map("w59" -> (0, 1), "w60" -> (2, 3), "w61" -> (4, 5), "w66" -> (6, 7), "w69" -> (8, 9), "w72" -> (10, 11))),
-  IndelNode(witnessReadings = Map("w66" -> (6, 7), "w69" -> (8, 9), "w72" -> (10, 11))),
-  ReadingNode(witnessReadings = Map("w59" -> (0, 1), "w60" -> (2, 3), "w61" -> (4, 5), "w66" -> (6, 7), "w69" -> (8, 9), "w72" -> (10, 11)))
+  ReadingNode(witnessReadings = Map("w59" -> (0, 1), "w60" -> (1, 2), "w61" -> (2, 3), "w66" -> (3, 4), "w69" -> (4, 5), "w72" -> (5, 6))),
+  IndelNode(witnessReadings = Map("w66" -> (6, 7), "w69" -> (7, 8), "w72" -> (8, 9))),
+  ReadingNode(witnessReadings = Map("w59" -> (9, 10), "w60" -> (10, 11), "w61" -> (11, 12), "w66" -> (12, 13), "w69" -> (13, 14), "w72" -> (14, 15)))
 )
 
-@tailrec
-def processReadingGroups(rgs: Map[String, Map[String, String]], pos: Int, acc: Vector[Elem]): Vector[Elem] =
-  if rgs.isEmpty then
-    acc
-  else
-    val currentRg = rgs.head
-    val newItem: Elem = <rect></rect>
-    processReadingGroups(rgs.tail, pos + currentRg._2.size, acc :+ newItem)
+// Fake token array enforcing shared raedings for reading and indel nodes
+val tokenArray: Vector[String] = Vector("a", "a", "a", "a", "a", "a", "b", "b", "b", "c", "c", "c", "c", "c", "c")
 
-/** Compute <path> elements from preceding node to current node
- *
- * One <path> per witness
- * Witness groupings and order (order of groups and order of witnesses within groups) of both nodes must be known
- * All witnesses are present in all output, either as explicit or, if absent from node, as inferred
- *
- * @param source as Node
- * @param target as Node
- * @return <g> with <path> children, one for each witness
- */
+def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, Int]): Vector[Elem] =
+  val initialRdgs: Vector[String] = rdgGrp
+    .sorted
+  @tailrec
+  def nextRdg(rdgs: Vector[String], pos: Int, acc: Vector[Elem]): Vector[Elem] =
+    if rdgs.isEmpty then acc
+    else {
+      val currentSiglum: String = rdgs.head
+      val xPos: String = (pos * witDims("w")).toString
+      val fill: String = witnessToColor(currentSiglum)
+      val newNodes: Vector[Elem] = Vector(
+        <rect x={xPos} y="0" width={witDims("w").toString} height={witDims("h").toString} fill={fill}/>,
+        <text
+          x={(xPos.toInt + witDims("w") / 2).toString}
+          y={(witDims("h") / 2).toString}
+          text-anchor="middle"
+          dominant-baseline="central"
+          font-size={(witDims("w") * .7).toString}
+        >{currentSiglum.drop(1)}</text>)
+      nextRdg(rdgs.tail, pos + 1, acc :++ newNodes)
+    }
+  nextRdg(initialRdgs, 0, Vector.empty)
 
-def computePath(source: AlignmentTreeNode, target: AlignmentTreeNode): Elem =
-  ???
 
-/* Create SVV for output
+/* Create SVG for output
  *
  * Input is sequence of nodes
  * Output has two parts:
@@ -54,9 +58,8 @@ def computePath(source: AlignmentTreeNode, target: AlignmentTreeNode): Elem =
  */
 val svg: Elem =
   /* Constants */
-  val witW = 6
-  val witH = 10
-  val verticalNodeSpacing = 3 * witH // height of node plus twice height of node for sigmoid connectors
+  val witDims: Map[String, Int] = Map("w" -> 6, "h" -> 10)
+  val verticalNodeSpacing = 3 * witDims("h") // height of node plus twice height of node for sigmoid connectors
   val allSigla: Set[String] = witnessToColor.keySet // TODO: Derive from nodes, but AlignmentTreeNode doesn't have a witnessReadings property
   val totalWitCount: Int = allSigla.size
   /* End of constants*/
@@ -64,66 +67,62 @@ val svg: Elem =
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 180">
     <g transform="translate(10)">
       <line
-      transform={"translate(0, -" + ((verticalNodeSpacing - witH) / 2).toString + ")"}
-      x1={(totalWitCount * witW + witW / 2).toString}
+      transform={"translate(0, -" + ((verticalNodeSpacing - witDims("h")) / 2).toString + ")"}
+      x1={(totalWitCount * witDims("w") + witDims("w") / 2).toString}
       y1="0"
-      x2={(totalWitCount * witW + witW / 2).toString}
+      x2={(totalWitCount * witDims("w") + witDims("w") / 2).toString}
       y2={(nodes.size * verticalNodeSpacing).toString}
-      stroke="gray"/>{val nodesWithIndex = nodes.zipWithIndex
-    for (n, i) <- nodesWithIndex yield {
-      val translateInstruction = "translate(0, " + (i * verticalNodeSpacing).toString + ")"
-      val contents: Vector[Elem] = n match
-        case ReadingNode(witnessReadings) =>
-          val rects: Vector[Elem] =
-            witnessReadings.keys.toSeq.sorted // Sort alphabetically by siglum
-              .zipWithIndex
+      stroke="gray"/>{nodes
+      .zipWithIndex
+      .map { (n, i) =>
+        val translateInstruction = "translate(0, " + (i * verticalNodeSpacing).toString + ")"
+        val contents: Vector[Elem] = n match
+          case ReadingNode(witnessReadings) =>
+            val readingGroups: Vector[Vector[String]] = witnessReadings // vector of vectors of sigla
+              .groupBy((_, offsets) => tokenArray.slice(offsets._1, offsets._2)) // groupo by same reading text
+              .map((text, attestations) => attestations.keys.toVector) // keep only sigla
               .toVector
-              .flatMap((siglum, offset) => {
-                val xPos: String = (offset * witW).toString
-                val fill: String = witnessToColor(siglum)
-                Vector(<rect x={xPos} y="0" width={witW.toString} height={witH.toString} fill={fill}/>,
-                  <text x={(xPos.toInt + witW / 2).toString}
-                        y={(witH / 2).toString}
-                        text-anchor="middle"
-                        dominant-baseline="central"
-                        font-size={(witH / 2.5).toString}>{siglum.drop(1)}</text>)
-              })
-          rects
-        case IndelNode(witnessReadings) =>
-          val readingRects: Vector[Elem] =
-            witnessReadings.keys.toSeq.sorted
-              .zipWithIndex
-              .toVector
-              .flatMap((siglum, offset) => {
-                val xPos: String = (offset * witW).toString
-                val fill: String = witnessToColor(siglum)
-                Vector(<rect x={xPos} y="0" width={witW.toString} height={witH.toString} fill={fill}/>,
-                  <text x={(xPos.toInt + witW / 2).toString}
-                        y={(witH / 2).toString}
-                        text-anchor="middle"
-                        dominant-baseline="central"
-                        font-size={(witH / 2.5).toString}>{siglum.drop(1)}</text>)
-              })
-          val missingRects: Vector[Elem] =
-            allSigla.diff(witnessReadings.keySet).toSeq.sorted
-              .zipWithIndex
-              .toVector
-              .flatMap((siglum, offset) => {
-                val xPos: String = ((offset + totalWitCount + 1) * witW).toString // include spacer
-                val fill: String = witnessToColor(siglum)
-                Vector(<rect x={xPos} y="0" width={witW.toString} height={witH.toString} fill={fill}/>,
-                  <text x={(xPos.toInt + witW / 2).toString}
-                        y={(witH / 2).toString}
-                        text-anchor="middle"
-                        dominant-baseline="central"
-                        font-size={(witH / 2.5).toString}>{siglum.drop(1)}</text>)
-              })
-          readingRects :++ missingRects
-        case _ => Vector(<rect></rect>)
-      <g transform={translateInstruction}>
-        {contents}
-      </g>
-    }}
+            val rects: Vector[Elem] = readingGroups.flatMap(e => processReadingGroup(e, 0, witDims))
+            rects
+          case IndelNode(witnessReadings) =>
+            val readingRects: Vector[Elem] =
+              witnessReadings.keys.toSeq.sorted
+                .zipWithIndex
+                .toVector
+                .flatMap((siglum, offset) => {
+                  val xPos: String = (offset * witDims("w")).toString
+                  val fill: String = witnessToColor(siglum)
+                  Vector(<rect x={xPos} y="0" width={witDims("w").toString} height={witDims("h").toString} fill={fill}/>,
+                    <text x={(xPos.toInt + witDims("w") / 2).toString}
+                          y={(witDims("h") / 2).toString}
+                          text-anchor="middle"
+                          dominant-baseline="central"
+                          font-size={(witDims("w") / 2.5).toString}>
+                      {siglum.drop(1)}
+                    </text>)
+                })
+            val missingRects: Vector[Elem] =
+              allSigla.diff(witnessReadings.keySet).toSeq.sorted
+                .zipWithIndex
+                .toVector
+                .flatMap((siglum, offset) => {
+                  val xPos: String = ((offset + totalWitCount + 1) * witDims("w")).toString // include spacer
+                  val fill: String = witnessToColor(siglum)
+                  Vector(<rect x={xPos} y="0" width={witDims("w").toString} height={witDims("h").toString} fill={fill}/>,
+                    <text x={(xPos.toInt + witDims("w") / 2).toString}
+                          y={(witDims("h") / 2).toString}
+                          text-anchor="middle"
+                          dominant-baseline="central"
+                          font-size={(witDims("h") / 2.5).toString}>
+                      {siglum.drop(1)}
+                    </text>)
+                })
+            readingRects :++ missingRects
+          case _ => Vector(<rect></rect>)
+        <g transform={translateInstruction}>
+          {contents}
+        </g>
+      }}
     </g>
   </svg>
 
