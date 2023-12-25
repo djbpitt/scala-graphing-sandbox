@@ -6,26 +6,22 @@ import annotation.tailrec
 import scala.jdk.CollectionConverters.*
 import net.collatex.reptilian.{AlignmentTreeNode, IndelNode, ReadingNode, VariationNode}
 
-object WitnessColors extends Enumeration {
-  type witnessColor = Value
-  val Peru, Orange, Yellow, LimeGreen, DodgerBlue, Violet = Value
-}
-import WitnessColors._
-
-object Sigla extends Enumeration {
-  type siglum = Value
-  val W59, W60, W61, W66, W69, W72 = Value
-}
-import Sigla._
-
+val witnessToColor: Map[String, String] = Map(
+  "w59" -> "peru",
+  "w60" -> "orange",
+  "w61" -> "yellow",
+  "w66" -> "limegreen",
+  "w69" -> "dodgerblue",
+  "w72" -> "violet"
+)
 val nodes: Vector[AlignmentTreeNode] = Vector(
-  ReadingNode(witnessReadings = Map("W59" -> (0, 1), "W60" -> (2, 3), "W61" -> (4, 5), "W66" -> (6, 7), "W69" -> (8, 9), "W72" -> (10, 11))),
-  IndelNode(witnessReadings = Map("W66" -> (6, 7), "W69" -> (8, 9), "W72" -> (10, 11))),
-  ReadingNode(witnessReadings = Map("W59" -> (0, 1), "W60" -> (2, 3), "W61" -> (4, 5), "W66" -> (6, 7), "W69" -> (8, 9), "W72" -> (10, 11)))
+  ReadingNode(witnessReadings = Map("w59" -> (0, 1), "w60" -> (2, 3), "w61" -> (4, 5), "w66" -> (6, 7), "w69" -> (8, 9), "w72" -> (10, 11))),
+  IndelNode(witnessReadings = Map("w66" -> (6, 7), "w69" -> (8, 9), "w72" -> (10, 11))),
+  ReadingNode(witnessReadings = Map("w59" -> (0, 1), "w60" -> (2, 3), "w61" -> (4, 5), "w66" -> (6, 7), "w69" -> (8, 9), "w72" -> (10, 11)))
 )
 
 @tailrec
-def processReadingGroups(rgs: Map[String, Map[Sigla.Value, String]], pos: Int, acc: Vector[Elem]): Vector[Elem] =
+def processReadingGroups(rgs: Map[String, Map[String, String]], pos: Int, acc: Vector[Elem]): Vector[Elem] =
   if rgs.isEmpty then
     acc
   else
@@ -61,7 +57,8 @@ val svg: Elem =
   val witW = 6
   val witH = 10
   val verticalNodeSpacing = 3 * witH // height of node plus twice height of node for sigmoid connectors
-  val totalWitCount = Sigla.values.size
+  val allSigla: Set[String] = witnessToColor.keySet // TODO: Derive from nodes, but AlignmentTreeNode doesn't have a witnessReadings property
+  val totalWitCount: Int = allSigla.size
   /* End of constants*/
   /* Vertical line between present and absent witnesses first */
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 180">
@@ -83,7 +80,7 @@ val svg: Elem =
               .toVector
               .flatMap((siglum, offset) => {
                 val xPos: String = (offset * witW).toString
-                val fill: String = WitnessColors(offset).toString
+                val fill: String = witnessToColor(siglum)
                 Vector(<rect x={xPos} y="0" width={witW.toString} height={witH.toString} fill={fill}/>,
                   <text x={(xPos.toInt + witW / 2).toString}
                         y={(witH / 2).toString}
@@ -99,7 +96,7 @@ val svg: Elem =
               .toVector
               .flatMap((siglum, offset) => {
                 val xPos: String = (offset * witW).toString
-                val fill: String = WitnessColors(Sigla.withName(siglum).id).toString
+                val fill: String = witnessToColor(siglum)
                 Vector(<rect x={xPos} y="0" width={witW.toString} height={witH.toString} fill={fill}/>,
                   <text x={(xPos.toInt + witW / 2).toString}
                         y={(witH / 2).toString}
@@ -108,18 +105,18 @@ val svg: Elem =
                         font-size={(witH / 2.5).toString}>{siglum.drop(1)}</text>)
               })
           val missingRects: Vector[Elem] =
-            Sigla.values.filterNot(e => witnessReadings.keySet.contains(e.toString))
+            allSigla.diff(witnessReadings.keySet).toSeq.sorted
               .zipWithIndex
               .toVector
               .flatMap((siglum, offset) => {
-                val xPos: String = ((offset + Sigla.values.size + 1) * witW).toString // include spacer
-                val fill: String = WitnessColors(Sigla.withName(siglum.toString).id).toString
+                val xPos: String = ((offset + totalWitCount + 1) * witW).toString // include spacer
+                val fill: String = witnessToColor(siglum)
                 Vector(<rect x={xPos} y="0" width={witW.toString} height={witH.toString} fill={fill}/>,
                   <text x={(xPos.toInt + witW / 2).toString}
                         y={(witH / 2).toString}
                         text-anchor="middle"
                         dominant-baseline="central"
-                        font-size={(witH / 2.5).toString}>{siglum.toString.drop(1)}</text>)
+                        font-size={(witH / 2.5).toString}>{siglum.drop(1)}</text>)
               })
           readingRects :++ missingRects
         case _ => Vector(<rect></rect>)
