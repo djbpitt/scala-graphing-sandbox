@@ -4,7 +4,7 @@ import scala.xml.Elem
 import scala.xml.XML.save
 import annotation.tailrec
 import scala.jdk.CollectionConverters.*
-import net.collatex.reptilian.{AlignmentTreeNode, FormatWitnessReadings, IndelNode, ReadingNode, VariationNode}
+import net.collatex.reptilian.{AlignmentTreeNode, HasWitnessReadings, IndelNode, ReadingNode, VariationNode}
 
 val witnessToColor: Map[String, String] = Map(
   "w59" -> "peru",
@@ -96,7 +96,7 @@ val svg: Elem =
       x2={verticalRuleXPos.toString}
       y2={(nodes.size * verticalNodeSpacing).toString}
       stroke="gray"/>{nodes
-      .map(_.asInstanceOf[FormatWitnessReadings])
+      .map(_.asInstanceOf[HasWitnessReadings])
       .zipWithIndex
       .map { (n, i) =>
         val translateInstruction = "translate(0, " + (i * verticalNodeSpacing).toString + ")"

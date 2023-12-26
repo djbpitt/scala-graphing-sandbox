@@ -18,7 +18,7 @@ sealed trait AlignmentTreeNode // supertype of all nodes
  * Reading nodes also have witness readings but do not use a ListMap visualization,
  *   and therefore do not inherit this trait
  * */
-trait FormatWitnessReadings {
+trait HasWitnessReadings {
   def witnessReadings: WitnessReadings
   def formatWitnessReadings: String =
       s"${ListMap(witnessReadings.toSeq.sortBy(_._1): _*)}"
@@ -32,13 +32,13 @@ trait FormatWitnessReadings {
  * @param children ListBuffer of alignment-tree nodes
  */
 final case class ExpandedNode(witnessReadings: WitnessReadings, children: ListBuffer[AlignmentTreeNode] =
-ListBuffer.empty) extends AlignmentTreeNode with FormatWitnessReadings
+ListBuffer.empty) extends AlignmentTreeNode with HasWitnessReadings
 
 final case class VariationNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode
 
 final case class StringNode(txt: String = "unspecified mistake") extends AlignmentTreeNode
 
-final case class ReadingNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode with FormatWitnessReadings
+final case class ReadingNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode with HasWitnessReadings
 
 /** Custom constructor to simplify creation of LeafNode
  *
@@ -67,7 +67,7 @@ object ReadingNode {
  * Companion object is a convenience constructor (see documentation of
  *   companion object for ReadingNode, above)
  */
-final case class IndelNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode with FormatWitnessReadings
+final case class IndelNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode with HasWitnessReadings
 object IndelNode {
   def apply(m: (String, (Int, Int))*): AlignmentTreeNode =
     if m.isEmpty then
@@ -77,7 +77,7 @@ object IndelNode {
 }
 
 // Temporary; eventually the alignment graph will have no unexpanded nodes
-final case class UnexpandedNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode with FormatWitnessReadings
+final case class UnexpandedNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode with HasWitnessReadings
 // When we expand an UnexpandedNode we replace it with an ExpandedNode
 // UnexpandedNode cannot have children (it has only WitnessReadings)
 // ExpandedNode must have children
