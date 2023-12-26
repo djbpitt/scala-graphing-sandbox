@@ -55,16 +55,15 @@ def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, I
       val currentSiglum: String = rdgs.head
       val xPos: String = (pos * witDims("w")).toString
       val fill: String = witnessToColor(currentSiglum)
-      val newNodes: Vector[Elem] = Vector(
+      val newNodes: Vector[Elem] =
+        Vector(
           <rect x={xPos} y="0" width={witDims("w").toString} height={witDims("h").toString} fill={fill}/>,
-        <text
-        x={(xPos.toInt + witDims("w") / 2).toString}
-        y={(witDims("h") / 2).toString}
-        text-anchor="middle"
-        dominant-baseline="central"
-        font-size={(witDims("w") * .7).toString}>
-          {currentSiglum.drop(1)}
-        </text>)
+          <text
+          x={(xPos.toInt + witDims("w") / 2).toString}
+          y={(witDims("h") / 2).toString}
+          text-anchor="middle"
+          dominant-baseline="central"
+          font-size={(witDims("w") * .7).toString}>{currentSiglum.drop(1)}</text>)
       nextRdg(rdgs.tail, pos + 1, acc :++ newNodes)
     }
 
@@ -84,6 +83,15 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
   def nextNode(nodesToProcess: Vector[HasWitnessReadings], pos: Int, elements: Vector[Elem]): Vector[Elem] =
     if nodesToProcess.isEmpty then elements
     else
+      if elements.last.label == "g" then
+        val precedingGElement = elements.last
+        println(s"Preceding g element: $precedingGElement")
+        val allChildElements = precedingGElement.child
+        println(s"All children: $allChildElements")
+        val text66 = allChildElements.indexWhere(_.text == "66")
+        println(s"Index of single text child with value of 66: $text66")
+        val rect66 = precedingGElement.child(text66 - 1)
+        println(s"At last! $rect66")
       val currentNode: HasWitnessReadings = nodesToProcess.head
       val translateInstruction = "translate(0, " + (pos * verticalNodeSpacing).toString + ")"
       val contents: Vector[Elem] =
