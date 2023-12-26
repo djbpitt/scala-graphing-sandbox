@@ -62,9 +62,7 @@ def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, I
         y={(witDims("h") / 2).toString}
         text-anchor="middle"
         dominant-baseline="central"
-        font-size={(witDims("w") * .7).toString}>
-          {currentSiglum.drop(1)}
-        </text>)
+        font-size={(witDims("w") * .7).toString}>{currentSiglum.drop(1)}</text>)
       nextRdg(rdgs.tail, pos + 1, acc :++ newNodes)
     }
 
@@ -135,7 +133,7 @@ val svg: Elem =
   </svg>
 
 @main def testSvg(): Unit =
-  val pp = new scala.xml.PrettyPrinter(78, 4)
+  val pp = new scala.xml.PrettyPrinter(120, 4)
   val x = pp.format(svg)
   println(x)
   save("svgTest.svg", svg)
