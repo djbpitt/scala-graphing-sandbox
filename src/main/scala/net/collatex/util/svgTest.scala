@@ -18,7 +18,7 @@ val witnessToColor: Map[String, String] = Map(
 /* Fake data for testing / demo
 *
 * Includes fake token array (below) because witness readings are grouped, which will matter for variation nodes */
-val nodes: Vector[AlignmentTreeNode] = Vector(
+val nodes: Vector[HasWitnessReadings] = Vector(
   ReadingNode(witnessReadings = Map("w59" -> (0, 1), "w60" -> (1, 2), "w61" -> (2, 3), "w66" -> (3, 4), "w69" -> (4, 5), "w72" -> (5, 6))),
   IndelNode(witnessReadings = Map("w66" -> (6, 7), "w69" -> (7, 8), "w72" -> (8, 9))),
   ReadingNode(witnessReadings = Map("w59" -> (9, 10), "w60" -> (10, 11), "w61" -> (11, 12), "w66" -> (12, 13), "w69" -> (13, 14), "w72" -> (14, 15)))
@@ -68,6 +68,7 @@ def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, I
 
   nextRdg(rdgGrp, pos, Vector.empty) // start at supplied offset position
 
+private def processNode(node: HasWitnessReadings): Elem = ???
 
 /* Create SVG for output
  *
@@ -96,11 +97,10 @@ val svg: Elem =
       x2={verticalRuleXPos.toString}
       y2={(nodes.size * verticalNodeSpacing).toString}
       stroke="gray"/>{nodes
-      .map(_.asInstanceOf[HasWitnessReadings])
       .zipWithIndex
       .map { (n, i) =>
         val translateInstruction = "translate(0, " + (i * verticalNodeSpacing).toString + ")"
-        val contents: Vector[Elem] = 
+        val contents: Vector[Elem] =
           val readingGroups: Vector[Vector[String]] = n.witnessReadings // vector of vectors of sigla
             .groupBy((_, offsets) => tokenArray.slice(offsets._1, offsets._2)) // groupo by same reading text
             .map((_, attestations) => attestations.keys.toVector) // keep only sigla
