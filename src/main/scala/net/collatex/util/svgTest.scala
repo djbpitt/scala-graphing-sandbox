@@ -39,7 +39,7 @@ val tokenArray: Vector[String] = Vector("a", "a", "a", "a", "a", "a", "b", "b", 
  * For variation nodes: spacing is specified when function is called, inserted spacers between groups
  *
  * TODO: Process all groups at once (except, perhaps, absence-of-reading groups for indel  nodes) so that
- *   intergroup spacing can be automated
+ * intergroup spacing can be automated
  *
  * @param rdgGrp  vector of strings representing sigla, already sorted into stable order
  * @param pos     offset of reading within group
@@ -62,58 +62,68 @@ def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, I
         y={(witDims("h") / 2).toString}
         text-anchor="middle"
         dominant-baseline="central"
-        font-size={(witDims("w") * .7).toString}>{currentSiglum.drop(1)}</text>)
+        font-size={(witDims("w") * .7).toString}>
+          {currentSiglum.drop(1)}
+        </text>)
       nextRdg(rdgs.tail, pos + 1, acc :++ newNodes)
     }
 
   nextRdg(rdgGrp, pos, Vector.empty) // start at supplied offset position
 
-private def processNode(node: HasWitnessReadings): Elem = ???
 
-/* Create SVG for output
- *
- * Input is sequence of AlignmentTreeNodes
- * Output has two parts:
- *   1. Sigmoid connections from preceding node to current node (absent for first node)
- *      <g> with <path> children
- *   2. Current node <g> with <rect> and <text> children
- *
- */
-val svg: Elem =
+private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
   /* Constants */
   val witDims: Map[String, Int] = Map("w" -> 6, "h" -> 10)
   val verticalNodeSpacing = 3 * witDims("h") // height of node plus twice height of node for sigmoid connectors
   val allSigla: Set[String] = witnessToColor.keySet // TODO: Derive from nodes, but AlignmentTreeNode doesn't have a witnessReadings property
-  val totalWitCount: Int = allSigla.size
-  val verticalRuleXPos: Int = totalWitCount * witDims("w") + witDims("w") / 2
+  val totalWitnessCount: Int = allSigla.size
+  val verticalRuleXPos: Int = totalWitnessCount * witDims("w") + witDims("w") / 2
+
   /* End of constants*/
+  @tailrec
+  def nextNode(nodesToProcess: Vector[HasWitnessReadings], pos: Int, elements: Vector[Elem]): Vector[Elem] =
+    if nodesToProcess.isEmpty then elements
+    else
+      val currentNode: HasWitnessReadings = nodesToProcess.head
+      val translateInstruction = "translate(0, " + (pos * verticalNodeSpacing).toString + ")"
+      val contents: Vector[Elem] =
+        val readingGroups: Vector[Vector[String]] = currentNode.witnessReadings // vector of vectors of sigla
+          .groupBy((_, offsets) => tokenArray.slice(offsets._1, offsets._2)) // groupo by same reading text
+          .map((_, attestations) => attestations.keys.toVector) // keep only sigla
+          .toVector
+        val groupElements: Vector[Elem] = readingGroups.flatMap(e => processReadingGroup(e.sorted, 0, witDims))
+        // Augment with single group of missing witnesses
+        val missingGroup: Vector[String] = allSigla.diff(currentNode.witnessReadings.keySet).toVector.sorted
+        val missingElements: Vector[Elem] = processReadingGroup(missingGroup, totalWitnessCount + 1, witDims)
+        groupElements :++ missingElements
+      val newElement: Elem = <g transform={translateInstruction}>
+        {contents}
+      </g>
+      nextNode(nodesToProcess.tail, pos + 1, elements :+ newElement)
+
+  val verticalLine = <line
+    transform={"translate(0, -" + ((verticalNodeSpacing - witDims("h")) / 2).toString + ")"}
+    x1={verticalRuleXPos.toString}
+    y1="0"
+    x2={verticalRuleXPos.toString}
+    y2={(nodes.size * verticalNodeSpacing).toString}
+    stroke="gray"/>
+  nextNode(nodes, 0, Vector(verticalLine))
+
+/* Create SVG for output
+*
+* Input is sequence of AlignmentTreeNodes
+* Output has two parts:
+*   1. Sigmoid connections from preceding node to current node (absent for first node)
+*      <g> with <path> children
+*   2. Current node <g> with <rect> and <text> children
+*
+*/
+val svg: Elem =
   /* Vertical line between present and absent witnesses first */
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 180">
     <g transform="translate(10)">
-      <line
-      transform={"translate(0, -" + ((verticalNodeSpacing - witDims("h")) / 2).toString + ")"}
-      x1={verticalRuleXPos.toString}
-      y1="0"
-      x2={verticalRuleXPos.toString}
-      y2={(nodes.size * verticalNodeSpacing).toString}
-      stroke="gray"/>{nodes
-      .zipWithIndex
-      .map { (n, i) =>
-        val translateInstruction = "translate(0, " + (i * verticalNodeSpacing).toString + ")"
-        val contents: Vector[Elem] =
-          val readingGroups: Vector[Vector[String]] = n.witnessReadings // vector of vectors of sigla
-            .groupBy((_, offsets) => tokenArray.slice(offsets._1, offsets._2)) // groupo by same reading text
-            .map((_, attestations) => attestations.keys.toVector) // keep only sigla
-            .toVector
-          val readingRects: Vector[Elem] = readingGroups.flatMap(e => processReadingGroup(e.sorted, 0, witDims))
-          // Augment with single group of missing witnesses
-          val missingGroup: Vector[String] = allSigla.diff(n.witnessReadings.keySet).toVector.sorted
-          val missingRects: Vector[Elem] = processReadingGroup(missingGroup, totalWitCount + 1, witDims)
-          readingRects :++ missingRects
-        <g transform={translateInstruction}>
-          {contents}
-        </g>
-      }}
+      {processNodes(nodes)}
     </g>
   </svg>
 
