@@ -4,7 +4,7 @@ import scala.xml.Elem
 import scala.xml.XML.save
 import annotation.tailrec
 import scala.jdk.CollectionConverters.*
-import net.collatex.reptilian.{AlignmentTreeNode, IndelNode, ReadingNode, VariationNode}
+import net.collatex.reptilian.{AlignmentTreeNode, FormatWitnessReadings, IndelNode, ReadingNode, VariationNode}
 
 val witnessToColor: Map[String, String] = Map(
   "w59" -> "peru",
@@ -96,35 +96,20 @@ val svg: Elem =
       x2={verticalRuleXPos.toString}
       y2={(nodes.size * verticalNodeSpacing).toString}
       stroke="gray"/>{nodes
+      .map(_.asInstanceOf[FormatWitnessReadings])
       .zipWithIndex
       .map { (n, i) =>
         val translateInstruction = "translate(0, " + (i * verticalNodeSpacing).toString + ")"
-        val contents: Vector[Elem] = n match
-          /* Reading node: single group of readings
-          *
-          * TODO: Currently vector of vector of strings, even though there's only one; simplify this (and indel node)
-          * */
-          case ReadingNode(witnessReadings) =>
-            val readingGroups: Vector[Vector[String]] = witnessReadings // vector of vectors of sigla
-              .groupBy((_, offsets) => tokenArray.slice(offsets._1, offsets._2)) // groupo by same reading text
-              .map((_, attestations) => attestations.keys.toVector) // keep only sigla
-              .toVector
-            val rects: Vector[Elem] = readingGroups.flatMap(e => processReadingGroup(e.sorted, 0, witDims))
-            rects
-          /* Indel node */
-          case IndelNode(witnessReadings) =>
-            // First process single group of readings; coordinate treatment with reading node
-            val readingGroups: Vector[Vector[String]] = witnessReadings // vector of vectors of sigla
-              .groupBy((_, offsets) => tokenArray.slice(offsets._1, offsets._2)) // groupo by same reading text
-              .map((_, attestations) => attestations.keys.toVector) // keep only sigla
-              .toVector
-            val readingRects: Vector[Elem] = readingGroups.flatMap(e => processReadingGroup(e.sorted, 0, witDims))
-            // Augment with single group of missing witnesses
-            val missingGroup: Vector[String] = allSigla.diff(witnessReadings.keySet).toVector.sorted
-            val missingRects: Vector[Elem] = processReadingGroup(missingGroup, totalWitCount + 1, witDims)
-            readingRects :++ missingRects
-          /* Placeholder; remove once variation nodes have been handled correctly */
-          case _ => Vector(<rect></rect>)
+        val contents: Vector[Elem] = 
+          val readingGroups: Vector[Vector[String]] = n.witnessReadings // vector of vectors of sigla
+            .groupBy((_, offsets) => tokenArray.slice(offsets._1, offsets._2)) // groupo by same reading text
+            .map((_, attestations) => attestations.keys.toVector) // keep only sigla
+            .toVector
+          val readingRects: Vector[Elem] = readingGroups.flatMap(e => processReadingGroup(e.sorted, 0, witDims))
+          // Augment with single group of missing witnesses
+          val missingGroup: Vector[String] = allSigla.diff(n.witnessReadings.keySet).toVector.sorted
+          val missingRects: Vector[Elem] = processReadingGroup(missingGroup, totalWitCount + 1, witDims)
+          readingRects :++ missingRects
         <g transform={translateInstruction}>
           {contents}
         </g>
