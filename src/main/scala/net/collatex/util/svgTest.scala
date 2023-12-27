@@ -46,7 +46,7 @@ val tokenArray: Vector[String] = Vector("a", "a", "a", "a", "a", "a", "b", "b", 
  * @param witDims map with width and height of cells, used for positioning
  * @return vector of <rect> and <text> elements, which is flatmapped by caller
  */
-def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, Int]): Vector[Elem] =
+def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, Double]): Vector[Elem] =
 
   @tailrec
   def nextRdg(rdgs: Vector[String], pos: Int, acc: Vector[Elem]): Vector[Elem] =
@@ -59,7 +59,7 @@ def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, I
         Vector(
           <rect x={xPos} y="0" width={witDims("w").toString} height={witDims("h").toString} fill={fill}/>,
           <text
-          x={(xPos.toInt + witDims("w") / 2).toString}
+          x={(xPos.toDouble + witDims("w") / 2).toString}
           y={(witDims("h") / 2).toString}
           text-anchor="middle"
           dominant-baseline="central"
@@ -68,6 +68,9 @@ def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, I
     }
 
   nextRdg(rdgGrp, pos, Vector.empty) // start at supplied offset position
+
+
+private def drawFlowsForNode(sourceNodeElements: Vector[Elem], targetNodeElements: Vector[Elem], verticalNodeSpacing: Double, witDims: Map[String, Double]) = ???
 
 /** Draw flow connection for one witness from source (preceding) to target (current)
  *
@@ -120,11 +123,11 @@ private def createSingleColorGradient(color: String): Elem =
  */
 private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
   /* Constants */
-  val witDims: Map[String, Int] = Map("w" -> 6, "h" -> 10)
+  val witDims: Map[String, Double] = Map("w" -> 6, "h" -> 10)
   val verticalNodeSpacing = 3 * witDims("h") // height of node plus twice height of node for sigmoid connectors
   val allSigla: Set[String] = witnessToColor.keySet // TODO: Derive from nodes, but AlignmentTreeNode doesn't have a witnessReadings property
   val totalWitnessCount: Int = allSigla.size
-  val verticalRuleXPos: Int = totalWitnessCount * witDims("w") + witDims("w") / 2
+  val verticalRuleXPos: Double = totalWitnessCount * witDims("w") + witDims("w") / 2
   /* End of constants*/
 
   @tailrec
@@ -164,8 +167,10 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
     x2={verticalRuleXPos.toString}
     y2={(nodes.size * verticalNodeSpacing).toString}
     stroke="gray"/>
+
   val gradients: Vector[Elem] = witnessToColor.values.map(createSingleColorGradient).toVector
   val defs: Elem = <defs>{gradients}</defs>
+
   nextNode(nodes, 0, Vector(verticalLine,defs))
 
 /* Create SVG for output
