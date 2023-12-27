@@ -70,7 +70,22 @@ def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, D
   nextRdg(rdgGrp, pos, Vector.empty) // start at supplied offset position
 
 
-private def drawFlowsForNode(sourceNodeElements: Vector[Elem], targetNodeElements: Vector[Elem], verticalNodeSpacing: Double, witDims: Map[String, Double]) = ???
+/** Draw flow connection for all witnesses from source (preceding) to target (current) node
+ *
+ * Calls drawFlow() for each flow (svg <path> element)
+ *
+ * @param sourceNodeElements vector of <g> elements with <rect> and <text> children
+ * @param targetNodeElements vector of <g> elements with <rect> and <text> children
+ * @param verticalNodeSpacing distance between corresponding y positions of consecutive nodes
+ * @param witDims width and height of witness representation in node
+ * @return vector of svg <path> elements
+ */
+private def drawFlowsForNode(
+                              sourceNodeElements: Vector[Elem],
+                              targetNodeElements: Vector[Elem],
+                              verticalNodeSpacing: Double,
+                              witDims: Map[String, Double]
+                            ) = ???
 
 /** Draw flow connection for one witness from source (preceding) to target (current)
  *
@@ -82,6 +97,7 @@ private def drawFlowsForNode(sourceNodeElements: Vector[Elem], targetNodeElement
  * @param sourceColor color of source node
  * @param targetColor color of target node
  * @param verticalNodeSpacing distance between corresponding y positions of consecutive nodes
+ * @param witDims width and height of witness representation in node
  * @return svg <path> element
  */
 private def drawFlow(
