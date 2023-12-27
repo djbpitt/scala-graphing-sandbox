@@ -69,7 +69,55 @@ def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, I
 
   nextRdg(rdgGrp, pos, Vector.empty) // start at supplied offset position
 
+/** Draw flow connection for one witness from source (preceding) to target (current)
+ *
+ * Flows currently have constant color because the color is determined by the witness, but
+ *   allow for alternative color strategies, such as color by grouping, rather than witness
+ *
+ * @param sourceX x offset of source node
+ * @param targetX x offset of target node
+ * @param sourceColor color of source node
+ * @param targetColor color of target node
+ * @param verticalNodeSpacing distance between corresponding y positions of consecutive nodes
+ * @return svg <path> element
+ */
+private def drawFlow(
+                      sourceX: Double,
+                      targetX: Double,
+                      sourceColor: String,
+                      targetColor: String,
+                      verticalNodeSpacing: Double,
+                      witDims: Map[String, Int]
+                    ): Elem =
+  val startX: Double = sourceX + witDims("w") / 2
+  val endX: Double = targetX + witDims("w") / 2
+  val handleOffset: Double = (endX - startX) * 3 / 4
+  val startY: Double = witDims("h") - verticalNodeSpacing // should be negative
+  val d: String = s"M $startX,$startY C $startX + $handleOffset,$startY $endX - $handleOffset,0, $endX,0"
+  val color: String = s"url(#${sourceColor}gradient)"
+  <path d={d} stroke={color} fill="none" stroke-width={witDims("w").toString}/>
 
+
+/** Create single-color radial gradient
+ *
+ * @param color start and end colors are the same
+ * @return <radialGradient> element
+ */
+private def createSingleColorGradient(color: String): Elem =
+<radialGradient>
+  <stop offset="20%" stop-color={color} stop-opacity=".4"/>
+  <stop offset="50%" stop-color={color} stop-opacity="1"/>
+  <stop offset="80%" stop-color={color} stop-opacity=".4"/>
+</radialGradient>
+
+
+/** Create bars and flows for all nodes and connections
+ *
+ * TODO: Not yet processing variation nodes
+ *
+ * @param nodes all alignment nodes (reading, indel, variation)
+ * @return vector of svg <g> elements, one per node plus incoming flows
+ */
 private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
   /* Constants */
   val witDims: Map[String, Int] = Map("w" -> 6, "h" -> 10)
@@ -77,8 +125,8 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
   val allSigla: Set[String] = witnessToColor.keySet // TODO: Derive from nodes, but AlignmentTreeNode doesn't have a witnessReadings property
   val totalWitnessCount: Int = allSigla.size
   val verticalRuleXPos: Int = totalWitnessCount * witDims("w") + witDims("w") / 2
-
   /* End of constants*/
+
   @tailrec
   def nextNode(nodesToProcess: Vector[HasWitnessReadings], pos: Int, elements: Vector[Elem]): Vector[Elem] =
     if nodesToProcess.isEmpty then elements
@@ -116,7 +164,9 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
     x2={verticalRuleXPos.toString}
     y2={(nodes.size * verticalNodeSpacing).toString}
     stroke="gray"/>
-  nextNode(nodes, 0, Vector(verticalLine))
+  val gradients: Vector[Elem] = witnessToColor.values.map(createSingleColorGradient).toVector
+  val defs: Elem = <defs>{gradients}</defs>
+  nextNode(nodes, 0, Vector(verticalLine,defs))
 
 /* Create SVG for output
 *
@@ -128,7 +178,7 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
 *
 */
 val svg: Elem =
-  /* Vertical line between present and absent witnesses first */
+  /* Gradients and vertical line between present and absent witnesses first */
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 180">
     <g transform="translate(10)">
       {processNodes(nodes)}
