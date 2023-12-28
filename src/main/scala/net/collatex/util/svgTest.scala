@@ -15,6 +15,9 @@ val witnessToColor: Map[String, String] = Map(
   "w72" -> "violet"
 )
 
+val witDims: Map[String, Double] = Map("w" -> 6, "h" -> 10)
+val verticalNodeSpacing = 3 * witDims("h") // height of node plus twice height of node for sigmoid connectors
+
 /* Fake data for testing / demo
 *
 * Includes fake token array (below) because witness readings are grouped, which will matter for variation nodes */
@@ -122,8 +125,6 @@ private def createSingleColorGradient(color: String): Elem =
  */
 private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
   /* Constants */
-  val witDims: Map[String, Double] = Map("w" -> 6, "h" -> 10)
-  val verticalNodeSpacing = 3 * witDims("h") // height of node plus twice height of node for sigmoid connectors
   val allSigla: Set[String] = witnessToColor.keySet // TODO: Derive from nodes, but AlignmentTreeNode doesn't have a witnessReadings property
   val totalWitnessCount: Int = allSigla.size
   val verticalRuleXPos: Double = totalWitnessCount * witDims("w") + witDims("w") / 2
