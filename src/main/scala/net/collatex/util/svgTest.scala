@@ -72,6 +72,23 @@ def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, D
 
   nextRdg(rdgGrp, pos, Vector.empty) // start at supplied offset position
 
+private def drawFlows(sourceG: Elem, targetG: Elem) =
+  def findRectBySiglum(g: Elem, siglum: String) =
+    g.child(g.child.indexWhere(_.text == siglum) - 1)
+  val labels: Vector[String] = sourceG
+    .child
+    .filter(_.label == "text")
+    .map(_.text)
+    .toVector
+  val yPos = (sourceG \ "@transform").text
+  println(yPos)
+  val paths = labels.map { e =>
+    val sourceX = findRectBySiglum(sourceG, e) \ "@x"
+    val targetX = findRectBySiglum(targetG, e) \ "@x"
+    val color = findRectBySiglum(sourceG, e) \ "@fill"
+    drawFlow(sourceX.toString.toDouble, targetX.toString.toDouble, color.toString, color.toString)
+  }
+  <g transform={yPos}>{paths}</g>
 
 /** Draw flow connection for one witness from source (preceding) to target (current)
  *
@@ -94,8 +111,8 @@ private def drawFlow(
   val endX: Double = targetX + witDims("w") / 2
   val handleOffset: Double = (endX - startX) * 3 / 4
   val startY: Double = witDims("h") - verticalNodeSpacing // should be negative
-  val d: String = s"M $startX,$startY C $startX + $handleOffset,$startY $endX - $handleOffset,0, $endX,0"
-  val color: String = s"url(#${sourceColor}gradient)"
+  val d: String = s"M $startX,$startY C ${startX + handleOffset},$startY ${endX - handleOffset},0 $endX,0"
+  val color: String = s"url(#${sourceColor}Gradient)"
   <path d={d} stroke={color} fill="none" stroke-width={witDims("w").toString}/>
 
 
@@ -112,7 +129,7 @@ private def createSingleColorGradient(color: String): Elem =
 </radialGradient>
 
 
-/** Create bars and flows for all nodes and connections
+/** Create rectangles and text labels for all nodes
  *
  * TODO: Not yet processing variation nodes
  *
@@ -130,15 +147,15 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
   def nextNode(nodesToProcess: Vector[HasWitnessReadings], pos: Int, elements: Vector[Elem]): Vector[Elem] =
     if nodesToProcess.isEmpty then elements
     else
-      if elements.last.label == "g" then
-        val precedingGElement = elements.last
-        println(s"Preceding g element: $precedingGElement")
-        val allChildElements = precedingGElement.child
-        println(s"All children: $allChildElements")
-        val text66 = allChildElements.indexWhere(_.text == "66")
-        println(s"Index of single text child with value of 66: $text66")
-        val rect66 = precedingGElement.child(text66 - 1)
-        println(s"At last! $rect66")
+//      if elements.last.label == "g" then
+//        val precedingGElement = elements.last
+//        println(s"Preceding g element: $precedingGElement")
+//        val allChildElements = precedingGElement.child
+//        println(s"All children: $allChildElements")
+//        val text66 = allChildElements.indexWhere(_.text == "66")
+//        println(s"Index of single text child with value of 66: $text66")
+//        val rect66 = precedingGElement.child(text66 - 1)
+//        println(s"At last! $rect66")
       val currentNode: HasWitnessReadings = nodesToProcess.head
       val translateInstruction = "translate(0, " + (pos * verticalNodeSpacing).toString + ")"
       val contents: Vector[Elem] =
@@ -179,15 +196,18 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
 *
 */
 val svg: Elem =
+  val nodeElements = processNodes(nodes)
+  val flowElements = nodeElements.drop(2).sliding(2).map(e => drawFlows(e.head, e.last))
   /* Gradients and vertical line between present and absent witnesses first */
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 180">
     <g transform="translate(10)">
-      {processNodes(nodes)}
+      {nodeElements}
+      {flowElements}
     </g>
   </svg>
 
 @main def testSvg(): Unit =
   val pp = new scala.xml.PrettyPrinter(120, 4)
   val x = pp.format(svg)
-  println(x)
+//  println(x)
   save("svgTest.svg", svg)
