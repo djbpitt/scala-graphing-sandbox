@@ -9,6 +9,7 @@
 
 ## Sankey vs. Alluvial vs Parallel Set
 
+* https://www.analyticsvidhya.com/blog/2022/06/data-visualisation-alluvial-diagram-vs-sankey-diagram/
 * http://www.datasmith.org/2020/05/02/alluvial-plots-vs-sankey-diagrams/
 * https://corybrunson.github.io/2019/09/13/flow-taxonomy/
 * https://datascience.blog.wzb.eu/2016/09/27/parallel-coordinate-plots-for-discrete-and-categorical-data-in-r-a-comparison/
