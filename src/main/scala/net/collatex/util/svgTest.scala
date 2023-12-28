@@ -111,7 +111,7 @@ private def drawFlow(
   val handleOffset: Double = verticalNodeSpacing * 3 / 4
   val startY: Double = witDims("h") -verticalNodeSpacing // should be negative
   val d: String =
-    s"M $startX,$startY C $startX,${-verticalNodeSpacing * 3 / 4} $endX, ${-verticalNodeSpacing * 1 / 4} $endX,0"
+    s"M $startX,$startY C $startX,${startY + handleOffset} $endX, ${-handleOffset} $endX,0"
   val color: String = s"url(#${sourceColor}Gradient)"
   <path d={d} stroke={color} fill="none" stroke-width={witDims("w").toString}/>
 
