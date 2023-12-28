@@ -80,8 +80,7 @@ private def drawFlows(sourceG: Elem, targetG: Elem) =
     .filter(_.label == "text")
     .map(_.text)
     .toVector
-  val yPos = (sourceG \ "@transform").text
-  println(yPos)
+  val yPos = (targetG \ "@transform").text
   val paths = labels.map { e =>
     val sourceX = findRectBySiglum(sourceG, e) \ "@x"
     val targetX = findRectBySiglum(targetG, e) \ "@x"
