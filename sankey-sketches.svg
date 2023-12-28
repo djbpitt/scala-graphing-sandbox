@@ -73,4 +73,10 @@
             C 60,0 0,60 60,60
             " stroke="url(#radialFlowGradient)" fill="none" stroke-width="5"/>
     </g>
+    <!-- Change orientation-->
+    <g transform="translate(110, 210)">
+        <path d="M 0,0
+            C 0,45 60,15 60,60
+            " stroke="url(#radialFlowGradient)" fill="none" stroke-width="5"/>
+    </g>
 </svg>
