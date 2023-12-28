@@ -127,11 +127,18 @@ private def drawFlow(
  * @return <radialGradient> element
  */
 private def createSingleColorGradient(color: String): Elem =
-<radialGradient id={color + "Gradient"} cx="50%" cy="50%" r="150%">
-  <stop offset="20%" stop-color={color} stop-opacity=".4"/>
-  <stop offset="50%" stop-color={color} stop-opacity="1"/>
-  <stop offset="80%" stop-color={color} stop-opacity=".4"/>
-</radialGradient>
+<linearGradient id={color+"Gradient"}>
+  <stop offset="0%" stop-color={color} stop-opacity="1"/>
+  <stop offset="10%" stop-color={color} stop-opacity=".9"/>
+  <stop offset="20%" stop-color={color} stop-opacity=".7"/>
+  <stop offset="30%" stop-color={color} stop-opacity=".55"/>
+  <stop offset="40%" stop-color={color} stop-opacity=".4"/>
+  <stop offset="50%" stop-color={color} stop-opacity=".4"/>
+  <stop offset="60%" stop-color={color} stop-opacity=".55"/>
+  <stop offset="70%" stop-color={color} stop-opacity=".7"/>
+  <stop offset="80%" stop-color={color} stop-opacity=".9"/>
+  <stop offset="90%" stop-color={color} stop-opacity="1"/>
+</linearGradient>
 
 
 /** Create rectangles and text labels for all nodes

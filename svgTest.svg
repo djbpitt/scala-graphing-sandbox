@@ -1,30 +1,72 @@
 <svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg">
     <g transform="translate(10)">
-      <defs><radialGradient id="dodgerblueGradient" cx="50%" cy="50%" r="150%">
-  <stop offset="20%" stop-color="dodgerblue" stop-opacity=".4"/>
-  <stop offset="50%" stop-color="dodgerblue" stop-opacity="1"/>
-  <stop offset="80%" stop-color="dodgerblue" stop-opacity=".4"/>
-</radialGradient><radialGradient id="yellowGradient" cx="50%" cy="50%" r="150%">
-  <stop offset="20%" stop-color="yellow" stop-opacity=".4"/>
-  <stop offset="50%" stop-color="yellow" stop-opacity="1"/>
-  <stop offset="80%" stop-color="yellow" stop-opacity=".4"/>
-</radialGradient><radialGradient id="violetGradient" cx="50%" cy="50%" r="150%">
-  <stop offset="20%" stop-color="violet" stop-opacity=".4"/>
-  <stop offset="50%" stop-color="violet" stop-opacity="1"/>
-  <stop offset="80%" stop-color="violet" stop-opacity=".4"/>
-</radialGradient><radialGradient id="orangeGradient" cx="50%" cy="50%" r="150%">
-  <stop offset="20%" stop-color="orange" stop-opacity=".4"/>
-  <stop offset="50%" stop-color="orange" stop-opacity="1"/>
-  <stop offset="80%" stop-color="orange" stop-opacity=".4"/>
-</radialGradient><radialGradient id="limegreenGradient" cx="50%" cy="50%" r="150%">
-  <stop offset="20%" stop-color="limegreen" stop-opacity=".4"/>
-  <stop offset="50%" stop-color="limegreen" stop-opacity="1"/>
-  <stop offset="80%" stop-color="limegreen" stop-opacity=".4"/>
-</radialGradient><radialGradient id="peruGradient" cx="50%" cy="50%" r="150%">
-  <stop offset="20%" stop-color="peru" stop-opacity=".4"/>
-  <stop offset="50%" stop-color="peru" stop-opacity="1"/>
-  <stop offset="80%" stop-color="peru" stop-opacity=".4"/>
-</radialGradient></defs><g transform="translate(0, 0.0)">
+      <defs><linearGradient id="dodgerblueGradient">
+  <stop offset="0%" stop-color="dodgerblue" stop-opacity="1"/>
+  <stop offset="10%" stop-color="dodgerblue" stop-opacity=".9"/>
+  <stop offset="20%" stop-color="dodgerblue" stop-opacity=".7"/>
+  <stop offset="30%" stop-color="dodgerblue" stop-opacity=".55"/>
+  <stop offset="40%" stop-color="dodgerblue" stop-opacity=".4"/>
+  <stop offset="50%" stop-color="dodgerblue" stop-opacity=".4"/>
+  <stop offset="60%" stop-color="dodgerblue" stop-opacity=".55"/>
+  <stop offset="70%" stop-color="dodgerblue" stop-opacity=".7"/>
+  <stop offset="80%" stop-color="dodgerblue" stop-opacity=".9"/>
+  <stop offset="90%" stop-color="dodgerblue" stop-opacity="1"/>
+</linearGradient><linearGradient id="yellowGradient">
+  <stop offset="0%" stop-color="yellow" stop-opacity="1"/>
+  <stop offset="10%" stop-color="yellow" stop-opacity=".9"/>
+  <stop offset="20%" stop-color="yellow" stop-opacity=".7"/>
+  <stop offset="30%" stop-color="yellow" stop-opacity=".55"/>
+  <stop offset="40%" stop-color="yellow" stop-opacity=".4"/>
+  <stop offset="50%" stop-color="yellow" stop-opacity=".4"/>
+  <stop offset="60%" stop-color="yellow" stop-opacity=".55"/>
+  <stop offset="70%" stop-color="yellow" stop-opacity=".7"/>
+  <stop offset="80%" stop-color="yellow" stop-opacity=".9"/>
+  <stop offset="90%" stop-color="yellow" stop-opacity="1"/>
+</linearGradient><linearGradient id="violetGradient">
+  <stop offset="0%" stop-color="violet" stop-opacity="1"/>
+  <stop offset="10%" stop-color="violet" stop-opacity=".9"/>
+  <stop offset="20%" stop-color="violet" stop-opacity=".7"/>
+  <stop offset="30%" stop-color="violet" stop-opacity=".55"/>
+  <stop offset="40%" stop-color="violet" stop-opacity=".4"/>
+  <stop offset="50%" stop-color="violet" stop-opacity=".4"/>
+  <stop offset="60%" stop-color="violet" stop-opacity=".55"/>
+  <stop offset="70%" stop-color="violet" stop-opacity=".7"/>
+  <stop offset="80%" stop-color="violet" stop-opacity=".9"/>
+  <stop offset="90%" stop-color="violet" stop-opacity="1"/>
+</linearGradient><linearGradient id="orangeGradient">
+  <stop offset="0%" stop-color="orange" stop-opacity="1"/>
+  <stop offset="10%" stop-color="orange" stop-opacity=".9"/>
+  <stop offset="20%" stop-color="orange" stop-opacity=".7"/>
+  <stop offset="30%" stop-color="orange" stop-opacity=".55"/>
+  <stop offset="40%" stop-color="orange" stop-opacity=".4"/>
+  <stop offset="50%" stop-color="orange" stop-opacity=".4"/>
+  <stop offset="60%" stop-color="orange" stop-opacity=".55"/>
+  <stop offset="70%" stop-color="orange" stop-opacity=".7"/>
+  <stop offset="80%" stop-color="orange" stop-opacity=".9"/>
+  <stop offset="90%" stop-color="orange" stop-opacity="1"/>
+</linearGradient><linearGradient id="limegreenGradient">
+  <stop offset="0%" stop-color="limegreen" stop-opacity="1"/>
+  <stop offset="10%" stop-color="limegreen" stop-opacity=".9"/>
+  <stop offset="20%" stop-color="limegreen" stop-opacity=".7"/>
+  <stop offset="30%" stop-color="limegreen" stop-opacity=".55"/>
+  <stop offset="40%" stop-color="limegreen" stop-opacity=".4"/>
+  <stop offset="50%" stop-color="limegreen" stop-opacity=".4"/>
+  <stop offset="60%" stop-color="limegreen" stop-opacity=".55"/>
+  <stop offset="70%" stop-color="limegreen" stop-opacity=".7"/>
+  <stop offset="80%" stop-color="limegreen" stop-opacity=".9"/>
+  <stop offset="90%" stop-color="limegreen" stop-opacity="1"/>
+</linearGradient><linearGradient id="peruGradient">
+  <stop offset="0%" stop-color="peru" stop-opacity="1"/>
+  <stop offset="10%" stop-color="peru" stop-opacity=".9"/>
+  <stop offset="20%" stop-color="peru" stop-opacity=".7"/>
+  <stop offset="30%" stop-color="peru" stop-opacity=".55"/>
+  <stop offset="40%" stop-color="peru" stop-opacity=".4"/>
+  <stop offset="50%" stop-color="peru" stop-opacity=".4"/>
+  <stop offset="60%" stop-color="peru" stop-opacity=".55"/>
+  <stop offset="70%" stop-color="peru" stop-opacity=".7"/>
+  <stop offset="80%" stop-color="peru" stop-opacity=".9"/>
+  <stop offset="90%" stop-color="peru" stop-opacity="1"/>
+</linearGradient></defs><g transform="translate(0, 0.0)">
         <rect x="0.0" y="0" width="6.0" height="10.0" fill="peru"/><text x="3.0" y="5.0" text-anchor="middle" dominant-baseline="central" font-size="4.199999999999999">59</text><rect x="6.0" y="0" width="6.0" height="10.0" fill="orange"/><text x="9.0" y="5.0" text-anchor="middle" dominant-baseline="central" font-size="4.199999999999999">60</text><rect x="12.0" y="0" width="6.0" height="10.0" fill="yellow"/><text x="15.0" y="5.0" text-anchor="middle" dominant-baseline="central" font-size="4.199999999999999">61</text><rect x="18.0" y="0" width="6.0" height="10.0" fill="limegreen"/><text x="21.0" y="5.0" text-anchor="middle" dominant-baseline="central" font-size="4.199999999999999">66</text><rect x="24.0" y="0" width="6.0" height="10.0" fill="dodgerblue"/><text x="27.0" y="5.0" text-anchor="middle" dominant-baseline="central" font-size="4.199999999999999">69</text><rect x="30.0" y="0" width="6.0" height="10.0" fill="violet"/><text x="33.0" y="5.0" text-anchor="middle" dominant-baseline="central" font-size="4.199999999999999">72</text>
       </g><g transform="translate(0, 30.0)">
         <rect x="0.0" y="0" width="6.0" height="10.0" fill="limegreen"/><text x="3.0" y="5.0" text-anchor="middle" dominant-baseline="central" font-size="4.199999999999999">66</text><rect x="6.0" y="0" width="6.0" height="10.0" fill="dodgerblue"/><text x="9.0" y="5.0" text-anchor="middle" dominant-baseline="central" font-size="4.199999999999999">69</text><rect x="12.0" y="0" width="6.0" height="10.0" fill="violet"/><text x="15.0" y="5.0" text-anchor="middle" dominant-baseline="central" font-size="4.199999999999999">72</text><rect x="42.0" y="0" width="6.0" height="10.0" fill="peru"/><text x="45.0" y="5.0" text-anchor="middle" dominant-baseline="central" font-size="4.199999999999999">59</text><rect x="48.0" y="0" width="6.0" height="10.0" fill="orange"/><text x="51.0" y="5.0" text-anchor="middle" dominant-baseline="central" font-size="4.199999999999999">60</text><rect x="54.0" y="0" width="6.0" height="10.0" fill="yellow"/><text x="57.0" y="5.0" text-anchor="middle" dominant-baseline="central" font-size="4.199999999999999">61</text>
