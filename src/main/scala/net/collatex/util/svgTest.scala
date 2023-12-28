@@ -15,8 +15,13 @@ val witnessToColor: Map[String, String] = Map(
   "w72" -> "violet"
 )
 
+/* Constants */
+val allSigla: Set[String] = witnessToColor.keySet // TODO: Derive from nodes, but AlignmentTreeNode doesn't have a witnessReadings property
+val totalWitnessCount: Int = allSigla.size
 val witDims: Map[String, Double] = Map("w" -> 6, "h" -> 10)
 val verticalNodeSpacing = 3 * witDims("h") // height of node plus twice height of node for sigmoid connectors
+val verticalRuleXPos: Double = totalWitnessCount * witDims("w") + witDims("w") / 2
+/* End of constants*/
 
 /* Fake data for testing / demo
 *
@@ -108,7 +113,7 @@ private def drawFlow(
                     ): Elem =
   val startX: Double = sourceX + witDims("w") / 2
   val endX: Double = targetX + witDims("w") / 2
-  val handleOffset: Double = verticalNodeSpacing * 3 / 4
+  val handleOffset: Double = verticalNodeSpacing / 2
   val startY: Double = witDims("h") -verticalNodeSpacing // should be negative
   val d: String =
     s"M $startX,$startY C $startX,${startY + handleOffset} $endX, ${-handleOffset} $endX,0"
@@ -137,11 +142,6 @@ private def createSingleColorGradient(color: String): Elem =
  * @return vector of svg <g> elements, one per node plus incoming flows
  */
 private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
-  /* Constants */
-  val allSigla: Set[String] = witnessToColor.keySet // TODO: Derive from nodes, but AlignmentTreeNode doesn't have a witnessReadings property
-  val totalWitnessCount: Int = allSigla.size
-  val verticalRuleXPos: Double = totalWitnessCount * witDims("w") + witDims("w") / 2
-  /* End of constants*/
 
   @tailrec
   def nextNode(nodesToProcess: Vector[HasWitnessReadings], pos: Int, elements: Vector[Elem]): Vector[Elem] =
@@ -173,18 +173,10 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
       </g>
       nextNode(nodesToProcess.tail, pos + 1, elements :+ newElement)
 
-  val verticalLine = <line
-    transform={"translate(0, -" + ((verticalNodeSpacing - witDims("h")) / 2).toString + ")"}
-    x1={verticalRuleXPos.toString}
-    y1="0"
-    x2={verticalRuleXPos.toString}
-    y2={(nodes.size * verticalNodeSpacing).toString}
-    stroke="gray"/>
-
   val gradients: Vector[Elem] = witnessToColor.values.map(createSingleColorGradient).toVector
   val defs: Elem = <defs>{gradients}</defs>
 
-  nextNode(nodes, 0, Vector(verticalLine,defs))
+  nextNode(nodes, 0, Vector(defs))
 
 /* Create SVG for output
 *
@@ -196,13 +188,21 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
 *
 */
 val svg: Elem =
+  val verticalLine = <line
+    transform={"translate(0, -" + ((verticalNodeSpacing - witDims("h")) / 2).toString + ")"}
+    x1={verticalRuleXPos.toString}
+    y1="0"
+    x2={verticalRuleXPos.toString}
+    y2={(nodes.size * verticalNodeSpacing).toString}
+    stroke="gray"/>
   val nodeElements = processNodes(nodes)
-  val flowElements = nodeElements.drop(2).sliding(2).map(e => drawFlows(e.head, e.last))
+  val flowElements = nodeElements.drop(1).sliding(2).map(e => drawFlows(e.head, e.last))
   /* Gradients and vertical line between present and absent witnesses first */
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 180">
     <g transform="translate(10)">
       {nodeElements}
       {flowElements}
+      {verticalLine}
     </g>
   </svg>
 
