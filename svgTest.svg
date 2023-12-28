@@ -1,26 +1,26 @@
 <svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg">
     <g transform="translate(10)">
-      <line transform="translate(0, -10.0)" x1="39.0" y1="0" x2="39.0" y2="90.0" stroke="gray"/><defs><radialGradient>
+      <line transform="translate(0, -10.0)" x1="39.0" y1="0" x2="39.0" y2="90.0" stroke="gray"/><defs><radialGradient id="dodgerblueGradient" cx="50%" cy="50%" r="150%">
   <stop offset="20%" stop-color="dodgerblue" stop-opacity=".4"/>
   <stop offset="50%" stop-color="dodgerblue" stop-opacity="1"/>
   <stop offset="80%" stop-color="dodgerblue" stop-opacity=".4"/>
-</radialGradient><radialGradient>
+</radialGradient><radialGradient id="yellowGradient" cx="50%" cy="50%" r="150%">
   <stop offset="20%" stop-color="yellow" stop-opacity=".4"/>
   <stop offset="50%" stop-color="yellow" stop-opacity="1"/>
   <stop offset="80%" stop-color="yellow" stop-opacity=".4"/>
-</radialGradient><radialGradient>
+</radialGradient><radialGradient id="violetGradient" cx="50%" cy="50%" r="150%">
   <stop offset="20%" stop-color="violet" stop-opacity=".4"/>
   <stop offset="50%" stop-color="violet" stop-opacity="1"/>
   <stop offset="80%" stop-color="violet" stop-opacity=".4"/>
-</radialGradient><radialGradient>
+</radialGradient><radialGradient id="orangeGradient" cx="50%" cy="50%" r="150%">
   <stop offset="20%" stop-color="orange" stop-opacity=".4"/>
   <stop offset="50%" stop-color="orange" stop-opacity="1"/>
   <stop offset="80%" stop-color="orange" stop-opacity=".4"/>
-</radialGradient><radialGradient>
+</radialGradient><radialGradient id="limegreenGradient" cx="50%" cy="50%" r="150%">
   <stop offset="20%" stop-color="limegreen" stop-opacity=".4"/>
   <stop offset="50%" stop-color="limegreen" stop-opacity="1"/>
   <stop offset="80%" stop-color="limegreen" stop-opacity=".4"/>
-</radialGradient><radialGradient>
+</radialGradient><radialGradient id="peruGradient" cx="50%" cy="50%" r="150%">
   <stop offset="20%" stop-color="peru" stop-opacity=".4"/>
   <stop offset="50%" stop-color="peru" stop-opacity="1"/>
   <stop offset="80%" stop-color="peru" stop-opacity=".4"/>

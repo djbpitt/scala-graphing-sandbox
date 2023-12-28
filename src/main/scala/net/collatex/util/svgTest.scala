@@ -82,17 +82,13 @@ def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, D
  * @param targetX x offset of target node
  * @param sourceColor color of source node
  * @param targetColor color of target node
- * @param verticalNodeSpacing distance between corresponding y positions of consecutive nodes
- * @param witDims width and height of witness representation in node
  * @return svg <path> element
  */
 private def drawFlow(
                       sourceX: Double,
                       targetX: Double,
                       sourceColor: String,
-                      targetColor: String,
-                      verticalNodeSpacing: Double,
-                      witDims: Map[String, Int]
+                      targetColor: String
                     ): Elem =
   val startX: Double = sourceX + witDims("w") / 2
   val endX: Double = targetX + witDims("w") / 2
@@ -109,7 +105,7 @@ private def drawFlow(
  * @return <radialGradient> element
  */
 private def createSingleColorGradient(color: String): Elem =
-<radialGradient>
+<radialGradient id={color + "Gradient"} cx="50%" cy="50%" r="150%">
   <stop offset="20%" stop-color={color} stop-opacity=".4"/>
   <stop offset="50%" stop-color={color} stop-opacity="1"/>
   <stop offset="80%" stop-color={color} stop-opacity=".4"/>
