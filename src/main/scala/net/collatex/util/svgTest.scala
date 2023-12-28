@@ -140,6 +140,11 @@ private def createSingleColorGradient(color: String): Elem =
   <stop offset="90%" stop-color={color} stop-opacity="1"/>
 </linearGradient>
 
+private def drawBorder(node: Elem): Elem =
+  val width = 10 * witDims("w") // TODO: Compute width, perhaps for each group separately
+  val yPos = (node \ "@transform").text
+  <rect transform={yPos} x ="-.5" y ="-.5" width={(width + 1).toString} height={(witDims("h") + 1).toString} stroke="black" stroke-width="1" fill="none" rx="3"/>
+
 
 /** Create rectangles and text labels for all nodes
  *
@@ -154,15 +159,6 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
   def nextNode(nodesToProcess: Vector[HasWitnessReadings], pos: Int, elements: Vector[Elem]): Vector[Elem] =
     if nodesToProcess.isEmpty then elements
     else
-//      if elements.last.label == "g" then
-//        val precedingGElement = elements.last
-//        println(s"Preceding g element: $precedingGElement")
-//        val allChildElements = precedingGElement.child
-//        println(s"All children: $allChildElements")
-//        val text66 = allChildElements.indexWhere(_.text == "66")
-//        println(s"Index of single text child with value of 66: $text66")
-//        val rect66 = precedingGElement.child(text66 - 1)
-//        println(s"At last! $rect66")
       val currentNode: HasWitnessReadings = nodesToProcess.head
       val translateInstruction = "translate(0, " + (pos * verticalNodeSpacing).toString + ")"
       val contents: Vector[Elem] =
@@ -204,12 +200,13 @@ val svg: Elem =
     stroke="gray"/>
   val nodeElements = processNodes(nodes)
   val flowElements = nodeElements.drop(1).sliding(2).map(e => drawFlows(e.head, e.last))
-  /* Gradients and vertical line between present and absent witnesses first */
+  val nodeWrappers = nodeElements.drop(1).map(drawBorder)
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 180">
     <g transform="translate(10)">
       {nodeElements}
       {flowElements}
       {verticalLine}
+      {nodeWrappers}
     </g>
   </svg>
 
