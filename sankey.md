@@ -6,6 +6,7 @@
 * https://www.sankey-diagrams.com/
 * https://github.com/calischs/Sankey/blob/master/SankeyNotes.pdf (mathematics of Sankey layout)
 * https://visualign.org/2012/05/14/sankey-diagrams/
+* https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10289785/
 
 ## Sankey vs. Alluvial vs Parallel Set
 
