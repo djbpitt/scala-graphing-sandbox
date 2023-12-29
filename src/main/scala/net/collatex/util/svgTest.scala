@@ -54,11 +54,11 @@ val tokenArray: Vector[String] = Vector("a", "a", "a", "a", "a", "a", "b", "b", 
  * @param witDims map with width and height of cells, used for positioning
  * @return vector of <rect> and <text> elements, which is flatmapped by caller
  */
-def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, Double]): Vector[Elem] =
+def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, Double]): Elem =
 
   @tailrec
-  def nextRdg(rdgs: Vector[String], pos: Int, acc: Vector[Elem]): Vector[Elem] =
-    if rdgs.isEmpty then acc
+  def nextRdg(rdgs: Vector[String], pos: Int, acc: Vector[Elem]): Elem =
+    if rdgs.isEmpty then <g>{acc}</g>
     else {
       val currentSiglum: String = rdgs.head
       val xPos: String = (pos * witDims("w")).toString
@@ -133,10 +133,13 @@ private def createSingleColorGradient(color: String): Elem =
   <stop offset="100%" stop-color={color} stop-opacity="1"/>
 </linearGradient>
 
-private def drawBorder(node: Elem): Elem =
-  val width = 10 * witDims("w") // TODO: Compute width, perhaps for each group separately
-  val yPos = (node \ "@transform").text
-  <rect transform={yPos} x ="-.5" y ="-.5" width={(width + 1).toString} height={(witDims("h") + 1).toString} stroke="black" stroke-width="1" fill="none" rx="3"/>
+private def drawBorder(g: xml.Node, translateValue: String): Elem =
+  println(g)
+  val xStartPos: Double = ((g \ "rect").head \ "@x").text.toDouble
+  val xEndPos: Double = ((g \ "rect").last \ "@x").text.toDouble + witDims("w")
+  val width: String = (xEndPos - xStartPos + 1).toString
+  val xPlot: String = (xStartPos -.5).toString
+  <rect transform={translateValue} x ={xPlot} y ="-.5" width={width} height={(witDims("h") + 1).toString} stroke="black" stroke-width="1" fill="none" rx="3"/>
 
 
 /** Create rectangles and text labels for all nodes
@@ -159,11 +162,12 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
           .groupBy((_, offsets) => tokenArray.slice(offsets._1, offsets._2)) // groupo by same reading text
           .map((_, attestations) => attestations.keys.toVector) // keep only sigla
           .toVector
-        val groupElements: Vector[Elem] = readingGroups.flatMap(e => processReadingGroup(e.sorted, 0, witDims))
+        val groupElements: Vector[Elem] = readingGroups.map(e => processReadingGroup(e.sorted, 0, witDims))
         // Augment with single group of missing witnesses
         val missingGroup: Vector[String] = allSigla.diff(currentNode.witnessReadings.keySet).toVector.sorted
-        val missingElements: Vector[Elem] = processReadingGroup(missingGroup, totalWitnessCount + 1, witDims)
-        groupElements :++ missingElements
+        val missingElements: Elem = processReadingGroup(missingGroup, totalWitnessCount + 1, witDims)
+        val allElements = groupElements :+ missingElements
+        allElements
       val newElement: Elem = <g transform={translateInstruction}>
         {contents}
       </g>
@@ -192,14 +196,24 @@ val svg: Elem =
     y2={(nodes.size * verticalNodeSpacing).toString}
     stroke="gray"/>
   val nodeElements = processNodes(nodes)
+  val readingGroupBorders = nodeElements
+    .filter(_.label == "g")
+    .map {
+      e => {
+        val translateValue = (e \ "@transform").text
+        e.child
+          .filter(_.child.nonEmpty)
+          .map(f => drawBorder(f, translateValue))
+      }
+    }
   val flowElements = nodeElements.drop(1).sliding(2).map(e => drawFlows(e.head, e.last))
-  val nodeWrappers = nodeElements.drop(1).map(drawBorder)
+//  val nodeWrappers = readingGroups.map(drawBorder)
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 180">
     <g transform="translate(10)">
       {nodeElements}
       {flowElements}
       {verticalLine}
-      {nodeWrappers}
+      {readingGroupBorders}
     </g>
   </svg>
 
