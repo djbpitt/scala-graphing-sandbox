@@ -1,11 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 300" width="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" width="100%">
     <defs>
-        <radialGradient id="radialFlowGradient" cx="50%" cy="50%" r="150%">
-            <stop offset="20%" stop-color="blue" stop-opacity=".4"/>
-            <stop offset="50%" stop-color="blue" stop-opacity="1"/>
-            <stop offset="80%" stop-color="blue" stop-opacity=".4"/>
-        </radialGradient>
+        <linearGradient id="linearDefaultGradient">
+            <stop offset="0%" stop-color="blue" stop-opacity="1"/>
+            <stop offset="10%" stop-color="blue" stop-opacity=".9"/>
+            <stop offset="20%" stop-color="blue" stop-opacity=".7"/>
+            <stop offset="30%" stop-color="blue" stop-opacity=".55"/>
+            <stop offset="40%" stop-color="blue" stop-opacity=".4"/>
+            <stop offset="50%" stop-color="blue" stop-opacity=".4"/>
+            <stop offset="60%" stop-color="blue" stop-opacity=".55"/>
+            <stop offset="70%" stop-color="blue" stop-opacity=".7"/>
+            <stop offset="80%" stop-color="blue" stop-opacity=".9"/>
+            <stop offset="90%" stop-color="blue" stop-opacity="1"/>
+        </linearGradient>
+        <linearGradient id="linearVerticalGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+            <stop offset="0%" stop-color="blue" stop-opacity="1"/>
+            <stop offset="10%" stop-color="blue" stop-opacity=".9"/>
+            <stop offset="20%" stop-color="blue" stop-opacity=".7"/>
+            <stop offset="30%" stop-color="blue" stop-opacity=".55"/>
+            <stop offset="40%" stop-color="blue" stop-opacity=".4"/>
+            <stop offset="50%" stop-color="blue" stop-opacity=".4"/>
+            <stop offset="60%" stop-color="blue" stop-opacity=".55"/>
+            <stop offset="70%" stop-color="blue" stop-opacity=".7"/>
+            <stop offset="80%" stop-color="blue" stop-opacity=".9"/>
+            <stop offset="90%" stop-color="blue" stop-opacity="1"/>
+        </linearGradient>
+        <linearGradient id="linearMinimalVerticalGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+            <stop offset="0%" stop-color="blue" stop-opacity="1"/>
+            <stop offset="50%" stop-color="blue" stop-opacity=".4"/>
+            <stop offset="90%" stop-color="blue" stop-opacity="1"/>
+        </linearGradient>
     </defs>
     <!-- ================================================================ -->
     <!-- T: mirror the control from the preceding step                    -->
@@ -17,31 +41,31 @@
             Q 30,0 30,30
             T 55,60
             L 60,60
-            " stroke="url(#radialFlowGradient)" fill="none" stroke-width="5"/>
+            " stroke="url(#linearDefaultGradient)" fill="none" stroke-width="5"/>
     </g>
     <g transform="translate(110, 10)">
         <path d="M 0,0 
             Q 22.5,0 30,30
             T 60,60
-            " stroke="url(#radialFlowGradient)" fill="none" stroke-width="5"/>
+            " stroke="url(#linearDefaultGradient)" fill="none" stroke-width="5"/>
     </g>
     <g transform="translate(210, 10)">
         <path d="M 0,0 
             Q 25,0 30,30
             T 60,60
-            " stroke="url(#radialFlowGradient)" fill="none" stroke-width="5"/>
+            " stroke="url(#linearDefaultGradient)" fill="none" stroke-width="5"/>
     </g>
     <g transform="translate(310, 10)">
         <path d="M 0,0 
             Q 27.5,0 30,30
             T 60,60
-            " stroke="url(#radialFlowGradient)" fill="none" stroke-width="5"/>
+            " stroke="url(#linearDefaultGradient)" fill="none" stroke-width="5"/>
     </g>
     <g transform="translate(410, 10)">
         <path d="M 0,0 
             Q 30,0 30,30
             T 60,60
-            " stroke="url(#radialFlowGradient)" fill="none" stroke-width="5"/>
+            " stroke="url(#linearDefaultGradient)" fill="none" stroke-width="5"/>
     </g>
     <!-- ================================================================ -->
     <!-- C: cubic, so just one curve with two control points              -->
@@ -51,32 +75,48 @@
             L 5,0
             C 45,0 15,60 55,60
             L 60,60
-            " stroke="url(#radialFlowGradient)" fill="none" stroke-width="5"/>
+            " stroke="url(#linearDefaultGradient)" fill="none" stroke-width="5"/>
     </g>
     <g transform="translate(110, 110)">
         <path d="M 0,0
             C 45,0 15,60 60,60
-            " stroke="url(#radialFlowGradient)" fill="none" stroke-width="5"/>
+            " stroke="url(#linearDefaultGradient)" fill="none" stroke-width="5"/>
     </g>
     <g transform="translate(210, 110)">
         <path d="M 0,0
             C 50,0 10,60 60,60
-            " stroke="url(#radialFlowGradient)" fill="none" stroke-width="5"/>
+            " stroke="url(#linearDefaultGradient)" fill="none" stroke-width="5"/>
     </g>
     <g transform="translate(310, 110)">
         <path d="M 0,0
             C 55,0 5,60 60,60
-            " stroke="url(#radialFlowGradient)" fill="none" stroke-width="5"/>
+            " stroke="url(#linearDefaultGradient)" fill="none" stroke-width="5"/>
     </g>
     <g transform="translate(410, 110)">
         <path d="M 0,0
             C 60,0 0,60 60,60
-            " stroke="url(#radialFlowGradient)" fill="none" stroke-width="5"/>
+            " stroke="url(#linearDefaultGradient)" fill="none" stroke-width="5"/>
     </g>
-    <!-- Change orientation-->
+    <!-- ================================================================ -->
+    <!-- Change orientation                                               -->
+    <!-- ================================================================ -->
     <g transform="translate(110, 210)">
         <path d="M 0,0
             C 0,45 60,15 60,60
-            " stroke="url(#radialFlowGradient)" fill="none" stroke-width="5"/>
+            " stroke="url(#linearDefaultGradient)" fill="none" stroke-width="5"/>
     </g>
+    <!-- ================================================================ -->
+    <!-- Change gradient direction                                        -->
+    <!-- ================================================================ -->
+    <g transform="translate(110, 310)">
+        <path d="M 0,0
+            C 0,45 60,15 60,60
+            " stroke="url(#linearVerticalGradient)" fill="none" stroke-width="5"/>
+    </g>
+    <g transform="translate(210, 310)">
+        <path d="M 0,0
+            C 0,45 60,15 60,60
+            " stroke="url(#linearMinimalVerticalGradient)" fill="none" stroke-width="5"/>
+    </g>
+
 </svg>
