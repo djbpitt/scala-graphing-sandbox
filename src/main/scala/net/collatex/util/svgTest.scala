@@ -77,12 +77,17 @@ def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, D
 
   nextRdg(rdgGrp, pos, Vector.empty) // start at supplied offset position
 
+/** Draw flows between entire nodes
+ *
+ * @param sourceG <g> elements that wraps one <g> for each group of agreed readings
+ * @param targetG same as sourceG, but target of flow instead of source
+ * @return <g> element that wraps all path groups (each of which is a inner <g>
+ */
 private def drawFlows(sourceG: Elem, targetG: Elem) =
   def findRectBySiglum(g: Elem, siglum: String) =
-    g.child(g.child.indexWhere(_.text == siglum) - 1)
-  val labels: Vector[String] = sourceG
-    .child
-    .filter(_.label == "text")
+    val x = (g \\ "text").indexWhere(_.text == siglum)
+    (g \\ "rect")(x)
+  val labels: Vector[String] = (sourceG \\ "text")
     .map(_.text)
     .toVector
   val yPos = (targetG \ "@transform").text
@@ -134,7 +139,6 @@ private def createSingleColorGradient(color: String): Elem =
 </linearGradient>
 
 private def drawBorder(g: xml.Node, translateValue: String): Elem =
-  println(g)
   val xStartPos: Double = ((g \ "rect").head \ "@x").text.toDouble
   val xEndPos: Double = ((g \ "rect").last \ "@x").text.toDouble + witDims("w")
   val width: String = (xEndPos - xStartPos + 1).toString
@@ -167,7 +171,7 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
         val missingGroup: Vector[String] = allSigla.diff(currentNode.witnessReadings.keySet).toVector.sorted
         val missingElements: Elem = processReadingGroup(missingGroup, totalWitnessCount + 1, witDims)
         val allElements = groupElements :+ missingElements
-        allElements
+        allElements.filter(_.child.nonEmpty)
       val newElement: Elem = <g transform={translateInstruction}>
         {contents}
       </g>
@@ -206,7 +210,7 @@ val svg: Elem =
           .map(f => drawBorder(f, translateValue))
       }
     }
-  val flowElements = nodeElements.drop(1).sliding(2).map(e => drawFlows(e.head, e.last))
+  val flowElements = nodeElements.tail.sliding(2).map(e => drawFlows(e.head, e.last))
 //  val nodeWrappers = readingGroups.map(drawBorder)
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 180">
     <g transform="translate(10)">
