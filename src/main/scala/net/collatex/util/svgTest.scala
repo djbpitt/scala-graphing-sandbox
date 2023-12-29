@@ -212,7 +212,7 @@ private def drawLinesBetweenNodes(positioning: NodeSeq, nodesToConnect: Vector[E
   pairs.map { e =>
     val startX = ((e.head \ "@x").text.toDouble + (e.head \ "@width").text.toDouble).toString
     val endX = (e.last \ "@x").text
-    <line x1={startX} y1={yPos} x2={endX} y2={yPos} stroke="black" stroke-width=".5"/>
+    <line x1={startX} y1={yPos} x2={endX} y2={yPos} stroke="black" stroke-width="1"/>
   }.toVector
 
 
