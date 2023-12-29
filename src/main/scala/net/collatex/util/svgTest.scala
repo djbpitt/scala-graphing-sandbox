@@ -129,7 +129,7 @@ private def drawFlow(
 private def createSingleColorGradient(color: String): Elem =
 <linearGradient id={color+"Gradient"} x1="0%" x2="0%" y1="0%" y2="100%">
   <stop offset="0%" stop-color={color} stop-opacity="1"/>
-  <stop offset="50%" stop-color={color} stop-opacity=".3"/>
+  <stop offset="50%" stop-color={color} stop-opacity=".2"/>
   <stop offset="100%" stop-color={color} stop-opacity="1"/>
 </linearGradient>
 
