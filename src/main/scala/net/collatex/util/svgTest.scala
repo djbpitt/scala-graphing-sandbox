@@ -1,11 +1,13 @@
 package net.collatex.util
 
-import scala.xml.Elem
+import scala.xml.{Elem, NodeSeq}
 import scala.xml.XML.save
 import annotation.tailrec
 import scala.jdk.CollectionConverters.*
 import net.collatex.reptilian.{AlignmentTreeNode, HasWitnessReadings, IndelNode, ReadingNode, VariationNode}
 
+
+/* Constants */
 val witnessToColor: Map[String, String] = Map(
   "w59" -> "peru",
   "w60" -> "orange",
@@ -14,8 +16,6 @@ val witnessToColor: Map[String, String] = Map(
   "w69" -> "dodgerblue",
   "w72" -> "violet"
 )
-
-/* Constants */
 val allSigla: Set[String] = witnessToColor.keySet // TODO: Derive from nodes, but AlignmentTreeNode doesn't have a witnessReadings property
 val totalWitnessCount: Int = allSigla.size
 val witDims: Map[String, Double] = Map("w" -> 6, "h" -> 10)
@@ -38,24 +38,29 @@ val tokenArray: Vector[String] = Vector("a", "a", "a", "a", "a", "a", "b", "b", 
 /** Process single group of shared readings
  *
  * Reading nodes have one such group
- * Indel nodes have two, one of which is a shared absence of readings
- * Variation nodes have a variable number
+ * Indel nodes have two, one of which for absent of readings
+ * Variation nodes have a variable number, including possible group for absent readings
  *
- * Cells within the group are positioned automatically from a starting offset supplied on invocation:
+ * Cells within the group are positioned from a starting offset supplied on invocation:
  * For reading nodes: start at 0
- * For indel nodes: reading start at 0, absence of readings starts beyond vertical dividing line
- * For variation nodes: spacing is specified when function is called, inserted spacers between groups
+ * For indel nodes: readings start at 0, absence of readings starts beyond vertical dividing line
+ * For variation nodes: spacing is specified when function is called (caller inserts empty spacer between groups)
  *
- * TODO: Process all groups at once (except, perhaps, absence-of-reading groups for indel  nodes) so that
- * intergroup spacing can be automated
+ * TODO: Intergroup spacing can be automated
  *
  * @param rdgGrp  vector of strings representing sigla, already sorted into stable order
  * @param pos     offset of reading within group
- * @param witDims map with width and height of cells, used for positioning
  * @return vector of <rect> and <text> elements, which is flatmapped by caller
  */
-def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, Double]): Elem =
+def processReadingGroup(rdgGrp: Vector[String], pos: Int): Elem =
 
+  /** Processes each reading in reading group
+   *
+   * @param rdgs sigla to process (no more sigla is the exit condition)
+   * @param pos offset of siglum in sequence of sigla for group
+   * @param acc <rect> and <text> elements for sigla that have already been processed
+   * @return <g> containing acc once all sigla for group have been processed
+   */
   @tailrec
   def nextRdg(rdgs: Vector[String], pos: Int, acc: Vector[Elem]): Elem =
     if rdgs.isEmpty then <g>{acc}</g>
@@ -71,11 +76,11 @@ def processReadingGroup(rdgGrp: Vector[String], pos: Int, witDims: Map[String, D
           y={(witDims("h") / 2).toString}
           text-anchor="middle"
           dominant-baseline="central"
-          font-size={(witDims("w") * .7).toString}>{currentSiglum.drop(1)}</text>)
+          font-size={(witDims("w") * .7).toString}>{currentSiglum.tail}</text>)
       nextRdg(rdgs.tail, pos + 1, acc :++ newNodes)
     }
 
-  nextRdg(rdgGrp, pos, Vector.empty) // start at supplied offset position
+  nextRdg(rdgGrp.map(_.trim), pos, Vector.empty) // start at supplied offset position
 
 /** Draw flows between entire nodes
  *
@@ -103,6 +108,7 @@ private def drawFlows(sourceG: Elem, targetG: Elem) =
  *
  * Flows currently have constant color because the color is determined by the witness, but
  *   allow for alternative color strategies, such as color by grouping, rather than witness
+ * Flow is path from start to end through single cubic Bézier curve
  *
  * @param sourceX x offset of source node
  * @param targetX x offset of target node
@@ -110,12 +116,7 @@ private def drawFlows(sourceG: Elem, targetG: Elem) =
  * @param targetColor color of target node
  * @return svg <path> element
  */
-private def drawFlow(
-                      sourceX: Double,
-                      targetX: Double,
-                      sourceColor: String,
-                      targetColor: String
-                    ): Elem =
+private def drawFlow(sourceX: Double, targetX: Double, sourceColor: String, targetColor: String ): Elem =
   val startX: Double = sourceX + witDims("w") / 2
   val endX: Double = targetX + witDims("w") / 2
   val handleOffset: Double = verticalNodeSpacing / 2
@@ -128,8 +129,11 @@ private def drawFlow(
 
 /** Create single-color radial gradient
  *
+ * Transition is vertical (default is horizontal)
+ * No need to specify graduated steps; renderer creates smooth transition with just end and mid points
+ *
  * @param color start and end colors are the same
- * @return <radialGradient> element
+ * @return <linearGradient> element
  */
 private def createSingleColorGradient(color: String): Elem =
 <linearGradient id={color+"Gradient"} x1="0%" x2="0%" y1="0%" y2="100%">
@@ -138,6 +142,15 @@ private def createSingleColorGradient(color: String): Elem =
   <stop offset="100%" stop-color={color} stop-opacity="1"/>
 </linearGradient>
 
+
+/** Draw rectangle with rounded corners around a single group of shared readings
+ *
+ * Variation and indel nodes have multiple groups
+ *
+ * @param g <g> element around which to draw rectangle
+ * @param translateValue y offset for border rectangle (copied from <g> **grand**parent)
+ * @return <rect> element that describes border rectangle with rounded corners
+ */
 private def drawBorder(g: xml.Node, translateValue: String): Elem =
   val xStartPos: Double = ((g \ "rect").head \ "@x").text.toDouble
   val xEndPos: Double = ((g \ "rect").last \ "@x").text.toDouble + witDims("w")
@@ -155,6 +168,15 @@ private def drawBorder(g: xml.Node, translateValue: String): Elem =
  */
 private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
 
+  /** Process all nodes
+   *
+   * Recursive processing makes it easy to track offset in sequence, used for y positioning
+   *
+   * @param nodesToProcess sequence of remaining nodes to process; empty sequence is exit condition
+   * @param pos offset of current node in original sequence, used for vertical positioning
+   * @param elements <g> elements, one per node, which contains separate <g> children for each group of shared readings
+   * @return
+   */
   @tailrec
   def nextNode(nodesToProcess: Vector[HasWitnessReadings], pos: Int, elements: Vector[Elem]): Vector[Elem] =
     if nodesToProcess.isEmpty then elements
@@ -166,10 +188,10 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
           .groupBy((_, offsets) => tokenArray.slice(offsets._1, offsets._2)) // groupo by same reading text
           .map((_, attestations) => attestations.keys.toVector) // keep only sigla
           .toVector
-        val groupElements: Vector[Elem] = readingGroups.map(e => processReadingGroup(e.sorted, 0, witDims))
+        val groupElements: Vector[Elem] = readingGroups.map(e => processReadingGroup(e.sorted, 0))
         // Augment with single group of missing witnesses
         val missingGroup: Vector[String] = allSigla.diff(currentNode.witnessReadings.keySet).toVector.sorted
-        val missingElements: Elem = processReadingGroup(missingGroup, totalWitnessCount + 1, witDims)
+        val missingElements: Elem = processReadingGroup(missingGroup, totalWitnessCount + 1)
         val allElements = groupElements :+ missingElements
         allElements.filter(_.child.nonEmpty)
       val newElement: Elem = <g transform={translateInstruction}>
@@ -177,18 +199,33 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
       </g>
       nextNode(nodesToProcess.tail, pos + 1, elements :+ newElement)
 
+  /* Initialize output <g> with gradient declarations */
   val gradients: Vector[Elem] = witnessToColor.values.map(createSingleColorGradient).toVector
   val defs: Elem = <defs>{gradients}</defs>
 
   nextNode(nodes, 0, Vector(defs))
 
+
+private def drawLinesBetweenNodes(positioning: NodeSeq, nodesToConnect: Vector[Elem]): Vector[Elem] =
+  val yPos = (positioning.head.text.split(" ").last.dropRight(1).toDouble + witDims("h") / 2).toString
+  val pairs = nodesToConnect.sortBy(e => (e \ "@x").text.toDouble).sliding(2)
+  pairs.map { e =>
+    val startX = ((e.head \ "@x").text.toDouble + (e.head \ "@width").text.toDouble).toString
+    val endX = (e.last \ "@x").text
+    <line x1={startX} y1={yPos} x2={endX} y2={yPos} stroke="black" stroke-width=".5"/>
+  }.toVector
+
+
 /* Create SVG for output
 *
-* Input is sequence of AlignmentTreeNodes
-* Output has two parts:
-*   1. Sigmoid connections from preceding node to current node (absent for first node)
+* Input is sequence of AlignmentTreeNodes (ReadingNode, IndelNode, VariationNode)
+* Output has the following parts:
+*   1. nodeElements: One <g> for each AlignmentTreeNode
+*   2. flowElements: Sigmoid connections from preceding node to current node (absent for first node)
 *      <g> with <path> children
-*   2. Current node <g> with <rect> and <text> children
+*   3. verticalLine: Separates nodes with readings from (sometimes) single node without readings
+*   4. readingGroupBorders: <rect> elements with rounded corners around each node
+*   5. connectElements: connecting <line> elements between borders around reading groups
 *
 */
 val svg: Elem =
@@ -202,7 +239,7 @@ val svg: Elem =
   val nodeElements = processNodes(nodes)
   val readingGroupBorders = nodeElements
     .filter(_.label == "g")
-    .map {
+    .flatMap {
       e => {
         val translateValue = (e \ "@transform").text
         e.child
@@ -211,13 +248,16 @@ val svg: Elem =
       }
     }
   val flowElements = nodeElements.tail.sliding(2).map(e => drawFlows(e.head, e.last))
-//  val nodeWrappers = readingGroups.map(drawBorder)
+  val groupsToConnect = readingGroupBorders.groupBy(_ \ "@transform").filter(_._2.size > 1)
+  val connectElements = groupsToConnect.map(drawLinesBetweenNodes)
+
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 180">
     <g transform="translate(10)">
       {nodeElements}
       {flowElements}
       {verticalLine}
       {readingGroupBorders}
+      {connectElements}
     </g>
   </svg>
 
