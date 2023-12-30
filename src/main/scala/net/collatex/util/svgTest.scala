@@ -46,13 +46,17 @@ val tokenArray: Vector[String] = Vector("a", "a", "a", "a", "a", "a", "b", "b", 
  * For indel nodes: readings start at 0, absence of readings starts beyond vertical dividing line
  * For variation nodes: spacing is specified when function is called (caller inserts empty spacer between groups)
  *
+ * The groupPos parameter is an integer that represents the offset of the entire group. The integer
+ *   value is the sum of cells to the left (including spacers). The group is plotted at position
+ *   zero; the pos parameter gets translated into a transform=translate() instruction on the <g>.
+ *
  * TODO: Intergroup spacing can be automated
  *
  * @param rdgGrp  vector of strings representing sigla, already sorted into stable order
- * @param pos     offset of reading within group
+ * @param groupPos     start position of entire subgroup within node
  * @return vector of <rect> and <text> elements, which is flatmapped by caller
  */
-def processReadingGroup(rdgGrp: Vector[String], pos: Int): Elem =
+def processReadingGroup(rdgGrp: Vector[String], groupPos: Int): Elem =
 
   /** Processes each reading in reading group
    *
@@ -63,7 +67,7 @@ def processReadingGroup(rdgGrp: Vector[String], pos: Int): Elem =
    */
   @tailrec
   def nextRdg(rdgs: Vector[String], pos: Int, acc: Vector[Elem]): Elem =
-    if rdgs.isEmpty then <g>{acc}</g>
+    if rdgs.isEmpty then <g transform={"translate(" + (witDims("w") * groupPos).toString + ")"}>{acc}</g>
     else {
       val currentSiglum: String = rdgs.head
       val xPos: String = (pos * witDims("w")).toString
@@ -80,7 +84,7 @@ def processReadingGroup(rdgGrp: Vector[String], pos: Int): Elem =
       nextRdg(rdgs.tail, pos + 1, acc :++ newNodes)
     }
 
-  nextRdg(rdgGrp.map(_.trim), pos, Vector.empty) // start at supplied offset position
+  nextRdg(rdgGrp.map(_.trim), 0, Vector.empty)
 
 /** Draw flows between entire nodes
  *
@@ -148,16 +152,17 @@ private def createSingleColorGradient(color: String): Elem =
  * Variation and indel nodes have multiple groups
  *
  * @param g <g> element around which to draw rectangle
- * @param translateValue y offset for border rectangle (copied from <g> **grand**parent)
+ * @param yTranslateValue y offset for border rectangle (copied from <g> **grand**parent)
  * @return <rect> element that describes border rectangle with rounded corners
  */
-private def drawBorder(g: xml.Node, translateValue: String): Elem =
+private def drawBorder(g: xml.Node, yTranslateValue: String): Elem =
+  val xIncrement: String = (g \ "@transform").text.split(" ").last.dropRight(1)
+  val translateValue = s"$xIncrement, $yTranslateValue)"
   val xStartPos: Double = ((g \ "rect").head \ "@x").text.toDouble
   val xEndPos: Double = ((g \ "rect").last \ "@x").text.toDouble + witDims("w")
-  val width: String = (xEndPos - xStartPos + 1).toString
-  val xPlot: String = (xStartPos -.5).toString
-  <rect transform={translateValue} x ={xPlot} y ="-.5" width={width} height={(witDims("h") + 1).toString} stroke="black" stroke-width="1" fill="none" rx="3"/>
-
+  val width: String = (xEndPos - xStartPos + .5).toString
+  val xPlot: String = (xStartPos -.25).toString
+  <rect transform={translateValue} x ={xPlot} y ="-.25" width={width} height={(witDims("h") + .5).toString} stroke="black" stroke-width=".5" fill="none" rx="3"/>
 
 /** Create rectangles and text labels for all nodes
  *
@@ -212,7 +217,7 @@ private def drawLinesBetweenNodes(positioning: NodeSeq, nodesToConnect: Vector[E
   pairs.map { e =>
     val startX = ((e.head \ "@x").text.toDouble + (e.head \ "@width").text.toDouble).toString
     val endX = (e.last \ "@x").text
-    <line x1={startX} y1={yPos} x2={endX} y2={yPos} stroke="black" stroke-width="1"/>
+    <line x1={startX} y1={yPos} x2={endX} y2={yPos} stroke="black" stroke-width=".5"/>
   }.toVector
 
 
@@ -235,21 +240,23 @@ val svg: Elem =
     y1="0"
     x2={verticalRuleXPos.toString}
     y2={(nodes.size * verticalNodeSpacing).toString}
-    stroke="gray"/>
+    stroke="gray"
+    stroke-width=".5"/>
   val nodeElements = processNodes(nodes)
-  val readingGroupBorders = nodeElements
-    .filter(_.label == "g")
-    .flatMap {
-      e => {
-        val translateValue = (e \ "@transform").text
-        e.child
-          .filter(_.child.nonEmpty)
-          .map(f => drawBorder(f, translateValue))
-      }
+  val readingGroupBorders =
+    val outerGroups: Vector[Elem] = nodeElements // one <g> for each reading, indel, or variation node
+      .filter(_.label == "g")
+    outerGroups.map { e =>
+      val yPos: String = (e \ "@transform")
+        .text
+        .split(" ")
+        .last
+        .dropRight(1) // y position of all groups in node
+      (e \ "g").map(f => drawBorder(f, yPos))
     }
   val flowElements = nodeElements.tail.sliding(2).map(e => drawFlows(e.head, e.last))
-  val groupsToConnect = readingGroupBorders.groupBy(_ \ "@transform").filter(_._2.size > 1)
-  val connectElements = groupsToConnect.map(drawLinesBetweenNodes)
+//  val groupsToConnect = readingGroupBorders.groupBy(_ \ "@transform").filter(_._2.size > 1)
+//  val connectElements = groupsToConnect.map(drawLinesBetweenNodes)
 
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 180">
     <g transform="translate(10)">
@@ -257,7 +264,6 @@ val svg: Elem =
       {flowElements}
       {verticalLine}
       {readingGroupBorders}
-      {connectElements}
     </g>
   </svg>
 
