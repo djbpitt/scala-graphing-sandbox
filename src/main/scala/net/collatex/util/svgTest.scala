@@ -211,14 +211,30 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
   nextNode(nodes, 0, Vector(defs))
 
 
-private def drawLinesBetweenNodes(positioning: NodeSeq, nodesToConnect: Vector[Elem]): Vector[Elem] =
-  val yPos = (positioning.head.text.split(" ").last.dropRight(1).toDouble + witDims("h") / 2).toString
-  val pairs = nodesToConnect.sortBy(e => (e \ "@x").text.toDouble).sliding(2)
-  pairs.map { e =>
-    val startX = ((e.head \ "@x").text.toDouble + (e.head \ "@width").text.toDouble).toString
-    val endX = (e.last \ "@x").text
-    <line x1={startX} y1={yPos} x2={endX} y2={yPos} stroke="black" stroke-width=".5"/>
-  }.toVector
+/** Draw horizontal line between groups from same alignment node
+ *
+ * Draw lines between round-cornered rectangles around the groups. The x position
+ *   of the rectangle is a combination of its @x and @transform="translate()" values.
+ *   Starting at the right edge means also including the @width.
+ *
+ * @param nodesToConnect pair of nodes
+ * @return <line> element
+ */
+private def drawLinesBetweenNodes(nodesToConnect: Vector[xml.Node]): Elem =
+  val startNode = nodesToConnect.head
+  val endNode = nodesToConnect.last
+  val yPos = ((startNode \ "@transform").text.split(" ").last.dropRight(1).toDouble + witDims("h") / 2).toString
+  val startX = (
+    (startNode \ "@transform").text.split(", ").head.split("\\(").last.toDouble +
+      (startNode \ "@x").text.toDouble + (startNode \ "@width").text.toDouble
+    ).toString
+  val endX = (
+    (endNode \ "@transform").text.split(", ").head.split("\\(").last.toDouble +
+      (endNode \ "@x").text.toDouble
+    ).toString
+  val result = <line x1={startX} y1={yPos} x2={endX} y2={yPos} stroke="black" stroke-width=".5"/>
+  result
+
 
 
 /* Create SVG for output
@@ -254,9 +270,11 @@ val svg: Elem =
         .dropRight(1) // y position of all groups in node
       (e \ "g").map(f => drawBorder(f, yPos))
     }
-  val flowElements = nodeElements.tail.sliding(2).map(e => drawFlows(e.head, e.last))
-//  val groupsToConnect = readingGroupBorders.groupBy(_ \ "@transform").filter(_._2.size > 1)
-//  val connectElements = groupsToConnect.map(drawLinesBetweenNodes)
+  val flowElements: Iterator[Elem] = nodeElements.tail.sliding(2).map(e => drawFlows(e.head, e.last))
+
+  val groupsToConnect: Vector[NodeSeq] = readingGroupBorders.filter(_.size > 1)
+  val connectPairs: Iterator[Vector[xml.Node]] = groupsToConnect.flatten.sliding(2)
+  val connectingLines = connectPairs.map(e => drawLinesBetweenNodes(e))
 
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 180">
     <g transform="translate(10)">
@@ -264,6 +282,7 @@ val svg: Elem =
       {flowElements}
       {verticalLine}
       {readingGroupBorders}
+      {connectingLines}
     </g>
   </svg>
 
