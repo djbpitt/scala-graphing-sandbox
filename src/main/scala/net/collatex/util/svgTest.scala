@@ -88,11 +88,29 @@ def processReadingGroup(rdgGrp: Vector[String], groupPos: Int): Elem =
 
 /** Draw flows between entire nodes
  *
+ * The source and target <g> elements are wrappers around child <g> elements, one for
+ *   each group of readings for that alignment tree node.
+ * The y position is available from the transform="translate()" attribute on the outer
+ *   <g>.
+ * The absolute x position of each flow end is the sum of the x part of the
+ *   transform="translate()" attribute on an inner <g> plus the @x value on a <rect>
+ *   child of that <g>.
+ * We precompute the absolute x positions and save them in a map from a <rect> to a
+ *   double.
+ *
  * @param sourceG <g> elements that wraps one <g> for each group of agreed readings
  * @param targetG same as sourceG, but target of flow instead of source
  * @return <g> element that wraps all path groups (each of which is a inner <g>
  */
 private def drawFlows(sourceG: Elem, targetG: Elem) =
+  val sourceGXs: Map[xml.Node, Double] =
+    (for childG <- sourceG \ "g" yield
+      val groupOffset = (childG \ "@transform").text.split("\\(").last.dropRight(1).toDouble
+      (childG \ "rect").map(e => e -> ((e \ "@x").text.toDouble + groupOffset))).flatten.toMap
+  val targetGXs: Map[xml.Node, Double] =
+    (for childG <- targetG \ "g" yield
+      val groupOffset = (childG \ "@transform").text.split("\\(").last.dropRight(1).toDouble
+      (childG \ "rect").map(e => e -> ((e \ "@x").text.toDouble + groupOffset))).flatten.toMap
   def findRectBySiglum(g: Elem, siglum: String) =
     val x = (g \\ "text").indexWhere(_.text == siglum)
     (g \\ "rect")(x)
@@ -101,8 +119,8 @@ private def drawFlows(sourceG: Elem, targetG: Elem) =
     .toVector
   val yPos = (targetG \ "@transform").text
   val paths = labels.map { e =>
-    val sourceX = findRectBySiglum(sourceG, e) \ "@x"
-    val targetX = findRectBySiglum(targetG, e) \ "@x"
+    val sourceX = sourceGXs(findRectBySiglum(sourceG, e))
+    val targetX = targetGXs(findRectBySiglum(targetG, e))
     val color = findRectBySiglum(sourceG, e) \ "@fill"
     drawFlow(sourceX.toString.toDouble, targetX.toString.toDouble, color.toString, color.toString)
   }
