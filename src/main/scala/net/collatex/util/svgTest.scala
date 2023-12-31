@@ -103,14 +103,12 @@ def processReadingGroup(rdgGrp: Vector[String], groupPos: Int): Elem =
  * @return <g> element that wraps all path groups (each of which is a inner <g>
  */
 private def drawFlows(sourceG: Elem, targetG: Elem) =
-  val sourceGXs: Map[xml.Node, Double] =
-    (for childG <- sourceG \ "g" yield
+  def nodeToGXs(g: xml.Node): Map[xml.Node, Double] =
+    (for childG <- g \ "g" yield
       val groupOffset = (childG \ "@transform").text.split("\\(").last.dropRight(1).toDouble
       (childG \ "rect").map(e => e -> ((e \ "@x").text.toDouble + groupOffset))).flatten.toMap
-  val targetGXs: Map[xml.Node, Double] =
-    (for childG <- targetG \ "g" yield
-      val groupOffset = (childG \ "@transform").text.split("\\(").last.dropRight(1).toDouble
-      (childG \ "rect").map(e => e -> ((e \ "@x").text.toDouble + groupOffset))).flatten.toMap
+  val sourceGXs: Map[xml.Node, Double] = nodeToGXs(sourceG)
+  val targetGXs: Map[xml.Node, Double] = nodeToGXs(targetG)
   def findRectBySiglum(g: Elem, siglum: String) =
     val x = (g \\ "text").indexWhere(_.text == siglum)
     (g \\ "rect")(x)
