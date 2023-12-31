@@ -67,7 +67,7 @@ def processReadingGroup(rdgGrp: Vector[String], groupPos: Int): Elem =
    */
   @tailrec
   def nextRdg(rdgs: Vector[String], pos: Int, acc: Vector[Elem]): Elem =
-    if rdgs.isEmpty then <g transform={"translate(" + (witDims("w") * groupPos).toString + ")"}>{acc}</g>
+    if rdgs.isEmpty then <g transform={"translate(" + (witDims("w") * groupPos).toString + ")"}  clip-path={"url(#clipPath"+pos+")"}>{acc}</g>
     else {
       val currentSiglum: String = rdgs.head
       val xPos: String = (pos * witDims("w")).toString
@@ -156,12 +156,17 @@ private def drawFlow(sourceX: Double, targetX: Double, sourceColor: String, targ
  * @return <linearGradient> element
  */
 private def createSingleColorGradient(color: String): Elem =
-<linearGradient id={color+"Gradient"} x1="0%" x2="0%" y1="0%" y2="100%">
-  <stop offset="0%" stop-color={color} stop-opacity="1"/>
-  <stop offset="50%" stop-color={color} stop-opacity=".2"/>
-  <stop offset="100%" stop-color={color} stop-opacity="1"/>
-</linearGradient>
+  <linearGradient id={color+"Gradient"} x1="0%" x2="0%" y1="0%" y2="100%">
+    <stop offset="0%" stop-color={color} stop-opacity="1"/>
+    <stop offset="50%" stop-color={color} stop-opacity=".2"/>
+    <stop offset="100%" stop-color={color} stop-opacity="1"/>
+  </linearGradient>
 
+
+private def createClipPath(count: Int): Elem =
+  <clipPath id={"clipPath"+count.toString}>
+    <rect x="0" y="0" width={(count * witDims("w")).toString} height={witDims("h").toString} rx="2.75"/>
+   </clipPath>
 
 /** Draw rectangle with rounded corners around a single group of shared readings
  *
@@ -222,7 +227,8 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
 
   /* Initialize output <g> with gradient declarations */
   val gradients: Vector[Elem] = witnessToColor.values.map(createSingleColorGradient).toVector
-  val defs: Elem = <defs>{gradients}</defs>
+  val clipPaths: Vector[Elem] = (1 to totalWitnessCount).map(e => createClipPath(e)).toVector
+  val defs: Elem = <defs>{gradients}{clipPaths}</defs>
 
   nextNode(nodes, 0, Vector(defs))
 
