@@ -149,7 +149,7 @@ private def drawFlow(sourceX: Double, targetX: Double, sourceColor: String, targ
   <path d={d} stroke={color} fill="none" stroke-width={witDims("w").toString}/>
 
 
-/** Create single-color radial gradient
+/** Create single-color linear gradient
  *
  * Transition is vertical (default is horizontal)
  * No need to specify graduated steps; renderer creates smooth transition with just end and mid points
