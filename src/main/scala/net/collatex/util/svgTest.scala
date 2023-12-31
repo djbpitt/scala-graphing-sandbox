@@ -140,9 +140,9 @@ private def drawFlow(sourceX: Double, targetX: Double, sourceColor: String, targ
   val startX: Double = sourceX + witDims("w") / 2
   val endX: Double = targetX + witDims("w") / 2
   val handleOffset: Double = verticalNodeSpacing / 2
-  val startY: Double = witDims("h") -verticalNodeSpacing // should be negative
+  val startY: Double = witDims("h") -verticalNodeSpacing - 1 // should be negative
   val d: String =
-    s"M $startX,$startY C $startX,${startY + handleOffset} $endX, ${-handleOffset} $endX,0"
+    s"M $startX,$startY C $startX,${startY + handleOffset} $endX, ${-handleOffset} $endX,2"
   val color: String = s"url(#${sourceColor}Gradient)"
   <path d={d} stroke={color} fill="none" stroke-width={witDims("w").toString}/>
 
@@ -158,7 +158,9 @@ private def drawFlow(sourceX: Double, targetX: Double, sourceColor: String, targ
 private def createSingleColorGradient(color: String): Elem =
   <linearGradient id={color+"Gradient"} x1="0%" x2="0%" y1="0%" y2="100%">
     <stop offset="0%" stop-color={color} stop-opacity="1"/>
+    <stop offset="5%" stop-color={color} stop-opacity="1"/>
     <stop offset="50%" stop-color={color} stop-opacity=".2"/>
+    <stop offset="95%" stop-color={color} stop-opacity="1"/>
     <stop offset="100%" stop-color={color} stop-opacity="1"/>
   </linearGradient>
 
