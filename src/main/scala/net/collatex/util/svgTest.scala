@@ -29,11 +29,13 @@ val verticalRuleXPos: Double = totalWitnessCount * witDims("w") + witDims("w") /
 val nodes: Vector[HasWitnessReadings] = Vector(
   ReadingNode(witnessReadings = Map("w59" -> (0, 1), "w60" -> (1, 2), "w61" -> (2, 3), "w66" -> (3, 4), "w69" -> (4, 5), "w72" -> (5, 6))),
   IndelNode(witnessReadings = Map("w66" -> (6, 7), "w69" -> (7, 8), "w72" -> (8, 9))),
-  ReadingNode(witnessReadings = Map("w59" -> (9, 10), "w60" -> (10, 11), "w61" -> (11, 12), "w66" -> (12, 13), "w69" -> (13, 14), "w72" -> (14, 15)))
+  ReadingNode(witnessReadings = Map("w59" -> (9, 10), "w60" -> (10, 11), "w61" -> (11, 12), "w66" -> (12, 13), "w69" -> (13, 14), "w72" -> (14, 15))),
+  //VariationNode(witnessReadings = Map("w59" -> (16, 17), "w60" -> (17, 18), "w61" -> (18, 19), "w66" -> (19, 20), "w69" -> (20, 21), "w72" -> (21, 22))),
+  ReadingNode(witnessReadings = Map("w59" -> (22, 23), "w60" -> (23, 24), "w61" -> (24, 25), "w66" -> (25, 26), "w69" -> (26, 27), "w72" -> (27, 28)))
 )
 
 // Fake token array enforcing shared raedings for reading and indel nodes
-val tokenArray: Vector[String] = Vector("a", "a", "a", "a", "a", "a", "b", "b", "b", "c", "c", "c", "c", "c", "c")
+val tokenArray: Vector[String] = Vector("a", "a", "a", "a", "a", "a", "b", "b", "b", "c", "c", "c", "c", "c", "c", "d", "d", "e", "e", "d", "e", "d", "f", "f", "f", "f", "f", "f")
 
 /** Process single group of shared readings
  *
@@ -129,6 +131,8 @@ private def drawFlows(sourceG: Elem, targetG: Elem) =
  * Flows currently have constant color because the color is determined by the witness, but
  *   allow for alternative color strategies, such as color by grouping, rather than witness
  * Flow is path from start to end through single cubic Bézier curve
+ * Gradient on straight horizontal or vertical is invisible, so add 0.001 to endX
+ *   https://stackoverflow.com/questions/73043945/why-does-a-svg-line-disappear-when-i-apply-a-svg-lineargradient
  *
  * @param sourceX x offset of source node
  * @param targetX x offset of target node
@@ -138,11 +142,11 @@ private def drawFlows(sourceG: Elem, targetG: Elem) =
  */
 private def drawFlow(sourceX: Double, targetX: Double, sourceColor: String, targetColor: String ): Elem =
   val startX: Double = sourceX + witDims("w") / 2
-  val endX: Double = targetX + witDims("w") / 2
+  val endX: Double = targetX + witDims("w") / 2 + 0.001
   val handleOffset: Double = verticalNodeSpacing / 2
   val startY: Double = witDims("h") -verticalNodeSpacing - 1 // should be negative
   val d: String =
-    s"M $startX,$startY C $startX,${startY + handleOffset} $endX, ${-handleOffset} $endX,2"
+    s"M $startX,$startY C $startX,${startY + handleOffset} $endX,${-handleOffset} $endX,2"
   val color: String = s"url(#${sourceColor}Gradient)"
   <path d={d} stroke={color} fill="none" stroke-width={witDims("w").toString}/>
 
@@ -158,9 +162,13 @@ private def drawFlow(sourceX: Double, targetX: Double, sourceColor: String, targ
 private def createSingleColorGradient(color: String): Elem =
   <linearGradient id={color+"Gradient"} x1="0%" x2="0%" y1="0%" y2="100%">
     <stop offset="0%" stop-color={color} stop-opacity="1"/>
-    <stop offset="5%" stop-color={color} stop-opacity="1"/>
-    <stop offset="50%" stop-color={color} stop-opacity=".2"/>
-    <stop offset="95%" stop-color={color} stop-opacity="1"/>
+    <stop offset="6%" stop-color={color} stop-opacity="1"/>
+    <stop offset="20%" stop-color={color} stop-opacity=".6"/>
+    <stop offset="35%" stop-color={color} stop-opacity=".4"/>
+    <stop offset="50%" stop-color={color} stop-opacity=".3"/>
+    <stop offset="65%" stop-color={color} stop-opacity=".4"/>
+    <stop offset="80%" stop-color={color} stop-opacity=".6"/>
+    <stop offset="94%" stop-color={color} stop-opacity="1"/>
     <stop offset="100%" stop-color={color} stop-opacity="1"/>
   </linearGradient>
 
@@ -300,8 +308,8 @@ val svg: Elem =
   val connectPairs: Iterator[Vector[xml.Node]] = groupsToConnect.flatten.sliding(2)
   val connectingLines = connectPairs.map(e => drawLinesBetweenNodes(e))
 
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 180">
-    <g transform="translate(10)">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+    <g transform="translate(10, 10)">
       {nodeElements}
       {flowElements}
       {verticalLine}
