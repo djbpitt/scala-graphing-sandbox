@@ -237,7 +237,7 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
         val readingGroups: Vector[Vector[String]] = currentNode.witnessReadings // vector of vectors of sigla
           .groupBy((_, offsets) => tokenArray.slice(offsets._1, offsets._2)) // groupo by same reading text
           .map((_, attestations) => attestations.keys.toVector.sorted) // keep only sigla
-          .toVector
+          .toVector.sorted
         println("\nNew group:")
         readingGroups.foreach(println)
         val readingGroupSizes = readingGroups.map(_.size)
