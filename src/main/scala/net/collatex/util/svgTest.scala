@@ -30,12 +30,18 @@ val nodes: Vector[HasWitnessReadings] = Vector(
   ReadingNode(witnessReadings = Map("w59" -> (0, 1), "w60" -> (1, 2), "w61" -> (2, 3), "w66" -> (3, 4), "w69" -> (4, 5), "w72" -> (5, 6))),
   IndelNode(witnessReadings = Map("w66" -> (6, 7), "w69" -> (7, 8), "w72" -> (8, 9))),
   ReadingNode(witnessReadings = Map("w59" -> (9, 10), "w60" -> (10, 11), "w61" -> (11, 12), "w66" -> (12, 13), "w69" -> (13, 14), "w72" -> (14, 15))),
-  //VariationNode(witnessReadings = Map("w59" -> (16, 17), "w60" -> (17, 18), "w61" -> (18, 19), "w66" -> (19, 20), "w69" -> (20, 21), "w72" -> (21, 22))),
-  ReadingNode(witnessReadings = Map("w59" -> (22, 23), "w60" -> (23, 24), "w61" -> (24, 25), "w66" -> (25, 26), "w69" -> (26, 27), "w72" -> (27, 28)))
+  // VariationNode(witnessReadings = Map("w59" -> (16, 17), "w60" -> (16, 17), "w61" -> (17, 18), "w66" -> (18, 19), "w69" -> (19, 20), "w72" -> (20, 21))),
+  ReadingNode(witnessReadings = Map("w59" -> (21, 22), "w60" -> (22, 23), "w61" -> (23, 24), "w66" -> (24, 25), "w69" -> (25, 26), "w72" -> (26, 27)))
 )
 
 // Fake token array enforcing shared raedings for reading and indel nodes
-val tokenArray: Vector[String] = Vector("a", "a", "a", "a", "a", "a", "b", "b", "b", "c", "c", "c", "c", "c", "c", "d", "d", "e", "e", "d", "e", "d", "f", "f", "f", "f", "f", "f")
+val tokenArray: Vector[String] = Vector(
+  "a", "a", "a", "a", "a", "a", // reading
+  "b", "b", "b",                // indel
+  "c", "c", "c", "c", "c", "c", // reading
+  "d", "d", "e", "e", "d", "e", // variation
+  "f", "f", "f", "f", "f", "f"  // reading
+)
 
 /** Process single group of shared readings
  *
