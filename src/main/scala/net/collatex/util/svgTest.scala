@@ -33,7 +33,9 @@ val nodes: Vector[HasWitnessReadings] = Vector(
   VariationNode(witnessReadings = Map("w59" -> (16, 17), "w60" -> (16, 17), "w61" -> (17, 18), "w66" -> (18, 19), "w69" -> (19, 20), "w72" -> (20, 21))),
   ReadingNode(witnessReadings = Map("w59" -> (21, 22), "w60" -> (22, 23), "w61" -> (23, 24), "w66" -> (24, 25), "w69" -> (25, 26), "w72" -> (26, 27))),
   VariationNode(witnessReadings = Map("w59" -> (27, 28), "w60" -> (28, 29), "w61" -> (29, 30), "w66" -> (30, 31), "w69" -> (31, 32), "w72" -> (32, 33))),
-  ReadingNode(witnessReadings = Map("w59" -> (33, 34), "w60" -> (34, 35), "w61" -> (35, 36), "w66" -> (36, 37), "w69" -> (37, 38), "w72" -> (38, 39)))
+  ReadingNode(witnessReadings = Map("w59" -> (33, 34), "w60" -> (34, 35), "w61" -> (35, 36), "w66" -> (36, 37), "w69" -> (37, 38), "w72" -> (38, 39))),
+  VariationNode(witnessReadings = Map("w59" -> (39, 40), "w60" -> (40, 41), "w61" -> (41, 42), "w66" -> (42, 43), "w69" -> (43, 44), "w72" -> (44, 45))),
+  ReadingNode(witnessReadings = Map("w59" -> (45, 46), "w60" -> (46, 47), "w61" -> (47, 48), "w66" -> (48, 49), "w69" -> (49, 50), "w72" -> (50, 51)))
 )
 
 // Fake token array enforcing shared raedings for reading and indel nodes
@@ -44,7 +46,9 @@ val tokenArray: Vector[String] = Vector(
   "d", "d", "e", "e", "d", "e", // variation (2 groups)
   "f", "f", "f", "f", "f", "f", // reading
   "g", "h", "g", "h", "i", "i", // variation (3 groups)
-  "j", "j", "j", "j", "j", "j"  // reading
+  "j", "j", "j", "j", "j", "j", // reading
+  "k", "l", "l", "m", "m", "n",  //variation (4 groups)
+  "o", "o", "o", "o", "o", "o"
 )
 
 /** Process single group of shared readings
@@ -233,14 +237,17 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
         val readingGroups: Vector[Vector[String]] = currentNode.witnessReadings // vector of vectors of sigla
           .groupBy((_, offsets) => tokenArray.slice(offsets._1, offsets._2)) // groupo by same reading text
           .map((_, attestations) => attestations.keys.toVector) // keep only sigla
-          .toVector
+          .toVector.sorted
+        println("\nNew group:")
         readingGroups.foreach(println)
         val readingGroupSizes = readingGroups.map(_.size)
         val precedingWitnessCounts =
           for (r, i) <- readingGroups.zipWithIndex yield
-            readingGroupSizes.slice(0, i).sum
+            readingGroupSizes.slice(0, i).sum + i
         precedingWitnessCounts.foreach(println)
-        val groupElements: Vector[Elem] = readingGroups.map(e => processReadingGroup(e.sorted, 0))
+        val readingGroupsWithOffsets = readingGroups.zip(precedingWitnessCounts)
+        readingGroupsWithOffsets.foreach(println)
+        val groupElements: Vector[Elem] = readingGroupsWithOffsets.map((e, f) => processReadingGroup(e.sorted, f))
         // Augment with single group of missing witnesses
         val missingGroup: Vector[String] = allSigla.diff(currentNode.witnessReadings.keySet).toVector.sorted
         val missingElements: Elem = processReadingGroup(missingGroup, totalWitnessCount * 2)
@@ -324,7 +331,7 @@ val svg: Elem =
   val connectPairs: Iterator[Vector[xml.Node]] = groupsToConnect.flatten.sliding(2)
   val connectingLines = connectPairs.map(e => drawLinesBetweenNodes(e))
 
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300">
     <g transform="translate(10, 20)">
       {nodeElements}
       {flowElements}
