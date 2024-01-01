@@ -31,7 +31,9 @@ val nodes: Vector[HasWitnessReadings] = Vector(
   IndelNode(witnessReadings = Map("w66" -> (6, 7), "w69" -> (7, 8), "w72" -> (8, 9))),
   ReadingNode(witnessReadings = Map("w59" -> (9, 10), "w60" -> (10, 11), "w61" -> (11, 12), "w66" -> (12, 13), "w69" -> (13, 14), "w72" -> (14, 15))),
   VariationNode(witnessReadings = Map("w59" -> (16, 17), "w60" -> (16, 17), "w61" -> (17, 18), "w66" -> (18, 19), "w69" -> (19, 20), "w72" -> (20, 21))),
-  ReadingNode(witnessReadings = Map("w59" -> (21, 22), "w60" -> (22, 23), "w61" -> (23, 24), "w66" -> (24, 25), "w69" -> (25, 26), "w72" -> (26, 27)))
+  ReadingNode(witnessReadings = Map("w59" -> (21, 22), "w60" -> (22, 23), "w61" -> (23, 24), "w66" -> (24, 25), "w69" -> (25, 26), "w72" -> (26, 27))),
+  VariationNode(witnessReadings = Map("w59" -> (27, 28), "w60" -> (28, 29), "w61" -> (29, 30), "w66" -> (30, 31), "w69" -> (31, 32), "w72" -> (32, 33))),
+  ReadingNode(witnessReadings = Map("w59" -> (33, 34), "w60" -> (34, 35), "w61" -> (35, 36), "w66" -> (36, 37), "w69" -> (37, 38), "w72" -> (38, 39)))
 )
 
 // Fake token array enforcing shared raedings for reading and indel nodes
@@ -39,8 +41,10 @@ val tokenArray: Vector[String] = Vector(
   "a", "a", "a", "a", "a", "a", // reading
   "b", "b", "b",                // indel
   "c", "c", "c", "c", "c", "c", // reading
-  "d", "d", "e", "e", "d", "e", // variation
-  "f", "f", "f", "f", "f", "f"  // reading
+  "d", "d", "e", "e", "d", "e", // variation (2 groups)
+  "f", "f", "f", "f", "f", "f", // reading
+  "g", "h", "g", "h", "i", "i", // variation (3 groups)
+  "j", "j", "j", "j", "j", "j"  // reading
 )
 
 /** Process single group of shared readings
@@ -230,6 +234,12 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
           .groupBy((_, offsets) => tokenArray.slice(offsets._1, offsets._2)) // groupo by same reading text
           .map((_, attestations) => attestations.keys.toVector) // keep only sigla
           .toVector
+        readingGroups.foreach(println)
+        val readingGroupSizes = readingGroups.map(_.size)
+        val precedingWitnessCounts =
+          for (r, i) <- readingGroups.zipWithIndex yield
+            readingGroupSizes.slice(0, i).sum
+        precedingWitnessCounts.foreach(println)
         val groupElements: Vector[Elem] = readingGroups.map(e => processReadingGroup(e.sorted, 0))
         // Augment with single group of missing witnesses
         val missingGroup: Vector[String] = allSigla.diff(currentNode.witnessReadings.keySet).toVector.sorted
