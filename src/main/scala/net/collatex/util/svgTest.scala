@@ -41,13 +41,13 @@ val nodes: Vector[HasWitnessReadings] = Vector(
 // Fake token array enforcing shared raedings for reading and indel nodes
 val tokenArray: Vector[String] = Vector(
   "a", "a", "a", "a", "a", "a", // reading
-  "b", "b", "b",                // indel
+  "b", "b", "b", // indel
   "c", "c", "c", "c", "c", "c", // reading
   "d", "d", "e", "e", "d", "e", // variation (2 groups)
   "f", "f", "f", "f", "f", "f", // reading
   "g", "h", "g", "h", "i", "i", // variation (3 groups)
   "j", "j", "j", "j", "j", "j", // reading
-  "k", "l", "l", "m", "m", "n",  //variation (4 groups)
+  "k", "l", "l", "m", "m", "n", //variation (4 groups)
   "o", "o", "o", "o", "o", "o"
 )
 
@@ -63,13 +63,13 @@ val tokenArray: Vector[String] = Vector(
  * For variation nodes: spacing is specified when function is called (caller inserts empty spacer between groups)
  *
  * The groupPos parameter is an integer that represents the offset of the entire group. The integer
- *   value is the sum of cells to the left (including spacers). The group is plotted at position
- *   zero; the pos parameter gets translated into a transform=translate() instruction on the <g>.
+ * value is the sum of cells to the left (including spacers). The group is plotted at position
+ * zero; the pos parameter gets translated into a transform=translate() instruction on the <g>.
  *
  * TODO: Intergroup spacing can be automated
  *
- * @param rdgGrp  vector of strings representing sigla, already sorted into stable order
- * @param groupPos     start position of entire subgroup within node
+ * @param rdgGrp   vector of strings representing sigla, already sorted into stable order
+ * @param groupPos start position of entire subgroup within node
  * @return vector of <rect> and <text> elements, which is flatmapped by caller
  */
 def processReadingGroup(rdgGrp: Vector[String], groupPos: Int): Elem =
@@ -77,26 +77,30 @@ def processReadingGroup(rdgGrp: Vector[String], groupPos: Int): Elem =
   /** Processes each reading in reading group
    *
    * @param rdgs sigla to process (no more sigla is the exit condition)
-   * @param pos offset of siglum in sequence of sigla for group
-   * @param acc <rect> and <text> elements for sigla that have already been processed
+   * @param pos  offset of siglum in sequence of sigla for group
+   * @param acc  <rect> and <text> elements for sigla that have already been processed
    * @return <g> containing acc once all sigla for group have been processed
    */
   @tailrec
   def nextRdg(rdgs: Vector[String], pos: Int, acc: Vector[Elem]): Elem =
-    if rdgs.isEmpty then <g transform={"translate(" + (witDims("w") * groupPos).toString + ")"}  clip-path={"url(#clipPath"+pos+")"}>{acc}</g>
+    if rdgs.isEmpty then <g transform={"translate(" + (witDims("w") * groupPos).toString + ")"} clip-path={"url(#clipPath" + pos + ")"}>
+      {acc}
+    </g>
     else {
       val currentSiglum: String = rdgs.head
       val xPos: String = (pos * witDims("w")).toString
       val fill: String = witnessToColor(currentSiglum)
       val newNodes: Vector[Elem] =
         Vector(
-          <rect x={xPos} y="0" width={witDims("w").toString} height={witDims("h").toString} fill={fill}/>,
+            <rect x={xPos} y="0" width={witDims("w").toString} height={witDims("h").toString} fill={fill}/>,
           <text
           x={(xPos.toDouble + witDims("w") / 2).toString}
           y={(witDims("h") / 2).toString}
           text-anchor="middle"
           dominant-baseline="central"
-          font-size={(witDims("w") * .7).toString}>{currentSiglum.tail}</text>)
+          font-size={(witDims("w") * .7).toString}>
+            {currentSiglum.tail}
+          </text>)
       nextRdg(rdgs.tail, pos + 1, acc :++ newNodes)
     }
 
@@ -105,14 +109,14 @@ def processReadingGroup(rdgGrp: Vector[String], groupPos: Int): Elem =
 /** Draw flows between entire nodes
  *
  * The source and target <g> elements are wrappers around child <g> elements, one for
- *   each group of readings for that alignment tree node.
+ * each group of readings for that alignment tree node.
  * The y position is available from the transform="translate()" attribute on the outer
- *   <g>.
+ * <g>.
  * The absolute x position of each flow end is the sum of the x part of the
- *   transform="translate()" attribute on an inner <g> plus the @x value on a <rect>
- *   child of that <g>.
+ * transform="translate()" attribute on an inner <g> plus the @x value on a <rect>
+ * child of that <g>.
  * We precompute the absolute x positions and save them in a map from a <rect> to a
- *   double.
+ * double.
  *
  * @param sourceG <g> elements that wraps one <g> for each group of agreed readings
  * @param targetG same as sourceG, but target of flow instead of source
@@ -123,11 +127,14 @@ private def drawFlows(sourceG: Elem, targetG: Elem) =
     (for childG <- g \ "g" yield
       val groupOffset = (childG \ "@transform").text.split("\\(").last.dropRight(1).toDouble
       (childG \ "rect").map(e => e -> ((e \ "@x").text.toDouble + groupOffset))).flatten.toMap
+
   val sourceGXs: Map[xml.Node, Double] = nodeToGXs(sourceG)
   val targetGXs: Map[xml.Node, Double] = nodeToGXs(targetG)
+
   def findRectBySiglum(g: Elem, siglum: String) =
     val x = (g \\ "text").indexWhere(_.text == siglum)
     (g \\ "rect")(x)
+
   val labels: Vector[String] = (sourceG \\ "text")
     .map(_.text)
     .toVector
@@ -138,31 +145,33 @@ private def drawFlows(sourceG: Elem, targetG: Elem) =
     val color = findRectBySiglum(sourceG, e) \ "@fill"
     drawFlow(sourceX.toString.toDouble, targetX.toString.toDouble, color.toString, color.toString)
   }
-  <g transform={yPos}>{paths}</g>
+  <g transform={yPos}>
+    {paths}
+  </g>
 
 /** Draw flow connection for one witness from source (preceding) to target (current)
  *
  * Flows currently have constant color because the color is determined by the witness, but
- *   allow for alternative color strategies, such as color by grouping, rather than witness
+ * allow for alternative color strategies, such as color by grouping, rather than witness
  * Flow is path from start to end through single cubic Bézier curve
  * Gradient on straight horizontal or vertical is invisible, so add 0.001 to endX
- *   https://stackoverflow.com/questions/73043945/why-does-a-svg-line-disappear-when-i-apply-a-svg-lineargradient
+ * https://stackoverflow.com/questions/73043945/why-does-a-svg-line-disappear-when-i-apply-a-svg-lineargradient
  *
- * @param sourceX x offset of source node
- * @param targetX x offset of target node
+ * @param sourceX     x offset of source node
+ * @param targetX     x offset of target node
  * @param sourceColor color of source node
  * @param targetColor color of target node
  * @return svg <path> element
  */
-private def drawFlow(sourceX: Double, targetX: Double, sourceColor: String, targetColor: String ): Elem =
+private def drawFlow(sourceX: Double, targetX: Double, sourceColor: String, targetColor: String): Elem =
   val startX: Double = sourceX + witDims("w") / 2
   val endX: Double = targetX + witDims("w") / 2 + 0.001
   val handleOffset: Double = verticalNodeSpacing / 2
-  val startY: Double = witDims("h") -verticalNodeSpacing - 1 // should be negative
+  val startY: Double = witDims("h") - verticalNodeSpacing - 1 // should be negative
   val d: String =
     s"M $startX,$startY C $startX,${startY + handleOffset} $endX,${-handleOffset} $endX,2"
   val color: String = s"url(#${sourceColor}Gradient)"
-  <path d={d} stroke={color} fill="none" stroke-width={witDims("w").toString}/>
+    <path d={d} stroke={color} fill="none" stroke-width={witDims("w").toString}/>
 
 
 /** Create single-color linear gradient
@@ -174,7 +183,7 @@ private def drawFlow(sourceX: Double, targetX: Double, sourceColor: String, targ
  * @return <linearGradient> element
  */
 private def createSingleColorGradient(color: String): Elem =
-  <linearGradient id={color+"Gradient"} x1="0%" x2="0%" y1="0%" y2="100%">
+  <linearGradient id={color + "Gradient"} x1="0%" x2="0%" y1="0%" y2="100%">
     <stop offset="0%" stop-color={color} stop-opacity="1"/>
     <stop offset="6%" stop-color={color} stop-opacity="1"/>
     <stop offset="20%" stop-color={color} stop-opacity=".6"/>
@@ -188,15 +197,15 @@ private def createSingleColorGradient(color: String): Elem =
 
 
 private def createClipPath(count: Int): Elem =
-  <clipPath id={"clipPath"+count.toString}>
+  <clipPath id={"clipPath" + count.toString}>
     <rect x="0" y="0" width={(count * witDims("w")).toString} height={witDims("h").toString} rx="2.75"/>
-   </clipPath>
+  </clipPath>
 
 /** Draw rectangle with rounded corners around a single group of shared readings
  *
  * Variation and indel nodes have multiple groups
  *
- * @param g <g> element around which to draw rectangle
+ * @param g               <g> element around which to draw rectangle
  * @param yTranslateValue y offset for border rectangle (copied from <g> **grand**parent)
  * @return <rect> element that describes border rectangle with rounded corners
  */
@@ -206,8 +215,8 @@ private def drawBorder(g: xml.Node, yTranslateValue: String): Elem =
   val xStartPos: Double = ((g \ "rect").head \ "@x").text.toDouble
   val xEndPos: Double = ((g \ "rect").last \ "@x").text.toDouble + witDims("w")
   val width: String = (xEndPos - xStartPos + .5).toString
-  val xPlot: String = (xStartPos -.25).toString
-  <rect transform={translateValue} x ={xPlot} y ="-.25" width={width} height={(witDims("h") + .5).toString} stroke="black" stroke-width=".5" fill="none" rx="3"/>
+  val xPlot: String = (xStartPos - .25).toString
+    <rect transform={translateValue} x={xPlot} y="-.25" width={width} height={(witDims("h") + .5).toString} stroke="black" stroke-width=".5" fill="none" rx="3"/>
 
 /** Create rectangles and text labels for all nodes
  *
@@ -223,8 +232,8 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
    * Recursive processing makes it easy to track offset in sequence, used for y positioning
    *
    * @param nodesToProcess sequence of remaining nodes to process; empty sequence is exit condition
-   * @param pos offset of current node in original sequence, used for vertical positioning
-   * @param elements <g> elements, one per node, which contains separate <g> children for each group of shared readings
+   * @param pos            offset of current node in original sequence, used for vertical positioning
+   * @param elements       <g> elements, one per node, which contains separate <g> children for each group of shared readings
    * @return
    */
   @tailrec
@@ -248,7 +257,7 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
         val missingGroup: Vector[String] = allSigla.diff(currentNode.witnessReadings.keySet).toVector.sorted
         val missingElements: Elem = processReadingGroup(missingGroup, totalWitnessCount * 2)
         val allElements = groupElements :+ missingElements
-        allElements.filter(_.child.nonEmpty)
+        allElements.filter(e => (e \ "rect").nonEmpty)
       val newElement: Elem = <g transform={translateInstruction}>
         {contents}
       </g>
@@ -257,7 +266,9 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
   /* Initialize output <g> with gradient declarations */
   val gradients: Vector[Elem] = witnessToColor.values.map(createSingleColorGradient).toVector
   val clipPaths: Vector[Elem] = (1 to totalWitnessCount).map(e => createClipPath(e)).toVector
-  val defs: Elem = <defs>{gradients}{clipPaths}</defs>
+  val defs: Elem = <defs>
+    {gradients}{clipPaths}
+  </defs>
 
   nextNode(nodes, 0, Vector(defs))
 
@@ -265,8 +276,8 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
 /** Draw pairwise horizontal lines between groups from same alignment node
  *
  * Draw lines between round-cornered rectangles around the groups. The x position
- *   of the rectangle is a combination of its @x and @transform="translate()" values.
- *   Starting at the right edge means also including the @width.
+ * of the rectangle is a combination of its @x and @transform="translate()" values.
+ * Starting at the right edge means also including the @width.
  *
  * Convert @x position of <rect> to double for sorting, so that 11 > 2 (not true of strings)
  *
@@ -277,7 +288,7 @@ private def drawLinesBetweenNodes(nodesToConnect: Vector[xml.Node]): Iterator[xm
   val sortedNodes = nodesToConnect
     .sortBy(e => (e \ "@transform").text.dropWhile(!_.isDigit).split(",").head.toDouble)
   val nodePairs = sortedNodes.sliding(2)
-  nodePairs map {e =>
+  nodePairs map { e =>
     val startNode = e.head
     val endNode = e.last
     val yPos = ((startNode \ "@transform").text.split(" ").last.dropRight(1).toDouble + witDims("h") / 2).toString
@@ -336,11 +347,7 @@ val svg: Elem =
 
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300">
     <g transform="translate(10, 20)">
-      {nodeElements}
-      {flowElements}
-      {verticalLine}
-      {readingGroupBorders}
-      {connectingLines}
+      {nodeElements}{flowElements}{verticalLine}{readingGroupBorders}{connectingLines}
     </g>
   </svg>
 
