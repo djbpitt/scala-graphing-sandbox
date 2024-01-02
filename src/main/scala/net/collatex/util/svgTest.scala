@@ -255,13 +255,11 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
         val groupElements: Vector[Elem] = readingGroupsWithOffsets.map((e, f) => processReadingGroup(e, f))
         // Augment with single group of missing witnesses
         val missingGroup: Vector[String] = allSigla.diff(currentNode.witnessReadings.keySet).toVector.sorted
-        val allElements =
-          if missingGroup.nonEmpty then
-            val missingElements: Elem = processReadingGroup(missingGroup, totalWitnessCount * 2)
-            groupElements :+ missingElements
-          else
-            groupElements
-        allElements
+        if missingGroup.nonEmpty then
+          val missingElements: Elem = processReadingGroup(missingGroup, totalWitnessCount * 2)
+          groupElements :+ missingElements
+        else
+          groupElements
       val newElement: Elem = <g transform={translateInstruction}>
         {contents}
       </g>
