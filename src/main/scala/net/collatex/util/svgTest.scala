@@ -238,8 +238,6 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
           .groupBy((_, offsets) => tokenArray.slice(offsets._1, offsets._2)) // groupo by same reading text
           .map((_, attestations) => attestations.keys.toVector.sorted) // keep only sigla, sort early
           .toVector.sorted // sort groups by sorted sigla to minimize crossing flows
-        println("\nNew group:")
-        readingGroups.foreach(println)
         val readingGroupSizes = readingGroups.map(_.size)
         val precedingWitnessCounts =
           for (r, i) <- readingGroups.zipWithIndex yield
@@ -264,30 +262,36 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
   nextNode(nodes, 0, Vector(defs))
 
 
-/** Draw horizontal line between groups from same alignment node
+/** Draw pairwise horizontal lines between groups from same alignment node
  *
  * Draw lines between round-cornered rectangles around the groups. The x position
  *   of the rectangle is a combination of its @x and @transform="translate()" values.
  *   Starting at the right edge means also including the @width.
  *
- * @param nodesToConnect pair of nodes
- * @return <line> element
+ * Convert @x position of <rect> to double for sorting, so that 11 > 2 (not true of strings)
+ *
+ * @param nodesToConnect groups (as <rect> elements for alignment tree node)
+ * @return iterator of pairwise connecting <line> elements
  */
-private def drawLinesBetweenNodes(nodesToConnect: Vector[xml.Node]): Elem =
-  val startNode = nodesToConnect.head
-  val endNode = nodesToConnect.last
-  val yPos = ((startNode \ "@transform").text.split(" ").last.dropRight(1).toDouble + witDims("h") / 2).toString
-  val startX = (
-    (startNode \ "@transform").text.split(", ").head.split("\\(").last.toDouble +
-      (startNode \ "@x").text.toDouble + (startNode \ "@width").text.toDouble
-    ).toString
-  val endX = (
-    (endNode \ "@transform").text.split(", ").head.split("\\(").last.toDouble +
-      (endNode \ "@x").text.toDouble
-    ).toString
-  val result = <line x1={startX} y1={yPos} x2={endX} y2={yPos} stroke="black" stroke-width=".5"/>
-  result
-
+private def drawLinesBetweenNodes(nodesToConnect: Vector[xml.Node]): Iterator[xml.Elem] =
+  val sortedNodes = nodesToConnect
+    .sortBy(e => (e \ "@transform").text.dropWhile(!_.isDigit).split(",").head.toDouble)
+  val nodePairs = sortedNodes.sliding(2)
+  nodePairs map {e =>
+    val startNode = e.head
+    val endNode = e.last
+    val yPos = ((startNode \ "@transform").text.split(" ").last.dropRight(1).toDouble + witDims("h") / 2).toString
+    val startX = (
+      (startNode \ "@transform").text.split(", ").head.split("\\(").last.toDouble +
+        (startNode \ "@x").text.toDouble + (startNode \ "@width").text.toDouble
+      ).toString
+    val endX = (
+      (endNode \ "@transform").text.split(", ").head.split("\\(").last.toDouble +
+        (endNode \ "@x").text.toDouble
+      ).toString
+    val result = <line x1={startX} y1={yPos} x2={endX} y2={yPos} stroke="black" stroke-width=".5"/>
+    result
+  }
 
 
 /* Create SVG for output
@@ -325,9 +329,10 @@ val svg: Elem =
     }
   val flowElements: Iterator[Elem] = nodeElements.tail.sliding(2).map(e => drawFlows(e.head, e.last))
 
-  val groupsToConnect: Vector[NodeSeq] = readingGroupBorders.filter(_.size > 1)
-  val connectPairs: Iterator[Vector[xml.Node]] = groupsToConnect.flatten.sliding(2)
-  val connectingLines = connectPairs.map(e => drawLinesBetweenNodes(e))
+  val groupsToConnect = readingGroupBorders
+    .filter(_.size > 1) // Keep only alignment nodes with more than one group
+    .map(_.sortBy(e => (e \ "g" \ "@transform").text)) // Sort inside by x offset (NB: strings; is that a problem?)
+  val connectingLines = groupsToConnect.map(e => drawLinesBetweenNodes(e.toVector))
 
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300">
     <g transform="translate(10, 20)">
@@ -342,5 +347,5 @@ val svg: Elem =
 @main def testSvg(): Unit =
   val pp = new scala.xml.PrettyPrinter(120, 4)
   val x = pp.format(svg)
-//  println(x)
+  // println(x)
   save("svgTest.svg", svg)
