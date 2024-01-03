@@ -119,63 +119,32 @@ val nodes: Vector[HasWitnessReadings] = Vector(
       "w69" -> (49, 50),
       "w72" -> (50, 51)
     )
-  )
+  ),
+    VariationNode (witnessReadings =
+      Map(
+        "w59" -> (51, 52),
+        "w60" -> (52, 53),
+        "w61" -> (53, 54),
+        "w66" -> (54, 55)
+      )
+    )
 )
 
 // Fake token array enforcing shared raedings for reading and indel nodes
+// Format: off
 val tokenArray: Vector[String] = Vector(
-  "a",
-  "a",
-  "a",
-  "a",
-  "a",
-  "a", // reading
-  "b",
-  "b",
-  "b", // indel
-  "c",
-  "c",
-  "c",
-  "c",
-  "c",
-  "c", // reading
-  "d",
-  "d",
-  "e",
-  "e",
-  "d",
-  "e", // variation (2 groups)
-  "f",
-  "f",
-  "f",
-  "f",
-  "f",
-  "f", // reading
-  "g",
-  "h",
-  "g",
-  "h",
-  "i",
-  "i", // variation (3 groups)
-  "j",
-  "j",
-  "j",
-  "j",
-  "j",
-  "j", // reading
-  "k",
-  "l",
-  "l",
-  "m",
-  "m",
-  "n", // variation (4 groups)
-  "o",
-  "o",
-  "o",
-  "o",
-  "o",
-  "o"
+  "a", "a", "a", "a", "a", "a", // reading
+  "b", "b", "b", // indel
+  "c", "c", "c", "c", "c", "c", // reading
+  "d", "d", "e", "e", "d", "e", // variation (2 groups)
+  "f", "f", "f", "f", "f", "f", // reading
+  "g", "h", "g", "h", "i", "i", // variation (2 groups)
+  "j", "j", "j", "j", "j", "j", // reading
+  "k", "l", "l", "m", "m", "n", // variation (4 groups)
+  "o", "o", "o", "o", "o", "o", // reading
+  "p", "p", "q", "q"            // variation (2 groups plus indel)
 )
+// Format: on
 
 /** Process single group of shared readings
   *
@@ -563,7 +532,7 @@ val svg: Elem =
   val connectingLines =
     groupsToConnect.map(e => drawLinesBetweenNodes(e.toVector))
 
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 350">
     <g transform="translate(10, 20)">
       {nodeElements}{flowElements}{verticalLine}{readingGroupBorders}{
     connectingLines
