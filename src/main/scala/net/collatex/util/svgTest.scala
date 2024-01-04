@@ -203,9 +203,7 @@ def processReadingGroup(rdgGrp: Vector[String], groupPos: Int): Elem =
           y={(witDims("h") / 2).toString}
           text-anchor="middle"
           dominant-baseline="central"
-          font-size={(witDims("w") * .7).toString}>
-            {currentSiglum.tail}
-          </text>
+          font-size={(witDims("w") * .7).toString}>{currentSiglum.tail}</text>
         )
       nextRdg(rdgs.tail, pos + 1, acc :++ newNodes)
     }
