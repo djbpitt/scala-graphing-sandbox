@@ -595,15 +595,49 @@ def createAlignmentPoints(input: Vector[HasWitnessReadings]) = input map {
   // save("flowModel.svg", svg)
   createAlignmentPoints(nodes)
 
+/** AlignmentPoint
+  *
+  * Corresponds to AlignmentTreeNode of any type Rendered at a shared vertical
+  * position in SVG
+  *
+  * @param subGroups
+  *   witnesses are grouped according to shared readings, extracted from token
+  *   array
+  * @param missingGroup
+  *   witnesses not present at alignment point; may be empty
+  */
 case class AlignmentPoint(
     subGroups: Vector[SubGroup],
     missingGroup: Vector[WitnessReading]
 )
+
+/** SubGroup
+  *
+  * Group of WitnessReading instances, one per witness present in the subgroup
+  * of the alignment-tree node
+  *
+  * Sort lexcially by (siglum of) first witness reading; no ambiguity because
+  * subgroups have no overlap
+  *
+  * @param witnesses
+  *   Witnesses are represented by WitnessReading instances, each represented by
+  *   its sigla
+  */
 case class SubGroup(witnesses: Vector[WitnessReading])
 object SubGroup {
   implicit def ordering: Ordering[SubGroup] =
     (a: SubGroup, b: SubGroup) => a.witnesses.head.compare(b.witnesses.head)
 }
+
+/** WitnessReading
+  *
+  * Individual witness reading represented by its siglum
+  *
+  * Sort lexically
+  *
+  * @param siglum
+  *   witness identifier
+  */
 case class WitnessReading(siglum: String)
 object WitnessReading {
   implicit def ordering: Ordering[WitnessReading] =
