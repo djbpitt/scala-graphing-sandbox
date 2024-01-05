@@ -588,13 +588,31 @@ private def createAlignmentPoints(input: Vector[HasWitnessReadings]) =
       result
   }
 
-private def createOuterG(input: (AlignmentPoint, Int)) =
+/** Create one <g> element for each AlignmentPoint instance
+  *
+  * @param input
+  *   tuple of AlignmentPoint and Int, representing its offset in the sequence
+  *   of alignment points
+  * @return
+  *   <g> that contains SVG for all alignment points
+  */
+private def createOuterG(input: (AlignmentPoint, Int)): Elem =
   val yPos = (input._2 * verticalNodeSpacing).toString
   <g transform={"translate(0, " + yPos + ")"}>{
     input._1
   }</g>
 
-private def createSvg(alignmentPoints: Vector[AlignmentPoint]) =
+private def createInnerG(input: Vector[AlignmentPoint], yPos: Int) =
+  ???
+
+/** Dispatch all alignment points for conversion to SVG
+  *
+  * @param alignmentPoints
+  *   vector of all alignment points
+  * @return
+  *   vector of <g> elements, one per alignment point
+  */
+private def createSvgAlignmentContent(alignmentPoints: Vector[AlignmentPoint]) =
   val outerGroups = createAlignmentPoints(nodes).zipWithIndex
     .map((e, f) => createOuterG(e, f))
   outerGroups
@@ -602,10 +620,10 @@ private def createSvg(alignmentPoints: Vector[AlignmentPoint]) =
 @main def flowModel(): Unit =
   // save("flowModel.svg", svg)
   val alignmentPoints = createAlignmentPoints(nodes)
-  val nodeOutput = createSvg(alignmentPoints)
+  val nodeOutput = createSvgAlignmentContent(alignmentPoints)
   val svgWidth = ((totalWitnessCount + 1) * witDims("w") * 2).toString
   val svgHeight = (alignmentPoints.size * verticalNodeSpacing).toString
-  val viewBox = List("0 0 ",svgWidth, svgHeight).mkString(" ")
+  val viewBox = List("0 0 ", svgWidth, svgHeight).mkString(" ")
   val result =
     <svg xmlns="http://www.w3.org/2000/svg" viewBox={viewBox}>
       <g transform="translate(10, 10)">
