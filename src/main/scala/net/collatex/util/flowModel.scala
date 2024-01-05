@@ -542,58 +542,79 @@ val svg: Elem =
     </g>
   </svg>
 
-def createAlignmentPoints(input: Vector[HasWitnessReadings]) = input map {
-  case e: ReadingNode =>
-    val result = AlignmentPoint(
-      subGroups = Vector(
-        SubGroup(witnesses =
-          e.witnessReadings.keys.map(f => WitnessReading(f)).toVector.sorted
-        )
-      ),
-      missingGroup = Vector.empty
-    )
-    println(result)
-    result
-  case e: IndelNode =>
-    val missingSigla = allSigla.diff(e.witnessReadings.keySet).toVector.sorted
-    val result = AlignmentPoint(
-      subGroups = Vector(
-        SubGroup(witnesses =
-          e.witnessReadings.keys.map(f => WitnessReading(f)).toVector
-        )
-      ),
-      missingGroup = missingSigla.map(e => WitnessReading(e))
-    )
-    println(result)
-    result
-  case e: VariationNode =>
-    val missingSigla =
-      allSigla.diff(e.witnessReadings.keySet).toVector.sorted // could be empty
-    val result = AlignmentPoint(
-      subGroups = e.witnessReadings
-        .groupBy((_, offsets) =>
-          tokenArray.slice(offsets._1, offsets._2)
-        ) // group by same reading text
-        .map((_, attestations) =>
-          attestations.keys.toVector.sorted.map(f => WitnessReading(f))
-        ) // keep only sigla, sort early
-        .map(f => SubGroup(f))
-        .toVector
-        .sorted // sort groups by sorted sigla to minimize crossing flows
-      ,
-      missingGroup = missingSigla.map(e => WitnessReading(e))
-    )
-    println(result)
-    result
-  case _ => println("Oops!")
-}
+private def createAlignmentPoints(input: Vector[HasWitnessReadings]) =
+  input map {
+    case e: ReadingNode =>
+      val result = AlignmentPoint(
+        subGroups = Vector(
+          SubGroup(witnesses =
+            e.witnessReadings.keys.map(f => WitnessReading(f)).toVector.sorted
+          )
+        ),
+        missingGroup = Vector.empty
+      )
+      result
+    case e: IndelNode =>
+      val missingSigla = allSigla.diff(e.witnessReadings.keySet).toVector.sorted
+      val result = AlignmentPoint(
+        subGroups = Vector(
+          SubGroup(witnesses =
+            e.witnessReadings.keys.map(f => WitnessReading(f)).toVector
+          )
+        ),
+        missingGroup = missingSigla.map(e => WitnessReading(e))
+      )
+      result
+    case e: VariationNode =>
+      val missingSigla =
+        allSigla
+          .diff(e.witnessReadings.keySet)
+          .toVector
+          .sorted // could be empty
+      val result = AlignmentPoint(
+        subGroups = e.witnessReadings
+          .groupBy((_, offsets) =>
+            tokenArray.slice(offsets._1, offsets._2)
+          ) // group by same reading text
+          .map((_, attestations) =>
+            attestations.keys.toVector.sorted.map(f => WitnessReading(f))
+          ) // keep only sigla, sort early
+          .map(f => SubGroup(f))
+          .toVector
+          .sorted // sort groups by sorted sigla to minimize crossing flows
+        ,
+        missingGroup = missingSigla.map(e => WitnessReading(e))
+      )
+      result
+  }
+
+private def createOuterG(input: (AlignmentPoint, Int)) =
+  val yPos = (input._2 * verticalNodeSpacing).toString
+  <g transform={"translate(0, " + yPos + ")"}>{
+    input._1
+  }</g>
+
+private def createSvg(alignmentPoints: Vector[AlignmentPoint]) =
+  val outerGroups = createAlignmentPoints(nodes).zipWithIndex
+    .map((e, f) => createOuterG(e, f))
+  outerGroups
 
 @main def flowModel(): Unit =
-  // val pp = new scala.xml.PrettyPrinter(120, 4)
-  // val x = pp.format(svg)
-  // println(x)
   // save("flowModel.svg", svg)
-  createAlignmentPoints(nodes)
+  val alignmentPoints = createAlignmentPoints(nodes)
+  val nodeOutput = createSvg(alignmentPoints)
+  val svgWidth = ((totalWitnessCount + 1) * witDims("w") * 2).toString
+  val svgHeight = (alignmentPoints.size * verticalNodeSpacing).toString
+  val viewBox = List("0 0 ",svgWidth, svgHeight).mkString(" ")
+  val result =
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox={viewBox}>
+      <g transform="translate(10, 10)">
+        {nodeOutput}
+      </g>
+    </svg>
+  val pp = new scala.xml.PrettyPrinter(120, 4)
+  val formattedSvg = pp.format(result)
+  println(result)
 
 /** AlignmentPoint
   *
