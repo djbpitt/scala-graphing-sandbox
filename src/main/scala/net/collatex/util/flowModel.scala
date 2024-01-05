@@ -617,22 +617,22 @@ private def createSvgAlignmentContent(alignmentPoints: Vector[AlignmentPoint]) =
     .map((e, f) => createOuterG(e, f))
   outerGroups
 
-@main def flowModel(): Unit =
+@main def createSvgFlowModel(): Unit =
   // save("flowModel.svg", svg)
   val alignmentPoints = createAlignmentPoints(nodes)
   val nodeOutput = createSvgAlignmentContent(alignmentPoints)
   val svgWidth = ((totalWitnessCount + 1) * witDims("w") * 2).toString
   val svgHeight = (alignmentPoints.size * verticalNodeSpacing).toString
   val viewBox = List("0 0 ", svgWidth, svgHeight).mkString(" ")
-  val result =
+  val flowModelSvg =
     <svg xmlns="http://www.w3.org/2000/svg" viewBox={viewBox}>
       <g transform="translate(10, 10)">
         {nodeOutput}
       </g>
     </svg>
   val pp = new scala.xml.PrettyPrinter(120, 4)
-  val formattedSvg = pp.format(result)
-  println(result)
+  val formattedSvg = pp.format(flowModelSvg)
+  println(formattedSvg)
 
 /** AlignmentPoint
   *
