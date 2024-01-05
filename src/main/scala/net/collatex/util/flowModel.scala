@@ -632,7 +632,7 @@ private def createInnerGs(input: AlignmentPoint): Vector[Elem] =
       val rectXPos = ((cumWitnessCount + groupCount) * witDims("w")).toString
       val newG = <g transform={
         "translate(" + rectXPos + ")"
-      }>{currentGroup}</g>
+      }>{createWitnessRects(currentGroup)}</g>
       val newCumWitnessCount = cumWitnessCount + currentGroup.witnesses.size
       val newGroupCount = groupCount + 1
       nextGroup(
@@ -641,7 +641,66 @@ private def createInnerGs(input: AlignmentPoint): Vector[Elem] =
         newCumWitnessCount,
         acc :+ newG
       )
-  nextGroup(input.subGroups, 0, 0, Vector.empty)
+  val groupRects = nextGroup(input.subGroups, 0, 0, Vector.empty)
+
+  if input.missingGroup.nonEmpty then
+    val missingRects =
+      <g transform={
+        "translate(" + (verticalRuleXPos + (witDims("w") / 2)).toString + ")"
+      }>{
+        input.missingGroup.zipWithIndex.map((reading, offset) =>
+          plotRectAndText(reading, offset)
+        )
+      }</g>
+    groupRects :+ missingRects
+  else groupRects
+
+/** Create colored rectangles and text for each witness in a single alignment
+  * group
+  *
+  * Rect and labels for group of missing witnesses is created elsewhere
+  *
+  * @param group
+  *   SubGroup, with witnesses property for witnesses present in that group
+  * @return
+  *   vector of <rect> and <text> elements, one of each per witness
+  */
+private def createWitnessRects(group: SubGroup): Vector[Elem] =
+  group.witnesses.zipWithIndex.flatMap { (reading, offset) =>
+    plotRectAndText(reading, offset)
+  }
+
+/** Plot one <rect> and <text>
+  *
+  * Called for both groups of readings and option group of missing witnesses
+  *
+  * @param reading
+  *   WitnessReading, which contains siglum
+  * @param offset
+  *   x offset within grouop
+  * @return
+  *   vector of one <rect> and one <text>
+  */
+private def plotRectAndText(
+    reading: WitnessReading,
+    offset: Int
+): Vector[Elem] =
+  val rectXPos = offset * witDims("w")
+  val rect =
+    <rect x={rectXPos.toString} y="0" width={
+      witDims("w").toString
+    } height={witDims("h").toString} fill={
+      witnessToColor(reading.siglum)
+    }></rect>
+  val text =
+    <text x={(rectXPos + witDims("w") / 2).toString} y={
+      (witDims("h") / 2).toString
+    } text-anchor="middle" dominant-baseline="central" font-size={
+      (witDims("w") * .7).toString
+    }>{
+      reading.siglum.tail
+    }</text>
+  Vector(rect, text)
 
 /** Dispatch all alignment points for conversion to SVG
   *
@@ -656,12 +715,11 @@ private def createSvgAlignmentContent(alignmentPoints: Vector[AlignmentPoint]) =
   outerGroups
 
 @main def createSvgFlowModel(): Unit =
-  // save("flowModel.svg", svg)
   val alignmentPoints = createAlignmentPoints(nodes)
   val nodeOutput = createSvgAlignmentContent(alignmentPoints)
   val svgWidth = ((totalWitnessCount + 1) * witDims("w") * 2).toString
   val svgHeight = (alignmentPoints.size * verticalNodeSpacing).toString
-  val viewBox = List("0 0 ", svgWidth, svgHeight).mkString(" ")
+  val viewBox = List("0 0", svgWidth, svgHeight).mkString(" ")
   val flowModelSvg =
     <svg xmlns="http://www.w3.org/2000/svg" viewBox={viewBox}>
       <g transform="translate(10, 10)">
@@ -671,6 +729,7 @@ private def createSvgAlignmentContent(alignmentPoints: Vector[AlignmentPoint]) =
   val pp = new scala.xml.PrettyPrinter(120, 4)
   val formattedSvg = pp.format(flowModelSvg)
   println(formattedSvg)
+  save("flowModel.svg", flowModelSvg)
 
 /** AlignmentPoint
   *
