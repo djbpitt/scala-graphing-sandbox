@@ -542,6 +542,18 @@ val svg: Elem =
     </g>
   </svg>
 
+// ---------------------------------------------
+// New code (below) uses some globals form above
+// ---------------------------------------------
+
+/** Create alignment points from all alignment tree nodes, preparatory to
+  * generating SVG flow diagrom
+  *
+  * @param input
+  *   vector of all alignment tree nodes
+  * @return
+  *   vector of alignment points
+  */
 private def createAlignmentPoints(input: Vector[HasWitnessReadings]) =
   input map {
     case e: ReadingNode =>
@@ -687,19 +699,19 @@ private def plotRectAndText(
 ): Vector[Elem] =
   val rectXPos = offset * witDims("w")
   val rect =
-    <rect x={rectXPos.toString} y="0" width={
-      witDims("w").toString
-    } height={witDims("h").toString} fill={
-      witnessToColor(reading.siglum)
-    }></rect>
+    <rect 
+      x={rectXPos.toString} 
+      y="0" 
+      width={witDims("w").toString} 
+      height={witDims("h").toString}
+      fill={witnessToColor(reading.siglum)}></rect>
   val text =
-    <text x={(rectXPos + witDims("w") / 2).toString} y={
-      (witDims("h") / 2).toString
-    } text-anchor="middle" dominant-baseline="central" font-size={
-      (witDims("w") * .7).toString
-    }>{
-      reading.siglum.tail
-    }</text>
+    <text
+      x={(rectXPos + witDims("w") / 2).toString}
+      y={(witDims("h") / 2).toString}
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size={(witDims("w") * .7).toString}>{reading.siglum.tail}</text>
   Vector(rect, text)
 
 /** Dispatch all alignment points for conversion to SVG
@@ -709,14 +721,27 @@ private def plotRectAndText(
   * @return
   *   vector of <g> elements, one per alignment point
   */
-private def createSvgAlignmentContent(alignmentPoints: Vector[AlignmentPoint]) =
+private def createSvgAlignmentGroupContent(
+    alignmentPoints: Vector[AlignmentPoint]
+) =
   val outerGroups = createAlignmentPoints(nodes).zipWithIndex
     .map((e, f) => createOuterG(e, f))
   outerGroups
 
+
+private def createFlows(input: Vector[AlignmentPoint]) =
+  val flowPairs = input.zip(input.tail) // pairs of alignment points
+  val flows = flowPairs.zipWithIndex map { e =>
+    val targetYPos = e._2 * verticalNodeSpacing
+
+
+  }
+
+
+
 @main def createSvgFlowModel(): Unit =
   val alignmentPoints = createAlignmentPoints(nodes)
-  val nodeOutput = createSvgAlignmentContent(alignmentPoints)
+  val nodeOutput = createSvgAlignmentGroupContent(alignmentPoints)
   val svgWidth = ((totalWitnessCount + 1) * witDims("w") * 2).toString
   val svgHeight = (alignmentPoints.size * verticalNodeSpacing).toString
   val viewBox = List("0 0", svgWidth, svgHeight).mkString(" ")
@@ -730,6 +755,7 @@ private def createSvgAlignmentContent(alignmentPoints: Vector[AlignmentPoint]) =
   val formattedSvg = pp.format(flowModelSvg)
   println(formattedSvg)
   save("flowModel.svg", flowModelSvg)
+  createFlows(alignmentPoints)
 
 /** AlignmentPoint
   *
