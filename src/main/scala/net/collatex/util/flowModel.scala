@@ -599,11 +599,49 @@ private def createAlignmentPoints(input: Vector[HasWitnessReadings]) =
 private def createOuterG(input: (AlignmentPoint, Int)): Elem =
   val yPos = (input._2 * verticalNodeSpacing).toString
   <g transform={"translate(0, " + yPos + ")"}>{
-    input._1
+    createInnerGs(input._1)
   }</g>
 
-private def createInnerG(input: Vector[AlignmentPoint], yPos: Int) =
-  ???
+/** Create inner <g> elements for each group of witnesses in one alignment point
+  * that share a reading, and for missing witnesses
+  *
+  * Inner <g> elements are positioned only horizontally, and they contain one
+  * <rect> and one <text> for each witness
+  *
+  * Bounding rectangles for each subgroup and horizontal connecting lines
+  * between them are created elsewhere
+  *
+  * @param input
+  *   alignment point, which contains subgroups and possibly empty vector of
+  *   missing witnesses
+  * @return
+  *   vector of <g> elements, one for each subgroup (and, optionally, group of
+  *   missing witnesses)
+  */
+private def createInnerGs(input: AlignmentPoint): Vector[Elem] =
+  @tailrec
+  def nextGroup(
+      groupsToProcess: Vector[SubGroup],
+      groupCount: Int,
+      cumWitnessCount: Int,
+      acc: Vector[Elem]
+  ): Vector[Elem] =
+    if groupsToProcess.isEmpty then acc
+    else
+      val currentGroup = groupsToProcess.head
+      val rectXPos = ((cumWitnessCount + groupCount) * witDims("w")).toString
+      val newG = <g transform={
+        "translate(" + rectXPos + ")"
+      }>{currentGroup}</g>
+      val newCumWitnessCount = cumWitnessCount + currentGroup.witnesses.size
+      val newGroupCount = groupCount + 1
+      nextGroup(
+        groupsToProcess.tail,
+        newGroupCount,
+        newCumWitnessCount,
+        acc :+ newG
+      )
+  nextGroup(input.subGroups, 0, 0, Vector.empty)
 
 /** Dispatch all alignment points for conversion to SVG
   *
