@@ -401,7 +401,9 @@ private def processNodes(nodes: Vector[HasWitnessReadings]): Vector[Elem] =
               attestations.keys.toVector.sorted
             ) // keep only sigla, sort early
             .toVector
-            .sorted // sort groups by sorted sigla to minimize crossing flows
+            .sortBy(
+              _.head
+            ) // sort groups (by first siglum) to minimize crossing flows
         val readingGroupSizes = readingGroups.map(_.size)
         val precedingWitnessCounts =
           for (r, i) <- readingGroups.zipWithIndex
@@ -761,7 +763,7 @@ private def createFlows(input: Vector[AlignmentPoint]) =
     val sourceY = e._2 * verticalNodeSpacing + witDims("h") - .2
     val targetY = sourceY + verticalNodeSpacing - witDims("h") + .2
     allSigla.map { f =>
-      val color = witnessToColor(f)
+      val color = s"url(#${witnessToColor(f)}Gradient)"
       val sourceX = absoluteXPos(e._1._1, WitnessReading(f)) + 3
       val targetX = absoluteXPos(e._1._2, WitnessReading(f)) + 3.0001
       val d =
@@ -773,24 +775,44 @@ private def createFlows(input: Vector[AlignmentPoint]) =
   }
   allPaths
 
+/* Initialize output <g> with gradient declarations */
+val gradients: Vector[Elem] =
+  witnessToColor.values.map(createSingleColorGradient).toVector
+val clipPaths: Vector[Elem] =
+  (1 to totalWitnessCount).map(e => createClipPath(e)).toVector
+val defs: Elem = <defs>
+  {gradients}{clipPaths}
+</defs>
 @main def createSvgFlowModel(): Unit =
   val alignmentPoints = createAlignmentPoints(nodes)
   val nodeOutput = createSvgAlignmentGroupContent(alignmentPoints)
   val flowOutput = createFlows(alignmentPoints)
-  val svgWidth = ((totalWitnessCount + 1) * witDims("w") * 2).toString
-  val svgHeight = (alignmentPoints.size * verticalNodeSpacing).toString
-  val viewBox = List("0 0", svgWidth, svgHeight).mkString(" ")
+  val verticalSeparator =
+    <line
+        x1={verticalRuleXPos.toString}
+        y1={(-witDims("h")).toString}
+        x2={verticalRuleXPos.toString}
+        y2={
+      ((alignmentPoints.size - 1) * verticalNodeSpacing + witDims(
+        "h"
+      ) * 2).toString
+    }
+        stroke="gray"
+        stroke-width=".5"/>
+  val svgWidth = (totalWitnessCount + 1) * witDims("w") * 3
+  val svgHeight = alignmentPoints.size * verticalNodeSpacing
+  val viewBox =
+    List("0 -10", svgWidth.toString, (svgHeight + 20).toString).mkString(" ")
   val flowModelSvg =
     <svg xmlns="http://www.w3.org/2000/svg" viewBox={viewBox}>
       <g transform="translate(10, 10)">
-        {nodeOutput}{flowOutput}
+        {defs}{nodeOutput}{flowOutput}{verticalSeparator}
       </g>
     </svg>
   val pp = new scala.xml.PrettyPrinter(120, 4)
   val formattedSvg = pp.format(flowModelSvg)
-  // println(formattedSvg)
+  println(formattedSvg)
   save("flowModel.svg", flowModelSvg)
-  createFlows(alignmentPoints)
 
 /** AlignmentPoint
   *
