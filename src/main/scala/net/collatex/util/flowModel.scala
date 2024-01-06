@@ -775,6 +775,38 @@ private def createFlows(input: Vector[AlignmentPoint]) =
   }
   allPaths
 
+private def createGroupingRects(input: (AlignmentPoint, Int)): Vector[Elem] =
+  val yPos = (input._2 * verticalNodeSpacing).toString
+  @tailrec
+  def nextSubGroup(
+      subGroupsToProcess: Vector[SubGroup],
+      readingCount: Int,
+      acc: Vector[Elem]
+  ): Vector[Elem] =
+    if subGroupsToProcess.isEmpty then
+      if input._1.missingGroup.nonEmpty then
+        acc :+ <rect
+          x={(verticalRuleXPos + (witDims("w") / 2)).toString}
+          y={yPos}
+          width={(input._1.missingGroup.size * witDims("w")).toString}
+          height={witDims("h").toString}
+          stroke="black" stroke-width=".5" fill="none"/>
+      else
+        acc
+    else
+      val currentSubGroup = subGroupsToProcess.head
+      val newRect =
+        <rect
+            x={(readingCount * witDims("w")).toString}
+            y={yPos}
+            width={(currentSubGroup.size * witDims("w")).toString}
+            height={witDims("h").toString}
+            fill="none" stroke="black" stroke-width=".5"/>
+      val newReadingCount = readingCount + currentSubGroup.size + 1
+      val newAcc = acc :+ newRect
+      nextSubGroup(subGroupsToProcess.tail, newReadingCount, newAcc)
+  nextSubGroup(input._1.subGroups, 0, Vector.empty)
+
 /* Initialize output <g> with gradient declarations */
 val gradients: Vector[Elem] =
   witnessToColor.values.map(createSingleColorGradient).toVector
@@ -787,6 +819,7 @@ val defs: Elem = <defs>
   val alignmentPoints = createAlignmentPoints(nodes)
   val nodeOutput = createSvgAlignmentGroupContent(alignmentPoints)
   val flowOutput = createFlows(alignmentPoints)
+  val groupingRects = alignmentPoints.zipWithIndex.map(createGroupingRects)
   val verticalSeparator =
     <line
         x1={verticalRuleXPos.toString}
@@ -806,12 +839,12 @@ val defs: Elem = <defs>
   val flowModelSvg =
     <svg xmlns="http://www.w3.org/2000/svg" viewBox={viewBox}>
       <g transform="translate(10, 10)">
-        {defs}{nodeOutput}{flowOutput}{verticalSeparator}
+        {defs}{nodeOutput}{flowOutput}{groupingRects}{verticalSeparator}
       </g>
     </svg>
   val pp = new scala.xml.PrettyPrinter(120, 4)
   val formattedSvg = pp.format(flowModelSvg)
-  println(formattedSvg)
+  // println(formattedSvg)
   save("flowModel.svg", flowModelSvg)
 
 /** AlignmentPoint
