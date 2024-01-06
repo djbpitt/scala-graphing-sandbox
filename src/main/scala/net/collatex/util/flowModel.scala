@@ -729,6 +729,32 @@ private def createSvgAlignmentGroupContent(
   outerGroups
 
 private def createFlows(input: Vector[AlignmentPoint]) =
+
+  /** Compute absolute x position of witness w in alignment point a
+    *
+    * @param a
+    *   alignment point
+    * @param w
+    *   witness reading
+    * @return
+    *   absolute x position of witness reading in alignment point
+    */
+  def absoluteXPos(a: AlignmentPoint, w: WitnessReading): Double =
+    if a.missingGroup.contains(w) then
+      verticalRuleXPos + witDims("w") / 2 + a.missingGroup.indexOf(w) * witDims(
+        "w"
+      )
+    else
+      val g: SubGroup =
+        a.subGroups.filter(_.witnesses.contains(w)).head // must be exactly one
+      val offsetInGroup: Int = g.witnesses.indexOf(w)
+      val groupOffset: Int = a.subGroups.indexOf(g)
+      witDims("w") * (a.subGroups
+        .slice(0, groupOffset)
+        .map(_.size + 1)
+        .sum // add one to each for spacer
+        + offsetInGroup)
+
   val handleOffset = verticalNodeSpacing / 2
   val alignmentPointPairs = input.zip(input.tail) // pairs of alignment points
   val allPaths = alignmentPointPairs.zipWithIndex flatMap { e =>
@@ -736,10 +762,13 @@ private def createFlows(input: Vector[AlignmentPoint]) =
     val targetY = sourceY + verticalNodeSpacing - witDims("h") + .2
     allSigla.map { f =>
       val color = witnessToColor(f)
-      val sourceX = e._1._1.absoluteXPos(WitnessReading(f)) + 3
-      val targetX = e._1._2.absoluteXPos(WitnessReading(f)) + 3.0001
-      val d = s"M $sourceX,$sourceY C $sourceX,${sourceY + handleOffset} $targetX,${targetY - handleOffset} $targetX,$targetY"
-      <path d={d} stroke={color} stroke-width={witDims("w").toString} fill="none"/>
+      val sourceX = absoluteXPos(e._1._1, WitnessReading(f)) + 3
+      val targetX = absoluteXPos(e._1._2, WitnessReading(f)) + 3.0001
+      val d =
+        s"M $sourceX,$sourceY C $sourceX,${sourceY + handleOffset} $targetX,${targetY - handleOffset} $targetX,$targetY"
+      <path d={d} stroke={color} stroke-width={
+        witDims("w").toString
+      } fill="none"/>
     }.toVector
   }
   allPaths
@@ -777,33 +806,7 @@ private def createFlows(input: Vector[AlignmentPoint]) =
 case class AlignmentPoint(
     subGroups: Vector[SubGroup],
     missingGroup: Vector[WitnessReading]
-) {
-
-  /** Absolute x position of witness in alignment point, used to position flows
-    *
-    * @param w
-    *   witness reading
-    * @return
-    *   absolute x position of witness reading in alignment point
-    */
-  def absoluteXPos(w: WitnessReading): Double =
-    val groupSizes: Vector[Int] =
-      subGroups.map(_.size) // number of witness readings in each subgroup
-    if missingGroup.contains(w) then
-      verticalRuleXPos + witDims("w") / 2 + missingGroup.indexOf(w) * witDims(
-        "w"
-      )
-    else
-      val g: SubGroup =
-        subGroups.filter(_.witnesses.contains(w)).head // must be exactly one
-      val offsetInGroup: Int = g.witnesses.indexOf(w)
-      val groupOffset: Int = subGroups.indexOf(g)
-      witDims("w") * (subGroups
-        .slice(0, groupOffset)
-        .map(_.size + 1)
-        .sum // add one to each for spacer
-        + offsetInGroup)
-}
+)
 
 /** SubGroup
   *
