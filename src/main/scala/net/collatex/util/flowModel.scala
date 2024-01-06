@@ -728,16 +728,12 @@ private def createSvgAlignmentGroupContent(
     .map((e, f) => createOuterG(e, f))
   outerGroups
 
-
 private def createFlows(input: Vector[AlignmentPoint]) =
   val flowPairs = input.zip(input.tail) // pairs of alignment points
   val flows = flowPairs.zipWithIndex map { e =>
     val targetYPos = e._2 * verticalNodeSpacing
 
-
   }
-
-
 
 @main def createSvgFlowModel(): Unit =
   val alignmentPoints = createAlignmentPoints(nodes)
@@ -753,7 +749,7 @@ private def createFlows(input: Vector[AlignmentPoint]) =
     </svg>
   val pp = new scala.xml.PrettyPrinter(120, 4)
   val formattedSvg = pp.format(flowModelSvg)
-  println(formattedSvg)
+  // println(formattedSvg)
   save("flowModel.svg", flowModelSvg)
   createFlows(alignmentPoints)
 
@@ -771,7 +767,33 @@ private def createFlows(input: Vector[AlignmentPoint]) =
 case class AlignmentPoint(
     subGroups: Vector[SubGroup],
     missingGroup: Vector[WitnessReading]
-)
+) {
+
+  /** Absolute x position of witness in alignment point, used to position flows
+    *
+    * @param w
+    *   witness reading
+    * @return
+    *   absolute x position of witness reading in alignment point
+    */
+  def absoluteXPos(w: WitnessReading): Double =
+    val groupSizes: Vector[Int] =
+      subGroups.map(_.size) // number of witness readings in each subgroup
+    if missingGroup.contains(w) then
+      verticalRuleXPos + witDims("w") / 2 + missingGroup.indexOf(w) * witDims(
+        "w"
+      )
+    else
+      val g: SubGroup =
+        subGroups.filter(_.witnesses.contains(w)).head // must be exactly one
+      val offsetInGroup: Int = g.witnesses.indexOf(w)
+      val groupOffset: Int = subGroups.indexOf(g)
+      witDims("w") * (subGroups
+        .slice(0, groupOffset)
+        .map(_.size + 1)
+        .sum // add one to each for spacer
+        + offsetInGroup)
+}
 
 /** SubGroup
   *
@@ -785,7 +807,9 @@ case class AlignmentPoint(
   *   Witnesses are represented by WitnessReading instances, each represented by
   *   its sigla
   */
-case class SubGroup(witnesses: Vector[WitnessReading])
+case class SubGroup(witnesses: Vector[WitnessReading]) {
+  def size: Int = witnesses.size
+}
 object SubGroup {
   implicit def ordering: Ordering[SubGroup] =
     (a: SubGroup, b: SubGroup) => a.witnesses.head.compare(b.witnesses.head)
