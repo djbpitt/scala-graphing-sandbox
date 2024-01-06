@@ -1,4 +1,4 @@
-package net.collatex.util
+package net.collatex.utilx
 
 import scala.xml.{Elem, NodeSeq}
 import scala.xml.XML.save
