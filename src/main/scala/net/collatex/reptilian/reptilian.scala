@@ -58,9 +58,13 @@ def readData(pathToData: Path): List[(String, String)] =
 //  val flatAlignmentTreeOutputPath = os.pwd / "src" / "main" / "output" / "flatAlignment.dot"
 //  os.write.over(flatAlignmentTreeOutputPath, flatAlignmentTreeAsDot)
 
-  val output = createSingleColumnAlignmentTable(root, tokenArray, sigla)
+  val tableOutput = createSingleColumnAlignmentTable(root, tokenArray, sigla)
   val singleColumnOutputPath = os.pwd / "src" / "main" / "output" / "single-column-alignment.xhtml"
-  os.write.over(singleColumnOutputPath, output)
+  os.write.over(singleColumnOutputPath, tableOutput)
+
+  val flowOutput = createSvgFlowModel(flattenNodeSeq(root), tokenArray)
+  val flowOutputPath = os.pwd / "src" / "main" / "output" / "flow-visualization.svg"
+  xml.XML.save(flowOutputPath.toString, flowOutput)
 
 //  val output = createAlignmentTable(root, tokenArray, sigla)
 //  val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
