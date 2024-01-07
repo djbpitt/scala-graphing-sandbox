@@ -61,38 +61,38 @@ private def createSingleColorGradient(color: String): Elem =
   */
 private def createAlignmentPoints(nodeSequence: Vector[NumberedNode], tokenArray: Vector[Token]) =
   nodeSequence map {
-    case e: NumberedNode if e.node.isInstanceOf[ReadingNode] =>
+    case NumberedNode(node:ReadingNode, nodeNo:Int) =>
       val result = AlignmentPoint(
-        nodeNo = e.nodeNo,
+        nodeNo = nodeNo,
         subGroups = Vector(
           SubGroup(witnesses =
-            e.node.witnessReadings.keys.map(f => WitnessReading(f)).toVector.sorted
+            node.witnessReadings.keys.map(f => WitnessReading(f)).toVector.sorted
           )
         ),
         missingGroup = Vector.empty
       )
       result
-    case e: NumberedNode if e.node.isInstanceOf[IndelNode] =>
-      val missingSigla = allSigla.diff(e.node.witnessReadings.keySet).toVector.sorted
+    case NumberedNode(node: IndelNode, nodeNo: Int)=>
+      val missingSigla = allSigla.diff(node.witnessReadings.keySet).toVector.sorted
       val result = AlignmentPoint(
-        nodeNo = e.nodeNo,
+        nodeNo = nodeNo,
         subGroups = Vector(
           SubGroup(witnesses =
-            e.node.witnessReadings.keys.map(f => WitnessReading(f)).toVector
+            node.witnessReadings.keys.map(f => WitnessReading(f)).toVector
           )
         ),
         missingGroup = missingSigla.map(e => WitnessReading(e))
       )
       result
-    case e: NumberedNode if e.node.isInstanceOf[VariationNode] =>
+    case NumberedNode(node: VariationNode, nodeNo: Int) =>
       val missingSigla =
         allSigla
-          .diff(e.node.witnessReadings.keySet)
+          .diff(node.witnessReadings.keySet)
           .toVector
           .sorted // could be empty
       val result = AlignmentPoint(
-        nodeNo = e.nodeNo,
-        subGroups = e.node.witnessReadings
+        nodeNo = nodeNo,
+        subGroups = node.witnessReadings
           .groupBy((_, offsets) =>
             tokenArray.slice(offsets._1, offsets._2)
           ) // group by same reading text
