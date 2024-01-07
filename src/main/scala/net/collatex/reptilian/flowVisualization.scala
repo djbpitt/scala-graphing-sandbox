@@ -118,7 +118,8 @@ private def createAlignmentPoints(nodeSequence: Vector[NumberedNode], tokenArray
   */
 private def createOuterG(input: (AlignmentPoint, Int)): Elem =
   val yPos = (input._2 * verticalNodeSpacing).toString
-  <g transform={"translate(0, " + yPos + ")"}>{
+  val id = "v" + input._1.nodeNo.toString
+  <g transform={"translate(0, " + yPos + ")"} id={id}>{
     createInnerGs(input._1)
   }</g>
 
