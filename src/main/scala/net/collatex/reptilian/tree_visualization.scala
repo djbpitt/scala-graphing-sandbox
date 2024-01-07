@@ -319,9 +319,21 @@ def createAlignmentTable(
   )
 }
 
+/** Flatten alignment tree
+  *
+  * Flattened tree is a vector of NumberedNode instances (case class instead of
+  * tuple to avoid type erasure that interferes with subsequent pattern
+  * matching)
+  *
+  * @param root
+  *   ExpandedNode at root of alignment tree
+  * @return
+  *   vector of NumberedNode instances, which combine the alignment-tree node
+  *   with its unique id number
+  */
 def flattenNodeSeq(
     root: ExpandedNode
-): Vector[(Int, AlignmentTreeNode)] =
+): Vector[NumberedNode] =
   /* Depth-first traversal to produce flat sequence of leaf nodes: reading, indel, variation*/
   var id = 0
   val nodesToProcess: List[(Int, AlignmentTreeNode)] = List(
@@ -331,18 +343,18 @@ def flattenNodeSeq(
     @tailrec
     def nextNode(
         inList: List[(Int, AlignmentTreeNode)],
-        outVector: Vector[(Int, AlignmentTreeNode)]
-    ): Vector[(Int, AlignmentTreeNode)] =
+        outVector: Vector[NumberedNode]
+    ): Vector[NumberedNode] =
       if inList.isEmpty then outVector
       else
         val currentNode = inList.head
         currentNode match
-          case (_, _: ReadingNode) =>
-            nextNode(inList.tail, outVector :+ currentNode)
-          case (_, _: IndelNode) =>
-            nextNode(inList.tail, outVector :+ currentNode)
-          case (_, _: VariationNode) =>
-            nextNode(inList.tail, outVector :+ currentNode)
+          case (nodeNo, node: ReadingNode) =>
+            nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
+          case (nodeNo, node: IndelNode) =>
+            nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
+          case (nodeNo, node: VariationNode) =>
+            nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
           case (_, e: ExpandedNode) =>
             val newNodesToProcess: List[(Int, AlignmentTreeNode)] =
               e.children.map { i =>
@@ -646,3 +658,5 @@ object WordBuffer {
 
   def apply(word: String): WordBuffer = WordBuffer(Vector(word))
 }
+
+case class NumberedNode(node: HasWitnessReadings, nodeNo: Int)

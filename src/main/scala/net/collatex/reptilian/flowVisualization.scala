@@ -1,27 +1,19 @@
 package net.collatex.reptilian
 
-import net.collatex.reptilian.{
-  AlignmentTreeNode,
-  HasWitnessReadings,
-  IndelNode,
-  ReadingNode,
-  VariationNode
-}
 import math.Ordered.orderingToOrdered
 
 import scala.annotation.tailrec
 import scala.jdk.CollectionConverters.*
-import scala.xml.XML.save
 import scala.xml.{Elem, NodeSeq}
 
 /* Constants */
 val witnessToColor: Map[String, String] = Map(
-  "w59" -> "peru",
-  "w60" -> "orange",
-  "w61" -> "yellow",
-  "w66" -> "limegreen",
-  "w69" -> "dodgerblue",
-  "w72" -> "violet"
+  "darwin1859.txt" -> "peru",
+  "darwin1860.txt" -> "orange",
+  "darwin1861.txt" -> "yellow",
+  "darwin1866.txt" -> "limegreen",
+  "darwin1869.txt" -> "dodgerblue",
+  "darwin1872.txt" -> "violet"
 )
 val allSigla: Set[String] =
   witnessToColor.keySet // TODO: Derive from nodes, but AlignmentTreeNode doesn't have a witnessReadings property
@@ -62,42 +54,45 @@ private def createSingleColorGradient(color: String): Elem =
 /** Create alignment points from all alignment tree nodes, preparatory to
   * generating SVG flow diagrom
   *
-  * @param input
+  * @param nodeSequence
   *   vector of all alignment tree nodes
   * @return
   *   vector of alignment points
   */
-private def createAlignmentPoints(nodeSequence: Vector[(Int, AlignmentTreeNode)], tokenArray: Vector[Token]) =
+private def createAlignmentPoints(nodeSequence: Vector[NumberedNode], tokenArray: Vector[Token]) =
   nodeSequence map {
-    case e: (Int, ReadingNode) =>
+    case e: NumberedNode if e.node.isInstanceOf[ReadingNode] =>
       val result = AlignmentPoint(
+        nodeNo = e.nodeNo,
         subGroups = Vector(
           SubGroup(witnesses =
-            e._2.witnessReadings.keys.map(f => WitnessReading(f)).toVector.sorted
+            e.node.witnessReadings.keys.map(f => WitnessReading(f)).toVector.sorted
           )
         ),
         missingGroup = Vector.empty
       )
       result
-    case e: (Int, IndelNode) =>
-      val missingSigla = allSigla.diff(e._2.witnessReadings.keySet).toVector.sorted
+    case e: NumberedNode if e.node.isInstanceOf[IndelNode] =>
+      val missingSigla = allSigla.diff(e.node.witnessReadings.keySet).toVector.sorted
       val result = AlignmentPoint(
+        nodeNo = e.nodeNo,
         subGroups = Vector(
           SubGroup(witnesses =
-            e._2.witnessReadings.keys.map(f => WitnessReading(f)).toVector
+            e.node.witnessReadings.keys.map(f => WitnessReading(f)).toVector
           )
         ),
         missingGroup = missingSigla.map(e => WitnessReading(e))
       )
       result
-    case e: (Int, VariationNode) =>
+    case e: NumberedNode if e.node.isInstanceOf[VariationNode] =>
       val missingSigla =
         allSigla
-          .diff(e._2.witnessReadings.keySet)
+          .diff(e.node.witnessReadings.keySet)
           .toVector
           .sorted // could be empty
       val result = AlignmentPoint(
-        subGroups = e._2.witnessReadings
+        nodeNo = e.nodeNo,
+        subGroups = e.node.witnessReadings
           .groupBy((_, offsets) =>
             tokenArray.slice(offsets._1, offsets._2)
           ) // group by same reading text
@@ -215,7 +210,7 @@ private def plotRectAndText(
     <rect 
       x={rectXPos.toString} 
       y="0" 
-      width={witDims("w").toString} 
+      width={witDims("w").toString}
       height={witDims("h").toString}
       fill={witnessToColor(reading.siglum)}></rect>
   val text =
@@ -224,7 +219,7 @@ private def plotRectAndText(
       y={(witDims("h") / 2).toString}
       text-anchor="middle"
       dominant-baseline="central"
-      font-size={(witDims("w") * .7).toString}>{reading.siglum.tail}</text>
+      font-size={(witDims("w") * .7).toString}>{reading.siglum.slice(8, 10)}</text>
   Vector(rect, text)
 
 /** Dispatch all alignment points for conversion to SVG
@@ -234,7 +229,7 @@ private def plotRectAndText(
   * @return
   *   vector of <g> elements, one per alignment point
   */
-private def createSvgAlignmentGroupContent(alignmentPoints: Vector[AlignmentPoint], nodeSequence: Vector[(Int, AlignmentTreeNode)], tokenArray: Vector[Token]) =
+private def createSvgAlignmentGroupContent(alignmentPoints: Vector[AlignmentPoint], nodeSequence: Vector[NumberedNode], tokenArray: Vector[Token]) =
   val outerGroups = createAlignmentPoints(nodeSequence, tokenArray).zipWithIndex
     .map((e, f) => createOuterG(e, f))
   outerGroups
@@ -331,7 +326,7 @@ val defs: Elem = <defs>
  *
  * @return
  */
-def createSvgFlowModel(nodeSequence: Vector[(Int, AlignmentTreeNode)], tokenArray: Vector[Token]): Elem =
+def createSvgFlowModel(nodeSequence: Vector[NumberedNode], tokenArray: Vector[Token]): Elem =
   val alignmentPoints = createAlignmentPoints(nodeSequence, tokenArray)
   val nodeOutput = createSvgAlignmentGroupContent(alignmentPoints, nodeSequence, tokenArray)
   val flowOutput = createFlows(alignmentPoints)
@@ -348,12 +343,13 @@ def createSvgFlowModel(nodeSequence: Vector[(Int, AlignmentTreeNode)], tokenArra
     }
         stroke="gray"
         stroke-width=".5"/>
-  val svgWidth = (totalWitnessCount + 1) * witDims("w") * 3
-  val svgHeight = alignmentPoints.size * verticalNodeSpacing
+  val vbWidth = (totalWitnessCount + 1) * witDims("w") * 3
+  val vbHeight = alignmentPoints.size * verticalNodeSpacing
+  val svgWidth = "100%"
   val viewBox =
-    List("0 -10", svgWidth.toString, (svgHeight + 20).toString).mkString(" ")
+    List("0 -10", vbWidth.toString, (vbHeight + 20).toString).mkString(" ")
   val flowModelSvg: Elem =
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox={viewBox}>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox={viewBox} width={svgWidth}>
       <g transform="translate(10, 10)">
         {defs}{nodeOutput}{flowOutput}{groupingRects}{verticalSeparator}
       </g>
@@ -376,6 +372,7 @@ def createSvgFlowModel(nodeSequence: Vector[(Int, AlignmentTreeNode)], tokenArra
   *   witnesses not present at alignment point; may be empty
   */
 case class AlignmentPoint(
+    nodeNo: Int,
     subGroups: Vector[SubGroup],
     missingGroup: Vector[WitnessReading]
 )
