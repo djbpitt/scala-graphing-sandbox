@@ -380,9 +380,9 @@ def createSingleColumnAlignmentTable(
       tag("style")(
         "table, tr, th, td {border: 1px black solid; border-collapse: collapse;}" +
           "th, td {padding: 4px 3px 3px 3px;} " +
-          "ul {margin: 0;}" +
-          "li {margin-left: -1.5em;}" +
-          "td:first-child {text-align: right;}" +
+          "ul {margin: 0; padding-left: 20px;}" +
+          ".sigla {font-size: small; font-weight: bold;}" +
+          "td:first-child {text-align: right; font-size: smaller;}" +
           "tr {vertical-align: top;}" +
           ".reading {background-color: lightblue;} " +
           ".indel {background-color: lightgoldenrodyellow;} " +
@@ -396,7 +396,6 @@ def createSingleColumnAlignmentTable(
       table(
         tr(
           th("Node"),
-          th("Type"),
           th("Text")
         ),
         for numberedNode <- flattenedNodeSeq
@@ -418,8 +417,7 @@ def createSingleColumnAlignmentTable(
                 .map(_.n)
               Seq[Frag](
                 nodeNo,
-                td("Reading"),
-                td(colspan := s"${sigla.size}")(tokens.mkString(" "))
+                td(tokens.mkString(" "))
               )
             case IndelNode(witnessReadings) =>
               val nodeNo = td(numberedNode.nodeNo + 1)
@@ -429,12 +427,10 @@ def createSingleColumnAlignmentTable(
                 .map(_.n)
               Seq[Frag](
                 nodeNo,
-                td("Indel"),
-                td(colspan := s"${sigla.size}")(tokens.mkString(" "))
+                td(tokens.mkString(" "))
               )
             case VariationNode(witnessReadings, witnessGroups) =>
               val nodeNo = td(numberedNode.nodeNo + 1)
-              val alignment = td("Variation")
               val readings = td(
                 ul(
                   for e <- witnessGroups
@@ -446,27 +442,13 @@ def createSingleColumnAlignmentTable(
                       .map(_.n)
                       .mkString(" ")
                     li(
-                      em(s"${e.map(_.slice(8, 10)).mkString(", ")}: "),
+                      span(`class` := "sigla")(s"${e.map(_.slice(8, 10)).mkString(", ")}: "),
                       text
                     )
-//                  for i <- sortedSigla
-//                  yield
-//                    if witnessReadings contains i then
-//                      val start = witnessReadings(i)._1
-//                      val end = witnessReadings(i)._2
-//                      li(
-//                        em(s"${i.slice(8, 10)}: "),
-//                        tokenArray
-//                          .slice(start, end)
-//                          .map(_.t)
-//                          .mkString(" ")
-//                      )
-//                    else raw("")
                 )
               )
               Seq[Frag](
                 nodeNo,
-                alignment,
                 readings
               )
           }
