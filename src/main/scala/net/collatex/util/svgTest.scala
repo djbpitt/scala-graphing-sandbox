@@ -68,7 +68,7 @@ val nodes: Vector[HasWitnessReadings] = Vector(
       "w66" -> (18, 19),
       "w69" -> (19, 20),
       "w72" -> (20, 21)
-    )
+    ), witnessGroups = Vector.empty
   ),
   ReadingNode(witnessReadings =
     Map(
@@ -88,7 +88,7 @@ val nodes: Vector[HasWitnessReadings] = Vector(
       "w66" -> (30, 31),
       "w69" -> (31, 32),
       "w72" -> (32, 33)
-    )
+    ), witnessGroups = Vector.empty
   ),
   ReadingNode(witnessReadings =
     Map(
@@ -108,7 +108,7 @@ val nodes: Vector[HasWitnessReadings] = Vector(
       "w66" -> (42, 43),
       "w69" -> (43, 44),
       "w72" -> (44, 45)
-    )
+    ), witnessGroups = Vector.empty
   ),
   ReadingNode(witnessReadings =
     Map(
@@ -126,7 +126,7 @@ val nodes: Vector[HasWitnessReadings] = Vector(
       "w60" -> (52, 53),
       "w61" -> (53, 54),
       "w66" -> (54, 55)
-    )
+    ), witnessGroups = Vector.empty
   )
 )
 

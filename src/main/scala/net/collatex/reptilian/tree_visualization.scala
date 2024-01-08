@@ -94,7 +94,7 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
       //               """.stripMargin.replaceAll("\n", ""))
       //        }
 
-      case (currentId, VariationNode(witnessReadings)) =>
+      case (currentId, VariationNode(witnessReadings, witnessGroups)) =>
         val allWitnessTexts: String =
           witnessReadings
             .map((k, v) =>
@@ -248,7 +248,7 @@ def createAlignmentTable(
                   td("Aligned"),
                   td(colspan := s"${sigla.size}")(tokens.mkString(" "))
                 )
-              case VariationNode(witnessReadings) =>
+              case VariationNode(witnessReadings, witnessGroups) =>
                 val alignment = td("Variation")
                 val readings =
                   for i <- sortedSigla
@@ -428,7 +428,7 @@ def createSingleColumnAlignmentTable(
                   td("Indel"),
                   td(colspan := s"${sigla.size}")(tokens.mkString(" "))
                 )
-              case VariationNode(witnessReadings) =>
+              case VariationNode(witnessReadings, witnessGroups) =>
                 val nodeNo = td(numberedNode.nodeNo + 1)
                 val alignment = td("Variation")
                 val readings = td(ul(
@@ -480,7 +480,7 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
     val currentNode = nodesToProcess.head
     nodesToProcess = nodesToProcess.tail
     currentNode match {
-      case (currentId, VariationNode(witnessReadings)) =>
+      case (currentId, VariationNode(witnessReadings, witnessGroups)) =>
         val allWitnessTexts: String =
           witnessReadings
             .map((k, v) =>
