@@ -385,7 +385,7 @@ def createSingleColumnAlignmentTable(
         "table, tr, th, td {border: 1px black solid; border-collapse: collapse;}" +
           "th, td {padding: 4px 3px 3px 3px; } " +
           "li {margin-left: 1em;} ",
-        "td:nth-child(7) {text-align: right; }" +
+        "td:first-child {text-align: right; }" +
           "tr {vertical-align: top}" +
           ".reading {background-color: lightblue; } " +
           ".indel {background-color: lightgoldenrodyellow; } " +
@@ -398,7 +398,6 @@ def createSingleColumnAlignmentTable(
       h1("Alignment"),
       table(
         tr(
-          for (i <- sortedSigla) yield th(i.slice(8, 10)),
           th("Node"),
           th("Type"),
           th("Text")
@@ -412,44 +411,31 @@ def createSingleColumnAlignmentTable(
           }))(
             numberedNode.node match {
               case ReadingNode(witnessReadings) =>
-                val scheme = for (i <- sortedSigla) yield td(" ")
                 val nodeNo = td(numberedNode.nodeNo + 1)
                 val (_, value) = witnessReadings.head
                 val tokens = tokenArray
                   .slice(value._1, value._2)
                   .map(_.n)
                 Seq[Frag](
-                  scheme,
                   nodeNo,
                   td("Reading"),
                   td(colspan := s"${sigla.size}")(tokens.mkString(" "))
                 )
               case IndelNode(witnessReadings) =>
-                val scheme =
-                  for (i <- sortedSigla)
-                    yield
-                      if witnessReadings contains i then td(" ")
-                      else td(`class` := "missing")(" ")
                 val nodeNo = td(numberedNode.nodeNo + 1)
                 val (_, value) = witnessReadings.head
                 val tokens = tokenArray
                   .slice(value._1, value._2)
                   .map(_.n)
                 Seq[Frag](
-                  scheme,
                   nodeNo,
                   td("Indel"),
                   td(colspan := s"${sigla.size}")(tokens.mkString(" "))
                 )
               case VariationNode(witnessReadings) =>
-                val scheme =
-                  for (i <- sortedSigla)
-                    yield
-                      if witnessReadings contains i then td(" ")
-                      else td(`class` := "missing")(" ")
                 val nodeNo = td(numberedNode.nodeNo + 1)
                 val alignment = td("Variation")
-                val readings = td(
+                val readings = td(ul(
                   for i <- sortedSigla
                   yield
                     if witnessReadings contains i then
@@ -463,9 +449,8 @@ def createSingleColumnAlignmentTable(
                           .mkString(" ")
                       )
                     else raw("")
-                )
+                ))
                 Seq[Frag](
-                  scheme,
                   nodeNo,
                   alignment,
                   readings
