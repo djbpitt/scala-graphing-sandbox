@@ -371,10 +371,6 @@ def createSingleColumnAlignmentTable(
     sigla: List[String]
 ) = {
   val sortedSigla = sigla.sorted
-  val id = 0
-  val nodesToProcess: List[(Int, AlignmentTreeNode)] = List(
-    (id, root)
-  ) // Prepend list of children of current node
   val flattenedNodeSeq = flattenNodeSeq(root)
   val htmlBoilerplate =
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
@@ -403,10 +399,10 @@ def createSingleColumnAlignmentTable(
           th("Text")
         ),
         for numberedNode <- flattenedNodeSeq
-          yield tr(`class` := (numberedNode.node.getClass.getSimpleName match {
-            case "ReadingNode"   => "reading"
-            case "IndelNode"     => "indel"
-            case "VariationNode" => "variation"
+          yield tr(id := s"t${numberedNode.nodeNo}", `class` := (numberedNode.node match {
+            case _:ReadingNode   => "reading"
+            case _:IndelNode     => "indel"
+            case _:VariationNode => "variation"
             case _               => "unaligned"
           }))(
             numberedNode.node match {
