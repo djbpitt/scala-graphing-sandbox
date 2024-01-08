@@ -432,19 +432,21 @@ def createSingleColumnAlignmentTable(
                 val nodeNo = td(numberedNode.nodeNo + 1)
                 val alignment = td("Variation")
                 val readings = td(ul(
-                  for i <- sortedSigla
-                  yield
-                    if witnessReadings contains i then
-                      val start = witnessReadings(i)._1
-                      val end = witnessReadings(i)._2
-                      li(
-                        em(s"${i.slice(8, 10)}: "),
-                        tokenArray
-                          .slice(start, end)
-                          .map(_.t)
-                          .mkString(" ")
-                      )
-                    else raw("")
+                  for e <- witnessGroups yield
+                    li(em(s"${e.map(_.slice(8, 10)).mkString(", ")}: Placeholder"))
+//                  for i <- sortedSigla
+//                  yield
+//                    if witnessReadings contains i then
+//                      val start = witnessReadings(i)._1
+//                      val end = witnessReadings(i)._2
+//                      li(
+//                        em(s"${i.slice(8, 10)}: "),
+//                        tokenArray
+//                          .slice(start, end)
+//                          .map(_.t)
+//                          .mkString(" ")
+//                      )
+//                    else raw("")
                 ))
                 Seq[Frag](
                   nodeNo,
