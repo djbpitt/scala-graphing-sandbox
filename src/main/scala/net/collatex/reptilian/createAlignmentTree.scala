@@ -178,12 +178,22 @@ def setupNodeExpansion(
   val blocks = alignTokenArray(tokenArray, sigla, selection)
   if blocks.isEmpty
   then
+    val groups = selection.witnessReadings
+      .groupBy((siglum, offsets) =>
+        tokenArray
+          .slice(offsets._1, offsets._2)
+          .map(_.n)
+          .mkString(" ")
+      ) // groups readings by shared text (n property)
+      .values // we don't care about the shared text after we've used it for grouping
+      .map(_.keys.toVector.sorted) // vector of sorted sigla for each group
+      .toVector.sorted // outer container is also a vector, producing Vector[Vector[String]]
     ExpandedNode( // no blocks, so the single child is a VariationNode
       witnessReadings = selection.witnessReadings,
       children = ListBuffer(
         VariationNode(
           witnessReadings = selection.witnessReadings,
-          witnessGroups = Vector.empty
+          witnessGroups = groups
         )
       )
     )
@@ -210,20 +220,20 @@ def recursiveBuildAlignmentTreeLevel(
   // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
   val firstReadingNode =
     remainingAlignment.head // used below to find both real alignment and optional leading "undecided part"
-  // println("Witness intervals of the first block of the alignment")
-  // println(firstReadingNode)
+      // println("Witness intervals of the first block of the alignment")
+      // println(firstReadingNode)
 
-  // split treeReadingNode based on the end position for each witness of the first reading node of the alignment.
-  // That splits the root reading node into aligned block plus optional leading non-block tokens
-  // TODO: map() creates a new map; would a map view be better (we use the value only once)? Would using a
-  //   map view instead of a map require changing the signature of split_reading_node()?
-  // TODO: split_reading_node() returns a tuple, which we could unpack
-  // Splits on end of aligned block, so:
-  //   First item contains block (empty only at end) preceded by optional leading unaligned stuff
-  //   Second item contains optional stuff after the block, which will be the input into the recursion
-  //   Recursion knows to end when remainingAlignment parameter is an empty list
-  //  println(firstReadingNode)
-  //  println(tokenArray)
+      // split treeReadingNode based on the end position for each witness of the first reading node of the alignment.
+      // That splits the root reading node into aligned block plus optional leading non-block tokens
+      // TODO: map() creates a new map; would a map view be better (we use the value only once)? Would using a
+      //   map view instead of a map require changing the signature of split_reading_node()?
+      // TODO: split_reading_node() returns a tuple, which we could unpack
+      // Splits on end of aligned block, so:
+      //   First item contains block (empty only at end) preceded by optional leading unaligned stuff
+      //   Second item contains optional stuff after the block, which will be the input into the recursion
+      //   Recursion knows to end when remainingAlignment parameter is an empty list
+      //  println(firstReadingNode)
+      //  println(tokenArray)
   val tempSplit = split_reading_node(
     treeReadingNode,
     firstReadingNode.witnessReadings.map((k, v) => k -> v._2)
