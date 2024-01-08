@@ -380,9 +380,10 @@ def createSingleColumnAlignmentTable(
       tag("style")(
         "table, tr, th, td {border: 1px black solid; border-collapse: collapse;}" +
           "th, td {padding: 4px 3px 3px 3px;} " +
-          "ul {margin: 0; padding-left: 20px;}" +
+          "ul {margin: -1px 0 0 0; padding-left: 12px;}" +
+          "li::marker {font-size: .7em;}" +
           ".sigla {font-size: small; font-weight: bold;}" +
-          "td:first-child {text-align: right; font-size: smaller;}" +
+          "td:first-child {text-align: right; font-size: small; line-height: 1.3em;}" +
           "tr {vertical-align: top;}" +
           ".reading {background-color: lightblue;} " +
           ".indel {background-color: lightgoldenrodyellow;} " +
