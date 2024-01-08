@@ -62,7 +62,7 @@ def readData(pathToData: Path): List[(String, String)] =
   val singleColumnOutputPath = os.pwd / "src" / "main" / "output" / "single-column-alignment.xhtml"
   os.write.over(singleColumnOutputPath, tableOutput)
 
-  val flowOutput = createSvgFlowModel(flattenNodeSeq(root), tokenArray)
+  val flowOutput: xml.Elem = createSvgFlowModel(flattenNodeSeq(root), tokenArray)
   val flowOutputPath = os.pwd / "src" / "main" / "output" / "flow-visualization.svg"
   xml.XML.save(flowOutputPath.toString, flowOutput)
 

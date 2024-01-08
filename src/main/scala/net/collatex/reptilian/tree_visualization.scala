@@ -371,37 +371,11 @@ def createSingleColumnAlignmentTable(
     sigla: List[String]
 ) = {
   val sortedSigla = sigla.sorted
-  // TODO: Flattening code has been copied into flattenNodeSeq; remove duplicate and call instead
-  /* Depth-first traversal to produce flat sequence of leaf nodes: reading, indel, variation*/
-  var id = 0
+  val id = 0
   val nodesToProcess: List[(Int, AlignmentTreeNode)] = List(
     (id, root)
   ) // Prepend list of children of current node
-  val flattenedNodeSeq =
-    @tailrec
-    def nextNode(
-        inList: List[(Int, AlignmentTreeNode)],
-        outVector: Vector[(Int, AlignmentTreeNode)]
-    ): Vector[(Int, AlignmentTreeNode)] =
-      if inList.isEmpty then outVector
-      else
-        val currentNode = inList.head
-        currentNode match
-          case (_, _: ReadingNode) =>
-            nextNode(inList.tail, outVector :+ currentNode)
-          case (_, _: IndelNode) =>
-            nextNode(inList.tail, outVector :+ currentNode)
-          case (_, _: VariationNode) =>
-            nextNode(inList.tail, outVector :+ currentNode)
-          case (_, e: ExpandedNode) =>
-            val newNodesToProcess: List[(Int, AlignmentTreeNode)] =
-              e.children.map { i =>
-                id += 1
-                (id, i)
-              }.toList
-            nextNode(newNodesToProcess ::: inList.tail, outVector)
-
-    nextNode(nodesToProcess, Vector.empty)
+  val flattenedNodeSeq = flattenNodeSeq(root)
   val htmlBoilerplate =
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
   htmlBoilerplate + html(xmlns := "http://www.w3.org/1999/xhtml")(
@@ -429,17 +403,17 @@ def createSingleColumnAlignmentTable(
           th("Type"),
           th("Text")
         ),
-        for ((index, child) <- flattenedNodeSeq)
-          yield tr(`class` := (child.getClass.getSimpleName match {
+        for numberedNode <- flattenedNodeSeq
+          yield tr(`class` := (numberedNode.node.getClass.getSimpleName match {
             case "ReadingNode"   => "reading"
             case "IndelNode"     => "indel"
             case "VariationNode" => "variation"
             case _               => "unaligned"
           }))(
-            child match {
+            numberedNode.node match {
               case ReadingNode(witnessReadings) =>
                 val scheme = for (i <- sortedSigla) yield td(" ")
-                val nodeNo = td(index + 1)
+                val nodeNo = td(numberedNode.nodeNo + 1)
                 val (_, value) = witnessReadings.head
                 val tokens = tokenArray
                   .slice(value._1, value._2)
@@ -456,7 +430,7 @@ def createSingleColumnAlignmentTable(
                     yield
                       if witnessReadings contains i then td(" ")
                       else td(`class` := "missing")(" ")
-                val nodeNo = td(index + 1)
+                val nodeNo = td(numberedNode.nodeNo + 1)
                 val (_, value) = witnessReadings.head
                 val tokens = tokenArray
                   .slice(value._1, value._2)
@@ -473,7 +447,7 @@ def createSingleColumnAlignmentTable(
                     yield
                       if witnessReadings contains i then td(" ")
                       else td(`class` := "missing")(" ")
-                val nodeNo = td(index + 1)
+                val nodeNo = td(numberedNode.nodeNo + 1)
                 val alignment = td("Variation")
                 val readings = td(
                   for i <- sortedSigla
