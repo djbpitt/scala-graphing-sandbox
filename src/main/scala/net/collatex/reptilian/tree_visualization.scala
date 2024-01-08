@@ -438,9 +438,17 @@ def createSingleColumnAlignmentTable(
               val readings = td(
                 ul(
                   for e <- witnessGroups
-                  yield li(
-                    em(s"${e.map(_.slice(8, 10)).mkString(", ")}: Placeholder")
-                  )
+                  yield
+                    val start = witnessReadings(e.head)._1
+                    val end = witnessReadings(e.head)._2
+                    val text = tokenArray
+                      .slice(start, end)
+                      .map(_.n)
+                      .mkString(" ")
+                    li(
+                      em(s"${e.map(_.slice(8, 10)).mkString(", ")}: "),
+                      text
+                    )
 //                  for i <- sortedSigla
 //                  yield
 //                    if witnessReadings contains i then
