@@ -380,10 +380,9 @@ def createSingleColumnAlignmentTable(
       tag("style")(
         "table, tr, th, td {border: 1px black solid; border-collapse: collapse;}" +
           "th, td {padding: 4px 3px 3px 3px;} " +
-          "ul {margin: -1px 0 0 0; padding-left: 12px;}" +
-          "li::marker {font-size: .7em;}" +
+          "ul {margin: -1px 0 0 0; padding-left: 1em; list-style-type:none; text-indent: -1em;}" +
           ".sigla {font-size: small; font-weight: bold;}" +
-          "td:first-child {text-align: right; font-size: small; line-height: 1.3em;}" +
+          "td:first-child {text-align: right; font-size: small; line-height: 1.33em;}" +
           "tr {vertical-align: top;}" +
           ".reading {background-color: lightblue;} " +
           ".indel {background-color: lightgoldenrodyellow;} " +
@@ -412,13 +411,15 @@ def createSingleColumnAlignmentTable(
           numberedNode.node match {
             case ReadingNode(witnessReadings) =>
               val nodeNo = td(numberedNode.nodeNo + 1)
+              val sigla = "all"
               val (_, value) = witnessReadings.head
-              val tokens = tokenArray
+              val text = tokenArray
                 .slice(value._1, value._2)
                 .map(_.n)
+                .mkString(" ")
               Seq[Frag](
                 nodeNo,
-                td(tokens.mkString(" "))
+                td(span(`class` := "sigla")(s"$sigla: "), text)
               )
             case IndelNode(witnessReadings) =>
               val nodeNo = td(numberedNode.nodeNo + 1)
