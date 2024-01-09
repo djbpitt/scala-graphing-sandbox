@@ -187,16 +187,23 @@ def setupNodeExpansion(
       ) // groups readings by shared text (n property)
       .values // we don't care about the shared text after we've used it for grouping
       .map(_.keys.toVector.sorted) // vector of sorted sigla for each group
-      .toVector.sorted // outer container is also a vector, producing Vector[Vector[String]]
-    ExpandedNode( // no blocks, so the single child is a VariationNode
-      witnessReadings = selection.witnessReadings,
-      children = ListBuffer(
-        VariationNode(
-          witnessReadings = selection.witnessReadings,
-          witnessGroups = groups
-        )
+      .toVector
+      .sorted // outer container is also a vector, producing Vector[Vector[String]]
+    selection.witnessReadings.size match {
+      case 1 => IndelNode(
+        witnessReadings = selection.witnessReadings
       )
-    )
+      case _ =>
+        ExpandedNode( // no blocks, so the single child is a VariationNode
+          witnessReadings = selection.witnessReadings,
+          children = ListBuffer(
+            VariationNode(
+              witnessReadings = selection.witnessReadings,
+              witnessGroups = groups
+            )
+          )
+        )
+    }
   else // blocks, so children are a sequence of one or more nodes of possibly different types
     val expansion = recursiveBuildAlignmentTreeLevel(
       result = ListBuffer(),
