@@ -422,13 +422,21 @@ def createSingleColumnAlignmentTable(
               )
             case IndelNode(witnessReadings) =>
               val nodeNo = td(numberedNode.nodeNo + 1)
+              val sigla = witnessReadings
+                .keys
+                .map(_.slice(8, 10))
+                .toVector
+                .sorted
+                .mkString(" ")
               val (_, value) = witnessReadings.head
-              val tokens = tokenArray
+              val text = tokenArray
                 .slice(value._1, value._2)
                 .map(_.n)
+                .mkString(" ")
               Seq[Frag](
                 nodeNo,
-                td(tokens.mkString(" "))
+                td(span(`class` := "sigla")(s"$sigla: "),
+                  text)
               )
             case VariationNode(witnessReadings, witnessGroups) =>
               val nodeNo = td(numberedNode.nodeNo + 1)
@@ -436,6 +444,7 @@ def createSingleColumnAlignmentTable(
                 ul(
                   for e <- witnessGroups
                   yield
+                    val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
                     val start = witnessReadings(e.head)._1
                     val end = witnessReadings(e.head)._2
                     val text = tokenArray
@@ -443,7 +452,7 @@ def createSingleColumnAlignmentTable(
                       .map(_.n)
                       .mkString(" ")
                     li(
-                      span(`class` := "sigla")(s"${e.map(_.slice(8, 10)).mkString(", ")}: "),
+                      span(`class` := "sigla")(s"$sigla: "),
                       text
                     )
                 )
