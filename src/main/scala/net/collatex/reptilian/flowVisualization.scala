@@ -27,7 +27,6 @@ val verticalRuleXPos: Double =
   totalWitnessCount * witDims("w") * 2 - witDims("w") / 2
 /* End of constants*/
 
-
 /** Create single-color linear gradient
   *
   * Transition is vertical (default is horizontal) No need to specify graduated
@@ -59,21 +58,28 @@ private def createSingleColorGradient(color: String): Elem =
   * @return
   *   vector of alignment points
   */
-private def createAlignmentPoints(nodeSequence: Vector[NumberedNode], tokenArray: Vector[Token]) =
+private def createAlignmentPoints(
+    nodeSequence: Vector[NumberedNode],
+    tokenArray: Vector[Token]
+) =
   nodeSequence map {
-    case NumberedNode(node:ReadingNode, nodeNo:Int) =>
+    case NumberedNode(node: ReadingNode, nodeNo: Int) =>
       val result = AlignmentPoint(
         nodeNo = nodeNo,
         subGroups = Vector(
           SubGroup(witnesses =
-            node.witnessReadings.keys.map(f => WitnessReading(f)).toVector.sorted
+            node.witnessReadings.keys
+              .map(f => WitnessReading(f))
+              .toVector
+              .sorted
           )
         ),
         missingGroup = Vector.empty
       )
       result
-    case NumberedNode(node: IndelNode, nodeNo: Int)=>
-      val missingSigla = allSigla.diff(node.witnessReadings.keySet).toVector.sorted
+    case NumberedNode(node: IndelNode, nodeNo: Int) =>
+      val missingSigla =
+        allSigla.diff(node.witnessReadings.keySet).toVector.sorted
       val result = AlignmentPoint(
         nodeNo = nodeNo,
         subGroups = Vector(
@@ -92,17 +98,8 @@ private def createAlignmentPoints(nodeSequence: Vector[NumberedNode], tokenArray
           .sorted // could be empty
       val result = AlignmentPoint(
         nodeNo = nodeNo,
-        subGroups = node.witnessReadings
-          .groupBy((_, offsets) =>
-            tokenArray.slice(offsets._1, offsets._2)
-          ) // group by same reading text
-          .map((_, attestations) =>
-            attestations.keys.toVector.sorted.map(f => WitnessReading(f))
-          ) // keep only sigla, sort early
-          .map(f => SubGroup(f))
-          .toVector
-          .sorted // sort groups by sorted sigla to minimize crossing flows
-        ,
+        subGroups =
+          node.witnessGroups.map(e => SubGroup(e.map(f => WitnessReading(f)))),
         missingGroup = missingSigla.map(e => WitnessReading(e))
       )
       result
@@ -220,7 +217,9 @@ private def plotRectAndText(
       y={(witDims("h") / 2).toString}
       text-anchor="middle"
       dominant-baseline="central"
-      font-size={(witDims("w") * .7).toString}>{reading.siglum.slice(8, 10)}</text>
+      font-size={(witDims("w") * .7).toString}>{
+      reading.siglum.slice(8, 10)
+    }</text>
   Vector(rect, text)
 
 /** Dispatch all alignment points for conversion to SVG
@@ -230,7 +229,11 @@ private def plotRectAndText(
   * @return
   *   vector of <g> elements, one per alignment point
   */
-private def createSvgAlignmentGroupContent(alignmentPoints: Vector[AlignmentPoint], nodeSequence: Vector[NumberedNode], tokenArray: Vector[Token]) =
+private def createSvgAlignmentGroupContent(
+    alignmentPoints: Vector[AlignmentPoint],
+    nodeSequence: Vector[NumberedNode],
+    tokenArray: Vector[Token]
+) =
   val outerGroups = createAlignmentPoints(nodeSequence, tokenArray).zipWithIndex
     .map((e, f) => createOuterG(e, f))
   outerGroups
@@ -317,19 +320,23 @@ val defs: Elem = <defs>
   {gradients}
 </defs>
 
-
 /** Entry point to create SVG flow visualization from alignment tree
- *
- * Create flattened sequence of alignment tree nodes (in tree_visualization.scala),
- * then create alignment points from alignment-tree nodes
- *
- * Input sequence is tuples of *nodeId, Node)
- *
- * @return
- */
-def createSvgFlowModel(nodeSequence: Vector[NumberedNode], tokenArray: Vector[Token]): Elem =
+  *
+  * Create flattened sequence of alignment tree nodes (in
+  * tree_visualization.scala), then create alignment points from alignment-tree
+  * nodes
+  *
+  * Input sequence is tuples of *nodeId, Node)
+  *
+  * @return
+  */
+def createSvgFlowModel(
+    nodeSequence: Vector[NumberedNode],
+    tokenArray: Vector[Token]
+): Elem =
   val alignmentPoints = createAlignmentPoints(nodeSequence, tokenArray)
-  val nodeOutput = createSvgAlignmentGroupContent(alignmentPoints, nodeSequence, tokenArray)
+  val nodeOutput =
+    createSvgAlignmentGroupContent(alignmentPoints, nodeSequence, tokenArray)
   val flowOutput = createFlows(alignmentPoints)
   val groupingRects = alignmentPoints.zipWithIndex.map(createGroupingRects)
   val verticalSeparator =
