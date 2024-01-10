@@ -238,7 +238,7 @@ private def createSvgAlignmentGroupContent(
     .map((e, f) => createOuterG(e, f))
   outerGroups
 
-private def createFlows(input: Vector[AlignmentPoint]) =
+private def createFlows(input: Vector[AlignmentPoint], reference: String) =
 
   /** Compute absolute x position of witness w in alignment point a
     *
@@ -268,7 +268,10 @@ private def createFlows(input: Vector[AlignmentPoint]) =
   val handleOffset = verticalNodeSpacing / 2
   val alignmentPointPairs = input.zip(input.tail) // pairs of alignment points
   val allPaths = alignmentPointPairs.zipWithIndex flatMap { e =>
-    val sourceY = e._2 * verticalNodeSpacing + witDims("h") - .2
+    val sourceY = reference match {
+      case "absolute" => e._2 * verticalNodeSpacing + witDims("h") - .2
+      case "relative" => witDims("h") - .2
+    } 
     val targetY = sourceY + verticalNodeSpacing - witDims("h") + .2
     allSigla.map { f =>
       val color = s"url(#${witnessToColor(f)}Gradient)"
@@ -337,7 +340,7 @@ def createSvgFlowModel(
   val alignmentPoints = createAlignmentPoints(nodeSequence, tokenArray)
   val nodeOutput =
     createSvgAlignmentGroupContent(alignmentPoints, nodeSequence, tokenArray)
-  val flowOutput = createFlows(alignmentPoints)
+  val flowOutput = createFlows(alignmentPoints, "absolute")
   val groupingRects = alignmentPoints.zipWithIndex.map(createGroupingRects)
   val verticalSeparator =
     <line

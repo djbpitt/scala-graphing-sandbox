@@ -85,7 +85,7 @@ def createMixedVisualization(
     tokenArray
   ) // one <g> element per node
   val flowGs =
-    createFlows(alignmentPoints)
+    createFlows(alignmentPoints, "relative")
       .grouped(6) // Vector of one Vector of 6 <path> elements per node;
       .toVector :+ Vector(<g></g>) // no flows for last block, so add empty <g>
   val tableCells = createTableCells(
