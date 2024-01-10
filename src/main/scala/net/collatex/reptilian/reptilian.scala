@@ -65,6 +65,10 @@ def readData(pathToData: Path): List[(String, String)] =
   val flowOutput: xml.Elem = createSvgFlowModel(flattenNodeSeq(root), tokenArray)
   val flowOutputPath = os.pwd / "src" / "main" / "output" / "flow-visualization.svg"
   xml.XML.save(flowOutputPath.toString, flowOutput)
+  
+  val mixedOutput = createMixedVisualization(flattenNodeSeq(root), tokenArray)
+  val mixedOutputPath = os.pwd / "src" / "main" / "output" / "mixed-visualization.xhtml"
+  os.write.over(mixedOutputPath, mixedOutput)
 
 //  val output = createAlignmentTable(root, tokenArray, sigla)
 //  val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
