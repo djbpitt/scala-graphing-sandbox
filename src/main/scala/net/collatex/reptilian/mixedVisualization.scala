@@ -91,4 +91,28 @@ def createMixedVisualization(
     nodeSequence,
     tokenArray
   ) // Vector of one Seq[Frag] per node
-  s"Nodes: ${nodeGs.size}, flows: ${flowGs.size}, tds: ${tableCells.size}"
+  val htmlBoilerplate =
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
+  val htmlHead =
+    head(
+      tag("title")("Alignments"),
+      tag("style")(
+        "table, tr, th, td {border: 1px black solid; border-collapse: collapse;}" +
+          "th, td {padding: 4px 3px 3px 3px;} " +
+          "ul {margin: -1px 0 0 0; padding-left: 1em; list-style-type:none; text-indent: -1em;}" +
+          ".sigla {font-size: small; font-weight: bold;}" +
+          "td:first-child {text-align: right; font-size: small; line-height: 1.33em;}" +
+          "tr {vertical-align: top;}" +
+          ".reading {background-color: lightblue;} " +
+          ".indel {background-color: lightgoldenrodyellow;} " +
+          ".variation {background-color: bisque;}" +
+          "tr:first-child {background-color: lightgray;}" +
+          ".missing {background-color: lightgray;}"
+      )
+    )
+  val htmlBody = body(h1("Hi, Mom"))
+  val result = htmlBoilerplate + html(xmlns := "http://www.w3.org/1999/xhtml")(
+    htmlHead,
+    htmlBody
+  )
+  result
