@@ -1,6 +1,10 @@
 package net.collatex.reptilian
 
+import scalatags.Text.*
 import scalatags.Text.all.*
+import scalatags.Text.svgTags.g
+
+import scala.xml.Elem
 
 def createTableCells(
     nodeSequence: Vector[NumberedNode],
@@ -14,9 +18,8 @@ def createTableCells(
         .slice(value._1, value._2)
         .map(_.n)
         .mkString(" ")
-      Seq[Frag](
-        td(span(`class` := "sigla")(s"$sigla: "), text)
-      )
+      td(span(`class` := "sigla")(s"$sigla: "), text)
+
     case IndelNode(witnessReadings) =>
       val sigla = witnessReadings.keys
         .map(_.slice(8, 10))
@@ -28,9 +31,8 @@ def createTableCells(
         .slice(value._1, value._2)
         .map(_.n)
         .mkString(" ")
-      Seq[Frag](
-        td(span(`class` := "sigla")(s"$sigla: "), text)
-      )
+      td(span(`class` := "sigla")(s"$sigla: "), text)
+
     case VariationNode(witnessReadings, witnessGroups) =>
       val readings = td(
         ul(
@@ -49,9 +51,8 @@ def createTableCells(
             )
         )
       )
-      Seq[Frag](
-        readings
-      )
+      readings
+
   }
 
 /** Create HTML table with SVG flow information in left column
@@ -85,12 +86,21 @@ def createMixedVisualization(
   ) // one <g> element per node
   val flowGs =
     createFlows(alignmentPoints)
-      .grouped(6)
-      .toVector // Vector of one Vector of 6 <path> elements per node
+      .grouped(6) // Vector of one Vector of 6 <path> elements per node;
+      .toVector :+ Vector(<g></g>) // no flows for last block, so add empty <g>
   val tableCells = createTableCells(
     nodeSequence,
     tokenArray
-  ) // Vector of one Seq[Frag] per node
+  ) // Vector of one <td> per node
+  val tableRowData = nodeGs.indices.map { e =>
+    val currentNodeG = nodeGs(e)
+    val currentFlow = flowGs(e)
+    val currentText = tableCells(e)
+    tableRow(currentNodeG, currentFlow, currentText)
+  }
+  val tableRows = tableRowData.map { e =>
+    tr(`class` := "placeholder")(td("Placeholder"), e.textCell)
+  }
   val htmlBoilerplate =
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
   val htmlHead =
@@ -110,9 +120,16 @@ def createMixedVisualization(
           ".missing {background-color: lightgray;}"
       )
     )
-  val htmlBody = body(h1("Hi, Mom"))
+  val htmlBody =
+    body(h1("Hi, Mom"), table(tr(th("Groups"), th("Text")), tableRows))
   val result = htmlBoilerplate + html(xmlns := "http://www.w3.org/1999/xhtml")(
     htmlHead,
     htmlBody
   )
   result
+
+case class tableRow(
+    svgG: Elem,
+    svgFlows: Vector[Elem],
+    textCell: scalatags.Text.TypedTag[String]
+)
