@@ -3,8 +3,8 @@ package net.collatex.util
 import net.collatex.reptilian.{
   AlignmentTreeNode,
   HasWitnessReadings,
-  IndelNode,
-  ReadingNode,
+  AgreementIndelNode,
+  AgreementNode,
   VariationNode
 }
 import math.Ordered.orderingToOrdered
@@ -39,7 +39,7 @@ val verticalRuleXPos: Double =
  *
  * Includes fake token array (below) because witness readings are grouped, which will matter for variation nodes */
 val nodes: Vector[HasWitnessReadings] = Vector(
-  ReadingNode(witnessReadings =
+  AgreementNode(witnessReadings =
     Map(
       "w59" -> (0, 1),
       "w60" -> (1, 2),
@@ -49,10 +49,10 @@ val nodes: Vector[HasWitnessReadings] = Vector(
       "w72" -> (5, 6)
     )
   ),
-  IndelNode(witnessReadings =
+  AgreementIndelNode(witnessReadings =
     Map("w66" -> (6, 7), "w69" -> (7, 8), "w72" -> (8, 9))
   ),
-  ReadingNode(witnessReadings =
+  AgreementNode(witnessReadings =
     Map(
       "w59" -> (9, 10),
       "w60" -> (10, 11),
@@ -72,7 +72,7 @@ val nodes: Vector[HasWitnessReadings] = Vector(
       "w72" -> (20, 21)
     ), witnessGroups = Vector.empty
   ),
-  ReadingNode(witnessReadings =
+  AgreementNode(witnessReadings =
     Map(
       "w59" -> (21, 22),
       "w60" -> (22, 23),
@@ -92,7 +92,7 @@ val nodes: Vector[HasWitnessReadings] = Vector(
       "w72" -> (32, 33)
     ), witnessGroups = Vector.empty
   ),
-  ReadingNode(witnessReadings =
+  AgreementNode(witnessReadings =
     Map(
       "w59" -> (33, 34),
       "w60" -> (34, 35),
@@ -112,7 +112,7 @@ val nodes: Vector[HasWitnessReadings] = Vector(
       "w72" -> (44, 45)
     ), witnessGroups = Vector.empty
   ),
-  ReadingNode(witnessReadings =
+  AgreementNode(witnessReadings =
     Map(
       "w59" -> (45, 46),
       "w60" -> (46, 47),
@@ -181,7 +181,7 @@ private def createSingleColorGradient(color: String): Elem =
   */
 private def createAlignmentPoints(input: Vector[HasWitnessReadings]) =
   input map {
-    case e: ReadingNode =>
+    case e: AgreementNode =>
       val result = AlignmentPoint(
         subGroups = Vector(
           SubGroup(witnesses =
@@ -191,7 +191,7 @@ private def createAlignmentPoints(input: Vector[HasWitnessReadings]) =
         missingGroup = Vector.empty
       )
       result
-    case e: IndelNode =>
+    case e: AgreementIndelNode =>
       val missingSigla = allSigla.diff(e.witnessReadings.keySet).toVector.sorted
       val result = AlignmentPoint(
         subGroups = Vector(

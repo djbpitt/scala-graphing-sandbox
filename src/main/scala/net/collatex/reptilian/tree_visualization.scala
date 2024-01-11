@@ -107,7 +107,7 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
              | [label=\"${currentId.toString}|$allWitnessTexts\"]
              """.stripMargin.replaceAll("\n", ""))
 
-      case (currentId, ReadingNode(witnessReadings)) =>
+      case (currentId, AgreementNode(witnessReadings)) =>
         val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
         val nValues = tokenArray
           .slice(tokenArrayPointers._1, tokenArrayPointers._2)
@@ -131,7 +131,7 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
               .mkString(", ")})\"
              | fillcolor=\"lightblue\"]""".stripMargin.replaceAll("\n", "")
         )
-      case (currentId, IndelNode(witnessReadings)) =>
+      case (currentId, AgreementIndelNode(witnessReadings)) =>
         val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
         val nValues = tokenArray
           .slice(tokenArrayPointers._1, tokenArrayPointers._2)
@@ -179,7 +179,7 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
           expandedNodes.append(
             s"""${currentId.toString}
                | [label=\"${currentId.toString}|expanded\"
-               | tooltip=\"${n.formatWitnessReadings}\"
+               | tooltip=\"Expanded node\"
                | fillcolor=\"plum\"]""".stripMargin.replaceAll("\n", "")
           )
       case (currentId, StringNode(txt)) =>
@@ -233,13 +233,13 @@ def createAlignmentTable(
         ),
         for ((child, index) <- root.children.zipWithIndex.toSeq)
           yield tr(`class` := (child.getClass.getSimpleName match {
-            case "ReadingNode"  => "aligned"
+            case "AgreementNode"  => "aligned"
             case "ExpandedNode" => "expanded"
             case _              => "unaligned"
           }))(
             td(index + 1),
             child match {
-              case ReadingNode(witnessReadings) =>
+              case AgreementNode(witnessReadings) =>
                 val (_, value) = witnessReadings.head
                 val tokens = tokenArray
                   .slice(value._1, value._2)
@@ -267,21 +267,9 @@ def createAlignmentTable(
                   alignment,
                   readings
                 )
-              case ExpandedNode(witnessReadings, children) =>
+              case ExpandedNode(children) =>
                 val alignment = td("Expanded")
-                val readings =
-                  for i <- sortedSigla
-                  yield
-                    if witnessReadings contains i then
-                      val start = witnessReadings(i)._1
-                      val end = witnessReadings(i)._2
-                      td(
-                        tokenArray
-                          .slice(start, end)
-                          .map(_.t)
-                          .mkString(" ")
-                      )
-                    else td(raw("&#xa0;"))
+                val readings = td("[Expanded node]")
                 Seq[Frag](
                   alignment,
                   readings
@@ -349,9 +337,9 @@ def flattenNodeSeq(
       else
         val currentNode = inList.head
         currentNode match
-          case (nodeNo, node: ReadingNode) =>
+          case (nodeNo, node: AgreementNode) =>
             nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
-          case (nodeNo, node: IndelNode) =>
+          case (nodeNo, node: AgreementIndelNode) =>
             nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
           case (nodeNo, node: VariationNode) =>
             nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
@@ -402,14 +390,14 @@ def createSingleColumnAlignmentTable(
         yield tr(
           id := s"t${numberedNode.nodeNo}",
           `class` := (numberedNode.node match {
-            case _: ReadingNode   => "reading"
-            case _: IndelNode     => "indel"
+            case _: AgreementNode   => "reading"
+            case _: AgreementIndelNode     => "indel"
             case _: VariationNode => "variation"
             case _                => "unaligned"
           })
         )(
           numberedNode.node match {
-            case ReadingNode(witnessReadings) =>
+            case AgreementNode(witnessReadings) =>
               val nodeNo = td(numberedNode.nodeNo + 1)
               val sigla = "all"
               val (_, value) = witnessReadings.head
@@ -421,7 +409,7 @@ def createSingleColumnAlignmentTable(
                 nodeNo,
                 td(span(`class` := "sigla")(s"$sigla: "), text)
               )
-            case IndelNode(witnessReadings) =>
+            case AgreementIndelNode(witnessReadings) =>
               val nodeNo = td(numberedNode.nodeNo + 1)
               val sigla = witnessReadings
                 .keys
@@ -506,7 +494,7 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
         edges.append(s"$lastNodeProcessed -> $currentId")
         lastNodeProcessed = currentId
 
-      case (currentId, ReadingNode(witnessReadings)) =>
+      case (currentId, AgreementNode(witnessReadings)) =>
         val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
         val nValues = tokenArray
           .slice(tokenArrayPointers._1, tokenArrayPointers._2)
@@ -533,7 +521,7 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
         edges.append(s"$lastNodeProcessed -> $currentId")
         lastNodeProcessed = currentId
 
-      case (currentId, IndelNode(witnessReadings)) =>
+      case (currentId, AgreementIndelNode(witnessReadings)) =>
         val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
         val nValues = tokenArray
           .slice(tokenArrayPointers._1, tokenArrayPointers._2)

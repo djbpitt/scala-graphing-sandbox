@@ -15,11 +15,11 @@
 //    )
 //    private val t = RootNode()
 //    t.children ++= List(
-//      ReadingNode("w0" -> (0, 1), "w1" -> (7, 8)),
-//      VariationNode(children = ListBuffer(ReadingNode("w0" -> (1, 2)), ReadingNode("w1" -> (8, 9)))),
-//      ReadingNode("w0" -> (2, 4), "w1" -> (9, 11)),
-//      VariationNode(children = ListBuffer(ReadingNode("w1" -> (4, 5)), ReadingNode("w0" -> (11, 12)))),
-//      ReadingNode("w0" -> (5, 6), "w1" -> (12, 13))
+//      AgreementNode("w0" -> (0, 1), "w1" -> (7, 8)),
+//      VariationNode(children = ListBuffer(AgreementNode("w0" -> (1, 2)), AgreementNode("w1" -> (8, 9)))),
+//      AgreementNode("w0" -> (2, 4), "w1" -> (9, 11)),
+//      VariationNode(children = ListBuffer(AgreementNode("w1" -> (4, 5)), AgreementNode("w0" -> (11, 12)))),
+//      AgreementNode("w0" -> (5, 6), "w1" -> (12, 13))
 //    )
 //    private val sigla = List("w0", "w1")
 //

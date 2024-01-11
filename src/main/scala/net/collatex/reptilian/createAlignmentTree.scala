@@ -16,9 +16,9 @@ import scala.collection.mutable.{ListBuffer, Map}
 // Basically an inverse of the current control flow.
 
 def split_reading_node(
-    current: ReadingNode,
-    position_to_split: immutable.Map[String, Int]
-): (ReadingNode, ReadingNode) = {
+                        current: AgreementNode,
+                        position_to_split: immutable.Map[String, Int]
+): (AgreementNode, AgreementNode) = {
   // For witness ranges, last value is exclusive
   // We filter out all the witnesses that have an empty range after the split
   //  // TODO: Simplify duplicate code
@@ -53,15 +53,15 @@ def split_reading_node(
     .filter((_, v) => v._1 != v._2)
 
   // TODO: if the whole map is empty we should return a special type, e.g., EmptyReadingNode
-  val result: (ReadingNode, ReadingNode) =
-    (ReadingNode(changedMap), ReadingNode(changedMap2))
+  val result: (AgreementNode, AgreementNode) =
+    (AgreementNode(changedMap), AgreementNode(changedMap2))
   result
 }
 
 def alignTokenArray(
     tokenArray: Vector[Token],
     sigla: List[String],
-    selection: ReadingNode
+    selection: AgreementNode
 ) = {
   // find the full depth blocks for the alignment
   // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
@@ -124,7 +124,7 @@ def createAlignmentTree(
     tokenArray: Vector[Token],
     sigla: List[String]
 ): ExpandedNode = {
-  // The working space should have witnesses and ranges (like a ReadingNode in our original type system)
+  // The working space should have witnesses and ranges (like a AgreementNode in our original type system)
   // Traverse over tokenArray and get the first and last token position for each witness to get full range.
   // To store it in a reading node we have to store in a (String, (Int, Int)), that is,
   //   (Witness identifier, (Token offset, Token offset)) (use type alias, which is more self-documenting?)
@@ -152,12 +152,12 @@ def createAlignmentTree(
   // mutable map is local to the function, to convert to immutable before return
   val witnessReadings = witnessRanges.toMap
 
-  val globalReadingNode = ReadingNode(witnessReadings)
+  val globalReadingNode = AgreementNode(witnessReadings)
   //  println("Witness intervals on the root node of the alignment tree")
   //  println(globalReadingNode)
 
   // Start recursion
-  val sortedReadingNodes: immutable.List[ReadingNode] =
+  val sortedReadingNodes: immutable.List[AgreementNode] =
     alignTokenArray(tokenArray, sigla, selection = globalReadingNode)
   val rootNode = recursiveBuildAlignmentTreeLevel(
     ListBuffer(),
@@ -173,7 +173,7 @@ def createAlignmentTree(
 def setupNodeExpansion(
     tokenArray: Vector[Token],
     sigla: List[String],
-    selection: ReadingNode
+    selection: AgreementNode
 ) = {
   val blocks = alignTokenArray(tokenArray, sigla, selection)
   if blocks.isEmpty
@@ -190,12 +190,12 @@ def setupNodeExpansion(
       .toVector
       .sorted // outer container is also a vector, producing Vector[Vector[String]]
     selection.witnessReadings.size match {
-      case 1 => IndelNode(
+      case 1 => AgreementIndelNode(
         witnessReadings = selection.witnessReadings
       )
       case _ =>
         ExpandedNode( // no blocks, so the single child is a VariationNode
-          witnessReadings = selection.witnessReadings,
+//          witnessReadings = selection.witnessReadings,
           children = ListBuffer(
             VariationNode(
               witnessReadings = selection.witnessReadings,
@@ -217,11 +217,11 @@ def setupNodeExpansion(
 
 @tailrec
 def recursiveBuildAlignmentTreeLevel(
-    result: ListBuffer[AlignmentTreeNode],
-    treeReadingNode: ReadingNode,
-    remainingAlignment: List[ReadingNode],
-    tokenArray: Vector[Token],
-    sigla: List[String]
+                                      result: ListBuffer[AlignmentTreeNode],
+                                      treeReadingNode: AgreementNode,
+                                      remainingAlignment: List[AgreementNode],
+                                      tokenArray: Vector[Token],
+                                      sigla: List[String]
 ): ExpandedNode = {
   // On first run, treeReadingNode contains full token ranges and remainingAlignment contains all sortedReadingNodes
   // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
@@ -263,7 +263,7 @@ def recursiveBuildAlignmentTreeLevel(
     result += setupNodeExpansion(tokenArray, sigla, undecidedPart)
   result += (
     if firstReadingNode.witnessReadings.size == sigla.size then firstReadingNode
-    else IndelNode(witnessReadings = firstReadingNode.witnessReadings)
+    else AgreementIndelNode(witnessReadings = firstReadingNode.witnessReadings)
   )
 
   // this part has to be split further recursively
@@ -284,7 +284,7 @@ def recursiveBuildAlignmentTreeLevel(
       result += setupNodeExpansion(tokenArray, sigla, tempSplit._2)
     val rootNode = ExpandedNode(
       children = result,
-      witnessReadings = treeReadingNode.witnessReadings
+//      witnessReadings = treeReadingNode.witnessReadings
     )
     rootNode
 }

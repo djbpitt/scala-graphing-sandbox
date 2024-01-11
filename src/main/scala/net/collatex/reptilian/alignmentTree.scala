@@ -2,7 +2,7 @@ package net.collatex.reptilian
 
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
-import scala.collection.mutable.{ListBuffer, Queue}
+import scala.collection.mutable.ListBuffer
 import scalatags.Text.all.*
 
 // One map entry per witness, from witness id to start and end (exclusive "until") offset in global token array
@@ -29,16 +29,12 @@ trait HasWitnessReadings {
   *
   * Include root node, which is no longer a separate subtype
   *
-  * @param witnessReadings
-  *   map from siglum to token range
   * @param children
   *   ListBuffer of alignment-tree nodes
   */
 final case class ExpandedNode(
-    witnessReadings: WitnessReadings,
     children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty
 ) extends AlignmentTreeNode
-    with HasWitnessReadings
 
 final case class VariationNode(
     witnessReadings: WitnessReadings,
@@ -49,7 +45,7 @@ final case class VariationNode(
 final case class StringNode(txt: String = "unspecified mistake")
     extends AlignmentTreeNode
 
-final case class ReadingNode(witnessReadings: WitnessReadings)
+final case class AgreementNode(witnessReadings: WitnessReadings)
     extends AlignmentTreeNode
     with HasWitnessReadings
 
@@ -60,15 +56,15 @@ final case class ReadingNode(witnessReadings: WitnessReadings)
   * 4 -> (5, 6)) Catch and report empty parameter, which is always a mistake
   * because leaf nodes cannot be empty
   */
-object ReadingNode {
+object AgreementNode {
   def apply(m: (String, (Int, Int))*): AlignmentTreeNode =
     if m.isEmpty then StringNode("Empty leaf node not allowed")
-    else ReadingNode(m.toMap)
+    else AgreementNode(m.toMap)
 }
 
 /** Indel node
   *
-  * Like a ReadingNode in that all witnesses agree, except that not all corpus
+  * Like a AgreementNode in that all witnesses agree, except that not all corpus
   * witnesses are present
   *
   * @param witnessReadings
@@ -76,15 +72,15 @@ object ReadingNode {
   *   array (end is exclusive)
   *
   * Companion object is a convenience constructor (see documentation of
-  * companion object for ReadingNode, above)
+  * companion object for AgreementNode, above)
   */
-final case class IndelNode(witnessReadings: WitnessReadings)
+final case class AgreementIndelNode(witnessReadings: WitnessReadings)
     extends AlignmentTreeNode
     with HasWitnessReadings
-object IndelNode {
+object AgreementIndelNode {
   def apply(m: (String, (Int, Int))*): AlignmentTreeNode =
     if m.isEmpty then StringNode("Empty leaf node not allowed")
-    else IndelNode(m.toMap)
+    else AgreementIndelNode(m.toMap)
 }
 
 // Temporary; eventually the alignment graph will have no unexpanded nodes
@@ -96,16 +92,16 @@ final case class UnexpandedNode(witnessReadings: WitnessReadings)
 // ExpandedNode must have children
 def show(node: AlignmentTreeNode): Unit =
   node match {
-    case ReadingNode(witnessReadings)            => println(witnessReadings)
-    case IndelNode(witnessReadings)              => println(witnessReadings)
-    case VariationNode(children, witnessGroups)                 => println(children)
+    case AgreementNode(witnessReadings)            => println(witnessReadings)
+    case AgreementIndelNode(witnessReadings)              => println(witnessReadings)
+    case VariationNode(children, _)                 => println(children)
     case UnexpandedNode(witnessReadings)         => println(witnessReadings)
-    case ExpandedNode(witnessReadings, children) => println(witnessReadings)
+    case ExpandedNode(children) => println(children)
     case StringNode(txt) => println(txt) // To report errors
   }
 
 /** Input is Vector[Int], representing FullDepthBlock instances Output is
-  * Vector[AlignmentNode], where the nodes are all of type ReadingNode
+  * Vector[AlignmentNode], where the nodes are all of type AgreementNode
   *
   * Will need to deal with non-full-depth locations in the alignment
   */
@@ -114,7 +110,7 @@ def blocksToNodes(
     blocks: Iterable[FullDepthBlock],
     tokenArray: Vector[Token],
     sigla: List[String]
-): Iterable[ReadingNode] =
+): Iterable[AgreementNode] =
   blocks
     .map(e => fullDepthBlockToReadingNode(e, tokenArray, sigla))
 // Convert local alignment offsets to global token-array offsets for the reading node
@@ -122,7 +118,7 @@ def fullDepthBlockToReadingNode(
     block: FullDepthBlock,
     tokenArray: Vector[Token],
     sigla: List[String]
-): ReadingNode =
+): AgreementNode =
 //  println(s"block: $block")
   val readings = block.instances
     .map(e =>
@@ -131,4 +127,4 @@ def fullDepthBlockToReadingNode(
       ).g + block.length)
     )
     .toMap
-  ReadingNode(readings)
+  AgreementNode(readings)

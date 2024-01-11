@@ -7,7 +7,7 @@ def createTableCells(
     tokenArray: Vector[Token]
 ) =
   for numberedNode <- nodeSequence yield numberedNode.node match {
-    case ReadingNode(witnessReadings) =>
+    case AgreementNode(witnessReadings) =>
       val sigla = "all"
       val (_, value) = witnessReadings.head
       val text = tokenArray
@@ -16,7 +16,7 @@ def createTableCells(
         .mkString(" ")
       <td class="reading"><span class="sigla">{s"$sigla: "}</span>{text}</td>
 
-    case IndelNode(witnessReadings) =>
+    case AgreementIndelNode(witnessReadings) =>
       val sigla = witnessReadings.keys
         .map(_.slice(8, 10))
         .toVector

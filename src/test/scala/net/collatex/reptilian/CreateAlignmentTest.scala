@@ -7,9 +7,9 @@ import org.scalatest.funsuite.AnyFunSuite
 //  private val fdb = FullDepthBlock(Vector(0, 4, 8), 2)
 //  private val result = fullDepthBlockToReadingNode(fdb)
 //
-//  test("Map from FullDepthBlock to ReadingNode") {
+//  test("Map from FullDepthBlock to AgreementNode") {
 //    val result = fullDepthBlockToReadingNode(fdb)
-//    val expected = ReadingNode("w0" -> (0,2), "w1" -> (4,6), "w2" -> (8,10))
+//    val expected = AgreementNode("w0" -> (0,2), "w1" -> (4,6), "w2" -> (8,10))
 //    assert(result == expected)
 //  }
 

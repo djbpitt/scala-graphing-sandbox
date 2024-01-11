@@ -63,7 +63,7 @@ private def createAlignmentPoints(
     tokenArray: Vector[Token]
 ) =
   nodeSequence map {
-    case NumberedNode(node: ReadingNode, nodeNo: Int) =>
+    case NumberedNode(node: AgreementNode, nodeNo: Int) =>
       val result = AlignmentPoint(
         nodeNo = nodeNo,
         subGroups = Vector(
@@ -77,7 +77,7 @@ private def createAlignmentPoints(
         missingGroup = Vector.empty
       )
       result
-    case NumberedNode(node: IndelNode, nodeNo: Int) =>
+    case NumberedNode(node: AgreementIndelNode, nodeNo: Int) =>
       val missingSigla =
         allSigla.diff(node.witnessReadings.keySet).toVector.sorted
       val result = AlignmentPoint(
