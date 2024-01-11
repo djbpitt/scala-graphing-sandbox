@@ -100,7 +100,7 @@ def createMixedVisualization(
     ) // Renumber nodes consecutively from one
   }
   val tableRows = tableRowData.map { e =>
-    val totalWidth = (totalWitnessCount * 3 * witDims("w")).toString
+    val totalWidth = (totalWitnessCount * 3 * witDims("w") - witDims("w")).toString
     val readingsViewBox = s"0 0 $totalWidth ${witDims("h").toString}"
     <tr class="placeholder">
       <td>{e.nodeNo}</td>
