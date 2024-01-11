@@ -47,6 +47,24 @@ def createTableCells(
         }
       <td class="variation"><ul>{variants}</ul></td>
 
+    case VariationIndelNode(witnessReadings, witnessGroups) =>
+      val variants =
+        witnessGroups map { e =>
+          val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
+          val start = witnessReadings(e.head)._1
+          val end = witnessReadings(e.head)._2
+          val text = tokenArray
+            .slice(start, end)
+            .map(_.n)
+            .mkString(" ")
+          <li>
+            <span class="sigla">
+              {s"$sigla: "}
+            </span>{text}
+          </li>
+        }
+      <td class="variationIndel"><ul>{variants}</ul></td>
+
   }
 
 /** Create HTML table with SVG flow information
@@ -125,6 +143,7 @@ def createMixedVisualization(
         .reading {{background-color: lightblue;}}
         .indel {{background-color: lightgoldenrodyellow;}}
         .variation {{background-color: bisque;}}
+        .variationIndel {{background-color: thistle;}}
         .missing {{background-color: lightgray;}}
         svg {{display: block;}}
       </style>

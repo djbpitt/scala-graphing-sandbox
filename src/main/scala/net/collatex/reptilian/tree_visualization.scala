@@ -226,9 +226,9 @@ def createAlignmentTable(
         ),
         for ((child, index) <- root.children.zipWithIndex.toSeq)
           yield tr(`class` := (child.getClass.getSimpleName match {
-            case "AgreementNode"  => "aligned"
-            case "ExpandedNode" => "expanded"
-            case _              => "unaligned"
+            case "AgreementNode" => "aligned"
+            case "ExpandedNode"  => "expanded"
+            case _               => "unaligned"
           }))(
             td(index + 1),
             child match {
@@ -329,6 +329,8 @@ def flattenNodeSeq(
             nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
           case (nodeNo, node: VariationNode) =>
             nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
+          case (nodeNo, node: VariationIndelNode) =>
+            nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
           case (_, e: ExpandedNode) =>
             val newNodesToProcess: List[(Int, AlignmentTreeNode)] =
               e.children.map { i =>
@@ -376,10 +378,10 @@ def createSingleColumnAlignmentTable(
         yield tr(
           id := s"t${numberedNode.nodeNo}",
           `class` := (numberedNode.node match {
-            case _: AgreementNode   => "reading"
-            case _: AgreementIndelNode     => "indel"
-            case _: VariationNode => "variation"
-            case _                => "unaligned"
+            case _: AgreementNode      => "reading"
+            case _: AgreementIndelNode => "indel"
+            case _: VariationNode      => "variation"
+            case _                     => "unaligned"
           })
         )(
           numberedNode.node match {
@@ -397,8 +399,7 @@ def createSingleColumnAlignmentTable(
               )
             case AgreementIndelNode(witnessReadings) =>
               val nodeNo = td(numberedNode.nodeNo + 1)
-              val sigla = witnessReadings
-                .keys
+              val sigla = witnessReadings.keys
                 .map(_.slice(8, 10))
                 .toVector
                 .sorted
@@ -410,10 +411,32 @@ def createSingleColumnAlignmentTable(
                 .mkString(" ")
               Seq[Frag](
                 nodeNo,
-                td(span(`class` := "sigla")(s"$sigla: "),
-                  text)
+                td(span(`class` := "sigla")(s"$sigla: "), text)
               )
             case VariationNode(witnessReadings, witnessGroups) =>
+              val nodeNo = td(numberedNode.nodeNo + 1)
+              val readings = td(
+                ul(
+                  for e <- witnessGroups
+                  yield
+                    val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
+                    val start = witnessReadings(e.head)._1
+                    val end = witnessReadings(e.head)._2
+                    val text = tokenArray
+                      .slice(start, end)
+                      .map(_.n)
+                      .mkString(" ")
+                    li(
+                      span(`class` := "sigla")(s"$sigla: "),
+                      text
+                    )
+                )
+              )
+              Seq[Frag](
+                nodeNo,
+                readings
+              )
+            case VariationIndelNode(witnessReadings, witnessGroups) =>
               val nodeNo = td(numberedNode.nodeNo + 1)
               val readings = td(
                 ul(

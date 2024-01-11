@@ -193,11 +193,19 @@ def setupNodeExpansion(
       case 1 => AgreementIndelNode(
         witnessReadings = selection.witnessReadings
       )
-      case _ =>
+      case e:Int if e == sigla.size =>
         ExpandedNode( // no blocks, so the single child is a VariationNode
-//          witnessReadings = selection.witnessReadings,
           children = ListBuffer(
             VariationNode(
+              witnessReadings = selection.witnessReadings,
+              witnessGroups = groups
+            )
+          )
+        )
+      case e =>
+        ExpandedNode( // no blocks, so the single child is a VariationNode
+          children = ListBuffer(
+            VariationIndelNode(
               witnessReadings = selection.witnessReadings,
               witnessGroups = groups
             )
@@ -283,8 +291,7 @@ def recursiveBuildAlignmentTreeLevel(
     if tempSplit._2.witnessReadings.nonEmpty then
       result += setupNodeExpansion(tokenArray, sigla, tempSplit._2)
     val rootNode = ExpandedNode(
-      children = result,
-//      witnessReadings = treeReadingNode.witnessReadings
+      children = result
     )
     rootNode
 }

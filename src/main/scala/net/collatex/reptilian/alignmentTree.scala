@@ -42,8 +42,11 @@ final case class VariationNode(
 ) extends AlignmentTreeNode
     with HasWitnessReadings
 
-//final case class StringNode(txt: String = "unspecified mistake")
-//    extends AlignmentTreeNode
+final case class VariationIndelNode(
+    witnessReadings: WitnessReadings,
+    witnessGroups: Vector[Vector[String]]
+) extends AlignmentTreeNode
+    with HasWitnessReadings
 
 final case class AgreementNode(witnessReadings: WitnessReadings)
     extends AlignmentTreeNode
@@ -90,11 +93,11 @@ final case class UnexpandedNode(witnessReadings: WitnessReadings)
 // ExpandedNode must have children
 def show(node: AlignmentTreeNode): Unit =
   node match {
-    case AgreementNode(witnessReadings)            => println(witnessReadings)
-    case AgreementIndelNode(witnessReadings)              => println(witnessReadings)
-    case VariationNode(children, _)                 => println(children)
-    case UnexpandedNode(witnessReadings)         => println(witnessReadings)
-    case ExpandedNode(children) => println(children)
+    case AgreementNode(witnessReadings)      => println(witnessReadings)
+    case AgreementIndelNode(witnessReadings) => println(witnessReadings)
+    case VariationNode(children, _)          => println(children)
+    case UnexpandedNode(witnessReadings)     => println(witnessReadings)
+    case ExpandedNode(children)              => println(children)
   }
 
 /** Input is Vector[Int], representing FullDepthBlock instances Output is
