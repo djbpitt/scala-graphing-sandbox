@@ -1,9 +1,5 @@
 package net.collatex.reptilian
 
-import scalatags.Text.*
-import scalatags.Text.all.*
-import scalatags.Text.svgTags.g
-
 import scala.xml.Elem
 
 def createTableCells(
@@ -18,7 +14,7 @@ def createTableCells(
         .slice(value._1, value._2)
         .map(_.n)
         .mkString(" ")
-      td(span(`class` := "sigla")(s"$sigla: "), text)
+      <td class="reading"><span class="sigla">{s"$sigla: "}</span>{text}</td>
 
     case IndelNode(witnessReadings) =>
       val sigla = witnessReadings.keys
@@ -31,27 +27,25 @@ def createTableCells(
         .slice(value._1, value._2)
         .map(_.n)
         .mkString(" ")
-      td(span(`class` := "sigla")(s"$sigla: "), text)
+      <td class="indel"><span class="sigla">{s"$sigla: "}</span>{text}</td>
 
     case VariationNode(witnessReadings, witnessGroups) =>
-      val readings = td(
-        ul(
-          for e <- witnessGroups
-          yield
-            val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
-            val start = witnessReadings(e.head)._1
-            val end = witnessReadings(e.head)._2
-            val text = tokenArray
-              .slice(start, end)
-              .map(_.n)
-              .mkString(" ")
-            li(
-              span(`class` := "sigla")(s"$sigla: "),
-              text
-            )
-        )
-      )
-      readings
+      val variants =
+        witnessGroups map { e =>
+          val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
+          val start = witnessReadings(e.head)._1
+          val end = witnessReadings(e.head)._2
+          val text = tokenArray
+            .slice(start, end)
+            .map(_.n)
+            .mkString(" ")
+          <li>
+            <span class="sigla">
+              {s"$sigla: "}
+            </span>{text}
+          </li>
+        }
+      <td class="variation"><ul>{variants}</ul></td>
 
   }
 
@@ -92,44 +86,64 @@ def createMixedVisualization(
     nodeSequence,
     tokenArray
   ) // Vector of one <td> per node
-  val tableRowData = nodeGs.indices.map { e =>
-    val currentNodeG = nodeGs(e)
-    val currentFlow = flowGs(e)
-    val currentText = tableCells(e)
-    tableRow(currentNodeG, currentFlow, currentText)
+  val tableRowData = nodeGs.indices.zipWithIndex.map { e =>
+    val currentNodeG = nodeGs(e._1)
+    val currentFlow = flowGs(e._1)
+    val currentText = tableCells(e._1)
+    val nodeNo = e._2
+    tableRow(
+      currentNodeG,
+      currentFlow,
+      currentText,
+      nodeNo + 1
+    ) // Renumber nodes consecutively from one
   }
   val tableRows = tableRowData.map { e =>
-    tr(`class` := "placeholder")(td("Placeholder"), e.textCell)
+    <tr class="placeholder">
+      <td>{e.nodeNo}</td>
+      <td><svg xmlns="http://www.w3.org/2000/svg"></svg></td>
+      {e.textCell}
+    </tr>
   }
-  val htmlBoilerplate =
-    "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
   val htmlHead =
-    head(
-      tag("title")("Alignments"),
-      tag("style")(
-        "table, tr, th, td {border: 1px black solid; border-collapse: collapse;}" +
-          "th, td {padding: 4px 3px 3px 3px;} " +
-          "ul {margin: -1px 0 0 0; padding-left: 1em; list-style-type:none; text-indent: -1em;}" +
-          ".sigla {font-size: small; font-weight: bold;}" +
-          "td:first-child {text-align: right; font-size: small; line-height: 1.33em;}" +
-          "tr {vertical-align: top;}" +
-          ".reading {background-color: lightblue;} " +
-          ".indel {background-color: lightgoldenrodyellow;} " +
-          ".variation {background-color: bisque;}" +
-          "tr:first-child {background-color: lightgray;}" +
-          ".missing {background-color: lightgray;}"
-      )
-    )
+    <head>
+      <title>Alignments</title>
+      <style>
+        table, tr, td, td {{border: 1px black solid; border-collapse: collapse;}}
+        tr {{vertical-align: top;}}
+        tr.first-child {{background-color: lightgray;}}
+        th, td {{padding: 4px 3px 3px 3px}}
+        td:first-child {{text-align: right; font-size: small; line-height: 1.33em;}}
+        ul {{margin: -1px 0 0 0; padding-left: 1em; list-style-type: none; text-indent: -1em;}}
+        .sigla {{font-size: small; font-weight: bold;}}
+        .reading {{background-color: lightblue;}}
+        .indel {{background-color: lightgoldenrodyellow;}}
+        .variation {{background-color: bisque;}}
+        .missing {{background-color: lightgray;}}
+      </style>
+    </head>
   val htmlBody =
-    body(h1("Hi, Mom"), table(tr(th("Groups"), th("Text")), tableRows))
-  val result = htmlBoilerplate + html(xmlns := "http://www.w3.org/1999/xhtml")(
-    htmlHead,
-    htmlBody
-  )
+    <body>
+      <h1>Alignments</h1>
+      <table>
+        <tr>
+          <th>No</th>
+          <th>Groups</th>
+          <th>Text</th>
+        </tr>
+        {tableRows}
+      </table>
+    </body>
+  val result =
+    <html xmlns="http://www.w3.org/1999/xhtml">
+      {htmlHead}
+      {htmlBody}
+    </html>
   result
 
 case class tableRow(
     svgG: Elem,
     svgFlows: Vector[Elem],
-    textCell: scalatags.Text.TypedTag[String]
+    textCell: Elem,
+    nodeNo: Int
 )
