@@ -110,11 +110,20 @@ private def createAlignmentPoints(
   * @param input
   *   tuple of AlignmentPoint and Int, representing its offset in the sequence
   *   of alignment points
+  * @param reference
+  *   "absolute" if absolutely positioned in total visualization (used for
+  *   stand-alone flow view); "relative" if y position is always zero (used in
+  *   mixed view)
   * @return
   *   <g> that contains SVG for all alignment points
   */
-private def createOuterG(input: (AlignmentPoint, Int)): Elem =
-  val yPos = (input._2 * verticalNodeSpacing).toString
+private def createOuterG(
+    input: (AlignmentPoint, Int),
+    reference: String = "relative"
+): Elem =
+  val yPos =
+    if reference == "absolute" then (input._2 * verticalNodeSpacing).toString
+    else "0"
   val id = "v" + input._1.nodeNo.toString
   <g transform={"translate(0, " + yPos + ")"} id={id}>{
     createInnerGs(input._1)
@@ -232,10 +241,11 @@ private def plotRectAndText(
 private def createSvgAlignmentGroupContent(
     alignmentPoints: Vector[AlignmentPoint],
     nodeSequence: Vector[NumberedNode],
-    tokenArray: Vector[Token]
+    tokenArray: Vector[Token],
+    reference: String = "absolute"
 ) =
   val outerGroups = createAlignmentPoints(nodeSequence, tokenArray).zipWithIndex
-    .map((e, f) => createOuterG(e, f))
+    .map((e, f) => createOuterG((e, f), reference))
   outerGroups
 
 private def createFlows(input: Vector[AlignmentPoint], reference: String) =
@@ -271,7 +281,7 @@ private def createFlows(input: Vector[AlignmentPoint], reference: String) =
     val sourceY = reference match {
       case "absolute" => e._2 * verticalNodeSpacing + witDims("h") - .2
       case "relative" => witDims("h") - .2
-    } 
+    }
     val targetY = sourceY + verticalNodeSpacing - witDims("h") + .2
     allSigla.map { f =>
       val color = s"url(#${witnessToColor(f)}Gradient)"

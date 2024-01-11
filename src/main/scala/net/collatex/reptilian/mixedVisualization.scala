@@ -49,7 +49,7 @@ def createTableCells(
 
   }
 
-/** Create HTML table with SVG flow information in left column
+/** Create HTML table with SVG flow information
   *
   * Each cell in left column is split horizontally in two: alignment point and
   * flow to next alignment point. The flow is empty for the last row.
@@ -76,7 +76,8 @@ def createMixedVisualization(
   val nodeGs = createSvgAlignmentGroupContent(
     alignmentPoints,
     nodeSequence,
-    tokenArray
+    tokenArray,
+    "relative"
   ) // one <g> element per node
   val flowGs =
     createFlows(alignmentPoints, "relative")
@@ -99,9 +100,13 @@ def createMixedVisualization(
     ) // Renumber nodes consecutively from one
   }
   val tableRows = tableRowData.map { e =>
+    val totalWidth = (totalWitnessCount * 3 * witDims("w")).toString
+    val readingsViewBox = s"0 0 $totalWidth ${witDims("h").toString}"
     <tr class="placeholder">
       <td>{e.nodeNo}</td>
-      <td><svg xmlns="http://www.w3.org/2000/svg"></svg></td>
+      <td><svg xmlns="http://www.w3.org/2000/svg" viewBox={
+      readingsViewBox
+    } height={witDims("h").toString} width={totalWidth}>{e.svgG}</svg></td>
       {e.textCell}
     </tr>
   }
@@ -113,6 +118,7 @@ def createMixedVisualization(
         tr {{vertical-align: top;}}
         tr.first-child {{background-color: lightgray;}}
         th, td {{padding: 4px 3px 3px 3px}}
+        td:nth-child(2) {{padding: 0;}}
         td:first-child {{text-align: right; font-size: small; line-height: 1.33em;}}
         ul {{margin: -1px 0 0 0; padding-left: 1em; list-style-type: none; text-indent: -1em;}}
         .sigla {{font-size: small; font-weight: bold;}}
@@ -120,6 +126,7 @@ def createMixedVisualization(
         .indel {{background-color: lightgoldenrodyellow;}}
         .variation {{background-color: bisque;}}
         .missing {{background-color: lightgray;}}
+        svg {{display: block;}}
       </style>
     </head>
   val htmlBody =
