@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Hi</title>
+        <style>
+            #defs {
+              position: absolute;
+              height: 0;
+              width: 0;
+            }
+            table,
+            tr,
+            td {
+              border: 1px solid red;
+              border-collapse: collapse;
+            }
+            td:first-child {
+              padding: 4px 3px 3px 3px;
+            }
+            svg {
+              display: block;
+            }</style>
+    </head>
+    <body>
+        <svg xmlns="http://www.w3.org/2000/svg" height="0" width="0" id="defs">
+            <defs>
+                <linearGradient id="gg" color="green" x1="0%" x2="0%" y1="0%" y2="100%">
+                    <stop offset="0%" stop-color="currentColor" stop-opacity="1"/>
+                    <stop offset="6%" stop-color="currentColor" stop-opacity="1"/>
+                    <stop offset="20%" stop-color="currentColor" stop-opacity=".6"/>
+                    <stop offset="35%" stop-color="currentColor" stop-opacity=".4"/>
+                    <stop offset="50%" stop-color="currentColor" stop-opacity=".3"/>
+                    <stop offset="65%" stop-color="currentColor" stop-opacity=".4"/>
+                    <stop offset="80%" stop-color="currentColor" stop-opacity=".6"/>
+                    <stop offset="94%" stop-color="currentColor" stop-opacity="1"/>
+                    <stop offset="100%" stop-color="currentColor" stop-opacity="1"/>
+                </linearGradient>
+                <linearGradient id="bb" color="blue" x1="0%" x2="0%" y1="0%" y2="100%">
+                    <stop offset="0%" stop-color="currentColor" stop-opacity="1"/>
+                    <stop offset="6%" stop-color="currentColor" stop-opacity="1"/>
+                    <stop offset="20%" stop-color="currentColor" stop-opacity=".6"/>
+                    <stop offset="35%" stop-color="currentColor" stop-opacity=".4"/>
+                    <stop offset="50%" stop-color="currentColor" stop-opacity=".3"/>
+                    <stop offset="65%" stop-color="currentColor" stop-opacity=".4"/>
+                    <stop offset="80%" stop-color="currentColor" stop-opacity=".6"/>
+                    <stop offset="94%" stop-color="currentColor" stop-opacity="1"/>
+                    <stop offset="100%" stop-color="currentColor" stop-opacity="1"/>
+                </linearGradient>
+            </defs>
+        </svg>
+        <h1>Some stuff</h1>
+        <p>A paragraph, followed by SVG with a gradient stroke and no fill:</p>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="200" height="100">
+            <line x1="0" y1="0" x2="200" y2="100" stroke="url(#gg)" stroke-width="10"/>
+        </svg>
+        <p>A table follows</p>
+        <table>
+            <tr>
+                <td>Line with green gradient stroke:</td>
+                <td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="200"
+                        height="100">
+                        <line x1="0" y1="0" x2="200" y2="100" stroke="url(#gg)" stroke-width="10"/>
+                    </svg></td>
+            </tr>
+            <tr>
+                <td>Line with blue gradient stroke:</td>
+                <td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="200"
+                        height="100">
+                        <line x1="0" y1="0" x2="200" y2="100" stroke="url(#bb)" stroke-width="10"/>
+                    </svg></td>
+            </tr>
+            <tr>
+                <td>Line with a solid stroke:</td>
+                <td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="200"
+                        height="100">
+                        <line x1="0" y1="0" x2="200" y2="100" stroke="green" stroke-width="10"/>
+                    </svg></td>
+            </tr>            
+        </table>
+        <p>A final paragraph</p>
+    </body>
+</html>
