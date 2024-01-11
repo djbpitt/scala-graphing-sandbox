@@ -42,8 +42,8 @@ final case class VariationNode(
 ) extends AlignmentTreeNode
     with HasWitnessReadings
 
-final case class StringNode(txt: String = "unspecified mistake")
-    extends AlignmentTreeNode
+//final case class StringNode(txt: String = "unspecified mistake")
+//    extends AlignmentTreeNode
 
 final case class AgreementNode(witnessReadings: WitnessReadings)
     extends AlignmentTreeNode
@@ -58,8 +58,7 @@ final case class AgreementNode(witnessReadings: WitnessReadings)
   */
 object AgreementNode {
   def apply(m: (String, (Int, Int))*): AlignmentTreeNode =
-    if m.isEmpty then StringNode("Empty leaf node not allowed")
-    else AgreementNode(m.toMap)
+    AgreementNode(m.toMap)
 }
 
 /** Indel node
@@ -79,8 +78,7 @@ final case class AgreementIndelNode(witnessReadings: WitnessReadings)
     with HasWitnessReadings
 object AgreementIndelNode {
   def apply(m: (String, (Int, Int))*): AlignmentTreeNode =
-    if m.isEmpty then StringNode("Empty leaf node not allowed")
-    else AgreementIndelNode(m.toMap)
+    AgreementIndelNode(m.toMap)
 }
 
 // Temporary; eventually the alignment graph will have no unexpanded nodes
@@ -97,7 +95,6 @@ def show(node: AlignmentTreeNode): Unit =
     case VariationNode(children, _)                 => println(children)
     case UnexpandedNode(witnessReadings)         => println(witnessReadings)
     case ExpandedNode(children) => println(children)
-    case StringNode(txt) => println(txt) // To report errors
   }
 
 /** Input is Vector[Int], representing FullDepthBlock instances Output is

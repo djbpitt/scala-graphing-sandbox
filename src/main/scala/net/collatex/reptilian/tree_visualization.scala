@@ -75,7 +75,6 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
   val edges =
     ListBuffer[String]() // Not List because we append to maintain order
   // Strings in dot format for all but the root node
-  val stringNodes = ListBuffer[String]()
   val readingNodes = ListBuffer[String]()
   val indelNodes = ListBuffer[String]()
   val variationNodes = ListBuffer[String]()
@@ -182,17 +181,11 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
                | tooltip=\"Expanded node\"
                | fillcolor=\"plum\"]""".stripMargin.replaceAll("\n", "")
           )
-      case (currentId, StringNode(txt)) =>
-        stringNodes.append(
-          s"${currentId.toString} [tooltip=\"$txt\" fillcolor=\"pink\"]"
-        )
-
     }
 
   List(
     header,
     edges.mkString("\n\t"),
-    stringNodes.mkString("\n"),
     readingNodes.mkString("\n"),
     indelNodes.mkString("\n"),
     variationNodes.mkString("\n"),
@@ -289,13 +282,6 @@ def createAlignmentTable(
                           .mkString(" ")
                       )
                     else td(raw("&#xa0;"))
-                Seq[Frag](
-                  alignment,
-                  readings
-                )
-              case StringNode(text) =>
-                val alignment = td("String")
-                val readings = td("String")
                 Seq[Frag](
                   alignment,
                   readings
@@ -576,12 +562,6 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
              | tooltip=\"${n.formatWitnessReadings}\"
              | fillcolor=\"goldenrod\"]""".stripMargin.replaceAll("\n", "")
         )
-      /* There are no string nodes; we leave this in so that the compiler won't think we aren't exhaustive */
-      case (currentId, StringNode(txt)) =>
-        stringNodes.append(
-          s"${currentId.toString} [tooltip=\"$txt\" fillcolor=\"pink\"]"
-        )
-
     }
 
   List(
