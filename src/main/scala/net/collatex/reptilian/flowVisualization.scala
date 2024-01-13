@@ -79,12 +79,18 @@ private def createAlignmentPoints(
       result
     case NumberedNode(node: AgreementIndelNode, nodeNo: Int) =>
       val missingSigla =
-        allSigla.diff(node.witnessReadings.keySet).toVector.sorted
+        allSigla
+          .diff(node.witnessReadings.keySet)
+          .toVector
+          .sorted
       val result = AlignmentPoint(
         nodeNo = nodeNo,
         subGroups = Vector(
           SubGroup(witnesses =
-            node.witnessReadings.keys.map(f => WitnessReading(f)).toVector
+            node.witnessReadings.keys
+              .map(f => WitnessReading(f))
+              .toVector
+              .sorted
           )
         ),
         missingGroup = missingSigla.map(e => WitnessReading(e))

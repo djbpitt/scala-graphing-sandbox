@@ -1,268 +1,263 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-    <title>Alignments</title>
-    <style>
-        table,
-        tr,
-        th,
-        td {
-            border: 1px black solid;
-            border-collapse: collapse;
-        }
-
-        ul {
-            margin: -1px 0 0 0;
-            padding-left: 1em;
-            list-style-type: none;
-            text-indent: -1em;
-        }
-
-        .sigla {
-            font-size: small;
-            font-weight: bold;
-        }
-
-        th,
-        td {
-            padding: 4px 3px 3px 3px;
-        }
-
-        td:first-child {
-            padding: 0;
-        }
-
-        td:nth-child(2) {
-            text-align: right;
-            font-size: small;
-            line-height: 1.33em;
-        }
-
-        tr {
-            vertical-align: top;
-        }
-
-        .reading {
-            background-color: lightblue;
-        }
-
-        .indel {
-            background-color: lightgoldenrodyellow;
-        }
-
-        .variation {
-            background-color: bisque;
-        }
-
-        tr:first-child {
-            background-color: lightgray;
-        }
-
-        svg {
-            display: block;
-        }</style>
-</head>
-<body>
-<h1>Hi, Mom!</h1>
-<table>
-    <tr>
-        <th>Visual</th>
-        <th>Node</th>
-        <th>Text</th>
-    </tr>
-    <tr id="t772" class="indel">
-        <td>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40" height="40">
-                <defs>
-                    <linearGradient id="yellowGradient" x1="0%" x2="0%" y1="0%" y2="100%">
-                        <stop offset="0%" stop-color="yellow" stop-opacity="1"/>
-                        <stop offset="6%" stop-color="yellow" stop-opacity="1"/>
-                        <stop offset="20%" stop-color="yellow" stop-opacity=".6"/>
-                        <stop offset="35%" stop-color="yellow" stop-opacity=".4"/>
-                        <stop offset="50%" stop-color="yellow" stop-opacity=".3"/>
-                        <stop offset="65%" stop-color="yellow" stop-opacity=".4"/>
-                        <stop offset="80%" stop-color="yellow" stop-opacity=".6"/>
-                        <stop offset="94%" stop-color="yellow" stop-opacity="1"/>
-                        <stop offset="100%" stop-color="yellow" stop-opacity="1"/>
-                    </linearGradient>
-                    <linearGradient id="dodgerblueGradient" x1="0%" x2="0%" y1="0%"
-                                    y2="100%">
-                        <stop offset="0%" stop-color="dodgerblue" stop-opacity="1"/>
-                        <stop offset="6%" stop-color="dodgerblue" stop-opacity="1"/>
-                        <stop offset="20%" stop-color="dodgerblue" stop-opacity=".6"/>
-                        <stop offset="35%" stop-color="dodgerblue" stop-opacity=".4"/>
-                        <stop offset="50%" stop-color="dodgerblue" stop-opacity=".3"/>
-                        <stop offset="65%" stop-color="dodgerblue" stop-opacity=".4"/>
-                        <stop offset="80%" stop-color="dodgerblue" stop-opacity=".6"/>
-                        <stop offset="94%" stop-color="dodgerblue" stop-opacity="1"/>
-                        <stop offset="100%" stop-color="dodgerblue" stop-opacity="1"/>
-                    </linearGradient>
-                    <linearGradient id="violetGradient" x1="0%" x2="0%" y1="0%" y2="100%">
-                        <stop offset="0%" stop-color="violet" stop-opacity="1"/>
-                        <stop offset="6%" stop-color="violet" stop-opacity="1"/>
-                        <stop offset="20%" stop-color="violet" stop-opacity=".6"/>
-                        <stop offset="35%" stop-color="violet" stop-opacity=".4"/>
-                        <stop offset="50%" stop-color="violet" stop-opacity=".3"/>
-                        <stop offset="65%" stop-color="violet" stop-opacity=".4"/>
-                        <stop offset="80%" stop-color="violet" stop-opacity=".6"/>
-                        <stop offset="94%" stop-color="violet" stop-opacity="1"/>
-                        <stop offset="100%" stop-color="violet" stop-opacity="1"/>
-                    </linearGradient>
-                    <linearGradient id="orangeGradient" x1="0%" x2="0%" y1="0%" y2="100%">
-                        <stop offset="0%" stop-color="orange" stop-opacity="1"/>
-                        <stop offset="6%" stop-color="orange" stop-opacity="1"/>
-                        <stop offset="20%" stop-color="orange" stop-opacity=".6"/>
-                        <stop offset="35%" stop-color="orange" stop-opacity=".4"/>
-                        <stop offset="50%" stop-color="orange" stop-opacity=".3"/>
-                        <stop offset="65%" stop-color="orange" stop-opacity=".4"/>
-                        <stop offset="80%" stop-color="orange" stop-opacity=".6"/>
-                        <stop offset="94%" stop-color="orange" stop-opacity="1"/>
-                        <stop offset="100%" stop-color="orange" stop-opacity="1"/>
-                    </linearGradient>
-                    <linearGradient id="peruGradient" x1="0%" x2="0%" y1="0%" y2="100%">
-                        <stop offset="0%" stop-color="peru" stop-opacity="1"/>
-                        <stop offset="6%" stop-color="peru" stop-opacity="1"/>
-                        <stop offset="20%" stop-color="peru" stop-opacity=".6"/>
-                        <stop offset="35%" stop-color="peru" stop-opacity=".4"/>
-                        <stop offset="50%" stop-color="peru" stop-opacity=".3"/>
-                        <stop offset="65%" stop-color="peru" stop-opacity=".4"/>
-                        <stop offset="80%" stop-color="peru" stop-opacity=".6"/>
-                        <stop offset="94%" stop-color="peru" stop-opacity="1"/>
-                        <stop offset="100%" stop-color="peru" stop-opacity="1"/>
-                    </linearGradient>
-                    <linearGradient id="limegreenGradient" x1="0%" x2="0%" y1="0%" y2="100%">
-                        <stop offset="0%" stop-color="limegreen" stop-opacity="1"/>
-                        <stop offset="6%" stop-color="limegreen" stop-opacity="1"/>
-                        <stop offset="20%" stop-color="limegreen" stop-opacity=".6"/>
-                        <stop offset="35%" stop-color="limegreen" stop-opacity=".4"/>
-                        <stop offset="50%" stop-color="limegreen" stop-opacity=".3"/>
-                        <stop offset="65%" stop-color="limegreen" stop-opacity=".4"/>
-                        <stop offset="80%" stop-color="limegreen" stop-opacity=".6"/>
-                        <stop offset="94%" stop-color="limegreen" stop-opacity="1"/>
-                        <stop offset="100%" stop-color="limegreen" stop-opacity="1"/>
-                    </linearGradient>
-                </defs>
-                <g transform="translate(0, 0.0)" id="v772">
-                    <g transform="translate(0.0)">
-                        <rect x="0.0" y="0" width="6.0" height="10.0" fill="limegreen"/>
-                        <text x="3.0" y="5.0" text-anchor="middle"
-                              dominant-baseline="central" font-size="4.199999999999999"
-                        >66
-                        </text>
-                        <rect x="6.0" y="0" width="6.0" height="10.0" fill="dodgerblue"/>
-                        <text x="9.0" y="5.0" text-anchor="middle"
-                              dominant-baseline="central" font-size="4.199999999999999"
-                        >69
-                        </text>
-                        <rect x="12.0" y="0" width="6.0" height="10.0" fill="violet"/>
-                        <text x="15.0" y="5.0" text-anchor="middle"
-                              dominant-baseline="central" font-size="4.199999999999999"
-                        >72
-                        </text>
-                    </g>
-                    <g transform="translate(72.0)">
-                        <rect x="0.0" y="0" width="6.0" height="10.0" fill="peru"/>
-                        <text x="3.0" y="5.0" text-anchor="middle"
-                              dominant-baseline="central" font-size="4.199999999999999"
-                        >59
-                        </text>
-                        <rect x="6.0" y="0" width="6.0" height="10.0" fill="orange"/>
-                        <text x="9.0" y="5.0" text-anchor="middle"
-                              dominant-baseline="central" font-size="4.199999999999999"
-                        >60
-                        </text>
-                        <rect x="12.0" y="0" width="6.0" height="10.0" fill="yellow"/>
-                        <text x="15.0" y="5.0" text-anchor="middle"
-                              dominant-baseline="central" font-size="4.199999999999999"
-                        >61
-                        </text>
-                    </g>
-                </g>
-                <g>
-                    <path
-                            d="M 81.0,10 C 81.0,25 9.0001,25 9.0001,40"
-                            stroke="url(#orangeGradient)" stroke-width="6.0" fill="none"/>
-                    <path
-                            d="M 75.0,10 C 75.0,25 3.0001,25 3.0001,40"
-                            stroke="url(#peruGradient)" stroke-width="6.0" fill="none"/>
-                    <path
-                            d="M 15.0,10 C 15.0,25 33.0001,25 33.0001,40"
-                            stroke="url(#violetGradient)" stroke-width="6.0" fill="none"/>
-                    <path
-                            d="M 3.0,10 C 3.0,25 21.0001,25 21.0001,40"
-                            stroke="url(#limegreenGradient)" stroke-width="6.0" fill="none"/>
-                    <path
-                            d="M 9.0,10 C 9.0,25 27.0001,25 27.0001,40"
-                            stroke="url(#dodgerblueGradient)" stroke-width="6.0" fill="none"/>
-                    <path d="M 87,10 C 87,25 15,25, 15,40" stroke="url(#yellowGradient)" stroke-width="6" fill="none"/>
-
-                </g>
-            </svg>
-        </td>
-        <td>773</td>
-        <td><span class="sigla">66 69 72: </span>causes of variability .</td>
-    </tr>
-    <tr id="t770" class="reading">
-        <td>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40">
-                <g id="v770">
-                    <g transform="translate(0.0)">
-                        <rect x="0.0" y="0" width="6.0" height="10.0" fill="peru"/>
-                        <text x="3.0" y="5.0" text-anchor="middle"
-                              dominant-baseline="central" font-size="4.199999999999999"
-                        >59
-                        </text>
-                        <rect x="6.0" y="0" width="6.0" height="10.0" fill="orange"/>
-                        <text x="9.0" y="5.0" text-anchor="middle"
-                              dominant-baseline="central" font-size="4.199999999999999"
-                        >60
-                        </text>
-                        <rect x="12.0" y="0" width="6.0" height="10.0" fill="yellow"/>
-                        <text x="15.0" y="5.0" text-anchor="middle"
-                              dominant-baseline="central" font-size="4.199999999999999"
-                        >61
-                        </text>
-                        <rect x="18.0" y="0" width="6.0" height="10.0" fill="limegreen"/>
-                        <text x="21.0" y="5.0" text-anchor="middle"
-                              dominant-baseline="central" font-size="4.199999999999999"
-                        >66
-                        </text>
-                        <rect x="24.0" y="0" width="6.0" height="10.0" fill="dodgerblue"/>
-                        <text x="27.0" y="5.0" text-anchor="middle"
-                              dominant-baseline="central" font-size="4.199999999999999"
-                        >69
-                        </text>
-                        <rect x="30.0" y="0" width="6.0" height="10.0" fill="violet"/>
-                        <text x="33.0" y="5.0" text-anchor="middle"
-                              dominant-baseline="central" font-size="4.199999999999999"
-                        >72
-                        </text>
-                    </g>
-                </g>
-            </svg>
-        </td>
-        <td>771</td>
-        <td><span class="sigla">all: </span>when we</td>
-    </tr>
-    <tr id="t773" class="variation">
-        <td>Placeholder</td>
-        <td>774</td>
-        <td>
-            <ul>
-                <li><span class="sigla">59 60 61 66: </span>look to</li>
-                <li><span class="sigla">69 72: </span>compare</li>
-            </ul>
-        </td>
-    </tr>
-    <tr id="t2" class="reading">
-        <td>Placeholder</td>
-        <td>3</td>
-        <td><span class="sigla">all: </span>the individuals of the same variety or sub -
-            variety of our older cultivated plants and animals , one of the first points
-            which strikes us
-        </td>
-    </tr>
-</table>
-</body>
+    <head>
+        <title>Alignments</title>
+        <style>
+            table,
+            tr,
+            th,
+            td {
+              border: 1px black solid;
+              border-collapse: collapse;
+            }
+            
+            ul {
+              margin: -1px 0 0 0;
+              padding-left: 1em;
+              list-style-type: none;
+              text-indent: -1em;
+            }
+            
+            .sigla {
+              font-size: small;
+              font-weight: bold;
+            }
+            
+            th,
+            td {
+              padding: 4px 3px 0 3px;
+              box-sizing: content-box;
+            }
+            
+            td:first-child {
+              padding: 0;
+              position: relative;
+            }
+            
+            td:nth-child(2) {
+              text-align: right;
+              font-size: small;
+              line-height: 1.33em;
+            }
+            
+            tr {
+              vertical-align: top;
+            }
+            
+            .reading {
+              background-color: lightblue;
+            }
+            
+            .indel {
+              background-color: lightgoldenrodyellow;
+            }
+            
+            .variation {
+              background-color: bisque;
+            }
+            
+            tr:first-child {
+              background-color: lightgray;
+            }
+            
+            svg {
+              display: block;
+            }
+            svg:nth-child(2) {
+              /*resize: vertical;*/
+              position: absolute;
+            }</style>
+    </head>
+    <body>
+        <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0">
+            <defs>
+                <linearGradient id="yellowGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+                    <stop offset="0%" stop-color="yellow" stop-opacity="1"/>
+                    <stop offset="6%" stop-color="yellow" stop-opacity="1"/>
+                    <stop offset="20%" stop-color="yellow" stop-opacity=".6"/>
+                    <stop offset="35%" stop-color="yellow" stop-opacity=".4"/>
+                    <stop offset="50%" stop-color="yellow" stop-opacity=".3"/>
+                    <stop offset="65%" stop-color="yellow" stop-opacity=".4"/>
+                    <stop offset="80%" stop-color="yellow" stop-opacity=".6"/>
+                    <stop offset="94%" stop-color="yellow" stop-opacity="1"/>
+                    <stop offset="100%" stop-color="yellow" stop-opacity="1"/>
+                </linearGradient>
+                <linearGradient id="dodgerblueGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+                    <stop offset="0%" stop-color="dodgerblue" stop-opacity="1"/>
+                    <stop offset="6%" stop-color="dodgerblue" stop-opacity="1"/>
+                    <stop offset="20%" stop-color="dodgerblue" stop-opacity=".6"/>
+                    <stop offset="35%" stop-color="dodgerblue" stop-opacity=".4"/>
+                    <stop offset="50%" stop-color="dodgerblue" stop-opacity=".3"/>
+                    <stop offset="65%" stop-color="dodgerblue" stop-opacity=".4"/>
+                    <stop offset="80%" stop-color="dodgerblue" stop-opacity=".6"/>
+                    <stop offset="94%" stop-color="dodgerblue" stop-opacity="1"/>
+                    <stop offset="100%" stop-color="dodgerblue" stop-opacity="1"/>
+                </linearGradient>
+                <linearGradient id="violetGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+                    <stop offset="0%" stop-color="violet" stop-opacity="1"/>
+                    <stop offset="6%" stop-color="violet" stop-opacity="1"/>
+                    <stop offset="20%" stop-color="violet" stop-opacity=".6"/>
+                    <stop offset="35%" stop-color="violet" stop-opacity=".4"/>
+                    <stop offset="50%" stop-color="violet" stop-opacity=".3"/>
+                    <stop offset="65%" stop-color="violet" stop-opacity=".4"/>
+                    <stop offset="80%" stop-color="violet" stop-opacity=".6"/>
+                    <stop offset="94%" stop-color="violet" stop-opacity="1"/>
+                    <stop offset="100%" stop-color="violet" stop-opacity="1"/>
+                </linearGradient>
+                <linearGradient id="orangeGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+                    <stop offset="0%" stop-color="orange" stop-opacity="1"/>
+                    <stop offset="6%" stop-color="orange" stop-opacity="1"/>
+                    <stop offset="20%" stop-color="orange" stop-opacity=".6"/>
+                    <stop offset="35%" stop-color="orange" stop-opacity=".4"/>
+                    <stop offset="50%" stop-color="orange" stop-opacity=".3"/>
+                    <stop offset="65%" stop-color="orange" stop-opacity=".4"/>
+                    <stop offset="80%" stop-color="orange" stop-opacity=".6"/>
+                    <stop offset="94%" stop-color="orange" stop-opacity="1"/>
+                    <stop offset="100%" stop-color="orange" stop-opacity="1"/>
+                </linearGradient>
+                <linearGradient id="peruGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+                    <stop offset="0%" stop-color="peru" stop-opacity="1"/>
+                    <stop offset="6%" stop-color="peru" stop-opacity="1"/>
+                    <stop offset="20%" stop-color="peru" stop-opacity=".6"/>
+                    <stop offset="35%" stop-color="peru" stop-opacity=".4"/>
+                    <stop offset="50%" stop-color="peru" stop-opacity=".3"/>
+                    <stop offset="65%" stop-color="peru" stop-opacity=".4"/>
+                    <stop offset="80%" stop-color="peru" stop-opacity=".6"/>
+                    <stop offset="94%" stop-color="peru" stop-opacity="1"/>
+                    <stop offset="100%" stop-color="peru" stop-opacity="1"/>
+                </linearGradient>
+                <linearGradient id="limegreenGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+                    <stop offset="0%" stop-color="limegreen" stop-opacity="1"/>
+                    <stop offset="6%" stop-color="limegreen" stop-opacity="1"/>
+                    <stop offset="20%" stop-color="limegreen" stop-opacity=".6"/>
+                    <stop offset="35%" stop-color="limegreen" stop-opacity=".4"/>
+                    <stop offset="50%" stop-color="limegreen" stop-opacity=".3"/>
+                    <stop offset="65%" stop-color="limegreen" stop-opacity=".4"/>
+                    <stop offset="80%" stop-color="limegreen" stop-opacity=".6"/>
+                    <stop offset="94%" stop-color="limegreen" stop-opacity="1"/>
+                    <stop offset="100%" stop-color="limegreen" stop-opacity="1"/>
+                </linearGradient>
+            </defs>
+        </svg>
+        <h1>Hi, Mom!</h1>
+        <table>
+            <tr>
+                <th>Visual</th>
+                <th>Node</th>
+                <th>Text</th>
+            </tr>
+            <tr id="t772" class="indel">
+                <td>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 10" height="10"
+                        width="100">
+                        <g transform="translate(0, 0.0)" id="v772">
+                            <g transform="translate(0.0)">
+                                <rect x="0.0" y="0" width="6.0" height="10.0" fill="limegreen"/>
+                                <text x="3.0" y="5.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">66 </text>
+                                <rect x="6.0" y="0" width="6.0" height="10.0" fill="dodgerblue"/>
+                                <text x="9.0" y="5.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">69 </text>
+                                <rect x="12.0" y="0" width="6.0" height="10.0" fill="violet"/>
+                                <text x="15.0" y="5.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">72
+                                </text>
+                            </g>
+                            <g transform="translate(72.0)">` <rect x="0.0" y="0" width="6.0"
+                                    height="10.0" fill="peru"/>
+                                <text x="3.0" y="5.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">59 </text>
+                                <rect x="6.0" y="0" width="6.0" height="10.0" fill="orange"/>
+                                <text x="9.0" y="5.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">60 </text>
+                                <rect x="12.0" y="0" width="6.0" height="10.0" fill="yellow"/>
+                                <text x="15.0" y="5.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">61
+                                </text>
+                            </g>
+                        </g>
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox=".05 0 100 30" width="100"
+                        height="93.3%" preserveAspectRatio="none">
+                        <g>
+                            <path d="M 81.0,0 C 81.0,15 9.0001,15 9.0001,30"
+                                stroke="url(#orangeGradient)" stroke-width="6.0" fill="none"/>
+                            <path d="M 75.0,0 C 75.0,15 3.0001,15 3.0001,30"
+                                stroke="url(#peruGradient)" stroke-width="6.0" fill="none"/>
+                            <path d="M 15.0,0 C 15.0,15 33.0001,15 33.0001,30"
+                                stroke="url(#violetGradient)" stroke-width="6.0" fill="none"/>
+                            <path d="M 3.0,0 C 3.0,15 21.0001,15 21.0001,30"
+                                stroke="url(#limegreenGradient)" stroke-width="6.0" fill="none"/>
+                            <path d="M 9.0,0 C 9.0,15 27.0001,15 27.0001,30"
+                                stroke="url(#dodgerblueGradient)" stroke-width="6.0" fill="none"/>
+                            <path d="M 87,0 C 87,15 15,15, 15,30" stroke="url(#yellowGradient)"
+                                stroke-width="6" fill="none"/>
+                        </g>
+                    </svg>
+                </td>
+                <td>773</td>
+                <td><span class="sigla">66 69 72: </span>causes of variability . causes of
+                    variability . causes of variability . causes of variability . causes of
+                    variability . causes of variability . causes of variability . causes of
+                    variability . causes of variability . causes of variability . causes of
+                    variability . causes of variability . causes of variability . causes of
+                    variability . causes of variability . causes of variability . causes of
+                    variability . causes of variability . causes of variability . causes of
+                    variability . causes of variability . causes of variability . causes of
+                    variability . causes of variability . causes of variability . causes of
+                    variability . causes of variability . causes of variability . causes of
+                    variability . causes of variability . causes of variability . causes of
+                    variability . </td>
+            </tr>
+            <tr id="t770" class="reading">
+                <td>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 35">
+                        <g id="v770">
+                            <g transform="translate(0.0)">
+                                <rect x="0.0" y="0" width="6.0" height="10.0" fill="peru"/>
+                                <text x="3.0" y="5.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">59 </text>
+                                <rect x="6.0" y="0" width="6.0" height="10.0" fill="orange"/>
+                                <text x="9.0" y="5.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">60 </text>
+                                <rect x="12.0" y="0" width="6.0" height="10.0" fill="yellow"/>
+                                <text x="15.0" y="5.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">61 </text>
+                                <rect x="18.0" y="0" width="6.0" height="10.0" fill="limegreen"/>
+                                <text x="21.0" y="5.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">66 </text>
+                                <rect x="24.0" y="0" width="6.0" height="10.0" fill="dodgerblue"/>
+                                <text x="27.0" y="5.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">69 </text>
+                                <rect x="30.0" y="0" width="6.0" height="10.0" fill="violet"/>
+                                <text x="33.0" y="5.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">72
+                                </text>
+                            </g>
+                        </g>
+                    </svg>
+                </td>
+                <td>771</td>
+                <td><span class="sigla">all: </span>when we</td>
+            </tr>
+            <tr id="t773" class="variation">
+                <td>Placeholder</td>
+                <td>774</td>
+                <td>
+                    <ul>
+                        <li><span class="sigla">59 60 61 66: </span>look to</li>
+                        <li><span class="sigla">69 72: </span>compare</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr id="t2" class="reading">
+                <td>Placeholder</td>
+                <td>3</td>
+                <td><span class="sigla">all: </span>the individuals of the same variety or sub -
+                    variety of our older cultivated plants and animals , one of the first points
+                    which strikes us </td>
+            </tr>
+        </table>
+    </body>
 </html>
