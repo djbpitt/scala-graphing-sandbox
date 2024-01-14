@@ -88,3 +88,8 @@ def readData(pathToData: Path): List[(String, String)] =
 //  val output = createAlignmentTable(root, tokenArray, sigla)
 //  val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
 //  os.write.over(outputPath, output)
+
+  val alignmentBrowser = createAlignmentBrowser(root, tokenArray)
+  val alignmentBrowserOutputPath =
+    os.pwd / "src" / "main" / "output" / "alignment-browser.xhtml"
+  xml.XML.save(alignmentBrowserOutputPath.toString, alignmentBrowser, "UTF-8", true, doctype)
