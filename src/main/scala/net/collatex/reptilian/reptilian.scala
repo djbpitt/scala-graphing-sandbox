@@ -87,3 +87,6 @@ def readData(pathToData: Path): List[(String, String)] =
 //  val output = createAlignmentTable(root, tokenArray, sigla)
 //  val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
 //  os.write.over(outputPath, output)
+
+  val t = createSingleColumnAlignmentTableRows(root, tokenArray)
+  t.foreach(println)

@@ -1,6 +1,7 @@
 package net.collatex.reptilian
 
 import scalatags.Text.all.*
+import java.beans.Introspector.decapitalize
 
 import scala.annotation.{tailrec, targetName, unchecked}
 import scala.collection.mutable
@@ -340,6 +341,66 @@ def flattenNodeSeq(
             nextNode(newNodesToProcess ::: inList.tail, outVector)
     nextNode(nodesToProcess, Vector.empty)
   flattenedNodeSeq
+
+def createSingleColumnAlignmentTableRows(
+    root: ExpandedNode,
+    tokenArray: Vector[Token]
+) =
+  val flattenedNodeSeq = flattenNodeSeq(root)
+  for (numberedNode, index) <- flattenedNodeSeq.zipWithIndex yield
+    val no = index + 1 // Renumber consecutively from one
+    val rowClass = decapitalize(
+      numberedNode.node.getClass.toString.split("\\.").last.dropRight(4)
+    )
+    val rowContent = numberedNode.node match {
+      case AgreementNode(witnessReadings) =>
+        val (_, value) = witnessReadings.head
+        val text = tokenArray
+          .slice(value._1, value._2)
+          .map(_.n)
+          .mkString(" ")
+        <td><span class="sigla">all:</span> {text}</td>
+      case AgreementIndelNode(witnessReadings) =>
+        val sigla = witnessReadings.keys
+          .map(_.slice(8, 10))
+          .toVector
+          .sorted
+          .mkString(" ")
+        val (_, value) = witnessReadings.head
+        val text = tokenArray
+          .slice(value._1, value._2)
+          .map(_.n)
+          .mkString(" ")
+        <td><span class="sigla">{sigla}:</span> {text}</td>
+      case VariationNode(witnessReadings, witnessGroups) =>
+        val readings = witnessGroups map { e =>
+          val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
+          val start = witnessReadings(e.head)._1
+          val end = witnessReadings(e.head)._2
+          val text = tokenArray
+            .slice(start, end)
+            .map(_.n)
+            .mkString(" ")
+          <li><span class="sigla">{sigla}:</span> {text}</li>
+        }
+        <td><ul>{readings}</ul></td>
+      case VariationIndelNode(witnessReadings, witnessGroups) =>
+        val readings = witnessGroups map { e =>
+        val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
+        val start = witnessReadings(e.head)._1
+        val end = witnessReadings(e.head)._2
+        val text = tokenArray
+          .slice(start, end)
+          .map(_.n)
+          .mkString(" ")
+        <li><span class="sigla">{sigla}:</span> {text}</li>
+        }
+        <td><ul>{readings}</ul></td>
+    }
+    <tr id={"t" + no} class={rowClass}>
+      <td>{no}</td>
+      {rowContent}
+    </tr>
 
 def createSingleColumnAlignmentTable(
     root: ExpandedNode,
