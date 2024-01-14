@@ -345,7 +345,7 @@ def flattenNodeSeq(
 def createSingleColumnAlignmentTableRows(
     root: ExpandedNode,
     tokenArray: Vector[Token]
-) =
+): Vector[xml.Elem] =
   val flattenedNodeSeq = flattenNodeSeq(root)
   for (numberedNode, index) <- flattenedNodeSeq.zipWithIndex yield
     val no = index + 1 // Renumber consecutively from one
@@ -386,14 +386,14 @@ def createSingleColumnAlignmentTableRows(
         <td><ul>{readings}</ul></td>
       case VariationIndelNode(witnessReadings, witnessGroups) =>
         val readings = witnessGroups map { e =>
-        val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
-        val start = witnessReadings(e.head)._1
-        val end = witnessReadings(e.head)._2
-        val text = tokenArray
-          .slice(start, end)
-          .map(_.n)
-          .mkString(" ")
-        <li><span class="sigla">{sigla}:</span> {text}</li>
+          val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
+          val start = witnessReadings(e.head)._1
+          val end = witnessReadings(e.head)._2
+          val text = tokenArray
+            .slice(start, end)
+            .map(_.n)
+            .mkString(" ")
+          <li><span class="sigla">{sigla}:</span> {text}</li>
         }
         <td><ul>{readings}</ul></td>
     }
@@ -405,126 +405,42 @@ def createSingleColumnAlignmentTableRows(
 def createSingleColumnAlignmentTable(
     root: ExpandedNode,
     tokenArray: Vector[Token],
-    sigla: List[String]
-) = {
-  val flattenedNodeSeq = flattenNodeSeq(root)
-  val htmlBoilerplate =
-    "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
-  htmlBoilerplate + html(xmlns := "http://www.w3.org/1999/xhtml")(
-    head(
-      tag("title")("Alignments"),
-      tag("style")(
-        "table, tr, th, td {border: 1px black solid; border-collapse: collapse;}" +
-          "th, td {padding: 4px 3px 3px 3px;} " +
-          "ul {margin: -1px 0 0 0; padding-left: 1em; list-style-type:none; text-indent: -1em;}" +
-          ".sigla {font-size: small; font-weight: bold;}" +
-          "td:first-child {text-align: right; font-size: small; line-height: 1.33em;}" +
-          "tr {vertical-align: top;}" +
-          ".reading {background-color: lightblue;} " +
-          ".indel {background-color: lightgoldenrodyellow;} " +
-          ".variation {background-color: bisque;}" +
-          "tr:first-child {background-color: lightgray;}" +
-          ".missing {background-color: lightgray;}"
-      )
-    ),
-    body(
-      h1("Alignment"),
-      table(
-        tr(
-          th("Node"),
-          th("Text")
-        ),
-        for numberedNode <- flattenedNodeSeq
-        yield tr(
-          id := s"t${numberedNode.nodeNo}",
-          `class` := (numberedNode.node match {
-            case _: AgreementNode      => "reading"
-            case _: AgreementIndelNode => "indel"
-            case _: VariationNode      => "variation"
-            case _                     => "unaligned"
-          })
-        )(
-          numberedNode.node match {
-            case AgreementNode(witnessReadings) =>
-              val nodeNo = td(numberedNode.nodeNo + 1)
-              val sigla = "all"
-              val (_, value) = witnessReadings.head
-              val text = tokenArray
-                .slice(value._1, value._2)
-                .map(_.n)
-                .mkString(" ")
-              Seq[Frag](
-                nodeNo,
-                td(span(`class` := "sigla")(s"$sigla: "), text)
-              )
-            case AgreementIndelNode(witnessReadings) =>
-              val nodeNo = td(numberedNode.nodeNo + 1)
-              val sigla = witnessReadings.keys
-                .map(_.slice(8, 10))
-                .toVector
-                .sorted
-                .mkString(" ")
-              val (_, value) = witnessReadings.head
-              val text = tokenArray
-                .slice(value._1, value._2)
-                .map(_.n)
-                .mkString(" ")
-              Seq[Frag](
-                nodeNo,
-                td(span(`class` := "sigla")(s"$sigla: "), text)
-              )
-            case VariationNode(witnessReadings, witnessGroups) =>
-              val nodeNo = td(numberedNode.nodeNo + 1)
-              val readings = td(
-                ul(
-                  for e <- witnessGroups
-                  yield
-                    val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
-                    val start = witnessReadings(e.head)._1
-                    val end = witnessReadings(e.head)._2
-                    val text = tokenArray
-                      .slice(start, end)
-                      .map(_.n)
-                      .mkString(" ")
-                    li(
-                      span(`class` := "sigla")(s"$sigla: "),
-                      text
-                    )
-                )
-              )
-              Seq[Frag](
-                nodeNo,
-                readings
-              )
-            case VariationIndelNode(witnessReadings, witnessGroups) =>
-              val nodeNo = td(numberedNode.nodeNo + 1)
-              val readings = td(
-                ul(
-                  for e <- witnessGroups
-                  yield
-                    val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
-                    val start = witnessReadings(e.head)._1
-                    val end = witnessReadings(e.head)._2
-                    val text = tokenArray
-                      .slice(start, end)
-                      .map(_.n)
-                      .mkString(" ")
-                    li(
-                      span(`class` := "sigla")(s"$sigla: "),
-                      text
-                    )
-                )
-              )
-              Seq[Frag](
-                nodeNo,
-                readings
-              )
-          }
-        )
-      )
-    )
-  )
-}
+) =
+  val htmlHeader: xml.Elem =
+    <head>
+      <title>Alignment</title>
+      <style>
+        table, tr, th, td {{border: 1px black solid; border-collapse: collapse;}}
+        tr {{vertical-align: top;}}
+        tr:first-child {{background-color: lightgray;}}
+        th, td {{padding: 4px 3px 3px 3px}}
+        td:first-child {{text-align: right; font-size: small; line-height: 1.33em;}}
+        ul {{margin: -1px 0 0 0; padding-left: 1em; list-style-type: none; text-indent: -1em;}}
+        .sigla {{font-size: small; font-weight: bold;}}
+        .agreement {{background-color: lightblue;}}
+        .agreementIndel {{background-color: lightgoldenrodyellow;}}
+        .variation {{background-color: bisque;}}
+        .variationIndel {{background-color: thistle;}}
+        .missing {{background-color: lightgray;}}
+      </style>
+    </head>
+  val htmlBody: xml.Elem =
+    <body>
+      <h1>Alignment</h1>
+      <table>
+        <tr>
+          <th>No</th>
+          <th>Text</th>
+        </tr>
+        {createSingleColumnAlignmentTableRows(root, tokenArray)}
+      </table>
+    </body>
+  val result =
+    <html xmlns="http://www.w3.org/1999/xhtml">
+      {htmlHeader}
+      {htmlBody}
+    </html>
+  result
 
 def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
   val header: String =

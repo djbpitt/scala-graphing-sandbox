@@ -67,10 +67,12 @@ def readData(pathToData: Path): List[(String, String)] =
 //  val flatAlignmentTreeOutputPath = os.pwd / "src" / "main" / "output" / "flatAlignment.dot"
 //  os.write.over(flatAlignmentTreeOutputPath, flatAlignmentTreeAsDot)
 
-  val tableOutput = createSingleColumnAlignmentTable(root, tokenArray, sigla)
+  val doctype: scala.xml.dtd.DocType = DocType("html") // used for single-column and mixed output
+
+  val tableOutput = createSingleColumnAlignmentTable(root, tokenArray)
   val singleColumnOutputPath =
     os.pwd / "src" / "main" / "output" / "single-column-alignment.xhtml"
-  os.write.over(singleColumnOutputPath, tableOutput)
+  scala.xml.XML.save(singleColumnOutputPath.toString, tableOutput, "UTF-8", true, doctype)
 
   val flowOutput: xml.Elem =
     createSvgFlowModel(flattenNodeSeq(root), tokenArray)
@@ -79,7 +81,6 @@ def readData(pathToData: Path): List[(String, String)] =
   xml.XML.save(flowOutputPath.toString, flowOutput)
 
   val mixedOutput = createMixedVisualization(flattenNodeSeq(root), tokenArray)
-  val doctype: scala.xml.dtd.DocType = DocType("html")
   val mixedOutputPath =
     os.pwd / "src" / "main" / "output" / "mixed-visualization.xhtml"
   scala.xml.XML.save(mixedOutputPath.toString, mixedOutput, "UTF-8", true, doctype)
@@ -87,6 +88,3 @@ def readData(pathToData: Path): List[(String, String)] =
 //  val output = createAlignmentTable(root, tokenArray, sigla)
 //  val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
 //  os.write.over(outputPath, output)
-
-  val t = createSingleColumnAlignmentTableRows(root, tokenArray)
-  t.foreach(println)
