@@ -346,7 +346,6 @@ def createSingleColumnAlignmentTable(
     tokenArray: Vector[Token],
     sigla: List[String]
 ) = {
-  val sortedSigla = sigla.sorted
   val flattenedNodeSeq = flattenNodeSeq(root)
   val htmlBoilerplate =
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE html>"
