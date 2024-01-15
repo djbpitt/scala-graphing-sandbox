@@ -58,9 +58,6 @@ def createAlignmentBrowser(root: ExpandedNode, tokenArray: Vector[Token]) =
       |.variationIndel {
       |  background-color: thistle;
       |}
-      |tr:first-child {
-      |  background-color: lightgray;
-      |}
       |tr.selected {
       |  outline: 3px red solid;
       |}
