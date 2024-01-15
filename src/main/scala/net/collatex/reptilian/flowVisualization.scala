@@ -391,7 +391,7 @@ def createSvgFlowModel(
   val flowModelSvg: Elem =
     <svg xmlns="http://www.w3.org/2000/svg" viewBox={viewBox} width={svgWidth}>
       <g transform="translate(10, 10)">
-        {defs}{nodeOutput}{flowOutput}{groupingRects}{verticalSeparator}
+        {defs}{flowOutput}{nodeOutput}{groupingRects}{verticalSeparator}
       </g>
     </svg>
   // val pp = new scala.xml.PrettyPrinter(120, 4)

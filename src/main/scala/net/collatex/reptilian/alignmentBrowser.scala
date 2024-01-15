@@ -62,13 +62,13 @@ def createAlignmentBrowser(root: ExpandedNode, tokenArray: Vector[Token]) =
       |  background-color: lightgray;
       |}
       |tr.selected {
-      |  outline: 5px red solid;
+      |  outline: 3px red solid;
       |}
       |svg > g > g:hover {
       |  cursor: pointer;
       |}
       |g.selected {
-      |  outline: 3px red solid;
+      |  outline: 1.5px red solid;
       |}""".stripMargin
   val js = scala.xml.Unparsed("""//<![CDATA[
              |window.addEventListener("DOMContentLoaded", init);
