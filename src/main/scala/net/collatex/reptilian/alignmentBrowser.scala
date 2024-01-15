@@ -58,19 +58,20 @@ def createAlignmentBrowser(root: ExpandedNode, tokenArray: Vector[Token]) =
       |.variationIndel {
       |  background-color: thistle;
       |}
-      |      |tr:first-child {
-      |  background-color: lightgray;
-      |}
-      |.missing {
+      |tr:first-child {
       |  background-color: lightgray;
       |}
       |tr.selected {
       |  outline: 5px red solid;
       |}
+      |svg > g > g:hover {
+      |  cursor: pointer;
+      |}
       |g.selected {
       |  outline: 3px red solid;
       |}""".stripMargin
-  val js = """window.addEventListener("DOMContentLoaded", init);
+  val js = scala.xml.Unparsed("""//<![CDATA[
+             |window.addEventListener("DOMContentLoaded", init);
              |function init() {
              |  let alignmentPoints = document.querySelectorAll("svg > g > g");
              |  for (i = 0, len = alignmentPoints.length; i < len; i++) {
@@ -93,7 +94,8 @@ def createAlignmentBrowser(root: ExpandedNode, tokenArray: Vector[Token]) =
              |  document.getElementById(targetId).scrollIntoView({
              |    block: "center", behavior: "smooth"
              |  });
-             |}//]]>""".stripMargin
+             |}
+             |//]]>""".stripMargin)
   val htmlHead =
     <head>
       <title>Alignment browser</title>

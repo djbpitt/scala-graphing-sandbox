@@ -62,10 +62,10 @@ private def createAlignmentPoints(
     nodeSequence: Vector[NumberedNode],
     tokenArray: Vector[Token]
 ) =
-  nodeSequence map {
-    case NumberedNode(node: AgreementNode, nodeNo: Int) =>
+  nodeSequence.zipWithIndex map {
+    case (NumberedNode(node: AgreementNode, nodeNo: Int), index) =>
       val result = AlignmentPoint(
-        nodeNo = nodeNo,
+        nodeNo = index + 1,
         subGroups = Vector(
           SubGroup(witnesses =
             node.witnessReadings.keys
@@ -77,14 +77,14 @@ private def createAlignmentPoints(
         missingGroup = Vector.empty
       )
       result
-    case NumberedNode(node: AgreementIndelNode, nodeNo: Int) =>
+    case (NumberedNode(node: AgreementIndelNode, nodeNo: Int), index) =>
       val missingSigla =
         allSigla
           .diff(node.witnessReadings.keySet)
           .toVector
           .sorted
       val result = AlignmentPoint(
-        nodeNo = nodeNo,
+        nodeNo = index + 1,
         subGroups = Vector(
           SubGroup(witnesses =
             node.witnessReadings.keys
@@ -96,27 +96,27 @@ private def createAlignmentPoints(
         missingGroup = missingSigla.map(e => WitnessReading(e))
       )
       result
-    case NumberedNode(node: VariationNode, nodeNo: Int) =>
+    case (NumberedNode(node: VariationNode, nodeNo: Int), index) =>
       val missingSigla =
         allSigla
           .diff(node.witnessReadings.keySet)
           .toVector
           .sorted // could be empty
       val result = AlignmentPoint(
-        nodeNo = nodeNo,
+        nodeNo = index + 1,
         subGroups =
           node.witnessGroups.map(e => SubGroup(e.map(f => WitnessReading(f)))),
         missingGroup = Vector.empty
       )
       result
-    case NumberedNode(node: VariationIndelNode, nodeNo: Int) =>
+    case (NumberedNode(node: VariationIndelNode, nodeNo: Int), index) =>
       val missingSigla =
         allSigla
           .diff(node.witnessReadings.keySet)
           .toVector
           .sorted // could be empty
       val result = AlignmentPoint(
-        nodeNo = nodeNo,
+        nodeNo = index + 1,
         subGroups =
           node.witnessGroups.map(e => SubGroup(e.map(f => WitnessReading(f)))),
         missingGroup = missingSigla.map(e => WitnessReading(e))
