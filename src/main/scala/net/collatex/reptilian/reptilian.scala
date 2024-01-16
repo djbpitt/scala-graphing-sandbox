@@ -2,7 +2,7 @@ package net.collatex.reptilian
 
 import os.Path
 
-import scala.collection.mutable.ListBuffer
+//import scala.collection.mutable.ListBuffer
 import scala.util.matching.Regex
 import scala.xml.dtd.DocType // Create tokenization regex here but tokenize in tokenization.scala
 

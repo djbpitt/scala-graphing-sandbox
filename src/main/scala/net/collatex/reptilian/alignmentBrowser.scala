@@ -71,22 +71,18 @@ def createAlignmentBrowser(root: ExpandedNode, tokenArray: Vector[Token]) =
              |window.addEventListener("DOMContentLoaded", init);
              |function init() {
              |  let svgAlignmentPoints = document.querySelectorAll("svg > g > g");
-             |  for (i = 0, len = svgAlignmentPoints.length; i < len; i++) {
+             |  for (let i = 0, len = svgAlignmentPoints.length; i < len; i++) {
              |    svgAlignmentPoints[i].addEventListener("click", centerTableRow);
              |  }
              |  let trAlignmentPoints = document.querySelectorAll("tr");
-             |  for (i = 0, len = trAlignmentPoints.length; i < len; i++) {
+             |  for (let i = 0, len = trAlignmentPoints.length; i < len; i++) {
              |    trAlignmentPoints[i].addEventListener("click", centerFlowG);
              |  }
              |}
              |function centerFlowG() {
              |  let sourceId = this.id;
              |  let targetId = sourceId.replace('t', 'v');
-             |  clearHighlighting();
-             |  let allTargets = document.querySelectorAll("svg > g > g");
-             |  for (i = 0, len = allTargets.length; i < len; i++) {
-             |    allTargets[i].classList.remove("selected");
-             |  }
+             |  clearSelected();
              |  document.getElementById(sourceId).classList.add("selected");
              |  document.getElementById(targetId).classList.add("selected");
              |  document.getElementById(targetId).scrollIntoView({
@@ -95,23 +91,20 @@ def createAlignmentBrowser(root: ExpandedNode, tokenArray: Vector[Token]) =
              |}
              |function centerTableRow() {
              |  let sourceId = this.id;
+             |  console.log("Clicked on " + sourceId);
              |  let targetId = sourceId.replace('v', 't');
-             |  clearHighlighting();
-             |  let allTargets = document.querySelectorAll("tr");
-             |  for (i = 0, len = allTargets.length; i < len; i++) {
-             |    allTargets[i].classList.remove("selected");
-             |  }
+             |  clearSelected();
              |  document.getElementById(sourceId).classList.add("selected");
              |  document.getElementById(targetId).classList.add("selected");
              |  document.getElementById(targetId).scrollIntoView({
              |    block: "center", behavior: "smooth"
              |  });
              |}
-             |function clearHighlighting() {
-             |  let allSources = document.querySelectorAll("svg > g > g");
-             |  for (i = 0, len = allSources.length; i < len; i++) {
-             |    allSources[i].classList.remove("selected");
-             |  }
+             |function clearSelected() {
+             |  let g = document.querySelector("g.selected");
+             |  let t = document.querySelector("tr.selected");
+             |  if (g) g.classList.remove("selected");
+             |  if (t) t.classList.remove("selected");
              |}
              |//]]>""".stripMargin)
   val htmlHead =
