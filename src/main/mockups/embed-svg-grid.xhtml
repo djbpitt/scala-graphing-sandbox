@@ -48,15 +48,25 @@
             svg {
               display: block;
             }
-            div > div:nth-child(3n-2) {
+            div > div:nth-child(3n-2):not(:first-child) {
               padding: 0;
               background-image: url('sprites.svg#b772');
+            }
+            div > div:first-child,
+            div > div:nth-child(2),
+            div > div:nth-child(3) {
+              display: grid;
+              align-items: center;
+              text-align: center;
+              font-size: initial;
+              background-color: lightgray;
+              background-image: none;
+              height: initial;
             }</style>
     </head>
     <body>
         <h1>Hi, Mom!</h1>
         <div>
-
             <div>Visual</div>
             <div>Node</div>
             <div>Text</div>
