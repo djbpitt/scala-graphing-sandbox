@@ -133,7 +133,7 @@ def createMixedVisualization(
       <title>Alignments</title>
       <style>
         table, tr, th, td {{border: 1px black solid; border-collapse: collapse;}}
-        tr {{vertical-align: top;}}
+        tr {{vertical-align: top; height: 40px;}}
         tr.first-child {{background-color: lightgray;}}
         th, td {{padding: 4px 3px 3px 3px}}
         td:nth-child(2) {{padding: 0;}}

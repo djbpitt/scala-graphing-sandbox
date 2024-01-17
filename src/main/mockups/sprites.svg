@@ -71,6 +71,7 @@
     </svg>
     <svg id="b772" viewBox="0 0 100 40" preserveAspectRatio="none">
         <g>
+            <rect x="0" y="0" width="100" height="40" fill="gainsboro"/>
             <path d="M 75,0 L 75,10 C 75,20 3,20 3,30 L 3,40" stroke="url(#peruGradient)"
                 vector-effect="non-scaling-stroke" stroke-width="6.0" fill="none"/>
             <path d="M 81,0 L 81,10 C 81,20 9,20 9,30 L 9,40" stroke="url(#orangeGradient)"
