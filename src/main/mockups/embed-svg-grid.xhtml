@@ -4,9 +4,48 @@
     <head>
         <title>Alignments</title>
         <style>
+            /* =========================================================== */
+            /* Three-column grid for svg, node number, text                */
+            /* Contents of each column are wrapped in transparent div      */
+            /* =========================================================== */
             body > div {
               display: grid;
               grid-template-columns: 100px 4em 1fr;
+            }
+            body > div > div { /* Look through grouping div to its three children*/
+              display: contents;
+            }
+            div > div {
+              border: 1px solid black;
+              margin: -1px 0 0 -1px; /* https://stackoverflow.com/questions/17915865/how-to-make-borders-collapse-on-a-div */
+            }
+            /* =========================================================== */
+            /* Flow column                                                 */
+            /* =========================================================== */
+            body > div > div > div:first-child { /* svg flow */
+              grid-column: 1/2;
+              padding: 0;
+              min-height: 40px;
+            }
+            svg {
+              display: block;
+            }
+            /* =========================================================== */
+            /* Node number column                                          */
+            /* =========================================================== */
+            body > div > div > div:nth-child(2) { /* node number */
+              grid-column: 2/3;
+              text-align: right;
+              font-size: small;
+              line-height: 1.33em;
+              padding: 4.4px 3px 0 3px;
+            }
+            /* =========================================================== */
+            /* Text column                                                 */
+            /* =========================================================== */
+            body > div > div > div:nth-child(3) { /* text */
+              grid-column: 3/4;
+              padding: 4px 3px 0 3px;
             }
             ul {
               margin: -1px 0 0 0;
@@ -18,125 +57,131 @@
               font-size: small;
               font-weight: bold;
             }
-            div > div:nth-child(3n-1),
-            div > div:nth-child(3n) {
-              padding: 4px 3px 0 3px;
+            /* =========================================================== */
+            /* Header row                                                  */
+            /* =========================================================== */
+            body > div > div:first-child > div {
+              display: grid;
+              place-items: center;
+              text-align: center;
+              font-size: medium;
+              background-color: lightgray;
+              background-image: none;
             }
-            div > div:nth-child(3n-1) {
-              text-align: right;
-              font-size: small;
-              line-height: 1.33em;
-            }
-            div > div {
-              vertical-align: top;
-              border: 1px solid black;
-              margin: -1px 0 0 -1px; /* https://stackoverflow.com/questions/17915865/how-to-make-borders-collapse-on-a-div */
-              min-height: 30px;
-            }
-            .reading {
+            /* =========================================================== */
+            /* Node-type background colors (columns 2 and 3)               */
+            /* =========================================================== */
+            .agreement {
               background-color: lightblue;
             }
-            .indel {
+            .agreementIndel {
               background-color: lightgoldenrodyellow;
             }
             .variation {
               background-color: bisque;
             }
-            div > div:first-child {
-              background-color: lightgray;
-            }
-            svg {
-              display: block;
-            }
-            div > div:nth-child(3n-2):not(:first-child) {
-              padding: 0;
-              background-image: url('sprites.svg#b772');
-            }
-            div > div:first-child,
-            div > div:nth-child(2),
-            div > div:nth-child(3) {
-              display: grid;
-              align-items: center;
-              text-align: center;
-              font-size: initial;
-              background-color: lightgray;
-              background-image: none;
-              height: initial;
+            .variationIndel {
+              background-color: thistle;
             }</style>
     </head>
     <body>
         <h1>Hi, Mom!</h1>
         <div>
-            <div>Visual</div>
-            <div>Node</div>
-            <div>Text</div>
-            <div id="t772" class="indel">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 10">
-                    <g transform="translate(0, 0.0)" id="v772">
-                        <g transform="translate(0.0)">
-                            <text x="3.0" y="3.0" text-anchor="middle" dominant-baseline="central"
-                                font-size="4.199999999999999">66 </text>
-                            <text x="9.0" y="3.0" text-anchor="middle" dominant-baseline="central"
-                                font-size="4.199999999999999">69 </text>
-                            <text x="15.0" y="3.0" text-anchor="middle" dominant-baseline="central"
-                                font-size="4.199999999999999">72 </text>
-                            <line x1="0" y1="6" x2="18" y2="6" stroke="black" stroke-width="1"/>
-                        </g>
-                        <g transform="translate(72.0)">
-                            <text x="3.0" y="3.0" text-anchor="middle" dominant-baseline="central"
-                                font-size="4.199999999999999">59 </text>
-                            <text x="9.0" y="3.0" text-anchor="middle" dominant-baseline="central"
-                                font-size="4.199999999999999">60 </text>
-                            <text x="15.0" y="3.0" text-anchor="middle" dominant-baseline="central"
-                                font-size="4.199999999999999">61 </text>
-                            <line x1="0" y1="6" x2="18" y2="6" stroke="black" stroke-width="1"/>
-                        </g>
-                    </g>
-                </svg>
-            </div>
-            <div>773</div>
-            <div><span class="sigla">66 69 72: </span>causes of variability .</div>
-            <div id="t770" class="reading">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 35">
-                    <g id="v770">
-                        <g transform="translate(0.0)">
-                            <rect x="0.0" y="0" width="6.0" height="10.0" fill="peru"/>
-                            <text x="3.0" y="5.0" text-anchor="middle" dominant-baseline="central"
-                                font-size="4.199999999999999">59 </text>
-                            <rect x="6.0" y="0" width="6.0" height="10.0" fill="orange"/>
-                            <text x="9.0" y="5.0" text-anchor="middle" dominant-baseline="central"
-                                font-size="4.199999999999999">60 </text>
-                            <rect x="12.0" y="0" width="6.0" height="10.0" fill="yellow"/>
-                            <text x="15.0" y="5.0" text-anchor="middle" dominant-baseline="central"
-                                font-size="4.199999999999999">61 </text>
-                            <rect x="18.0" y="0" width="6.0" height="10.0" fill="limegreen"/>
-                            <text x="21.0" y="5.0" text-anchor="middle" dominant-baseline="central"
-                                font-size="4.199999999999999">66 </text>
-                            <rect x="24.0" y="0" width="6.0" height="10.0" fill="dodgerblue"/>
-                            <text x="27.0" y="5.0" text-anchor="middle" dominant-baseline="central"
-                                font-size="4.199999999999999">69 </text>
-                            <rect x="30.0" y="0" width="6.0" height="10.0" fill="violet"/>
-                            <text x="33.0" y="5.0" text-anchor="middle" dominant-baseline="central"
-                                font-size="4.199999999999999">72 </text>
-                        </g>
-                    </g>
-                </svg>
-            </div>
-            <div>771</div>
-            <div><span class="sigla">all: </span>when we</div>
-            <div id="t773" class="variation">Placeholder</div>
-            <div>774</div>
             <div>
-                <ul>
-                    <li><span class="sigla">59 60 61 66: </span>look to</li>
-                    <li><span class="sigla">69 72: </span>compare</li>
-                </ul>
+                <div>Visual</div>
+                <div>Node</div>
+                <div>Text</div>
             </div>
-            <div id="t2" class="reading">Placeholder</div>
-            <div>3</div>
-            <div><span class="sigla">all: </span>the individuals of the same variety or sub -
-                variety of our older cultivated plants and animals , one of the first points which
-                strikes us </div>
+
+            <div>
+                <div id="t772" style="background-image: url('sprites.svg#b772');">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 10">
+                        <g transform="translate(0, 0.0)" id="v772">
+                            <g transform="translate(0.0)">
+                                <text x="3.0" y="3.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">66 </text>
+                                <text x="9.0" y="3.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">69 </text>
+                                <text x="15.0" y="3.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">72 </text>
+                                <line x1="0" y1="6" x2="18" y2="6" stroke="black" stroke-width="1"/>
+                            </g>
+                            <g transform="translate(72.0)">
+                                <text x="3.0" y="3.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">59 </text>
+                                <text x="9.0" y="3.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">60 </text>
+                                <text x="15.0" y="3.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">61 </text>
+                                <line x1="0" y1="6" x2="18" y2="6" stroke="black" stroke-width="1"/>
+                            </g>
+                        </g>
+                    </svg>
+                </div>
+                <div class="agreementIndel">773</div>
+                <div class="agreementIndel">
+                    <ul>
+                        <li><span class="sigla">66 69 72: </span>causes of variability .</li>
+                    </ul>
+                </div>
+            </div>
+            <div>
+                <div id="t770" style="background-image: url('sprites.svg#b772');">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 35">
+                        <g id="v770">
+                            <g transform="translate(0.0)">
+                                <rect x="0.0" y="0" width="6.0" height="10.0" fill="peru"/>
+                                <text x="3.0" y="5.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">59 </text>
+                                <rect x="6.0" y="0" width="6.0" height="10.0" fill="orange"/>
+                                <text x="9.0" y="5.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">60 </text>
+                                <rect x="12.0" y="0" width="6.0" height="10.0" fill="yellow"/>
+                                <text x="15.0" y="5.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">61 </text>
+                                <rect x="18.0" y="0" width="6.0" height="10.0" fill="limegreen"/>
+                                <text x="21.0" y="5.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">66 </text>
+                                <rect x="24.0" y="0" width="6.0" height="10.0" fill="dodgerblue"/>
+                                <text x="27.0" y="5.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">69 </text>
+                                <rect x="30.0" y="0" width="6.0" height="10.0" fill="violet"/>
+                                <text x="33.0" y="5.0" text-anchor="middle"
+                                    dominant-baseline="central" font-size="4.199999999999999">72
+                                </text>
+                            </g>
+                        </g>
+                    </svg>
+                </div>
+                <div class="agreement">771</div>
+                <div class="agreement">
+                    <ul>
+                        <li><span class="sigla">all: </span>when we</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <div id="t773" style="background-image: url('sprites.svg#b772');">Placeholder</div>
+                <div class="variation">774</div>
+                <div class="variation">
+                    <ul>
+                        <li><span class="sigla">59 60 61 66: </span>look to</li>
+                        <li><span class="sigla">69 72: </span>compare</li>
+                    </ul>
+                </div>
+            </div>
+            <div>
+                <div id="t2" style="background-image: url('sprites.svg#b772');">Placeholder</div>
+                <div class="variationIndel">3</div>
+                <div class="variationIndel">
+                    <ul>
+                        <li><span class="sigla">all: </span>the individuals of the same variety or
+                            sub - variety of our older cultivated plants and animals , one of the
+                            first points which strikes us </li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </body>
 </html>
