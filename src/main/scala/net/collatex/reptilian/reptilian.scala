@@ -93,3 +93,5 @@ def readData(pathToData: Path): List[(String, String)] =
   val alignmentBrowserOutputPath =
     os.pwd / "src" / "main" / "output" / "alignment-browser.xhtml"
   xml.XML.save(alignmentBrowserOutputPath.toString, alignmentBrowser, "UTF-8", true, doctype)
+
+  val mixedOutputGrid = createFlowModelForGrid(root, tokenArray)
