@@ -71,16 +71,16 @@
             /* =========================================================== */
             /* Node-type background colors (columns 2 and 3)               */
             /* =========================================================== */
-            .agreement {
+            div.agreement > div:not(:first-child) {
               background-color: lightblue;
             }
-            .agreementIndel {
+            div.agreementIndel > div:not(:first-child) {
               background-color: lightgoldenrodyellow;
             }
-            .variation {
+            div.variation > div:not(:first-child) {
               background-color: bisque;
             }
-            .variationIndel {
+            div.variationIndel > div:not(:first-child) {
               background-color: thistle;
             }</style>
     </head>
@@ -93,7 +93,7 @@
                 <div>Text</div>
             </div>
 
-            <div>
+            <div class="agreementIndel">
                 <div id="t772" style="background-image: url('sprites.svg#b772');">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 10">
                         <g transform="translate(0, 0.0)" id="v772">
@@ -120,14 +120,14 @@
                         </g>
                     </svg>
                 </div>
-                <div class="agreementIndel">773</div>
-                <div class="agreementIndel">
+                <div>773</div>
+                <div>
                     <ul>
                         <li><span class="sigla">66 69 72: </span>causes of variability .</li>
                     </ul>
                 </div>
             </div>
-            <div>
+            <div class="agreement">
                 <div id="t770" style="background-image: url('sprites.svg#b772');">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 35">
                         <g id="v770">
@@ -155,28 +155,28 @@
                         </g>
                     </svg>
                 </div>
-                <div class="agreement">771</div>
-                <div class="agreement">
+                <div>771</div>
+                <div>
                     <ul>
                         <li><span class="sigla">all: </span>when we</li>
                     </ul>
                 </div>
             </div>
 
-            <div>
+            <div class="variation">
                 <div id="t773" style="background-image: url('sprites.svg#b772');">Placeholder</div>
-                <div class="variation">774</div>
-                <div class="variation">
+                <div>774</div>
+                <div>
                     <ul>
                         <li><span class="sigla">59 60 61 66: </span>look to</li>
                         <li><span class="sigla">69 72: </span>compare</li>
                     </ul>
                 </div>
             </div>
-            <div>
+            <div class="variationIndel">
                 <div id="t2" style="background-image: url('sprites.svg#b772');">Placeholder</div>
-                <div class="variationIndel">3</div>
-                <div class="variationIndel">
+                <div>3</div>
+                <div>
                     <ul>
                         <li><span class="sigla">all: </span>the individuals of the same variety or
                             sub - variety of our older cultivated plants and animals , one of the
