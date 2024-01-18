@@ -40,7 +40,7 @@ enum NodeTypes:
  * Functions to manipulate unaligned nodes
  * */
 def readJsonData: List[UnalignedFragment] =
-  val datafilePath = os.pwd / "src" / "main" / "data" / "unaligned_data.json"
+  val datafilePath = os.pwd / "src" / "main" / "data" / "unaligned_data_node_296.json"
   val fileContents = os.read(datafilePath)
   val darwin = read[List[UnalignedFragment]](fileContents)
   darwin
@@ -64,6 +64,7 @@ def vectorizeReadings(node: UnalignedFragment): Array[Array[Double]] =
     .reduce(_ union _)
     .toArray
     .sorted
+  println(terms.mkString(" "))
   val arrayOfVectors = listBagsOfReadings
     .map(smile.nlp.vectorize(terms, _))
     .toArray
@@ -84,7 +85,7 @@ def clusterReadings(data: Array[Array[Double]]): List[ClusterInfo] =
   val darwin: List[UnalignedFragment] = readJsonData
   // we know there's only one, so we could have told it to find the first
   //   and then skipped the foreach()
-  darwin.filter(_.nodeno == 1146)
+  darwin.filter(_.nodeno == 3)
     .map(node => node -> (vectorizeReadings andThen clusterReadings)(node)) // list of tuples
     .toMap // map object (key -> value pairs)
     .foreach {
