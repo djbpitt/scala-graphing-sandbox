@@ -52,9 +52,11 @@ private def createInnerGridGs(input: AlignmentPoint): Vector[Elem] =
   else groupTexts
 
 private def createWitnessTexts(group: SubGroup): Vector[Elem] =
-  group.witnesses.zipWithIndex.flatMap { (reading, offset) =>
+  val texts = group.witnesses.zipWithIndex.flatMap { (reading, offset) =>
     plotText(reading, offset)
   }
+  val line = <line x1="0" y1="5" x2={(witDims("w") * group.size).toString} y2="5" stroke="black" stroke-width=".5"/>
+  texts :+ line
 
 /** Plot one <text>
   *
