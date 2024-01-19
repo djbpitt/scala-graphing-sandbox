@@ -67,12 +67,12 @@ def readData(pathToData: Path): List[(String, String)] =
 //  val flatAlignmentTreeOutputPath = os.pwd / "src" / "main" / "output" / "flatAlignment.dot"
 //  os.write.over(flatAlignmentTreeOutputPath, flatAlignmentTreeAsDot)
 
-  val doctype: scala.xml.dtd.DocType = DocType("html") // used for single-column and mixed output
+  val doctypeHtml: scala.xml.dtd.DocType = DocType("html") // used for single-column and mixed output
 
   val tableOutput = createSingleColumnAlignmentTable(root, tokenArray)
   val singleColumnOutputPath =
     os.pwd / "src" / "main" / "output" / "single-column-alignment.xhtml"
-  scala.xml.XML.save(singleColumnOutputPath.toString, tableOutput, "UTF-8", true, doctype)
+  scala.xml.XML.save(singleColumnOutputPath.toString, tableOutput, "UTF-8", true, doctypeHtml)
 
   val flowOutput: xml.Elem =
     createSvgFlowModel(flattenNodeSeq(root), tokenArray)
@@ -83,7 +83,7 @@ def readData(pathToData: Path): List[(String, String)] =
   val mixedOutput = createMixedVisualization(flattenNodeSeq(root), tokenArray)
   val mixedOutputPath =
     os.pwd / "src" / "main" / "output" / "mixed-visualization.xhtml"
-  scala.xml.XML.save(mixedOutputPath.toString, mixedOutput, "UTF-8", true, doctype)
+  scala.xml.XML.save(mixedOutputPath.toString, mixedOutput, "UTF-8", true, doctypeHtml)
 
 //  val output = createAlignmentTable(root, tokenArray, sigla)
 //  val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
@@ -92,6 +92,9 @@ def readData(pathToData: Path): List[(String, String)] =
   val alignmentBrowser = createAlignmentBrowser(root, tokenArray)
   val alignmentBrowserOutputPath =
     os.pwd / "src" / "main" / "output" / "alignment-browser.xhtml"
-  xml.XML.save(alignmentBrowserOutputPath.toString, alignmentBrowser, "UTF-8", true, doctype)
+  xml.XML.save(alignmentBrowserOutputPath.toString, alignmentBrowser, "UTF-8", true, doctypeHtml)
 
-  val mixedOutputGrid = createFlowModelForGrid(root, tokenArray)
+  val mixedOutputGrid = createFlowModelForGrid(root, tokenArray) // currently just main html; TODO: add flow sprites
+  val mixedOutputGridPath =
+    os.pwd / "src" / "main" / "output" / "mixed-output-grid.xhtml"
+  scala.xml.XML.save(mixedOutputGridPath.toString, mixedOutputGrid, "UTF-8", true, doctypeHtml)
