@@ -114,7 +114,7 @@ private def createTextGridColumnCells(
             .slice(value._1, value._2)
             .map(_.n)
             .mkString(" ")
-          <div><span class="sigla">all:</span> {text}</div>
+          <ul><li><span class="sigla">all:</span> {text}</li></ul>
         case AgreementIndelNode(witnessReadings) =>
           val sigla = witnessReadings.keys
             .map(_.slice(8, 10))
@@ -126,7 +126,7 @@ private def createTextGridColumnCells(
             .slice(value._1, value._2)
             .map(_.n)
             .mkString(" ")
-          <div><span class="sigla">{sigla}:</span> {text}</div>
+          <ul><li><span class="sigla">{sigla}:</span> {text}</li></ul>
         case VariationNode(witnessReadings, witnessGroups) =>
           val readings = witnessGroups map { e =>
             val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
@@ -138,7 +138,7 @@ private def createTextGridColumnCells(
               .mkString(" ")
             <li><span class="sigla">{sigla}:</span> {text}</li>
           }
-          <div><ul>{readings}</ul></div>
+          <ul>{readings}</ul>
         case VariationIndelNode(witnessReadings, witnessGroups) =>
           val readings = witnessGroups map { e =>
             val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
@@ -150,7 +150,7 @@ private def createTextGridColumnCells(
               .mkString(" ")
             <li><span class="sigla">{sigla}:</span> {text}</li>
           }
-          <div><ul>{readings}</ul></div>
+          <ul>{readings}</ul>
       }
       rowContent
     }
