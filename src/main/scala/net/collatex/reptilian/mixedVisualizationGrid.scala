@@ -102,10 +102,6 @@ private def plotText(
     }</text>
   text
 
-//  style={
-//      "background-image: url('sprites.svg#b" + nodeNo + "');"
-//      }
-
 /** Create vector of all svg column cells
   *
   * @param nodes
@@ -119,7 +115,7 @@ private def createSvgGridColumnCells(
   val result = nodes.zipWithIndex map { (node, index) =>
     val nodeNo = (index + 1).toString // Output is one-based
     val innerGs = createInnerGridGs(node)
-    <div id={"t" + nodeNo}>
+    <div id={"t" + nodeNo} style={"background-image: url('mixed-output-grid-backgrounds.svg#b" + nodeNo + "');"}>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40">
         <g id={"v" + nodeNo}>{innerGs}</g>
       </svg>
@@ -207,23 +203,71 @@ private def createTextGridColumnCells(
 private def getGridRowClasses(nodes: Vector[NumberedNode]): Vector[String] =
   nodes
     .map(_.node.getClass.toString.split("\\.").last.dropRight(4))
-    .map(e => e.head.toLower + e.tail)
+    .map(e => s"${e.head.toLower}${e.tail}")
 
-/** Main function to create html (main page) and svg (backgrounds sprites) for
+private def createGridBackgroundFlows(
+    nodes: Vector[AlignmentPoint]
+) =
+  val cellWidth = totalWitnessCount * 3 * witDims("w")
+  val cellHeight = verticalNodeSpacing * witDims("h")
+  val backgroundRect =
+    <rect x="0" y="0" width={cellWidth.toString} height={
+      cellHeight.toString
+    } fill="gainsboro"/>
+  def absoluteXPos(a: AlignmentPoint, w: WitnessReading): Double =
+    if a.missingGroup.contains(w) then
+      verticalRuleXPos + witDims("w") / 2 + a.missingGroup.indexOf(w) * witDims(
+        "w"
+      )
+    else
+      val g: SubGroup =
+        a.subGroups.filter(_.witnesses.contains(w)).head // must be exactly one
+      val offsetInGroup: Int = g.witnesses.indexOf(w)
+      val groupOffset: Int = a.subGroups.indexOf(g)
+      witDims("w") * (a.subGroups
+        .slice(0, groupOffset)
+        .map(_.size + 1)
+        .sum // add one to each for spacer
+        + offsetInGroup)
+
+  val handleOffset = verticalNodeSpacing / 2
+  val alignmentPointPairs = nodes.zip(nodes.tail) // pairs of alignment points
+  val lastPath = <svg id={s"b${alignmentPointPairs.size + 1}"} viewBox={"0 0 100 " +  {witDims("h").toString}} preserveAspectRatio="none">
+    <g><rect x="0" y="0" width={cellWidth.toString} height={witDims("h").toString} fill="gainsboro"/></g>
+  </svg>
+  val allPaths = alignmentPointPairs.zipWithIndex flatMap { e =>
+    val sourceY = 0
+    val targetY = verticalNodeSpacing + witDims("h")
+    val pathsForPair: Vector[Elem] = allSigla.map { f =>
+      val color = s"url(#${witnessToColor(f)}Gradient)"
+      val sourceX = absoluteXPos(e._1._1, WitnessReading(f)) + 3
+      val targetX = absoluteXPos(e._1._2, WitnessReading(f)) + 3.0001
+      val d =
+        s"M $sourceX,$sourceY C $sourceX,${sourceY + handleOffset} $targetX,${targetY - handleOffset} $targetX,$targetY"
+      <path d={d} stroke={color} stroke-width={
+        witDims("w").toString
+      } vector-effect="non-scaling-stroke" fill="none"/>
+    }.toVector
+    <svg id={s"b${e._2 + 1}"} viewBox="0 0 100 50" preserveAspectRatio="none">
+      <g>{backgroundRect}{pathsForPair}</g>
+    </svg>
+  }
+
+  allPaths :+ lastPath
+
+/** Entry point to create html (main page) and svg (backgrounds sprites) for
   * grid-based continuous flow visualization
   *
   * Depends on static css authored separately
   *
-  * @param root root of alignment tree, which is then immediately flattened
-  * @param tokenArray array of Token instances
-  * @return tuple of html main document and svg document with background sprites
+  * @param root
+  *   root of alignment tree, which is then immediately flattened
+  * @param tokenArray
+  *   array of Token instances
+  * @return
+  *   tuple of html main document and svg document with background sprites
   */
 def createFlowModelForGrid(root: ExpandedNode, tokenArray: Vector[Token]) =
-  // For HTML output:
-  // Create sequence of numbers for node number column
-  // For sprites.svg
-  // Create flows for each alignment point
-  // Return tuple of main HTML and sprites.svg
   /*
    * Setup
    * */
@@ -242,11 +286,11 @@ def createFlowModelForGrid(root: ExpandedNode, tokenArray: Vector[Token]) =
     createTextGridColumnCells(nodeSequence, tokenArray) // <td>
   val gridContent = gridRowClasses.indices map { e =>
     val c = gridRowClasses(e) // "class" is a reserved word
-    val svg = gridColumnCellsSvg(e)
+    val svg = gridColumnCellsSvg(e) // already wrapped in <div> because needs background pointer
     val nodeNo = gridColumnNodeNos(e)
     val text = gridColumnCellsText(e)
     <div class={c}>
-      <div>{svg}</div>
+      {svg}
       <div><ul><li>{nodeNo}</li></ul></div>
       <div>{text}</div>
     </div>
@@ -275,8 +319,14 @@ def createFlowModelForGrid(root: ExpandedNode, tokenArray: Vector[Token]) =
   /*
    * Background sprites
    * */
-  val sprites = <svg xmlns="http://www.w3.org/2000/svg"></svg>
+  val linearGradientDefs = witnessToColor.values.map(createSingleColorGradient)
+  val spritesContent = createGridBackgroundFlows(alignmentPoints)
+  val spritesPage =
+    <svg xmlns="http://www.w3.org/2000/svg">
+      <defs>{linearGradientDefs}</defs>
+      {spritesContent}
+    </svg>
   /*
    * Return tuple of html main page and svg background sprites
    */
-  (html, sprites)
+  (html, spritesPage)
