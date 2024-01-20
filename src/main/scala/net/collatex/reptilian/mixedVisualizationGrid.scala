@@ -248,9 +248,9 @@ private def createGridBackgroundFlows(
         witDims("w").toString
       } vector-effect="non-scaling-stroke" fill="none"/>
     }.toVector
-    <svg id={s"b${e._2 + 1}"} viewBox="0 0 100 50" preserveAspectRatio="none">
-      <g>{backgroundRect}{pathsForPair}</g>
-    </svg>
+    <g id={s"b${e._2 + 1}"}>
+      {backgroundRect}{pathsForPair}
+    </g>
   }
 
   allPaths :+ lastPath
@@ -322,7 +322,7 @@ def createFlowModelForGrid(root: ExpandedNode, tokenArray: Vector[Token]) =
   val linearGradientDefs = witnessToColor.values.map(createSingleColorGradient)
   val spritesContent = createGridBackgroundFlows(alignmentPoints)
   val spritesPage =
-    <svg xmlns="http://www.w3.org/2000/svg">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox={s"0 0 100 50"} preserveAspectRatio="none">
       <defs>{linearGradientDefs}</defs>
       {spritesContent}
     </svg>
