@@ -12,7 +12,7 @@ import scala.xml.Elem
   */
 private def createInnerGridGs(input: AlignmentPoint): Vector[Elem] =
   @tailrec
-  def nextGroup(
+  def nextGroup( // recursively process all non-empty subgrouops
       groupsToProcess: Vector[SubGroup],
       groupCount: Int,
       cumWitnessCount: Int,
@@ -35,9 +35,15 @@ private def createInnerGridGs(input: AlignmentPoint): Vector[Elem] =
         acc :+ newG
       )
 
-  val groupTexts = nextGroup(input.subGroups, 0, 0, Vector.empty)
+  val groupTexts = nextGroup(
+    input.subGroups,
+    0,
+    0,
+    Vector.empty
+  ) // start of subgroup processing
 
-  if input.missingGroup.nonEmpty then
+  if input.missingGroup.nonEmpty
+  then // process group of missing witnesses if present
     val missingTexts =
       <g transform={
         "translate(" + (verticalRuleXPos - (witDims("w") / 2)).toString + ")"
@@ -47,16 +53,27 @@ private def createInnerGridGs(input: AlignmentPoint): Vector[Elem] =
           plotText(reading, offset)
         )
       }
-      <line x1="0" y1="5" x2={(witDims("w") * input.missingGroup.size).toString} y2="5" stroke="black" stroke-width=".5"/>
+      <line x1="0" y1="5" x2={
+        (witDims("w") * input.missingGroup.size).toString
+      } y2="5" stroke="black" stroke-width=".5"/>
       </g>
     groupTexts :+ missingTexts
   else groupTexts
 
+/** Output <text> with witness sigla for a single subgroup of readigs
+  *
+  * @param group
+  *   single subgroup of readings in alignment point
+  * @return
+  *   vector of one <text> per witness plus underscore <line>
+  */
 private def createWitnessTexts(group: SubGroup): Vector[Elem] =
-  val texts = group.witnesses.zipWithIndex.flatMap { (reading, offset) =>
+  val texts = group.witnesses.zipWithIndex.map { (reading, offset) =>
     plotText(reading, offset)
   }
-  val line = <line x1="0" y1="5" x2={(witDims("w") * group.size).toString} y2="5" stroke="black" stroke-width=".5"/>
+  val line = <line x1="0" y1="5" x2={
+    (witDims("w") * group.size).toString
+  } y2="5" stroke="black" stroke-width=".5"/>
   texts :+ line
 
 /** Plot one <text>
@@ -73,7 +90,7 @@ private def createWitnessTexts(group: SubGroup): Vector[Elem] =
 private def plotText(
     reading: WitnessReading,
     offset: Int
-): Vector[Elem] =
+): Elem =
   val textXPos = offset * witDims("w")
   val text =
     <text
@@ -83,16 +100,24 @@ private def plotText(
     font-size={(witDims("w") * .7).toString}>{
       reading.siglum.slice(8, 10)
     }</text>
-  Vector(text)
+  text
 
 //  style={
 //      "background-image: url('sprites.svg#b" + nodeNo + "');"
 //      }
+
+/** Create vector of all svg column cells
+  *
+  * @param nodes
+  *   vector of AlignmentPoint instances
+  * @return
+  *   vector of <svg> elements
+  */
 private def createSvgGridColumnCells(
     nodes: Vector[AlignmentPoint]
 ): Vector[scala.xml.Elem] =
   val result = nodes.zipWithIndex map { (node, index) =>
-    val nodeNo = (index + 1).toString // Output should be one-based
+    val nodeNo = (index + 1).toString // Output is one-based
     val innerGs = createInnerGridGs(node)
     <div id={"t" + nodeNo}>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40">
@@ -102,9 +127,24 @@ private def createSvgGridColumnCells(
   }
   result
 
+/** Create vector of all text column cells
+  *
+  * agreement and agreementIndel nodes are one-item lists, but nonetheless
+  * conceptually lists, and therefore tagged as <ul> with single <li>
+  *
+  * <div> wrappers are added later
+  *
+  * @param nodes
+  *   vector of NumberedNode instances
+  * @param tokenArray
+  *   vector of Token instances
+  * @return
+  *   vector of <ul> elements
+  */
 private def createTextGridColumnCells(
     nodes: Vector[NumberedNode],
-    tokenArray: Vector[Token]) =
+    tokenArray: Vector[Token]
+) =
   val result =
     nodes.map { e =>
       val rowContent = e.node match {
@@ -156,10 +196,28 @@ private def createTextGridColumnCells(
     }
   result
 
-
+/** Create vector of alignment-node types, converted from PascalCase to
+  * camelCase, used as HTML @class value on row <div>
+  *
+  * @param nodes
+  *   vector of NumberedNode instances
+  * @return
+  *   vector of strings, representing alignment subtype
+  */
 private def getGridRowClasses(nodes: Vector[NumberedNode]): Vector[String] =
-  nodes.map(_.node.getClass.toString.split("\\.").last.dropRight(4)).map(e => e.head.toLower + e.tail)
+  nodes
+    .map(_.node.getClass.toString.split("\\.").last.dropRight(4))
+    .map(e => e.head.toLower + e.tail)
 
+/** Main function to create html (main page) and svg (backgrounds sprites) for
+  * grid-based continuous flow visualization
+  *
+  * Depends on static css authored separately
+  *
+  * @param root root of alignment tree, which is then immediately flattened
+  * @param tokenArray array of Token instances
+  * @return tuple of html main document and svg document with background sprites
+  */
 def createFlowModelForGrid(root: ExpandedNode, tokenArray: Vector[Token]) =
   // For HTML output:
   // Create sequence of numbers for node number column
@@ -170,14 +228,18 @@ def createFlowModelForGrid(root: ExpandedNode, tokenArray: Vector[Token]) =
    * Setup
    * */
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
-  val alignmentPoints: Vector[AlignmentPoint] = createAlignmentPoints(nodeSequence, tokenArray)
+  val alignmentPoints: Vector[AlignmentPoint] =
+    createAlignmentPoints(nodeSequence, tokenArray)
   /*
-   * Page columns
+   * Create grid content (one column per alignment point)
    * */
   val gridRowClasses: Vector[String] = getGridRowClasses(nodeSequence)
-  val gridColumnCellsSvg: Vector[Elem] = createSvgGridColumnCells(alignmentPoints) // <div>
+  val gridColumnCellsSvg: Vector[Elem] = createSvgGridColumnCells(
+    alignmentPoints
+  ) // <div>
   val gridColumnNodeNos = (1 to alignmentPoints.size).toVector
-  val gridColumnCellsText: Vector[Elem] = createTextGridColumnCells(nodeSequence, tokenArray) // <td>
+  val gridColumnCellsText: Vector[Elem] =
+    createTextGridColumnCells(nodeSequence, tokenArray) // <td>
   val gridContent = gridRowClasses.indices map { e =>
     val c = gridRowClasses(e) // "class" is a reserved word
     val svg = gridColumnCellsSvg(e)
