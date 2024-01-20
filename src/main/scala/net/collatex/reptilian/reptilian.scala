@@ -94,7 +94,10 @@ def readData(pathToData: Path): List[(String, String)] =
     os.pwd / "src" / "main" / "output" / "alignment-browser.xhtml"
   xml.XML.save(alignmentBrowserOutputPath.toString, alignmentBrowser, "UTF-8", true, doctypeHtml)
 
-  val mixedOutputGrid = createFlowModelForGrid(root, tokenArray) // currently just main html; TODO: add flow sprites
+  val (mixedOutputGrid, backgroundSprites) = createFlowModelForGrid(root, tokenArray)
   val mixedOutputGridPath =
     os.pwd / "src" / "main" / "output" / "mixed-output-grid.xhtml"
+  val mixedOutputGridBackgroundsPath =
+    os.pwd / "src" / "main" / "output" / "mixed-output-grid-backgrounds.svg"
   scala.xml.XML.save(mixedOutputGridPath.toString, mixedOutputGrid, "UTF-8", true, doctypeHtml)
+  scala.xml.XML.save(mixedOutputGridBackgroundsPath.toString, backgroundSprites, "UTF-8", true)

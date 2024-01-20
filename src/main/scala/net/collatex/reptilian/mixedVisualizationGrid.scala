@@ -210,4 +210,11 @@ def createFlowModelForGrid(root: ExpandedNode, tokenArray: Vector[Token]) =
         </div>
       </body>
     </html>
-  html
+  /*
+   * Background sprites
+   * */
+  val sprites = <svg xmlns="http://www.w3.org/2000/svg"></svg>
+  /*
+   * Return tuple of html main page and svg background sprites
+   */
+  (html, sprites)
