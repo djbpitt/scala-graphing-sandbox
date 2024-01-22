@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+    <style type="text/css">
+        .sprite {display:none;}
+        .sprite:target {display:inline;}
+    </style>
+    <defs>
+        <linearGradient id="yellowGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+            <stop offset="0%" stop-color="yellow" stop-opacity="1"/>
+            <stop offset="6%" stop-color="yellow" stop-opacity="1"/>
+            <stop offset="20%" stop-color="yellow" stop-opacity=".6"/>
+            <stop offset="35%" stop-color="yellow" stop-opacity=".4"/>
+            <stop offset="50%" stop-color="yellow" stop-opacity=".3"/>
+            <stop offset="65%" stop-color="yellow" stop-opacity=".4"/>
+            <stop offset="80%" stop-color="yellow" stop-opacity=".6"/>
+            <stop offset="94%" stop-color="yellow" stop-opacity="1"/>
+            <stop offset="100%" stop-color="yellow" stop-opacity="1"/>
+        </linearGradient>
+        <linearGradient id="dodgerblueGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+            <stop offset="0%" stop-color="dodgerblue" stop-opacity="1"/>
+            <stop offset="6%" stop-color="dodgerblue" stop-opacity="1"/>
+            <stop offset="20%" stop-color="dodgerblue" stop-opacity=".6"/>
+            <stop offset="35%" stop-color="dodgerblue" stop-opacity=".4"/>
+            <stop offset="50%" stop-color="dodgerblue" stop-opacity=".3"/>
+            <stop offset="65%" stop-color="dodgerblue" stop-opacity=".4"/>
+            <stop offset="80%" stop-color="dodgerblue" stop-opacity=".6"/>
+            <stop offset="94%" stop-color="dodgerblue" stop-opacity="1"/>
+            <stop offset="100%" stop-color="dodgerblue" stop-opacity="1"/>
+        </linearGradient>
+        <linearGradient id="violetGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+            <stop offset="0%" stop-color="violet" stop-opacity="1"/>
+            <stop offset="6%" stop-color="violet" stop-opacity="1"/>
+            <stop offset="20%" stop-color="violet" stop-opacity=".6"/>
+            <stop offset="35%" stop-color="violet" stop-opacity=".4"/>
+            <stop offset="50%" stop-color="violet" stop-opacity=".3"/>
+            <stop offset="65%" stop-color="violet" stop-opacity=".4"/>
+            <stop offset="80%" stop-color="violet" stop-opacity=".6"/>
+            <stop offset="94%" stop-color="violet" stop-opacity="1"/>
+            <stop offset="100%" stop-color="violet" stop-opacity="1"/>
+        </linearGradient>
+        <linearGradient id="orangeGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+            <stop offset="0%" stop-color="orange" stop-opacity="1"/>
+            <stop offset="6%" stop-color="orange" stop-opacity="1"/>
+            <stop offset="20%" stop-color="orange" stop-opacity=".6"/>
+            <stop offset="35%" stop-color="orange" stop-opacity=".4"/>
+            <stop offset="50%" stop-color="orange" stop-opacity=".3"/>
+            <stop offset="65%" stop-color="orange" stop-opacity=".4"/>
+            <stop offset="80%" stop-color="orange" stop-opacity=".6"/>
+            <stop offset="94%" stop-color="orange" stop-opacity="1"/>
+            <stop offset="100%" stop-color="orange" stop-opacity="1"/>
+        </linearGradient>
+        <linearGradient id="peruGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+            <stop offset="0%" stop-color="peru" stop-opacity="1"/>
+            <stop offset="6%" stop-color="peru" stop-opacity="1"/>
+            <stop offset="20%" stop-color="peru" stop-opacity=".6"/>
+            <stop offset="35%" stop-color="peru" stop-opacity=".4"/>
+            <stop offset="50%" stop-color="peru" stop-opacity=".3"/>
+            <stop offset="65%" stop-color="peru" stop-opacity=".4"/>
+            <stop offset="80%" stop-color="peru" stop-opacity=".6"/>
+            <stop offset="94%" stop-color="peru" stop-opacity="1"/>
+            <stop offset="100%" stop-color="peru" stop-opacity="1"/>
+        </linearGradient>
+        <linearGradient id="limegreenGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+            <stop offset="0%" stop-color="limegreen" stop-opacity="1"/>
+            <stop offset="6%" stop-color="limegreen" stop-opacity="1"/>
+            <stop offset="20%" stop-color="limegreen" stop-opacity=".6"/>
+            <stop offset="35%" stop-color="limegreen" stop-opacity=".4"/>
+            <stop offset="50%" stop-color="limegreen" stop-opacity=".3"/>
+            <stop offset="65%" stop-color="limegreen" stop-opacity=".4"/>
+            <stop offset="80%" stop-color="limegreen" stop-opacity=".6"/>
+            <stop offset="94%" stop-color="limegreen" stop-opacity="1"/>
+            <stop offset="100%" stop-color="limegreen" stop-opacity="1"/>
+        </linearGradient>
+    </defs>
+    <svg xmlns="http://www.w3.org/2000/svg" id="or" class="sprite" viewBox="0 0 100 50"
+        preserveAspectRatio="none" width="100%" height="100%">
+        <g>
+            <path d="M 10,0 L 90, 50" stroke="url('#orangeGradient')" stroke-width="6" fill="none"/>
+        </g>
+    </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" id="bl" class="sprite" viewBox="0 0 100 50"
+        preserveAspectRatio="none" width="100%" height="100%">
+        <g>
+            <path d="M 10,0 L 90, 50" stroke="url('#dodgerblueGradient')" stroke-width="6"
+                fill="none"/>
+        </g>
+    </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" id="gr" class="sprite" viewBox="0 0 100 50"
+        preserveAspectRatio="none" width="100%" height="100%">
+        <g>
+            <path d="M 10,0 L 90, 50" stroke="url('#limegreenGradient')" stroke-width="6"
+                fill="none"/>
+        </g>
+    </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" id="vi" class="sprite" viewBox="0 0 100 50"
+        preserveAspectRatio="none" width="100%" height="100%">
+        <g>
+            <path d="M 10,0 L 90, 50" stroke="url('#violetGradient')" stroke-width="6" fill="none"/>
+        </g>
+    </svg>
+</svg>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Gradient embedded background test</title>
+        <style>
+            div {
+              height: 200px;
+              width: 400px;
+              border: 1px solid black;
+              background-size: auto auto;
+              background-repeat: no-repeat;
+            }
+            #d1 {
+              height: 300px;
+            }
+            #d2 {
+              height: 500px;
+            }</style>
+    </head>
+    <body>
+        <h1>Hi, Mom!</h1>
+        <div style="background: url('test-background.svg#or')">Stuff</div>
+        <div style="background: url('test-background.svg#bl')">Stuff</div>
+        <div id="d1" style="background: url('test-background.svg#gr')">Stuff</div>
+        <div id="d2" style="background: url('test-background.svg#vi')">Stuff</div>
+    </body>
+</html>
