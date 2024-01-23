@@ -1,12 +1,23 @@
 package net.collatex.util
 
+import nl.gn0s1s.osita.Osita.osa
 import smile.clustering.hclust
 import smile.data.DataFrame
 import smile.feature.transform.WinsorScaler
 import smile.nlp.vectorize
 import upickle.default.*
 
-import scala.annotation.unused
+import scala.annotation.{unused, tailrec}
+import scala.math.min
+
+
+import scala.math.Ordering.Implicits._
+
+
+
+/* Needleman-Wunsch alignment code from
+ * https://github.com/Philippus/osita (MPL-2.0)
+ */
 
 /*
  * Domain classes, companion objects, enums
@@ -54,14 +65,16 @@ def readJsonData: List[UnalignedFragment] =
   val darwin = read[List[UnalignedFragment]](fileContents)
   darwin
 
-
 /** Create bag of readings for each witness
- *
- * Each bag includes all types found in any witness, so some may have a zero count
- *
- * @param readings List of one list of strings (token instances) for each witness
- * @return List of maps (one per witness) of token -> frequency (possibly zero)
- */
+  *
+  * Each bag includes all types found in any witness, so some may have a zero
+  * count
+  *
+  * @param readings
+  *   List of one list of strings (token instances) for each witness
+  * @return
+  *   List of maps (one per witness) of token -> frequency (possibly zero)
+  */
 private def bag(readings: List[List[String]]): List[Map[String, Int]] =
   val allTypes = readings.flatten.toSet // shared list of all tokens
   def oneBag(reading: List[String]): Map[String, Int] =
@@ -102,10 +115,88 @@ def clusterReadings(data: Array[Array[Double]]): List[ClusterInfo] =
     .map(e => ClusterInfo.of(e(0)(0), e(0)(1), e(1), data.length))
     .toList
 
+private def substitutionCost[A](a: A, b: A): Double =
+  if (a == b) 0.0d else 1.0d
+
+private def nwCreateMatrix(
+    a: List[String],
+    b: List[String]
+): Array[Array[Double]] =
+  val deletionCost = 1.0d
+  val insertionCost = 1.0d
+  val transpositionCost = 1.0d
+
+  val d = Array.ofDim[Double](a.size + 1, b.size + 1)
+
+  for (i <- 0 to a.size)
+    d(i)(0) = i * deletionCost
+  for (j <- 0 to b.size)
+    d(0)(j) = j * insertionCost
+  for {
+    i <- 1 to a.size
+    j <- 1 to b.size
+  } {
+    d(i)(j) = min(
+      min(
+        d(i - 1)(j) + deletionCost, // deletion
+        d(i)(j - 1) + insertionCost
+      ), // insertion
+      d(i - 1)(j - 1) + substitutionCost(a(i - 1), b(j - 1))
+    ) // substitution
+    if (i > 1 && j > 1 && a(i - 1) == b(j - 2) && a(i - 2) == b(j - 1))
+      d(i)(j) =
+        min(d(i)(j), d(i - 2)(j - 2) + transpositionCost) // transposition
+  }
+  val distance = d(a.size)(b.size)
+  d // return entire matrix
+
+// RESUME HERE: For next step:
+// 1. Get direction (and match/nonmatch)
+// 2. If direction (and match/nonmatch) = current last item in result, extend end position of that last item
+// 3. If direction (and match/nonmatch) != current last item, create new last item
+// NB: First item cannot compare to current last, so requires default behavior
+
+private def nwCreateAlignmentTreeNodes(
+    matrix: Array[Array[Double]]
+): Vector[AlignmentTreePath] =
+  @tailrec
+  def nextStep(
+      row: Int,
+      col: Int,
+      alignmentTreePaths: Vector[AlignmentTreePath]
+  ): Vector[AlignmentTreePath] =
+    if row == 0 && col == 0 then alignmentTreePaths
+    else
+      val scoreLeft = EditStep(Left, matrix(row)(col - 1))
+      val scoreDiag = EditStep(Diag, matrix(row -1)(col - 1))
+      val scoreUp = EditStep(Up, matrix(row - 1)(col))
+      val bestScore = Vector(scoreLeft, scoreDiag, scoreUp).min
+      val bestScoreStep = bestScore match
+        case EditStep(direction, distance) if direction == Left => ???
+        case EditStep(direction, distance) if direction == Up => ???
+        case EditStep(direction, distance) if distance == alignmentTreePaths.last.lastScore => ???
+        case _ => ???
+        
+      
+
+  nextStep(
+    row = matrix.length - 1,
+    col = matrix.head.length - 1,
+    alignmentTreePaths = Vector[AlignmentTreePath]()
+  ) // Start recursion in lower right corner
+
+  1
+
 @main def unalignedDev(): Unit =
   val darwin: List[UnalignedFragment] = readJsonData
   // we know there's only one, so we could have told it to find the first
   //   and then skipped the foreach()
+  val w0 = darwin.head.readings.head
+  val w1 = darwin.head.readings(1)
+  val m = nwCreateMatrix(w0, w1)
+  val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
+  println(dfm.toString(dfm.size))
+
   darwin
     .map(node =>
       node -> (vectorizeReadings andThen clusterReadings)(node)
@@ -114,3 +205,31 @@ def clusterReadings(data: Array[Array[Double]]): List[ClusterInfo] =
     .foreach { (node, clusters) =>
       println(s"${node.nodeno}:$clusters")
     }
+
+/** Traversal of NW matrix to create alignment-tree nodes
+  *
+  * Matrix is row-major, so rows (a) are base and columns (b) are minor Insert
+  * and delete are from major to minor, so: Insert means insert into a Delete
+  * means delete from a
+  */
+enum AlignmentTreePathType:
+  case Insert, Delete, Match, Nonmatch
+import AlignmentTreePath.*
+case class AlignmentTreePath(
+    start: MatrixPosition,
+    end: MatrixPosition,
+    stepType: AlignmentTreePathType, // Insert, Delete, Match, Nonmatch
+    lastScore: Double // compare current to last to distinguish Match from Nonmatch (both Diag)
+)
+
+case class MatrixPosition(row: Int, col: Int)
+
+
+enum DirectionType:
+  case Diag, Left, Up
+import DirectionType.*
+case class EditStep(direction: DirectionType, distance: Double) extends Ordered[EditStep] {
+
+  import math.Ordered.orderingToOrdered
+  def compare(that: EditStep): Int =  (this.distance, this.direction.ordinal) compare (that.distance, that.direction.ordinal)
+}
