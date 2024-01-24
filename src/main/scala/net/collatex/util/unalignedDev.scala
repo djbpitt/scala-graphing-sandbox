@@ -1,19 +1,15 @@
 package net.collatex.util
 
-import nl.gn0s1s.osita.Osita.osa
+import net.collatex.util.AlignmentTreePathType.{Delete, Insert, Match, Nonmatch}
 import smile.clustering.hclust
 import smile.data.DataFrame
 import smile.feature.transform.WinsorScaler
 import smile.nlp.vectorize
 import upickle.default.*
 
-import scala.annotation.{unused, tailrec}
+import scala.annotation.{tailrec, unused}
 import scala.math.min
-
-
-import scala.math.Ordering.Implicits._
-
-
+import scala.math.Ordering.Implicits.*
 
 /* Needleman-Wunsch alignment code from
  * https://github.com/Philippus/osita (MPL-2.0)
@@ -151,8 +147,8 @@ private def nwCreateMatrix(
   d // return entire matrix
 
 // RESUME HERE: For next step:
-// 1. Get direction (and match/nonmatch)
-// 2. If direction (and match/nonmatch) = current last item in result, extend end position of that last item
+// 1. Get direction (and, if diag, als0 match/nonmatch)
+// 2. If direction (and match/nonmatch) = current last item in result, extend start position (earlier) of that last item
 // 3. If direction (and match/nonmatch) != current last item, create new last item
 // NB: First item cannot compare to current last, so requires default behavior
 
@@ -163,29 +159,99 @@ private def nwCreateAlignmentTreeNodes(
   def nextStep(
       row: Int,
       col: Int,
-      alignmentTreePaths: Vector[AlignmentTreePath]
+      closedAlignmentTreePaths: Vector[AlignmentTreePath],
+      openAlignmentTreePath: Option[AlignmentTreePath]
   ): Vector[AlignmentTreePath] =
-    if row == 0 && col == 0 then alignmentTreePaths
+    if row == 0 && col == 0 then
+      (closedAlignmentTreePaths :+ openAlignmentTreePath.get).reverse
     else
-      val scoreLeft = EditStep(Left, matrix(row)(col - 1))
-      val scoreDiag = EditStep(Diag, matrix(row -1)(col - 1))
-      val scoreUp = EditStep(Up, matrix(row - 1)(col))
-      val bestScore = Vector(scoreLeft, scoreDiag, scoreUp).min
-      val bestScoreStep = bestScore match
-        case EditStep(direction, distance) if direction == Left => ???
-        case EditStep(direction, distance) if direction == Up => ???
-        case EditStep(direction, distance) if distance == alignmentTreePaths.last.lastScore => ???
-        case _ => ???
-        
-      
+      val scoreLeft = EditStep(DirectionType.Left, matrix(row - 1)(col))
+      val scoreDiag = EditStep(DirectionType.Diag, matrix(row - 1)(col - 1))
+      val scoreUp = EditStep(DirectionType.Up, matrix(row)(col - 1))
+      val bestScore =
+        Vector(scoreDiag, scoreLeft, scoreUp).min // correct up to here
+      bestScore match
+        case EditStep(DirectionType.Left, _) =>
+          if openAlignmentTreePath.isEmpty || openAlignmentTreePath.get.stepType != Insert // new direction
+          then
+            val newClosedAlignmentTreePaths =
+              closedAlignmentTreePaths :+ openAlignmentTreePath.get
+            val newOpenAlignmentTreePath = Some(
+              AlignmentTreePath(
+                start = MatrixPosition(row, col),
+                end = MatrixPosition(row, col),
+                stepType = Insert
+              )
+            )
+            nextStep(
+              row - 1,
+              col,
+              newClosedAlignmentTreePaths,
+              newOpenAlignmentTreePath
+            )
+          else // same direction, so extend
+            val newOpenAlignmentTreePath = Some(
+              AlignmentTreePath(
+                start = MatrixPosition(row, col),
+                end = openAlignmentTreePath.get.end,
+                stepType = Insert
+              )
+            )
+            nextStep(
+              row - 1,
+              col,
+              closedAlignmentTreePaths,
+              newOpenAlignmentTreePath
+            )
+
+        case EditStep(DirectionType.Up, _) =>
+          val newEnd =
+            if openAlignmentTreePath.isEmpty || openAlignmentTreePath.get.stepType != Delete
+            then MatrixPosition(row, col)
+            else
+              MatrixPosition(
+                openAlignmentTreePath.get.end.row,
+                openAlignmentTreePath.get.end.col
+              )
+          nextStep(
+            row,
+            col - 1,
+            closedAlignmentTreePaths,
+            Some(
+              AlignmentTreePath(
+                MatrixPosition(row, col),
+                newEnd,
+                Delete
+              )
+            )
+          )
+
+        case EditStep(DirectionType.Diag, distance) =>
+          val matchType: AlignmentTreePathType =
+            if distance == matrix(row)(col)
+            then Match
+            else Nonmatch
+          val newEnd =
+            if openAlignmentTreePath.isEmpty || openAlignmentTreePath.get.stepType != matchType
+            then MatrixPosition(row, col)
+            else
+              MatrixPosition(
+                openAlignmentTreePath.get.end.row,
+                openAlignmentTreePath.get.end.col
+              )
+          nextStep(
+            row - 1,
+            col - 1,
+            closedAlignmentTreePaths,
+            openAlignmentTreePath
+          )
 
   nextStep(
     row = matrix.length - 1,
     col = matrix.head.length - 1,
-    alignmentTreePaths = Vector[AlignmentTreePath]()
+    closedAlignmentTreePaths = Vector[AlignmentTreePath](),
+    openAlignmentTreePath = None
   ) // Start recursion in lower right corner
-
-  1
 
 @main def unalignedDev(): Unit =
   val darwin: List[UnalignedFragment] = readJsonData
@@ -218,18 +284,20 @@ import AlignmentTreePath.*
 case class AlignmentTreePath(
     start: MatrixPosition,
     end: MatrixPosition,
-    stepType: AlignmentTreePathType, // Insert, Delete, Match, Nonmatch
-    lastScore: Double // compare current to last to distinguish Match from Nonmatch (both Diag)
+    stepType: AlignmentTreePathType // Insert, Delete, Match, Nonmatch
 )
 
 case class MatrixPosition(row: Int, col: Int)
 
-
 enum DirectionType:
   case Diag, Left, Up
 import DirectionType.*
-case class EditStep(direction: DirectionType, distance: Double) extends Ordered[EditStep] {
+case class EditStep(direction: DirectionType, distance: Double)
+    extends Ordered[EditStep] {
 
   import math.Ordered.orderingToOrdered
-  def compare(that: EditStep): Int =  (this.distance, this.direction.ordinal) compare (that.distance, that.direction.ordinal)
+  def compare(that: EditStep): Int = (
+    this.distance,
+    this.direction.ordinal
+  ) compare (that.distance, that.direction.ordinal)
 }
