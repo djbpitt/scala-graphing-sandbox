@@ -1,0 +1,58 @@
+body {
+  padding: 20px;
+}
+
+img {
+  width: 32px;
+  height: 32px;
+}
+
+.icon {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+}
+
+.icon-clock {
+  background: url(https://s3-us-west-2.amazonaws.com/s.cdpn.io/3/fragment-ready-4.svg#icon-clock-view) no-repeat;
+}
+
+.icon-heart {
+  background: url(https://s3-us-west-2.amazonaws.com/s.cdpn.io/3/fragment-ready-4.svg#icon-heart-view) no-repeat;
+}
+
+.icon-arrow-right {
+  background: url(https://s3-us-west-2.amazonaws.com/s.cdpn.io/3/fragment-ready-4.svg#icon-arrow-right-view) no-repeat;
+}
+
+
+.icon-clock-2 {
+  background: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/3/fragment-ready-5.svg#svgView(viewBox(0,0,32,32))") no-repeat;
+}
+
+.icon-heart-2 {
+  background: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/3/fragment-ready-5.svg#svgView(viewBox(0,32,32,32))") no-repeat;
+}
+
+.icon-arrow-right-2 {
+  background: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/3/fragment-ready-5.svg#svgView(viewBox(0,64,32,32))") no-repeat;
+}
+
+
+.icon-clock-3 {
+  background: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/3/fragment-ready-1.svg") no-repeat;
+  background-size: 32px 96px;
+  background-position: 0 0;
+}
+
+.icon-heart-3 {
+  background: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/3/fragment-ready-2.svg") no-repeat;
+  background-size: 32px 96px;
+  background-position: 0 -32px;
+}
+
+.icon-arrow-right-3 {
+  background: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/3/fragment-ready-2.svg") no-repeat;
+  background-size: 32px 96px;
+  background-position: 0 -64px;
+}
