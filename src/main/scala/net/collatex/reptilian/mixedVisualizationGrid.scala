@@ -235,9 +235,9 @@ private def createGridBackgroundFlows(
   val handleOffset = verticalNodeSpacing / 2
   val alignmentPointPairs = nodes.zip(nodes.tail) // pairs of alignment points
   val lastPath = <g id={s"b${alignmentPointPairs.size + 1}"}>
-    <g><rect x="0" y="0" width={cellWidth.toString} height={
-    witDims("h").toString
-  } fill="gainsboro"/></g>
+    <rect x="0" y="0" width={cellWidth.toString} height={
+    cellHeight.toString
+  } fill="gainsboro"/>
   </g>
   val allPaths = alignmentPointPairs.zipWithIndex flatMap { e =>
     val sourceY = 0
