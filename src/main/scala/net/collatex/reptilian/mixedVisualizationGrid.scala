@@ -115,7 +115,9 @@ private def createSvgGridColumnCells(
   val result = nodes.zipWithIndex map { (node, index) =>
     val nodeNo = (index + 1).toString // Output is one-based
     val innerGs = createInnerGridGs(node)
-    <div id={"t" + nodeNo} style={"background-image: url('mixed-output-grid-backgrounds.svg#b" + nodeNo + "');"}>
+    <div id={"t" + nodeNo} style={
+      "background-image: url('mixed-output-grid-backgrounds.svg#b" + nodeNo + "');"
+    }>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40">
         <g id={"v" + nodeNo}>{innerGs}</g>
       </svg>
@@ -232,9 +234,11 @@ private def createGridBackgroundFlows(
 
   val handleOffset = verticalNodeSpacing / 2
   val alignmentPointPairs = nodes.zip(nodes.tail) // pairs of alignment points
-  val lastPath = <svg id={s"b${alignmentPointPairs.size + 1}"} viewBox={"0 0 100 " +  {witDims("h").toString}} preserveAspectRatio="none">
-    <g><rect x="0" y="0" width={cellWidth.toString} height={witDims("h").toString} fill="gainsboro"/></g>
-  </svg>
+  val lastPath = <g id={s"b${alignmentPointPairs.size + 1}"}>
+    <g><rect x="0" y="0" width={cellWidth.toString} height={
+    witDims("h").toString
+  } fill="gainsboro"/></g>
+  </g>
   val allPaths = alignmentPointPairs.zipWithIndex flatMap { e =>
     val sourceY = 0
     val targetY = verticalNodeSpacing + witDims("h")
@@ -286,7 +290,9 @@ def createFlowModelForGrid(root: ExpandedNode, tokenArray: Vector[Token]) =
     createTextGridColumnCells(nodeSequence, tokenArray) // <td>
   val gridContent = gridRowClasses.indices map { e =>
     val c = gridRowClasses(e) // "class" is a reserved word
-    val svg = gridColumnCellsSvg(e) // already wrapped in <div> because needs background pointer
+    val svg = gridColumnCellsSvg(
+      e
+    ) // already wrapped in <div> because needs background pointer
     val nodeNo = gridColumnNodeNos(e)
     val text = gridColumnCellsText(e)
     <div class={c}>
@@ -322,8 +328,15 @@ def createFlowModelForGrid(root: ExpandedNode, tokenArray: Vector[Token]) =
   val linearGradientDefs = witnessToColor.values.map(createSingleColorGradient)
   val spritesContent = createGridBackgroundFlows(alignmentPoints)
   val spritesPage =
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox={s"0 0 100 50"} preserveAspectRatio="none">
-      <defs>{linearGradientDefs}</defs>
+    <svg xmlns="http://www.w3.org/2000/svg"  height="100%" viewBox={
+      s"0 0 100 40"
+    } preserveAspectRatio="none">
+      <defs>
+        <style type="text/css">
+          g {{ display: none; }}
+          g:target {{ display: inline; }}
+        </style>
+        {linearGradientDefs}</defs>
       {spritesContent}
     </svg>
   /*
