@@ -147,7 +147,7 @@ private def nwCreateMatrix(
   d // return entire matrix
 
 // RESUME HERE: For next step:
-// 1. Get direction (and, if diag, als0 match/nonmatch)
+// 1. Get direction (and, if diag, also match/nonmatch)
 // 2. If direction (and match/nonmatch) = current last item in result, extend start position (earlier) of that last item
 // 3. If direction (and match/nonmatch) != current last item, create new last item
 // NB: First item cannot compare to current last, so requires default behavior
@@ -162,83 +162,145 @@ private def nwCreateAlignmentTreeNodes(
       closedAlignmentTreePaths: Vector[AlignmentTreePath],
       openAlignmentTreePath: Option[AlignmentTreePath]
   ): Vector[AlignmentTreePath] =
-    if row == 0 && col == 0 then
+    if row == 0 && col == 0 then // no more, so return result
       (closedAlignmentTreePaths :+ openAlignmentTreePath.get).reverse
-    else
+    else // there are three directions for four operations (two on diag)
       val scoreLeft = EditStep(DirectionType.Left, matrix(row - 1)(col))
       val scoreDiag = EditStep(DirectionType.Diag, matrix(row - 1)(col - 1))
       val scoreUp = EditStep(DirectionType.Up, matrix(row)(col - 1))
-      val bestScore =
+      val bestScore: EditStep =
         Vector(scoreDiag, scoreLeft, scoreUp).min // correct up to here
-      bestScore match
+      val nextMove: AlignmentTreePathType = bestScore match {
         case EditStep(DirectionType.Left, _) =>
-          if openAlignmentTreePath.isEmpty || openAlignmentTreePath.get.stepType != Insert // new direction
-          then
-            val newClosedAlignmentTreePaths =
-              closedAlignmentTreePaths :+ openAlignmentTreePath.get
-            val newOpenAlignmentTreePath = Some(
-              AlignmentTreePath(
-                start = MatrixPosition(row, col),
-                end = MatrixPosition(row, col),
-                stepType = Insert
-              )
-            )
-            nextStep(
-              row - 1,
-              col,
-              newClosedAlignmentTreePaths,
-              newOpenAlignmentTreePath
-            )
-          else // same direction, so extend
-            val newOpenAlignmentTreePath = Some(
-              AlignmentTreePath(
-                start = MatrixPosition(row, col),
-                end = openAlignmentTreePath.get.end,
-                stepType = Insert
-              )
-            )
-            nextStep(
-              row - 1,
-              col,
-              closedAlignmentTreePaths,
-              newOpenAlignmentTreePath
-            )
-
+          Insert
         case EditStep(DirectionType.Up, _) =>
-          val newEnd =
-            if openAlignmentTreePath.isEmpty || openAlignmentTreePath.get.stepType != Delete
-            then MatrixPosition(row, col)
-            else
-              MatrixPosition(
-                openAlignmentTreePath.get.end.row,
-                openAlignmentTreePath.get.end.col
+          Delete
+        case EditStep(DirectionType.Diag, score) =>
+          if score == matrix(row - 1)(col - 1) then Match
+          else Nonmatch
+      }
+      nextMove match
+        case Insert =>
+          val (newClosedAlignmentTreePaths, newOpenAlignmentTreePath) =
+            if openAlignmentTreePath.isEmpty || openAlignmentTreePath.get.alignmentTreePathType != Insert // new direction
+            then
+              (
+                closedAlignmentTreePaths :+ openAlignmentTreePath.get,
+                Some(
+                  AlignmentTreePath(
+                    start = MatrixPosition(row, col),
+                    end = MatrixPosition(row, col),
+                    alignmentTreePathType = Insert
+                  )
+                )
+              )
+            else // same direction, so extend
+              (
+                closedAlignmentTreePaths,
+                Some(
+                  AlignmentTreePath(
+                    start = MatrixPosition(row, col),
+                    end = openAlignmentTreePath.get.end,
+                    alignmentTreePathType = Insert
+                  )
+                )
+              )
+          nextStep(
+            row - 1,
+            col,
+            newClosedAlignmentTreePaths,
+            newOpenAlignmentTreePath
+          )
+
+        case Delete =>
+          val (newClosedAlignmentTreePaths, newOpenAlignmentTreePath) =
+            if openAlignmentTreePath.isEmpty || openAlignmentTreePath.get.alignmentTreePathType != Delete // new direction
+            then
+              (
+                closedAlignmentTreePaths :+ openAlignmentTreePath.get,
+                Some(
+                  AlignmentTreePath(
+                    start = MatrixPosition(row, col),
+                    end = MatrixPosition(row, col),
+                    alignmentTreePathType = Delete
+                  )
+                )
+              )
+            else // same direction, so extend
+              (
+                closedAlignmentTreePaths,
+                Some(
+                  AlignmentTreePath(
+                    start = MatrixPosition(row, col),
+                    end = openAlignmentTreePath.get.end,
+                    alignmentTreePathType = Delete
+                  )
+                )
               )
           nextStep(
             row,
             col - 1,
-            closedAlignmentTreePaths,
-            Some(
-              AlignmentTreePath(
-                MatrixPosition(row, col),
-                newEnd,
-                Delete
-              )
-            )
+            newClosedAlignmentTreePaths,
+            newOpenAlignmentTreePath
           )
 
-        case EditStep(DirectionType.Diag, distance) =>
-          val matchType: AlignmentTreePathType =
-            if distance == matrix(row)(col)
-            then Match
-            else Nonmatch
-          val newEnd =
-            if openAlignmentTreePath.isEmpty || openAlignmentTreePath.get.stepType != matchType
-            then MatrixPosition(row, col)
-            else
-              MatrixPosition(
-                openAlignmentTreePath.get.end.row,
-                openAlignmentTreePath.get.end.col
+        case Match =>
+          val (newClosedAlignmentTreePaths, newOpenAlignmentTreePath) =
+            if openAlignmentTreePath.isEmpty || openAlignmentTreePath.get.alignmentTreePathType != Match
+            then
+              (
+                closedAlignmentTreePaths :+ openAlignmentTreePath.get,
+                Some(
+                  AlignmentTreePath(
+                    start = MatrixPosition(row, col),
+                    end = MatrixPosition(row, col),
+                    alignmentTreePathType = Match
+                  )
+                )
               )
+            else // same direction, so extend
+              (
+                closedAlignmentTreePaths,
+                Some(
+                  AlignmentTreePath(
+                    start = MatrixPosition(row, col),
+                    end = openAlignmentTreePath.get.end,
+                    alignmentTreePathType = Match
+                  )
+                )
+              )
+          nextStep(
+            row,
+            col - 1,
+            newClosedAlignmentTreePaths,
+            newOpenAlignmentTreePath
+          )
+
+        case Nonmatch =>
+          val (newClosedAlignmentTreePaths, newOpenAlignmentTreePath) =
+            if openAlignmentTreePath.isEmpty || openAlignmentTreePath.get.alignmentTreePathType != Nonmatch
+            then
+              (
+                closedAlignmentTreePaths :+ openAlignmentTreePath.get,
+                Some(
+                  AlignmentTreePath(
+                    start = MatrixPosition(row, col),
+                    end = MatrixPosition(row, col),
+                    alignmentTreePathType = Match
+                  )
+                )
+              )
+            else // same direction, so extend
+            (
+              closedAlignmentTreePaths,
+              Some(
+                AlignmentTreePath(
+                  start = MatrixPosition(row, col),
+                  end = openAlignmentTreePath.get.end,
+                  alignmentTreePathType = Match
+                )
+              )
+            )
           nextStep(
             row - 1,
             col - 1,
@@ -279,12 +341,12 @@ private def nwCreateAlignmentTreeNodes(
   * means delete from a
   */
 enum AlignmentTreePathType:
-  case Insert, Delete, Match, Nonmatch
+  case Match, Nonmatch, Insert, Delete
 import AlignmentTreePath.*
 case class AlignmentTreePath(
     start: MatrixPosition,
     end: MatrixPosition,
-    stepType: AlignmentTreePathType // Insert, Delete, Match, Nonmatch
+    alignmentTreePathType: AlignmentTreePathType // Insert, Delete, Match, Nonmatch
 )
 
 case class MatrixPosition(row: Int, col: Int)
