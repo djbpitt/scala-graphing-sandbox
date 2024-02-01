@@ -156,8 +156,6 @@ private def nwCreateAlignmentTreeNodes(
       closedAlignmentTreePaths: Vector[AlignmentTreePath],
       openAlignmentTreePath: Option[AlignmentTreePath]
   ): Vector[AlignmentTreePath] =
-    if row == 0 && col == 0 then // no more, so return result
-      return (closedAlignmentTreePaths :+ openAlignmentTreePath.get).reverse
     val scoreLeft =
       EditStep(DirectionType.Left, matrix(row - 1)(col), row - 1, col)
     val scoreDiag =
@@ -176,7 +174,10 @@ private def nwCreateAlignmentTreeNodes(
         Match
       case _ => Nonmatch
     }
-    val (newClosedAlignmentTreePaths: Vector[AlignmentTreePath], newOpenAlignmentTreePath: Option[AlignmentTreePath]) =
+    val (
+      newClosedAlignmentTreePaths: Vector[AlignmentTreePath],
+      newOpenAlignmentTreePath: Option[AlignmentTreePath]
+    ) =
       if openAlignmentTreePath.isEmpty || openAlignmentTreePath.get.alignmentTreePathType != nextMove // new direction
       then
         (
@@ -203,12 +204,16 @@ private def nwCreateAlignmentTreeNodes(
             )
           )
         )
-    nextStep(
-      bestScore.row,
-      bestScore.col,
-      newClosedAlignmentTreePaths,
-      newOpenAlignmentTreePath
-    )
+    if bestScore.row == 0 && bestScore.col == 0
+    then // no more, so return result
+      (newClosedAlignmentTreePaths :+ newOpenAlignmentTreePath.get).reverse
+    else
+      nextStep(
+        bestScore.row,
+        bestScore.col,
+        newClosedAlignmentTreePaths,
+        newOpenAlignmentTreePath
+      )
 
   nextStep(
     row = matrix.length - 1,
