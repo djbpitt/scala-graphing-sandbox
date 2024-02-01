@@ -157,57 +157,58 @@ private def nwCreateAlignmentTreeNodes(
       openAlignmentTreePath: Option[AlignmentTreePath]
   ): Vector[AlignmentTreePath] =
     if row == 0 && col == 0 then // no more, so return result
-      (closedAlignmentTreePaths :+ openAlignmentTreePath.get).reverse
-    else // there are three directions for four operations (two on diag)
-      val scoreLeft =
-        EditStep(DirectionType.Left, matrix(row - 1)(col), row - 1, col)
-      val scoreDiag =
-        EditStep(DirectionType.Diag, matrix(row - 1)(col - 1), row - 1, col - 1)
-      val scoreUp =
-        EditStep(DirectionType.Up, matrix(row)(col - 1), row, col - 1)
-      val bestScore: EditStep =
-        Vector(scoreDiag, scoreLeft, scoreUp).min // correct up to here
-      val nextMove: AlignmentTreePathType = bestScore match {
-        case EditStep(DirectionType.Left, _, _, _) =>
-          Insert
-        case EditStep(DirectionType.Up, _, _, _) =>
-          Delete
-        case EditStep(DirectionType.Diag, score, _, _)
-            if score == matrix(row - 1)(col - 1) =>
-          Match
-        case _ => Nonmatch
-      }
-      val (newClosedAlignmentTreePaths, newOpenAlignmentTreePath) =
-        if openAlignmentTreePath.isEmpty || openAlignmentTreePath.get.alignmentTreePathType != nextMove // new direction
-        then
-          (
-            closedAlignmentTreePaths :+ openAlignmentTreePath.get,
-            Some(
-              AlignmentTreePath(
-                start = MatrixPosition(row, col),
-                end = MatrixPosition(row, col),
-                alignmentTreePathType = nextMove
-              )
+      return (closedAlignmentTreePaths :+ openAlignmentTreePath.get).reverse
+    val scoreLeft =
+      EditStep(DirectionType.Left, matrix(row - 1)(col), row - 1, col)
+    val scoreDiag =
+      EditStep(DirectionType.Diag, matrix(row - 1)(col - 1), row - 1, col - 1)
+    val scoreUp =
+      EditStep(DirectionType.Up, matrix(row)(col - 1), row, col - 1)
+    val bestScore: EditStep =
+      Vector(scoreDiag, scoreLeft, scoreUp).min // correct up to here
+    val nextMove: AlignmentTreePathType = bestScore match {
+      case EditStep(DirectionType.Left, _, _, _) =>
+        Insert
+      case EditStep(DirectionType.Up, _, _, _) =>
+        Delete
+      case EditStep(DirectionType.Diag, score, _, _)
+          if score == matrix(row - 1)(col - 1) =>
+        Match
+      case _ => Nonmatch
+    }
+    val (newClosedAlignmentTreePaths: Vector[AlignmentTreePath], newOpenAlignmentTreePath: Option[AlignmentTreePath]) =
+      if openAlignmentTreePath.isEmpty || openAlignmentTreePath.get.alignmentTreePathType != nextMove // new direction
+      then
+        (
+          openAlignmentTreePath match {
+            case None    => closedAlignmentTreePaths
+            case Some(e) => closedAlignmentTreePaths :+ e
+          },
+          Some(
+            AlignmentTreePath(
+              start = MatrixPosition(bestScore.row, bestScore.col),
+              end = MatrixPosition(row, col),
+              alignmentTreePathType = nextMove
             )
           )
-        else // same direction, so extend
-          (
-            closedAlignmentTreePaths,
-            Some(
-              AlignmentTreePath(
-                start = MatrixPosition(row, col),
-                end = openAlignmentTreePath.get.end,
-                alignmentTreePathType = nextMove
-              )
+        )
+      else // same direction, so extend
+        (
+          closedAlignmentTreePaths,
+          Some(
+            AlignmentTreePath(
+              start = MatrixPosition(bestScore.row, bestScore.col),
+              end = openAlignmentTreePath.get.end,
+              alignmentTreePathType = nextMove
             )
           )
-
-      nextStep(
-        bestScore.row,
-        bestScore.col,
-        newClosedAlignmentTreePaths,
-        newOpenAlignmentTreePath
-      )
+        )
+    nextStep(
+      bestScore.row,
+      bestScore.col,
+      newClosedAlignmentTreePaths,
+      newOpenAlignmentTreePath
+    )
 
   nextStep(
     row = matrix.length - 1,
@@ -225,6 +226,8 @@ private def nwCreateAlignmentTreeNodes(
   val m = nwCreateMatrix(w0, w1)
   val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
   println(dfm.toString(dfm.size))
+  val newAlignmentTreeNodes = nwCreateAlignmentTreeNodes(m)
+  println(newAlignmentTreeNodes)
 
   darwin
     .map(node =>
