@@ -170,7 +170,7 @@ private def nwCreateAlignmentTreeNodes(
       case EditStep(DirectionType.Up, _, _, _) =>
         Delete
       case EditStep(DirectionType.Diag, score, _, _)
-          if score == matrix(row - 1)(col - 1) =>
+          if score == matrix(row)(col) =>
         Match
       case _ => Nonmatch
     }
@@ -229,19 +229,19 @@ private def nwCreateAlignmentTreeNodes(
   val w0 = darwin.head.readings.head
   val w1 = darwin.head.readings(1)
   val m = nwCreateMatrix(w0, w1)
-  val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
-  println(dfm.toString(dfm.size))
+//  val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
+//  println(dfm.toString(dfm.size))
   val newAlignmentTreeNodes = nwCreateAlignmentTreeNodes(m)
   println(newAlignmentTreeNodes)
 
-  darwin
-    .map(node =>
-      node -> (vectorizeReadings andThen clusterReadings)(node)
-    ) // list of tuples
-    .toMap // map object (key -> value pairs)
-    .foreach { (node, clusters) =>
-      println(s"${node.nodeno}:$clusters")
-    }
+//  darwin
+//    .map(node =>
+//      node -> (vectorizeReadings andThen clusterReadings)(node)
+//    ) // list of tuples
+//    .toMap // map object (key -> value pairs)
+//    .foreach { (node, clusters) =>
+//      println(s"${node.nodeno}:$clusters")
+//    }
 
 /** Traversal of NW matrix to create alignment-tree nodes
   *
