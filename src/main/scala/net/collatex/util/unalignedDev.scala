@@ -224,13 +224,13 @@ private def nwCreateAlignmentTreeNodes(
 
 private def nwCreateAlignmentTreeNodesSingleStep(
     matrix: Array[Array[Double]]
-): List[AlignmentTreePath] =
+): LazyList[AlignmentTreePath] =
   @tailrec
   def nextStep(
       row: Int,
       col: Int,
-      accumulator: List[AlignmentTreePath]
-  ): List[AlignmentTreePath] =
+      accumulator: LazyList[AlignmentTreePath]
+  ): LazyList[AlignmentTreePath] =
     val scoreLeft =
       EditStep(DirectionType.Left, matrix(row - 1)(col), row - 1, col)
     val scoreDiag =
@@ -251,26 +251,26 @@ private def nwCreateAlignmentTreeNodesSingleStep(
     }
     if bestScore.row == 0 && bestScore.col == 0
     then // no more, so return result
-      AlignmentTreePath(
+      accumulator :+ AlignmentTreePath(
         start = MatrixPosition(row, col),
         end = MatrixPosition(0, 0),
         alignmentTreePathType = nextMove
-      ) :: accumulator
+      )
     else
       nextStep(
         bestScore.row,
         bestScore.col,
-        AlignmentTreePath(
+        accumulator :+ AlignmentTreePath(
           start = MatrixPosition(row, col),
           end = MatrixPosition(bestScore.row, bestScore.col),
           alignmentTreePathType = nextMove
-        ) :: accumulator
+        )
       )
 
   nextStep(
     row = matrix.length - 1,
     col = matrix.head.length - 1,
-    accumulator = List[AlignmentTreePath]()
+    accumulator = LazyList[AlignmentTreePath]()
   ) // Start recursion in lower right corner
 
 @main def unalignedDev(): Unit =
@@ -280,12 +280,13 @@ private def nwCreateAlignmentTreeNodesSingleStep(
   val w0 = darwin.head.readings.head
   val w1 = darwin.head.readings(1)
   val m = nwCreateMatrix(w0, w1)
-  val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
-  println(dfm.toString(dfm.size))
-  val newAlignmentTreeNodes = nwCreateAlignmentTreeNodes(m)
-  println(newAlignmentTreeNodes)
+//  val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
+//  println(dfm.toString(dfm.size))
+//  val newAlignmentTreeNodes = nwCreateAlignmentTreeNodes(m)
+//  println(newAlignmentTreeNodes)
   val newAlignmentTreeNodesSingleSteps = nwCreateAlignmentTreeNodesSingleStep(m)
   println(newAlignmentTreeNodesSingleSteps)
+  println(newAlignmentTreeNodesSingleSteps.toList)
 
 //  darwin
 //    .map(node =>
