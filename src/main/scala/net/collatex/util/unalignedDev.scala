@@ -271,7 +271,39 @@ private def nwCreateAlignmentTreeNodesSingleStep(
     col = matrix.head.length - 1
   ) // Start recursion in lower right corner
 
-
+private def nwCompactAlignmentTreeNodeSteps(
+    allSingleSteps: LazyList[AlignmentTreePath]
+): Vector[AlignmentTreePath] =
+  @tailrec
+  def nextStep(
+      stepsToProcess: LazyList[AlignmentTreePath],
+      compactedSteps: Vector[AlignmentTreePath],
+      openStep: AlignmentTreePath
+  ): Vector[AlignmentTreePath] =
+    if stepsToProcess.isEmpty
+    then compactedSteps :+ openStep
+    else if stepsToProcess.head.alignmentTreePathType == openStep.alignmentTreePathType
+    then
+      nextStep(
+        stepsToProcess = stepsToProcess.tail,
+        compactedSteps = compactedSteps,
+        openStep = AlignmentTreePath(
+          start = openStep.start,
+          end = stepsToProcess.head.end,
+          alignmentTreePathType = openStep.alignmentTreePathType
+        )
+      )
+    else
+      nextStep(
+        stepsToProcess = stepsToProcess.tail,
+        compactedSteps = compactedSteps :+ openStep,
+        openStep = stepsToProcess.head
+      )
+  nextStep(
+    stepsToProcess = allSingleSteps.tail,
+    compactedSteps = Vector.empty[AlignmentTreePath],
+    openStep = allSingleSteps.head
+  )
 
 @main def unalignedDev(): Unit =
   val darwin: List[UnalignedFragment] = readJsonData
@@ -285,8 +317,10 @@ private def nwCreateAlignmentTreeNodesSingleStep(
 //  val newAlignmentTreeNodes = nwCreateAlignmentTreeNodes(m)
 //  println(newAlignmentTreeNodes)
   val newAlignmentTreeNodesSingleSteps = nwCreateAlignmentTreeNodesSingleStep(m)
-  println(newAlignmentTreeNodesSingleSteps)
-  println(newAlignmentTreeNodesSingleSteps.toList)
+  val newCompactAlignmentTreeNodeSteps = nwCompactAlignmentTreeNodeSteps(newAlignmentTreeNodesSingleSteps)
+  val identifyAlignmentTreeNodeSteps = nwCompactAlignmentTreeNodeSteps compose nwCreateAlignmentTreeNodesSingleStep
+  val pathSteps = identifyAlignmentTreeNodeSteps(m)
+  println(pathSteps)
 
 //  darwin
 //    .map(node =>
