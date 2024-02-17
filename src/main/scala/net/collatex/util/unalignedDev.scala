@@ -271,6 +271,8 @@ private def nwCreateAlignmentTreeNodesSingleStep(
     col = matrix.head.length - 1
   ) // Start recursion in lower right corner
 
+
+
 @main def unalignedDev(): Unit =
   val darwin: List[UnalignedFragment] = readJsonData
   // we know there's only one, so we could have told it to find the first
