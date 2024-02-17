@@ -146,82 +146,6 @@ private def nwCreateMatrix(
   val distance = d(a.size)(b.size)
   d // return entire matrix
 
-private def nwCreateAlignmentTreeNodes(
-    matrix: Array[Array[Double]]
-): Vector[AlignmentTreePath] =
-  @tailrec
-  def nextStep(
-      row: Int,
-      col: Int,
-      closedAlignmentTreePaths: Vector[AlignmentTreePath],
-      openAlignmentTreePath: Option[AlignmentTreePath]
-  ): Vector[AlignmentTreePath] =
-    val scoreLeft =
-      EditStep(DirectionType.Left, matrix(row - 1)(col), row - 1, col)
-    val scoreDiag =
-      EditStep(DirectionType.Diag, matrix(row - 1)(col - 1), row - 1, col - 1)
-    val scoreUp =
-      EditStep(DirectionType.Up, matrix(row)(col - 1), row, col - 1)
-    val bestScore: EditStep =
-      Vector(scoreDiag, scoreLeft, scoreUp).min // correct up to here
-    val nextMove: AlignmentTreePathType = bestScore match {
-      case EditStep(DirectionType.Left, _, _, _) =>
-        Insert
-      case EditStep(DirectionType.Up, _, _, _) =>
-        Delete
-      case EditStep(DirectionType.Diag, score, _, _)
-          if score == matrix(row)(col) =>
-        Match
-      case _ => Nonmatch
-    }
-    val (
-      newClosedAlignmentTreePaths: Vector[AlignmentTreePath],
-      newOpenAlignmentTreePath: Option[AlignmentTreePath]
-    ) =
-      if openAlignmentTreePath.isEmpty || openAlignmentTreePath.get.alignmentTreePathType != nextMove // new direction
-      then
-        (
-          openAlignmentTreePath match {
-            case None    => closedAlignmentTreePaths
-            case Some(e) => closedAlignmentTreePaths :+ e
-          },
-          Some(
-            AlignmentTreePath(
-              start = MatrixPosition(bestScore.row, bestScore.col),
-              end = MatrixPosition(row, col),
-              alignmentTreePathType = nextMove
-            )
-          )
-        )
-      else // same direction, so extend
-        (
-          closedAlignmentTreePaths,
-          Some(
-            AlignmentTreePath(
-              start = MatrixPosition(bestScore.row, bestScore.col),
-              end = openAlignmentTreePath.get.end,
-              alignmentTreePathType = nextMove
-            )
-          )
-        )
-    if bestScore.row == 0 && bestScore.col == 0
-    then // no more, so return result
-      (newClosedAlignmentTreePaths :+ newOpenAlignmentTreePath.get).reverse
-    else
-      nextStep(
-        bestScore.row,
-        bestScore.col,
-        newClosedAlignmentTreePaths,
-        newOpenAlignmentTreePath
-      )
-
-  nextStep(
-    row = matrix.length - 1,
-    col = matrix.head.length - 1,
-    closedAlignmentTreePaths = Vector[AlignmentTreePath](),
-    openAlignmentTreePath = None
-  ) // Start recursion in lower right corner
-
 private def nwCreateAlignmentTreeNodesSingleStep(
     matrix: Array[Array[Double]]
 ): LazyList[AlignmentTreePath] =
@@ -280,25 +204,25 @@ private def nwCompactAlignmentTreeNodeSteps(
       compactedSteps: Vector[AlignmentTreePath],
       openStep: AlignmentTreePath
   ): Vector[AlignmentTreePath] =
-    if stepsToProcess.isEmpty
-    then compactedSteps :+ openStep
-    else if stepsToProcess.head.alignmentTreePathType == openStep.alignmentTreePathType
-    then
-      nextStep(
-        stepsToProcess = stepsToProcess.tail,
-        compactedSteps = compactedSteps,
-        openStep = AlignmentTreePath(
-          start = openStep.start,
-          end = stepsToProcess.head.end,
-          alignmentTreePathType = openStep.alignmentTreePathType
+    stepsToProcess match {
+      case LazyList() => compactedSteps :+ openStep
+      case h #:: t if h.alignmentTreePathType == openStep.alignmentTreePathType =>
+        nextStep(
+          stepsToProcess = t,
+          compactedSteps = compactedSteps,
+          openStep = AlignmentTreePath(
+            start = openStep.start,
+            end = h.end,
+            alignmentTreePathType = openStep.alignmentTreePathType
+          )
         )
-      )
-    else
-      nextStep(
-        stepsToProcess = stepsToProcess.tail,
-        compactedSteps = compactedSteps :+ openStep,
-        openStep = stepsToProcess.head
-      )
+      case h #:: t =>
+        nextStep(
+          stepsToProcess = t,
+          compactedSteps = compactedSteps :+ openStep,
+          openStep = h
+        )
+    }
   nextStep(
     stepsToProcess = allSingleSteps.tail,
     compactedSteps = Vector.empty[AlignmentTreePath],
@@ -318,8 +242,6 @@ val identifyAlignmentTreeNodeSteps = nwCompactAlignmentTreeNodeSteps compose nwC
 //  println(dfm.toString(dfm.size))
 //  val newAlignmentTreeNodes = nwCreateAlignmentTreeNodes(m)
 //  println(newAlignmentTreeNodes)
-  val newAlignmentTreeNodesSingleSteps = nwCreateAlignmentTreeNodesSingleStep(m)
-  val newCompactAlignmentTreeNodeSteps = nwCompactAlignmentTreeNodeSteps(newAlignmentTreeNodesSingleSteps)
   val pathSteps = identifyAlignmentTreeNodeSteps(m)
   println(pathSteps)
 
