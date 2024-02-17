@@ -225,11 +225,9 @@ private def nwCreateAlignmentTreeNodes(
 private def nwCreateAlignmentTreeNodesSingleStep(
     matrix: Array[Array[Double]]
 ): LazyList[AlignmentTreePath] =
-  @tailrec
   def nextStep(
       row: Int,
-      col: Int,
-      accumulator: LazyList[AlignmentTreePath]
+      col: Int
   ): LazyList[AlignmentTreePath] =
     val scoreLeft =
       EditStep(DirectionType.Left, matrix(row - 1)(col), row - 1, col)
@@ -251,26 +249,26 @@ private def nwCreateAlignmentTreeNodesSingleStep(
     }
     if bestScore.row == 0 && bestScore.col == 0
     then // no more, so return result
-      accumulator :+ AlignmentTreePath(
-        start = MatrixPosition(row, col),
-        end = MatrixPosition(0, 0),
-        alignmentTreePathType = nextMove
-      )
-    else
-      nextStep(
-        bestScore.row,
-        bestScore.col,
-        accumulator :+ AlignmentTreePath(
+      LazyList(
+        AlignmentTreePath(
           start = MatrixPosition(row, col),
           end = MatrixPosition(bestScore.row, bestScore.col),
-          alignmentTreePathType = nextMove
+          nextMove
         )
+      )
+    else
+      AlignmentTreePath(
+        start = MatrixPosition(row, col),
+        end = MatrixPosition(bestScore.row, bestScore.col),
+        nextMove
+      ) #:: nextStep(
+        bestScore.row,
+        bestScore.col
       )
 
   nextStep(
     row = matrix.length - 1,
-    col = matrix.head.length - 1,
-    accumulator = LazyList[AlignmentTreePath]()
+    col = matrix.head.length - 1
   ) // Start recursion in lower right corner
 
 @main def unalignedDev(): Unit =
