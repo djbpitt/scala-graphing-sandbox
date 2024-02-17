@@ -305,6 +305,8 @@ private def nwCompactAlignmentTreeNodeSteps(
     openStep = allSingleSteps.head
   )
 
+val identifyAlignmentTreeNodeSteps = nwCompactAlignmentTreeNodeSteps compose nwCreateAlignmentTreeNodesSingleStep
+
 @main def unalignedDev(): Unit =
   val darwin: List[UnalignedFragment] = readJsonData
   // we know there's only one, so we could have told it to find the first
@@ -318,7 +320,6 @@ private def nwCompactAlignmentTreeNodeSteps(
 //  println(newAlignmentTreeNodes)
   val newAlignmentTreeNodesSingleSteps = nwCreateAlignmentTreeNodesSingleStep(m)
   val newCompactAlignmentTreeNodeSteps = nwCompactAlignmentTreeNodeSteps(newAlignmentTreeNodesSingleSteps)
-  val identifyAlignmentTreeNodeSteps = nwCompactAlignmentTreeNodeSteps compose nwCreateAlignmentTreeNodesSingleStep
   val pathSteps = identifyAlignmentTreeNodeSteps(m)
   println(pathSteps)
 
