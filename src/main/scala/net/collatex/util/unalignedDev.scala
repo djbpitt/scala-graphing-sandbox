@@ -1,5 +1,6 @@
 package net.collatex.util
 
+import net.collatex.reptilian.Token
 import smile.clustering.hclust
 import smile.data.DataFrame
 import smile.feature.transform.WinsorScaler
@@ -17,11 +18,7 @@ import scala.math.Ordering.Implicits.*
 /*
  * Domain classes, companion objects, enums
  * */
-case class UnalignedFragment(nodeno: Int, readings: List[List[String]])
-
-@unused // object is used, but somehow IDE doesn't detect its usage.
-object UnalignedFragment: // add method to read from JSON into case class
-  implicit val rw: ReadWriter[UnalignedFragment] = macroRW
+case class UnalignedFragment(nodeno: Int, readings: List[List[Token]]) derives ReadWriter
 
 sealed trait ClusterInfo:
   def item1: Int
@@ -69,7 +66,7 @@ case class Delete(start: MatrixPosition, end: MatrixPosition) extends AlignmentT
  * */
 def readJsonData: List[UnalignedFragment] =
   val datafilePath =
-    os.pwd / "src" / "main" / "data" / "unaligned_data_node_296.json"
+    os.pwd / "src" / "main" / "data" / "unaligned_data_node_296_tokenized.json"
   val fileContents = os.read(datafilePath)
   val darwin = read[List[UnalignedFragment]](fileContents)
   darwin
@@ -84,14 +81,15 @@ def readJsonData: List[UnalignedFragment] =
   * @return
   *   List of maps (one per witness) of token -> frequency (possibly zero)
   */
-private def bag(readings: List[List[String]]): List[Map[String, Int]] =
-  val allTypes = readings.flatten.toSet // shared list of all tokens
+private def bag(readings: List[List[Token]]): List[Map[String, Int]] =
+  val nValues = readings.map(_.map(_.n))
+  val allTypes = nValues.flatten.toSet // shared list of all tokens
   def oneBag(reading: List[String]): Map[String, Int] =
     val typesInReading = reading.groupBy(identity).map((k, v) => (k, v.length))
     val allTypesForReading = allTypes
       .map(e => e -> typesInReading.getOrElse(e, 0))
     allTypesForReading.toMap
-  val result = readings.map(oneBag)
+  val result = nValues.map(oneBag)
   result
 
 def vectorizeReadings(node: UnalignedFragment): Array[Array[Double]] =
@@ -243,8 +241,8 @@ val identifyAlignmentTreeNodeSteps = nwCompactAlignmentTreeNodeSteps compose nwC
   val results = nodeToClustersMap.values.head // list of ClusterInfo instances
     .map {
       case SingletonSingleton(item1: Int, item2: Int, height: Double) =>
-        val w1 = darwin.head.readings(item1)
-        val w2 = darwin.head.readings(item2)
+        val w1 = darwin.head.readings(item1).map(_.n)
+        val w2 = darwin.head.readings(item2).map(_.n)
         val m = nwCreateMatrix(w1, w2)
         val pathSteps = identifyAlignmentTreeNodeSteps(m)
         pathSteps

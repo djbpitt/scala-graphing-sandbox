@@ -1,5 +1,7 @@
 package net.collatex.reptilian
 
+import upickle.default.*
+
 import scala.collection.mutable.ArrayBuffer
 import scala.util.matching.Regex
 
@@ -12,7 +14,7 @@ import scala.util.matching.Regex
  *
  *          Tokenization and normalization are under user control (to be implemented)
  */
-case class Token(t: String, n: String, w: Int, g: Int)
+case class Token(t: String, n: String, w: Int, g: Int) derives ReadWriter
 
 /** Used as partially applied function to create tokenizer
  *
@@ -20,6 +22,7 @@ case class Token(t: String, n: String, w: Int, g: Int)
  * @param witnessData  Individual witness as string
  * @return List of strings for single witness
  */
+
 def makeTokenizer(tokenPattern: Regex)(witnessData: String) =
   tokenPattern.findAllIn(witnessData).toList
 
