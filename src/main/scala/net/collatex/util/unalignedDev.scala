@@ -7,9 +7,8 @@ import smile.feature.transform.WinsorScaler
 import smile.nlp.vectorize
 import upickle.default.*
 
-import scala.annotation.{tailrec, unused}
+import scala.annotation.tailrec
 import scala.math.min
-import scala.math.Ordering.Implicits.*
 
 /* Needleman-Wunsch alignment code from
  * https://github.com/Philippus/osita (MPL-2.0)
@@ -40,21 +39,24 @@ object ClusterInfo:
       witnessCount: Int
   ): ClusterInfo =
     (item1 < witnessCount, item2 < witnessCount) match
-        case (true, true) => SingletonSingleton(item1, item2, height)
-        case (true, false) => SingletonTree(item1, item2, height) // Assume singleton is first
-        case (false, false) => TreeTree(item1, item2, height)
-        case _              => throw Exception("(false, true) should not occur")
+      case (true, true) => SingletonSingleton(item1, item2, height)
+      case (true, false) =>
+        SingletonTree(item1, item2, height) // Assume singleton is first
+      case (false, false) => TreeTree(item1, item2, height)
+      case _              => throw Exception("(false, true) should not occur")
 
 /** Traversal of NW matrix to create alignment-tree nodes
- *
- * Matrix is row-major, so rows (a) are base and columns (b) are minor Insert
- * and delete are from major to minor, so: Insert means insert into a Delete
- * means delete from a
- */
+  *
+  * Matrix is row-major, so rows (a) are base and columns (b) are minor Insert and delete are from major to minor, so:
+  * Insert means insert into a Delete means delete from a
+  */
 sealed trait AlignmentTreePath:
   def start: MatrixPosition
   def end: MatrixPosition
-  def copy(start: MatrixPosition = start, end: MatrixPosition = end): AlignmentTreePath
+  def copy(
+      start: MatrixPosition = start,
+      end: MatrixPosition = end
+  ): AlignmentTreePath
 
 case class Match(start: MatrixPosition, end: MatrixPosition) extends AlignmentTreePath
 case class NonMatch(start: MatrixPosition, end: MatrixPosition) extends AlignmentTreePath
@@ -73,8 +75,7 @@ def readJsonData: List[UnalignedFragment] =
 
 /** Create bag of readings for each witness
   *
-  * Each bag includes all types found in any witness, so some may have a zero
-  * count
+  * Each bag includes all types found in any witness, so some may have a zero count
   *
   * @param readings
   *   List of one list of strings (token instances) for each witness
@@ -125,10 +126,7 @@ def clusterReadings(data: Array[Array[Double]]): List[ClusterInfo] =
 private def substitutionCost[A](a: A, b: A): Double =
   if (a == b) 0.0d else 1.0d
 
-private def nwCreateMatrix(
-    a: List[String],
-    b: List[String]
-): Array[Array[Double]] =
+private def nwCreateMatrix(a: List[String], b: List[String]): Array[Array[Double]] =
   val deletionCost = 1.0d
   val insertionCost = 1.0d
   val transpositionCost = 1.0d
@@ -151,8 +149,7 @@ private def nwCreateMatrix(
       d(i - 1)(j - 1) + substitutionCost(a(i - 1), b(j - 1))
     ) // substitution
     if (i > 1 && j > 1 && a(i - 1) == b(j - 2) && a(i - 2) == b(j - 1))
-      d(i)(j) =
-        min(d(i)(j), d(i - 2)(j - 2) + transpositionCost) // transposition
+      d(i)(j) = min(d(i)(j), d(i - 2)(j - 2) + transpositionCost) // transposition
   }
   val distance = d(a.size)(b.size)
   d // return entire matrix
@@ -160,41 +157,26 @@ private def nwCreateMatrix(
 private def nwCreateAlignmentTreeNodesSingleStep(
     matrix: Array[Array[Double]]
 ): LazyList[AlignmentTreePath] =
-  def nextStep(
-      row: Int,
-      col: Int
-  ): LazyList[AlignmentTreePath] =
-    val scoreLeft =
-      EditStep(DirectionType.Left, matrix(row - 1)(col), row - 1, col)
-    val scoreDiag =
-      EditStep(DirectionType.Diag, matrix(row - 1)(col - 1), row - 1, col - 1)
-    val scoreUp =
-      EditStep(DirectionType.Up, matrix(row)(col - 1), row, col - 1)
-    val bestScore: EditStep =
-      Vector(scoreDiag, scoreLeft, scoreUp).min // correct up to here
+  def nextStep(row: Int, col: Int): LazyList[AlignmentTreePath] =
+    val scoreLeft = EditStep(DirectionType.Left, matrix(row - 1)(col), row - 1, col)
+    val scoreDiag = EditStep(DirectionType.Diag, matrix(row - 1)(col - 1), row - 1, col - 1)
+    val scoreUp = EditStep(DirectionType.Up, matrix(row)(col - 1), row, col - 1)
+    val bestScore: EditStep = Vector(scoreDiag, scoreLeft, scoreUp).min // correct up to here
     val nextMove: AlignmentTreePath = bestScore match {
       case EditStep(DirectionType.Left, _, _, _) =>
         Insert(MatrixPosition(row, col), MatrixPosition(bestScore.row, bestScore.col))
       case EditStep(DirectionType.Up, _, _, _) =>
         Delete(MatrixPosition(row, col), MatrixPosition(bestScore.row, bestScore.col))
-      case EditStep(DirectionType.Diag, score, _, _)
-        if score == matrix(row)(col) =>
+      case EditStep(DirectionType.Diag, score, _, _) if score == matrix(row)(col) =>
         Match(MatrixPosition(row, col), MatrixPosition(bestScore.row, bestScore.col))
-      case _ => NonMatch(MatrixPosition(row, col), MatrixPosition(bestScore.row, bestScore.col))
+      case _ =>
+        NonMatch(MatrixPosition(row, col), MatrixPosition(bestScore.row, bestScore.col))
     }
     if bestScore.row == 0 && bestScore.col == 0
-    then // no more, so return result
-      LazyList(nextMove)
-    else
-        nextMove #:: nextStep(
-        bestScore.row,
-        bestScore.col
-      )
+    then LazyList(nextMove) // no more, so return result
+    else nextMove #:: nextStep(bestScore.row, bestScore.col)
 
-  nextStep(
-    row = matrix.length - 1,
-    col = matrix.head.length - 1
-  ) // Start recursion in lower right corner
+  nextStep(row = matrix.length - 1, col = matrix.head.length - 1) // Start recursion in lower right corner
 
 private def nwCompactAlignmentTreeNodeSteps(
     allSingleSteps: LazyList[AlignmentTreePath]
@@ -208,17 +190,9 @@ private def nwCompactAlignmentTreeNodeSteps(
     stepsToProcess match {
       case LazyList() => compactedSteps :+ openStep
       case h #:: t if h.getClass == openStep.getClass =>
-        nextStep(
-          stepsToProcess = t,
-          compactedSteps = compactedSteps,
-          openStep = openStep.copy(end = h.end)
-        )
+        nextStep(stepsToProcess = t, compactedSteps = compactedSteps, openStep = openStep.copy(end = h.end))
       case h #:: t =>
-        nextStep(
-          stepsToProcess = t,
-          compactedSteps = compactedSteps :+ openStep,
-          openStep = h
-        )
+        nextStep(stepsToProcess = t, compactedSteps = compactedSteps :+ openStep, openStep = h)
     }
 
   nextStep(
@@ -227,14 +201,13 @@ private def nwCompactAlignmentTreeNodeSteps(
     openStep = allSingleSteps.head
   )
 
-val identifyAlignmentTreeNodeSteps = nwCompactAlignmentTreeNodeSteps compose nwCreateAlignmentTreeNodesSingleStep
+val identifyAlignmentTreeNodeSteps =
+  nwCompactAlignmentTreeNodeSteps compose nwCreateAlignmentTreeNodesSingleStep
 
 @main def unalignedDev(): Unit =
   val darwin: List[UnalignedFragment] = readJsonData // we know there's only one
   val nodeToClustersMap: Map[Int, List[ClusterInfo]] = darwin
-    .map(node =>
-      node.nodeno -> (vectorizeReadings andThen clusterReadings)(node)
-    ) // list of tuples
+    .map(node => node.nodeno -> (vectorizeReadings andThen clusterReadings)(node)) // list of tuples
     .toMap // map object (key -> value pairs)
   println(nodeToClustersMap)
 
@@ -246,11 +219,11 @@ val identifyAlignmentTreeNodeSteps = nwCompactAlignmentTreeNodeSteps compose nwC
         val m = nwCreateMatrix(w1, w2)
         val pathSteps = identifyAlignmentTreeNodeSteps(m)
         pathSteps
-      case SingletonTree(item1: Int, item2: Int, height: Double) => "SingletonTree"
+      case SingletonTree(item1: Int, item2: Int, height: Double) =>
+        "SingletonTree"
       case TreeTree(item1: Int, item2: Int, height: Double) => "TreeTree"
     }
   results.foreach(println)
-
 
 //  val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
 //  println(dfm.toString(dfm.size))
