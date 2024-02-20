@@ -210,6 +210,13 @@ val identifyAlignmentTreeNodeSteps =
     .map(node => node.nodeno -> (vectorizeReadings andThen clusterReadings)(node)) // list of tuples
     .toMap // map object (key -> value pairs)
   println(nodeToClustersMap)
+  
+  /* RESUME HERE 2024-02-20
+   * Done: We recognize SingletonSingleton and output path steps
+   * TODO: Convert path steps to alignment tree nodes
+   * TODO: Process SingletonTree
+   * TODO: Process TreeTree
+   * */
 
   val results = nodeToClustersMap.values.head // list of ClusterInfo instances
     .map {
