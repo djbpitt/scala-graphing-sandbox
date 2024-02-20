@@ -56,10 +56,10 @@ enum NodeTypes:
  * and delete are from major to minor, so: Insert means insert into a Delete
  * means delete from a
  */
-trait AlignmentTreePath:
+sealed trait AlignmentTreePath:
   def start: MatrixPosition
   def end: MatrixPosition
-  def copy(start: MatrixPosition = start, end: MatrixPosition): AlignmentTreePath
+  def copy(start: MatrixPosition = start, end: MatrixPosition = end): AlignmentTreePath
 
 case class Match(start: MatrixPosition, end: MatrixPosition) extends AlignmentTreePath
 case class NonMatch(start: MatrixPosition, end: MatrixPosition) extends AlignmentTreePath
