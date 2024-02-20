@@ -23,12 +23,16 @@ case class UnalignedFragment(nodeno: Int, readings: List[List[String]])
 object UnalignedFragment: // add method to read from JSON into case class
   implicit val rw: ReadWriter[UnalignedFragment] = macroRW
 
-case class ClusterInfo(
-    item1: Int,
-    item2: Int,
-    height: Double,
-    nodeType: NodeTypes
-)
+sealed trait ClusterInfo:
+  def item1: Int
+  def item2: Int
+  def height: Double
+
+case class SingletonSingleton(item1: Int, item2: Int, height: Double) extends ClusterInfo
+
+case class SingletonTree(item1: Int, item2: Int, height: Double) extends ClusterInfo
+
+case class TreeTree(item1: Int, item2: Int, height: Double) extends ClusterInfo
 
 object ClusterInfo:
   // "of" is conventional name for constructor
@@ -38,17 +42,11 @@ object ClusterInfo:
       height: Double,
       witnessCount: Int
   ): ClusterInfo =
-    val nodeType =
-      (item1 < witnessCount, item2 < witnessCount) match
-        case (true, true) => NodeTypes.SingletonSingleton
-        case (true, false) =>
-          NodeTypes.SingletonTree // Assume singleton is first
-        case (false, false) => NodeTypes.TreeTree
+    (item1 < witnessCount, item2 < witnessCount) match
+        case (true, true) => SingletonSingleton(item1, item2, height)
+        case (true, false) => SingletonTree(item1, item2, height) // Assume singleton is first
+        case (false, false) => TreeTree(item1, item2, height)
         case _              => throw Exception("(false, true) should not occur")
-    ClusterInfo(item1, item2, height, nodeType)
-
-enum NodeTypes:
-  case SingletonSingleton, SingletonTree, TreeTree
 
 /** Traversal of NW matrix to create alignment-tree nodes
  *
