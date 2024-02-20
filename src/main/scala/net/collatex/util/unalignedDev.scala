@@ -232,27 +232,30 @@ private def nwCompactAlignmentTreeNodeSteps(
 val identifyAlignmentTreeNodeSteps = nwCompactAlignmentTreeNodeSteps compose nwCreateAlignmentTreeNodesSingleStep
 
 @main def unalignedDev(): Unit =
-  val darwin: List[UnalignedFragment] = readJsonData
-  // we know there's only one, so we could have told it to find the first
-  //   and then skipped the foreach()
-  val w0 = darwin.head.readings.head
-  val w1 = darwin.head.readings(1)
-  val m = nwCreateMatrix(w0, w1)
+  val darwin: List[UnalignedFragment] = readJsonData // we know there's only one
+  val nodeToClustersMap: Map[Int, List[ClusterInfo]] = darwin
+    .map(node =>
+      node.nodeno -> (vectorizeReadings andThen clusterReadings)(node)
+    ) // list of tuples
+    .toMap // map object (key -> value pairs)
+  println(nodeToClustersMap)
+
+  val results = nodeToClustersMap.values.head // list of ClusterInfo instances
+    .map {
+      case SingletonSingleton(item1: Int, item2: Int, height: Double) =>
+        val w1 = darwin.head.readings(item1)
+        val w2 = darwin.head.readings(item2)
+        val m = nwCreateMatrix(w1, w2)
+        val pathSteps = identifyAlignmentTreeNodeSteps(m)
+        pathSteps
+      case SingletonTree(item1: Int, item2: Int, height: Double) => "SingletonTree"
+      case TreeTree(item1: Int, item2: Int, height: Double) => "TreeTree"
+    }
+  results.foreach(println)
+
+
 //  val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
 //  println(dfm.toString(dfm.size))
-//  val newAlignmentTreeNodes = nwCreateAlignmentTreeNodes(m)
-//  println(newAlignmentTreeNodes)
-  val pathSteps = identifyAlignmentTreeNodeSteps(m)
-  println(pathSteps)
-
-//  darwin
-//    .map(node =>
-//      node -> (vectorizeReadings andThen clusterReadings)(node)
-//    ) // list of tuples
-//    .toMap // map object (key -> value pairs)
-//    .foreach { (node, clusters) =>
-//      println(s"${node.nodeno}:$clusters")
-//    }
 
 case class MatrixPosition(row: Int, col: Int)
 
