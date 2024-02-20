@@ -1,6 +1,5 @@
 package net.collatex.util
 
-import net.collatex.util.AlignmentTreePathType.{Delete, Insert, Match, Nonmatch}
 import smile.clustering.hclust
 import smile.data.DataFrame
 import smile.feature.transform.WinsorScaler
@@ -50,6 +49,22 @@ object ClusterInfo:
 
 enum NodeTypes:
   case SingletonSingleton, SingletonTree, TreeTree
+
+/** Traversal of NW matrix to create alignment-tree nodes
+ *
+ * Matrix is row-major, so rows (a) are base and columns (b) are minor Insert
+ * and delete are from major to minor, so: Insert means insert into a Delete
+ * means delete from a
+ */
+trait AlignmentTreePath:
+  def start: MatrixPosition
+  def end: MatrixPosition
+  def copy(start: MatrixPosition = start, end: MatrixPosition): AlignmentTreePath
+
+case class Match(start: MatrixPosition, end: MatrixPosition) extends AlignmentTreePath
+case class NonMatch(start: MatrixPosition, end: MatrixPosition) extends AlignmentTreePath
+case class Insert(start: MatrixPosition, end: MatrixPosition) extends AlignmentTreePath
+case class Delete(start: MatrixPosition, end: MatrixPosition) extends AlignmentTreePath
 
 /*
  * Functions to manipulate unaligned nodes
@@ -161,31 +176,21 @@ private def nwCreateAlignmentTreeNodesSingleStep(
       EditStep(DirectionType.Up, matrix(row)(col - 1), row, col - 1)
     val bestScore: EditStep =
       Vector(scoreDiag, scoreLeft, scoreUp).min // correct up to here
-    val nextMove: AlignmentTreePathType = bestScore match {
+    val nextMove: AlignmentTreePath = bestScore match {
       case EditStep(DirectionType.Left, _, _, _) =>
-        Insert
+        Insert(MatrixPosition(row, col), MatrixPosition(bestScore.row, bestScore.col))
       case EditStep(DirectionType.Up, _, _, _) =>
-        Delete
+        Delete(MatrixPosition(row, col), MatrixPosition(bestScore.row, bestScore.col))
       case EditStep(DirectionType.Diag, score, _, _)
-          if score == matrix(row)(col) =>
-        Match
-      case _ => Nonmatch
+        if score == matrix(row)(col) =>
+        Match(MatrixPosition(row, col), MatrixPosition(bestScore.row, bestScore.col))
+      case _ => NonMatch(MatrixPosition(row, col), MatrixPosition(bestScore.row, bestScore.col))
     }
     if bestScore.row == 0 && bestScore.col == 0
     then // no more, so return result
-      LazyList(
-        AlignmentTreePath(
-          start = MatrixPosition(row, col),
-          end = MatrixPosition(bestScore.row, bestScore.col),
-          nextMove
-        )
-      )
+      LazyList(nextMove)
     else
-      AlignmentTreePath(
-        start = MatrixPosition(row, col),
-        end = MatrixPosition(bestScore.row, bestScore.col),
-        nextMove
-      ) #:: nextStep(
+        nextMove #:: nextStep(
         bestScore.row,
         bestScore.col
       )
@@ -206,15 +211,11 @@ private def nwCompactAlignmentTreeNodeSteps(
   ): Vector[AlignmentTreePath] =
     stepsToProcess match {
       case LazyList() => compactedSteps :+ openStep
-      case h #:: t if h.alignmentTreePathType == openStep.alignmentTreePathType =>
+      case h #:: t if h.getClass == openStep.getClass =>
         nextStep(
           stepsToProcess = t,
           compactedSteps = compactedSteps,
-          openStep = AlignmentTreePath(
-            start = openStep.start,
-            end = h.end,
-            alignmentTreePathType = openStep.alignmentTreePathType
-          )
+          openStep = openStep.copy(end = h.end)
         )
       case h #:: t =>
         nextStep(
@@ -223,6 +224,7 @@ private def nwCompactAlignmentTreeNodeSteps(
           openStep = h
         )
     }
+
   nextStep(
     stepsToProcess = allSingleSteps.tail,
     compactedSteps = Vector.empty[AlignmentTreePath],
@@ -253,21 +255,6 @@ val identifyAlignmentTreeNodeSteps = nwCompactAlignmentTreeNodeSteps compose nwC
 //    .foreach { (node, clusters) =>
 //      println(s"${node.nodeno}:$clusters")
 //    }
-
-/** Traversal of NW matrix to create alignment-tree nodes
-  *
-  * Matrix is row-major, so rows (a) are base and columns (b) are minor Insert
-  * and delete are from major to minor, so: Insert means insert into a Delete
-  * means delete from a
-  */
-enum AlignmentTreePathType:
-  case Match, Nonmatch, Insert, Delete
-import AlignmentTreePath.*
-case class AlignmentTreePath(
-    start: MatrixPosition,
-    end: MatrixPosition,
-    alignmentTreePathType: AlignmentTreePathType // Insert, Delete, Match, Nonmatch
-)
 
 case class MatrixPosition(row: Int, col: Int)
 
