@@ -45,11 +45,29 @@ object ClusterInfo:
       case (false, false) => TreeTree(item1, item2, height)
       case _              => throw Exception("(false, true) should not occur")
 
+enum EditStep extends Ordered[EditStep]:
+  def distance: Double
+  def row: Int
+  def col: Int
+
+  import math.Ordered.orderingToOrdered
+
+  def compare(that: EditStep): Int = (
+    this.distance,
+    this.ordinal
+  ) compare(that.distance, that.ordinal)
+
+  case Diag(distance: Double, row: Int, col: Int)
+  case Left(distance: Double, row: Int, col: Int)
+  case Up(distance: Double, row: Int, col: Int)
+
 /** Traversal of NW matrix to create alignment-tree nodes
   *
   * Matrix is row-major, so rows (a) are base and columns (b) are minor Insert and delete are from major to minor, so:
   * Insert means insert into a Delete means delete from a
   */
+case class MatrixPosition(row: Int, col: Int)
+
 sealed trait AlignmentTreePath:
   def start: MatrixPosition
   def end: MatrixPosition
@@ -158,17 +176,17 @@ private def nwCreateAlignmentTreeNodesSingleStep(
     matrix: Array[Array[Double]]
 ): LazyList[AlignmentTreePath] =
   def nextStep(row: Int, col: Int): LazyList[AlignmentTreePath] =
-    val scoreLeft = EditStep(DirectionType.Left, matrix(row - 1)(col), row - 1, col)
-    val scoreDiag = EditStep(DirectionType.Diag, matrix(row - 1)(col - 1), row - 1, col - 1)
-    val scoreUp = EditStep(DirectionType.Up, matrix(row)(col - 1), row, col - 1)
+    val scoreLeft = EditStep.Left(matrix(row - 1)(col), row - 1, col)
+    val scoreDiag = EditStep.Diag(matrix(row - 1)(col - 1), row - 1, col - 1)
+    val scoreUp = EditStep.Up(matrix(row)(col - 1), row, col - 1)
     val bestScore: EditStep = Vector(scoreDiag, scoreLeft, scoreUp).min // correct up to here
     val nextMove: AlignmentTreePath = bestScore match {
-      case EditStep(DirectionType.Left, _, _, _) =>
-        Insert(MatrixPosition(row, col), MatrixPosition(bestScore.row, bestScore.col))
-      case EditStep(DirectionType.Up, _, _, _) =>
-        Delete(MatrixPosition(row, col), MatrixPosition(bestScore.row, bestScore.col))
-      case EditStep(DirectionType.Diag, score, _, _) if score == matrix(row)(col) =>
-        Match(MatrixPosition(row, col), MatrixPosition(bestScore.row, bestScore.col))
+      case x:EditStep.Left =>
+        Insert(MatrixPosition(row, col), MatrixPosition(x.row, x.col))
+      case x:EditStep.Up =>
+        Delete(MatrixPosition(row, col), MatrixPosition(x.row, x.col))
+      case x:EditStep.Diag if x.distance == matrix(row)(col) =>
+        Match(MatrixPosition(row, col), MatrixPosition(x.row, x.col))
       case _ =>
         NonMatch(MatrixPosition(row, col), MatrixPosition(bestScore.row, bestScore.col))
     }
@@ -228,21 +246,3 @@ val identifyAlignmentTreeNodeSteps =
 //  val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
 //  println(dfm.toString(dfm.size))
 
-case class MatrixPosition(row: Int, col: Int)
-
-enum DirectionType:
-  case Diag, Left, Up
-import DirectionType.*
-case class EditStep(
-    direction: DirectionType,
-    distance: Double,
-    row: Int,
-    col: Int
-) extends Ordered[EditStep] {
-
-  import math.Ordered.orderingToOrdered
-  def compare(that: EditStep): Int = (
-    this.distance,
-    this.direction.ordinal
-  ) compare (that.distance, that.direction.ordinal)
-}
