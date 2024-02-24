@@ -1,6 +1,6 @@
 package net.collatex.util
 
-import net.collatex.reptilian.Token
+import net.collatex.reptilian.{AgreementNode, HasWitnessReadings, Token}
 import smile.clustering.hclust
 import smile.data.DataFrame
 import smile.feature.transform.WinsorScaler
@@ -55,7 +55,7 @@ enum EditStep extends Ordered[EditStep]:
   def compare(that: EditStep): Int = (
     this.distance,
     this.ordinal
-  ) compare(that.distance, that.ordinal)
+  ) compare (that.distance, that.ordinal)
 
   case Diag(distance: Double, row: Int, col: Int)
   case Left(distance: Double, row: Int, col: Int)
@@ -181,11 +181,11 @@ private def nwCreateAlignmentTreeNodesSingleStep(
     val scoreUp = EditStep.Up(matrix(row)(col - 1), row, col - 1)
     val bestScore: EditStep = Vector(scoreDiag, scoreLeft, scoreUp).min // correct up to here
     val nextMove: AlignmentTreePath = bestScore match {
-      case x:EditStep.Left =>
+      case x: EditStep.Left =>
         Insert(MatrixPosition(row, col), MatrixPosition(x.row, x.col))
-      case x:EditStep.Up =>
+      case x: EditStep.Up =>
         Delete(MatrixPosition(row, col), MatrixPosition(x.row, x.col))
-      case x:EditStep.Diag if x.distance == matrix(row)(col) =>
+      case x: EditStep.Diag if x.distance == matrix(row)(col) =>
         Match(MatrixPosition(row, col), MatrixPosition(x.row, x.col))
       case _ =>
         NonMatch(MatrixPosition(row, col), MatrixPosition(bestScore.row, bestScore.col))
@@ -222,27 +222,70 @@ private def nwCompactAlignmentTreeNodeSteps(
 val identifyAlignmentTreeNodeSteps =
   nwCompactAlignmentTreeNodeSteps compose nwCreateAlignmentTreeNodesSingleStep
 
+/**
+ *
+ * Match -> Agreement
+ * NonMatch -> Variation
+ * Insert, Delete -> AgreementIndel
+ * (no VariationIndel because that requires at least three witnesses)
+ */
+
+def singletonSingletonPathStepsToAlignmentTreeNode(
+    pathSteps: Vector[AlignmentTreePath],
+    w1Identifier: Int,
+    w2Identifier: Int,
+    w1: List[Token],
+    w2: List[Token]
+) =
+  def matrixPositionToTokenPosition(matrixStart: Int, matrixEnd: Int, witnessData: List[Token]): (Int, Int) =
+    println(s"first token: ${witnessData.head}")
+    println(s"token count: ${witnessData.size}")
+    println(s"start: $matrixStart; end: $matrixEnd")
+    (witnessData(matrixStart).g, witnessData(matrixEnd).g)
+
+  pathSteps map {
+    case Match(start: MatrixPosition, end: MatrixPosition) =>
+      val w1Data = w1Identifier -> matrixPositionToTokenPosition(start.row, end.row, w1)
+      val w2Data = w2Identifier -> matrixPositionToTokenPosition(start.col, end.col, w2)
+      val witnessReadings = (w1Data, w2Data)
+      witnessReadings
+
+    case NonMatch(start: MatrixPosition, end: MatrixPosition) => ???
+    case Insert(start: MatrixPosition, end: MatrixPosition) => ???
+    case Delete(start: MatrixPosition, end: MatrixPosition) => ???
+  }
+
 @main def unalignedDev(): Unit =
   val darwin: List[UnalignedFragment] = readJsonData // we know there's only one
   val nodeToClustersMap: Map[Int, List[ClusterInfo]] = darwin
     .map(node => node.nodeno -> (vectorizeReadings andThen clusterReadings)(node)) // list of tuples
     .toMap // map object (key -> value pairs)
   println(nodeToClustersMap)
-  
-  /* RESUME HERE 2024-02-20
+
+  /* RESUME HERE 2024-03-01
+   * We currently return matrix values from 21 to 0, but the witnesses contain only 21 tokens
+   *   The mistake seems to be returning 0,0, which we now think is a matrix artifact, and not data
    * Done: We recognize SingletonSingleton and output path steps
-   * TODO: Convert path steps to alignment tree nodes
+   * In progress: Convert path steps to alignment tree nodes
+   *   NB: Current CollateX aligns individual tokens and segmentation is a post-process;
+   *     The new model combines as much as possible, that is, makes segmentation the default
+   *     Because this part of the alignment is progressive, this means that we may need to
+   *       undo a combination because incorporating a new witness has changed (split) the
+   *       path type
    * TODO: Process SingletonTree
    * TODO: Process TreeTree
+   * TODO: Fix fake global token position numbers to make them consecutive within a witness
    * */
 
   val results = nodeToClustersMap.values.head // list of ClusterInfo instances
     .map {
       case SingletonSingleton(item1: Int, item2: Int, height: Double) =>
-        val w1 = darwin.head.readings(item1).map(_.n)
-        val w2 = darwin.head.readings(item2).map(_.n)
-        val m = nwCreateMatrix(w1, w2)
+        val w1: List[Token] = darwin.head.readings(item1)
+        val w2: List[Token] = darwin.head.readings(item2)
+        val m = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
         val pathSteps = identifyAlignmentTreeNodeSteps(m)
+        println(pathSteps)
+        val wr = singletonSingletonPathStepsToAlignmentTreeNode(pathSteps, item1, item2, w1, w2)
         pathSteps
       case SingletonTree(item1: Int, item2: Int, height: Double) =>
         "SingletonTree"
@@ -252,4 +295,3 @@ val identifyAlignmentTreeNodeSteps =
 
 //  val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
 //  println(dfm.toString(dfm.size))
-
