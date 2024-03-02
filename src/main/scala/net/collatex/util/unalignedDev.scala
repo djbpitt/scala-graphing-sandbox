@@ -45,14 +45,14 @@ object ClusterInfo:
       case (false, false) => TreeTree(item1, item2, height)
       case _              => throw Exception("(false, true) should not occur")
 
-enum EditStep extends Ordered[EditStep]:
+enum MatrixStep extends Ordered[MatrixStep]:
   def distance: Double
   def row: Int
   def col: Int
 
   import math.Ordered.orderingToOrdered
 
-  def compare(that: EditStep): Int = (
+  def compare(that: MatrixStep): Int = (
     this.distance,
     this.ordinal
   ) compare (that.distance, that.ordinal)
@@ -63,8 +63,10 @@ enum EditStep extends Ordered[EditStep]:
 
 /** Traversal of NW matrix to create alignment-tree nodes
   *
-  * Matrix is row-major, so rows (a) are base and columns (b) are minor Insert and delete are from major to minor, so:
-  * Insert means insert into a Delete means delete from a
+  * Matrix is row-major, so rows (a) are base and columns (b) are minor
+  * Insert and delete are from major to minor, so:
+  *   Insert means insert into a
+  *   Delete means delete from a
   */
 case class MatrixPosition(row: Int, col: Int)
 
@@ -80,6 +82,17 @@ case class Match(start: MatrixPosition, end: MatrixPosition) extends AlignmentTr
 case class NonMatch(start: MatrixPosition, end: MatrixPosition) extends AlignmentTreePath
 case class Insert(start: MatrixPosition, end: MatrixPosition) extends AlignmentTreePath
 case class Delete(start: MatrixPosition, end: MatrixPosition) extends AlignmentTreePath
+
+enum SingleStepAlignmentTreePath:
+  case SingleStepMatch(tok1: Token, tok2: Token)
+
+  case SingleStepNonMatch(tok1: Token, tok2: Token)
+
+  case SingleStepInsert(tok: Token)
+
+  case SingleStepDelete(tok: Token)
+
+export SingleStepAlignmentTreePath._
 
 /*
  * Functions to manipulate unaligned nodes
@@ -173,22 +186,24 @@ private def nwCreateMatrix(a: List[String], b: List[String]): Array[Array[Double
   d // return entire matrix
 
 private def nwCreateAlignmentTreeNodesSingleStep(
-    matrix: Array[Array[Double]]
-): LazyList[AlignmentTreePath] =
-  def nextStep(row: Int, col: Int): LazyList[AlignmentTreePath] =
-    val scoreLeft = EditStep.Left(matrix(row - 1)(col), row - 1, col)
-    val scoreDiag = EditStep.Diag(matrix(row - 1)(col - 1), row - 1, col - 1)
-    val scoreUp = EditStep.Up(matrix(row)(col - 1), row, col - 1)
-    val bestScore: EditStep = Vector(scoreDiag, scoreLeft, scoreUp).min // correct up to here
-    val nextMove: AlignmentTreePath = bestScore match {
-      case x: EditStep.Left =>
-        Insert(MatrixPosition(row, col), MatrixPosition(x.row, x.col))
-      case x: EditStep.Up =>
-        Delete(MatrixPosition(row, col), MatrixPosition(x.row, x.col))
-      case x: EditStep.Diag if x.distance == matrix(row)(col) =>
-        Match(MatrixPosition(row, col), MatrixPosition(x.row, x.col))
-      case _ =>
-        NonMatch(MatrixPosition(row, col), MatrixPosition(bestScore.row, bestScore.col))
+    matrix: Array[Array[Double]],
+    w1: List[Token], // rows
+    w2: List[Token]  // cols
+): LazyList[SingleStepAlignmentTreePath] =
+  def nextStep(row: Int, col: Int): LazyList[SingleStepAlignmentTreePath] =
+    val scoreLeft = MatrixStep.Left(matrix(row - 1)(col), row - 1, col)
+    val scoreDiag = MatrixStep.Diag(matrix(row - 1)(col - 1), row - 1, col - 1)
+    val scoreUp = MatrixStep.Up(matrix(row)(col - 1), row, col - 1)
+    val bestScore: MatrixStep = Vector(scoreDiag, scoreLeft, scoreUp).min
+    val nextMove: SingleStepAlignmentTreePath = bestScore match {
+      case x: MatrixStep.Left =>
+        SingleStepInsert(w2(x.col))
+      case x: MatrixStep.Up =>
+        SingleStepDelete(w1(x.row))
+      case x: MatrixStep.Diag if x.distance == matrix(row)(col) =>
+        SingleStepMatch(w2(x.col), w1(x.row))
+      case x: MatrixStep.Diag =>
+        SingleStepNonMatch(w2(x.col), w1(x.row))
     }
     if bestScore.row == 0 && bestScore.col == 0
     then LazyList(nextMove) // no more, so return result
@@ -219,8 +234,8 @@ private def nwCompactAlignmentTreeNodeSteps(
     openStep = allSingleSteps.head
   )
 
-val identifyAlignmentTreeNodeSteps =
-  nwCompactAlignmentTreeNodeSteps compose nwCreateAlignmentTreeNodesSingleStep
+//val identifyAlignmentTreeNodeSteps =
+//  nwCompactAlignmentTreeNodeSteps compose nwCreateAlignmentTreeNodesSingleStep
 
 /**
  *
@@ -255,6 +270,7 @@ def singletonSingletonPathStepsToAlignmentTreeNode(
     case Delete(start: MatrixPosition, end: MatrixPosition) => ???
   }
 
+
 @main def unalignedDev(): Unit =
   val darwin: List[UnalignedFragment] = readJsonData // we know there's only one
   val nodeToClustersMap: Map[Int, List[ClusterInfo]] = darwin
@@ -263,8 +279,6 @@ def singletonSingletonPathStepsToAlignmentTreeNode(
   println(nodeToClustersMap)
 
   /* RESUME HERE 2024-03-01
-   * We currently return matrix values from 21 to 0, but the witnesses contain only 21 tokens
-   *   The mistake seems to be returning 0,0, which we now think is a matrix artifact, and not data
    * Done: We recognize SingletonSingleton and output path steps
    * In progress: Convert path steps to alignment tree nodes
    *   NB: Current CollateX aligns individual tokens and segmentation is a post-process;
@@ -283,9 +297,11 @@ def singletonSingletonPathStepsToAlignmentTreeNode(
         val w1: List[Token] = darwin.head.readings(item1)
         val w2: List[Token] = darwin.head.readings(item2)
         val m = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
-        val pathSteps = identifyAlignmentTreeNodeSteps(m)
-        println(pathSteps)
-        val wr = singletonSingletonPathStepsToAlignmentTreeNode(pathSteps, item1, item2, w1, w2)
+//        val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
+//        println(dfm.toString(dfm.size))
+//        val pathSteps = identifyAlignmentTreeNodeSteps(m)
+        val pathSteps = nwCreateAlignmentTreeNodesSingleStep(m, w1, w2)
+//        val wr = singletonSingletonPathStepsToAlignmentTreeNode(pathSteps, item1, item2, w1, w2)
         pathSteps
       case SingletonTree(item1: Int, item2: Int, height: Double) =>
         "SingletonTree"
@@ -293,5 +309,4 @@ def singletonSingletonPathStepsToAlignmentTreeNode(
     }
   results.foreach(println)
 
-//  val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
-//  println(dfm.toString(dfm.size))
+
