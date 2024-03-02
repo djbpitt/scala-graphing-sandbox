@@ -63,10 +63,9 @@ enum MatrixStep extends Ordered[MatrixStep]:
 
 /** Traversal of NW matrix to create alignment-tree nodes
   *
-  * Matrix is row-major, so rows (a) are base and columns (b) are minor
-  * Insert and delete are from major to minor, so:
-  *   Insert means insert into a
-  *   Delete means delete from a
+  * First witness is rows, second is columns
+  * Delete means something has been deleted from rows, i.e., token is present only in columns
+  * Insert means something has been inserted into rows, i.e., token is present only in rows
   */
 case class MatrixPosition(row: Int, col: Int)
 
@@ -188,7 +187,7 @@ private def nwCreateMatrix(a: List[String], b: List[String]): Array[Array[Double
 private def nwCreateAlignmentTreeNodesSingleStep(
     matrix: Array[Array[Double]],
     w1: List[Token], // rows
-    w2: List[Token]  // cols
+    w2: List[Token] // cols
 ): LazyList[SingleStepAlignmentTreePath] =
   def nextStep(row: Int, col: Int): LazyList[SingleStepAlignmentTreePath] =
     val scoreLeft = MatrixStep.Left(matrix(row - 1)(col), row - 1, col)
@@ -197,9 +196,9 @@ private def nwCreateAlignmentTreeNodesSingleStep(
     val bestScore: MatrixStep = Vector(scoreDiag, scoreLeft, scoreUp).min
     val nextMove: SingleStepAlignmentTreePath = bestScore match {
       case x: MatrixStep.Left =>
-        SingleStepInsert(w2(x.col))
+        SingleStepInsert(w1(x.col))
       case x: MatrixStep.Up =>
-        SingleStepDelete(w1(x.row))
+        SingleStepDelete(w2(x.row))
       case x: MatrixStep.Diag if x.distance == matrix(row)(col) =>
         SingleStepMatch(w2(x.col), w1(x.row))
       case x: MatrixStep.Diag =>
@@ -237,13 +236,9 @@ private def nwCompactAlignmentTreeNodeSteps(
 //val identifyAlignmentTreeNodeSteps =
 //  nwCompactAlignmentTreeNodeSteps compose nwCreateAlignmentTreeNodesSingleStep
 
-/**
- *
- * Match -> Agreement
- * NonMatch -> Variation
- * Insert, Delete -> AgreementIndel
- * (no VariationIndel because that requires at least three witnesses)
- */
+/** Match -> Agreement NonMatch -> Variation Insert, Delete -> AgreementIndel (no VariationIndel because that requires
+  * at least three witnesses)
+  */
 
 def singletonSingletonPathStepsToAlignmentTreeNode(
     pathSteps: Vector[AlignmentTreePath],
@@ -266,10 +261,9 @@ def singletonSingletonPathStepsToAlignmentTreeNode(
       witnessReadings
 
     case NonMatch(start: MatrixPosition, end: MatrixPosition) => ???
-    case Insert(start: MatrixPosition, end: MatrixPosition) => ???
-    case Delete(start: MatrixPosition, end: MatrixPosition) => ???
+    case Insert(start: MatrixPosition, end: MatrixPosition)   => ???
+    case Delete(start: MatrixPosition, end: MatrixPosition)   => ???
   }
-
 
 @main def unalignedDev(): Unit =
   val darwin: List[UnalignedFragment] = readJsonData // we know there's only one
@@ -297,16 +291,14 @@ def singletonSingletonPathStepsToAlignmentTreeNode(
         val w1: List[Token] = darwin.head.readings(item1)
         val w2: List[Token] = darwin.head.readings(item2)
         val m = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
-//        val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
-//        println(dfm.toString(dfm.size))
+        val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
+        println(dfm.toString(dfm.size))
 //        val pathSteps = identifyAlignmentTreeNodeSteps(m)
         val pathSteps = nwCreateAlignmentTreeNodesSingleStep(m, w1, w2)
 //        val wr = singletonSingletonPathStepsToAlignmentTreeNode(pathSteps, item1, item2, w1, w2)
-        pathSteps
+        pathSteps.toList
       case SingletonTree(item1: Int, item2: Int, height: Double) =>
         "SingletonTree"
       case TreeTree(item1: Int, item2: Int, height: Double) => "TreeTree"
     }
   results.foreach(println)
-
-
