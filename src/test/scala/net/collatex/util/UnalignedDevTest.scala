@@ -34,17 +34,6 @@ private class UnalignedDevTest extends AnyFunSuite:
     List("a", "b", "c"),
     List("a", "d", "c")
   )
-  private val (m1w0, m1w1, m1) = createMatrixFromStrings( // match, insert, match
-    List("a", "c"),
-    List("a", "b", "c")
-  )
-//  private val m1 = nwCreateMatrix(ma.map(_.n), mb.map(_.n)) // match, nonmatch, match
-//  private val m2 = nwCreateMatrix(ma.map(_.n), mc.map(_.n)) // match, insert, match
-//  private val m3 = nwCreateMatrix(mc.map(_.n), ma.map(_.n)) // match, delete, match
-//  private val m4 = nwCreateMatrix(md.map(_.n), me.map(_.n)) // match, nonmatch(2), match
-//  private val m5 = nwCreateMatrix(mc.map(_.n), mf.map(_.n)) // match, delete(2), match
-//  private val m6 = nwCreateMatrix(mf.map(_.n), mc.map(_.n)) // match, insert(2), match
-
   test(testName = "single-step: match, nonmatch, match") {
     val result = nwCreateAlignmentTreeNodesSingleStep(m0, m0w0, m0w1)
     val expected = LazyList(
@@ -55,10 +44,11 @@ private class UnalignedDevTest extends AnyFunSuite:
     assert(result == expected)
   }
 
+  private val (m1w0, m1w1, m1) = createMatrixFromStrings( // match, delete, match
+    List("a", "c"),
+    List("a", "b", "c")
+  )
   test(testName = "single-step: match, delete, match") {
-    showDataFrame(m1)
-    println(m1w0)
-    println(m1w1)
     val result = nwCreateAlignmentTreeNodesSingleStep(m1, m1w0, m1w1)
     val expected = LazyList(
       SingleStepMatch(Token("c", "c", 1, 22), Token("c", "c", 0, 1)),
@@ -68,48 +58,80 @@ private class UnalignedDevTest extends AnyFunSuite:
     assert(result == expected)
   }
 
-//  test(testName = "single-step: match, delete, match") {
-//    val result = nwCreateAlignmentTreeNodesSingleStep(m3, mc, ma)
-//    val expected = LazyList(
-//      SingleStepMatch(Token("c", "c", 0, 0), Token("c", "c", 0, 0)),
-//      SingleStepDelete(Token("c", "c", 0, 0)),
-//      SingleStepMatch(Token("a", "a", 0, 0), Token("a", "a", 0, 0))
-//    )
-//    assert(result == expected)
-//  }
+  private val (m2w0, m2w1, m2) = createMatrixFromStrings( // match, insert, match
+    List("a", "b", "c"),
+    List("a", "c")
+  )
+  test(testName = "single-step: match, insert, match") {
+    val result = nwCreateAlignmentTreeNodesSingleStep(m2, m2w0, m2w1)
+    val expected = LazyList(
+      SingleStepMatch(Token("c", "c", 1, 21), Token("c", "c", 0, 2)),
+      SingleStepInsert(Token("b", "b", 0, 1)),
+      SingleStepMatch(Token("a", "a", 1, 20), Token("a", "a", 0, 0))
+    )
+    assert(result == expected)
+  }
 
-//  test(testName = "single-step: match, nonmatch(2), match") {
-//    val result = nwCreateAlignmentTreeNodesSingleStep(m4, md, me)
-//    val expected = LazyList(
-//      SingleStepMatch(Token("d", "d", 0, 0), Token("d", "d", 0, 0)),
-//      SingleStepNonMatch(Token("f", "a", 0, 0), Token("c", "c", 0, 0)),
-//      SingleStepNonMatch(Token("e", "e", 0, 0), Token("b", "b", 0, 0)),
-//      SingleStepMatch(Token("a", "a", 0, 0), Token("a", "a", 0, 0))
-//    )
-//    assert(result == expected)
-//  }
+  private val (m3w0, m3w1, m3) = createMatrixFromStrings( // match, nonmatch(2), match
+    List("a", "b", "c", "d"),
+    List("a", "e", "f", "d")
+  )
+  test(testName = "single-step: match, nonmatch(2), match") {
+    val result = nwCreateAlignmentTreeNodesSingleStep(m3, m3w0, m3w1)
+    val expected = LazyList(
+      SingleStepMatch(Token("d", "d", 1, 23), Token("d", "d", 0, 3)),
+      SingleStepNonMatch(Token("f", "f", 1, 22), Token("c", "c", 0, 2)),
+      SingleStepNonMatch(Token("e", "e", 1, 21), Token("b", "b", 0, 1)),
+      SingleStepMatch(Token("a", "a", 1, 20), Token("a", "a", 0, 0))
+    )
+    assert(result == expected)
+  }
 
-//  test(testName = "single-step: match, delete(2), match") {
-//    val result = nwCreateAlignmentTreeNodesSingleStep(m5, mc, mf)
-//    val expected = LazyList(
-//      SingleStepMatch(Token("c", "c", 0, 0), Token("c", "c", 0, 0)),
-//      SingleStepDelete(Token("c", "c", 0, 0)),
-//      SingleStepDelete(Token("c", "c", 0, 0)),
-//      SingleStepMatch(Token("a", "a", 0, 0), Token("a", "a", 0, 0))
-//    )
-//    assert(result == expected)
-//  }
+  private val (m4w0, m4w1, m4) = createMatrixFromStrings( // match, delete(2), match
+    List("a", "d"),
+    List("a", "b", "c", "d")
+  )
+  test(testName = "single-step: match, delete(2), match") {
+    val result = nwCreateAlignmentTreeNodesSingleStep(m4, m4w0, m4w1)
+    val expected = LazyList(
+      SingleStepMatch(Token("d", "d", 1, 23), Token("d", "d", 0, 1)),
+      SingleStepDelete(Token("b", "b", 1, 21)),
+      SingleStepDelete(Token("b", "b", 1, 21)),
+      SingleStepMatch(Token("a", "a", 1, 20), Token("a", "a", 0, 0))
+    )
+    assert(result == expected)
+  }
 
-//  test(testName = "single-step: match, insert(2), match") {
-//    val result = nwCreateAlignmentTreeNodesSingleStep(m6, mf, mc)
-//    val expected = LazyList(
-//      SingleStepMatch(Token("c", "c", 0, 0), Token("c", "c", 0, 0)),
-//      SingleStepInsert(Token("c", "c", 0, 0)),
-//      SingleStepInsert(Token("c", "c", 0, 0)),
-//      SingleStepMatch(Token("a", "a", 0, 0), Token("a", "a", 0, 0))
-//    )
-//    assert(result == expected)
-//  }
+  private val (m5w0, m5w1, m5) = createMatrixFromStrings( // match, insert(2), match
+    List("a", "b", "c", "d"),
+    List("a", "d")
+  )
+  test(testName = "single-step: match, insert(2), match") {
+    val result = nwCreateAlignmentTreeNodesSingleStep(m5, m5w0, m5w1)
+    val expected = LazyList(
+      SingleStepMatch(Token("d", "d", 1, 21), Token("d", "d", 0, 3)),
+      SingleStepInsert(Token("b", "b", 0, 1)),
+      SingleStepInsert(Token("b", "b", 0, 1)),
+      SingleStepMatch(Token("a", "a", 1, 20), Token("a", "a", 0, 0))
+    )
+    assert(result == expected)
+  }
+
+  private val (m6w0, m6w1, m6) = createMatrixFromStrings( // match(2), insert, match(2)
+    List("a", "b", "c", "d", "e"),
+    List("a", "b", "d", "e")
+  )
+  test(testName = "single-step: match(2), insert, match(2)") {
+    val result = nwCreateAlignmentTreeNodesSingleStep(m6, m6w0, m6w1)
+    val expected = LazyList(
+      SingleStepMatch(Token("e", "e", 1, 23), Token("e", "e", 0, 4)),
+      SingleStepMatch(Token("d", "d", 1, 22), Token("d", "d", 0, 3)),
+      SingleStepInsert(Token("c", "c", 0, 2)),
+      SingleStepMatch(Token("b", "b", 1, 21), Token("b", "b", 0, 1)),
+      SingleStepMatch(Token("a", "a", 1, 20), Token("a", "a", 0, 0))
+    )
+    assert(result == expected)
+  }
 
 //  test(testName = "compacted: match, nonmatch, match") {
 //    val result =

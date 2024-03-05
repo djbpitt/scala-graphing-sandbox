@@ -64,8 +64,8 @@ enum MatrixStep extends Ordered[MatrixStep]:
 /** Traversal of NW matrix to create alignment-tree nodes
   *
   * First witness is rows, second is columns
-  * Delete means something has been deleted from rows, i.e., token is present only in columns
-  * Insert means something has been inserted into rows, i.e., token is present only in rows
+  * Delete means something has been deleted from rows (1), i.e., token is present only in columns (2)
+  * Insert means something has been inserted into rows (1), i.e., token is present only in rows (2)
   */
 case class MatrixPosition(row: Int, col: Int)
 
