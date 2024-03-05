@@ -1,6 +1,14 @@
 package net.collatex.util
 
-import net.collatex.reptilian.{AgreementNode, HasWitnessReadings, Token}
+import net.collatex.reptilian.{
+  AgreementIndelNode,
+  AgreementNode,
+  VariationNode,
+  VariationIndelNode,
+  HasWitnessReadings,
+  WitnessReadings,
+  Token
+}
 import smile.clustering.hclust
 import smile.data.DataFrame
 import smile.feature.transform.WinsorScaler
@@ -63,9 +71,9 @@ enum MatrixStep extends Ordered[MatrixStep]:
 
 /** Traversal of NW matrix to create alignment-tree nodes
   *
-  * First witness is rows, second is columns
-  * Delete means something has been deleted from rows (1), i.e., token is present only in columns (2)
-  * Insert means something has been inserted into rows (1), i.e., token is present only in rows (2)
+  * First witness is rows, second is columns Delete means something has been deleted from rows (1), i.e., token is
+  * present only in columns (2) Insert means something has been inserted into rows (1), i.e., token is present only in
+  * rows (2)
   */
 case class MatrixPosition(row: Int, col: Int)
 
@@ -211,30 +219,62 @@ private def nwCreateAlignmentTreeNodesSingleStep(
   nextStep(row = matrix.length - 1, col = matrix.head.length - 1) // Start recursion in lower right corner
 
 private def nwCompactAlignmentTreeNodeSteps(
-    allSingleSteps: LazyList[AlignmentTreePath]
-): Vector[AlignmentTreePath] =
+    allSingleSteps: LazyList[SingleStepAlignmentTreePath]
+): Vector[HasWitnessReadings] =
+  def singleStepToWitnessReadings(single: SingleStepAlignmentTreePath): WitnessReadings =
+    single match {
+      case SingleStepMatch(tok1: Token, tok2: Token) =>
+        Map(tok1.w.toString -> (tok1.g, tok1.g + 1), tok2.w.toString -> (tok2.g, tok2.g + 1))
+      case SingleStepNonMatch(tok1: Token, tok2: Token) =>
+        Map(tok1.w.toString -> (tok1.g, tok1.g + 1), tok2.w.toString -> (tok2.g, tok2.g + 1))
+      case SingleStepInsert(tok: Token) => Map(tok.w.toString -> (tok.g, tok.g + 1))
+      case SingleStepDelete(tok: Token) => Map(tok.w.toString -> (tok.g, tok.g + 1))
+    }
+  def openStepToTreeNode(open: (SingleStepAlignmentTreePath, WitnessReadings)): HasWitnessReadings =
+    open match {
+      case (SingleStepMatch(tok1: Token, tok2: Token), wr: WitnessReadings) =>
+        AgreementNode(witnessReadings = wr)
+      case (SingleStepNonMatch(tok1: Token, tok2: Token), wr: WitnessReadings) =>
+        VariationNode(
+          witnessReadings = wr,
+          witnessGroups = wr.map((k, _) => Vector(k)).toVector
+        )
+      case (SingleStepInsert(tok: Token), wr: WitnessReadings) =>
+        AgreementIndelNode(witnessReadings = wr)
+      case (SingleStepDelete(tok: Token), wr: WitnessReadings) =>
+        AgreementIndelNode(witnessReadings = wr)
+    }
+
   @tailrec
   def nextStep(
-      stepsToProcess: LazyList[AlignmentTreePath],
-      compactedSteps: Vector[AlignmentTreePath],
-      openStep: AlignmentTreePath
-  ): Vector[AlignmentTreePath] =
+      stepsToProcess: LazyList[SingleStepAlignmentTreePath],
+      compactedSteps: Vector[HasWitnessReadings],
+      openStep: (SingleStepAlignmentTreePath, WitnessReadings)
+  ): Vector[HasWitnessReadings] =
     stepsToProcess match {
-      case LazyList() => compactedSteps :+ openStep
-      case h #:: t if h.getClass == openStep.getClass =>
-        nextStep(stepsToProcess = t, compactedSteps = compactedSteps, openStep = openStep.copy(end = h.end))
+      case LazyList() => compactedSteps :+ openStepToTreeNode(openStep)
+      case h #:: t if h.getClass == openStep._1.getClass =>
+        nextStep(
+          stepsToProcess = t,
+          compactedSteps = compactedSteps,
+          openStep = (openStep._1, openStep._2.map((k, v) => k -> (v._1, v._2 + 1)))
+        )
       case h #:: t =>
-        nextStep(stepsToProcess = t, compactedSteps = compactedSteps :+ openStep, openStep = h)
+        nextStep(
+          stepsToProcess = t,
+          compactedSteps = compactedSteps :+ openStepToTreeNode(openStep),
+          openStep = (h, singleStepToWitnessReadings(h))
+        )
     }
 
   nextStep(
     stepsToProcess = allSingleSteps.tail,
-    compactedSteps = Vector.empty[AlignmentTreePath],
-    openStep = allSingleSteps.head
+    compactedSteps = Vector.empty[HasWitnessReadings],
+    openStep = (allSingleSteps.head, singleStepToWitnessReadings(allSingleSteps.head))
   )
 
-//val identifyAlignmentTreeNodeSteps =
-//  nwCompactAlignmentTreeNodeSteps compose nwCreateAlignmentTreeNodesSingleStep
+//val identifyAlignmentTreeNodeSteps: Vector[HasWitnessReadings] =
+//  nwCreateAlignmentTreeNodesSingleStep andThen nwCompactAlignmentTreeNodeSteps
 
 /** Match -> Agreement NonMatch -> Variation Insert, Delete -> AgreementIndel (no VariationIndel because that requires
   * at least three witnesses)
@@ -291,12 +331,14 @@ def singletonSingletonPathStepsToAlignmentTreeNode(
         val w1: List[Token] = darwin.head.readings(item1)
         val w2: List[Token] = darwin.head.readings(item2)
         val m = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
-        val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
-        println(dfm.toString(dfm.size))
+//        val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
+//        println(dfm.toString(dfm.size))
 //        val pathSteps = identifyAlignmentTreeNodeSteps(m)
         val pathSteps = nwCreateAlignmentTreeNodesSingleStep(m, w1, w2)
 //        val wr = singletonSingletonPathStepsToAlignmentTreeNode(pathSteps, item1, item2, w1, w2)
-        pathSteps.toList
+//        pathSteps.toList
+        val compacted = nwCompactAlignmentTreeNodeSteps(pathSteps)
+        compacted
       case SingletonTree(item1: Int, item2: Int, height: Double) =>
         "SingletonTree"
       case TreeTree(item1: Int, item2: Int, height: Double) => "TreeTree"
