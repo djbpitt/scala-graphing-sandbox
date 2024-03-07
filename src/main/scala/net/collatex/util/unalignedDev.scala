@@ -273,9 +273,6 @@ private def nwCompactAlignmentTreeNodeSteps(
     openStep = (allSingleSteps.head, singleStepToWitnessReadings(allSingleSteps.head))
   )
 
-//val identifyAlignmentTreeNodeSteps: Vector[HasWitnessReadings] =
-//  nwCreateAlignmentTreeNodesSingleStep andThen nwCompactAlignmentTreeNodeSteps
-
 /** Match -> Agreement NonMatch -> Variation Insert, Delete -> AgreementIndel (no VariationIndel because that requires
   * at least three witnesses)
   */
@@ -325,6 +322,8 @@ def singletonSingletonPathStepsToAlignmentTreeNode(
    * TODO: Fix fake global token position numbers to make them consecutive within a witness
    * */
 
+  val matrixToAlignmentTreeNodes = nwCompactAlignmentTreeNodeSteps compose nwCreateAlignmentTreeNodesSingleStep.tupled
+
   val results = nodeToClustersMap.values.head // list of ClusterInfo instances
     .map {
       case SingletonSingleton(item1: Int, item2: Int, height: Double) =>
@@ -333,12 +332,7 @@ def singletonSingletonPathStepsToAlignmentTreeNode(
         val m = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
 //        val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
 //        println(dfm.toString(dfm.size))
-//        val pathSteps = identifyAlignmentTreeNodeSteps(m)
-        val pathSteps = nwCreateAlignmentTreeNodesSingleStep(m, w1, w2)
-//        val wr = singletonSingletonPathStepsToAlignmentTreeNode(pathSteps, item1, item2, w1, w2)
-//        pathSteps.toList
-        val compacted = nwCompactAlignmentTreeNodeSteps(pathSteps)
-        compacted
+        matrixToAlignmentTreeNodes(m, w1, w2)
       case SingletonTree(item1: Int, item2: Int, height: Double) =>
         "SingletonTree"
       case TreeTree(item1: Int, item2: Int, height: Double) => "TreeTree"
