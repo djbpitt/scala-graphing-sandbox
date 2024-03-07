@@ -252,12 +252,13 @@ private def nwCompactAlignmentTreeNodeSteps(
       openStep: (SingleStepAlignmentTreePath, WitnessReadings)
   ): Vector[HasWitnessReadings] =
     stepsToProcess match {
-      case LazyList() => compactedSteps :+ openStepToTreeNode(openStep)
+      case LazyList() =>
+        (compactedSteps :+ openStepToTreeNode(openStep)).reverse // return from upper left to lower right
       case h #:: t if h.getClass == openStep._1.getClass =>
         nextStep(
           stepsToProcess = t,
           compactedSteps = compactedSteps,
-          openStep = (openStep._1, openStep._2.map((k, v) => k -> (v._1, v._2 + 1)))
+          openStep = (openStep._1, openStep._2.map((k, v) => k -> (v._1 - 1, v._2)))
         )
       case h #:: t =>
         nextStep(
@@ -302,6 +303,8 @@ def singletonSingletonPathStepsToAlignmentTreeNode(
     case Delete(start: MatrixPosition, end: MatrixPosition)   => ???
   }
 
+val matrixToAlignmentTreeNodes = nwCompactAlignmentTreeNodeSteps compose nwCreateAlignmentTreeNodesSingleStep.tupled
+
 @main def unalignedDev(): Unit =
   val darwin: List[UnalignedFragment] = readJsonData // we know there's only one
   val nodeToClustersMap: Map[Int, List[ClusterInfo]] = darwin
@@ -321,8 +324,6 @@ def singletonSingletonPathStepsToAlignmentTreeNode(
    * TODO: Process TreeTree
    * TODO: Fix fake global token position numbers to make them consecutive within a witness
    * */
-
-  val matrixToAlignmentTreeNodes = nwCompactAlignmentTreeNodeSteps compose nwCreateAlignmentTreeNodesSingleStep.tupled
 
   val results = nodeToClustersMap.values.head // list of ClusterInfo instances
     .map {
