@@ -131,9 +131,18 @@ private class UnalignedDevTest extends AnyFunSuite:
     val result = nwCreateAlignmentTreeNodesSingleStep(m4, m4w0, m4w1)
     val expected = LazyList(
       SingleStepMatch(Token("d", "d", 1, 23), Token("d", "d", 0, 1)),
-      SingleStepDelete(Token("b", "b", 1, 21)),
+      SingleStepDelete(Token("c", "c", 1, 22)),
       SingleStepDelete(Token("b", "b", 1, 21)),
       SingleStepMatch(Token("a", "a", 1, 20), Token("a", "a", 0, 0))
+    )
+    assert(result == expected)
+  }
+  test(testName = "compacted match, delete(2), match") {
+    val result = matrixToAlignmentTreeNodes(m4, m4w0, m4w1)
+    val expected = Vector(
+      AgreementNode(Map("1" -> (20, 21), "0" -> (0, 1))),
+      AgreementIndelNode(Map("1" -> (21, 23))),
+      AgreementNode(Map("1" -> (23, 24), "0" -> (1, 2)))
     )
     assert(result == expected)
   }
@@ -146,9 +155,18 @@ private class UnalignedDevTest extends AnyFunSuite:
     val result = nwCreateAlignmentTreeNodesSingleStep(m5, m5w0, m5w1)
     val expected = LazyList(
       SingleStepMatch(Token("d", "d", 1, 21), Token("d", "d", 0, 3)),
-      SingleStepInsert(Token("b", "b", 0, 1)),
+      SingleStepInsert(Token("c", "c", 0, 2)),
       SingleStepInsert(Token("b", "b", 0, 1)),
       SingleStepMatch(Token("a", "a", 1, 20), Token("a", "a", 0, 0))
+    )
+    assert(result == expected)
+  }
+  test(testName = "compacted: match, insert(2), match") {
+    val result = matrixToAlignmentTreeNodes(m5, m5w0, m5w1)
+    val expected = Vector(
+      AgreementNode(Map("1" -> (20, 21), "0" -> (0, 1))),
+      AgreementIndelNode(Map("0" -> (1, 3))),
+      AgreementNode(Map("1" -> (21, 22), "0" -> (3, 4)))
     )
     assert(result == expected)
   }
@@ -168,25 +186,12 @@ private class UnalignedDevTest extends AnyFunSuite:
     )
     assert(result == expected)
   }
-
-//  }
-//
-//  test(testName = "compacted match, delete(2), match") {
-//    val result = identifyAlignmentTreeNodeSteps(m5)
-//    val expected = Vector(
-//      Match(MatrixPosition(2, 4), MatrixPosition(1, 3)),
-//      Delete(MatrixPosition(1, 3), MatrixPosition(1, 1)),
-//      Match(MatrixPosition(1, 1), MatrixPosition(0, 0))
-//    )
-//    assert(result == expected)
-//  }
-//
-//  test(testName = "compacted: match, insert(2), match") {
-//    val result = identifyAlignmentTreeNodeSteps(m6)
-//    val expected = Vector(
-//      Match(MatrixPosition(4, 2), MatrixPosition(3, 1)),
-//      Insert(MatrixPosition(3, 1), MatrixPosition(1, 1)),
-//      Match(MatrixPosition(1, 1), MatrixPosition(0, 0))
-//    )
-//    assert(result == expected)
-//  }
+  test(testName = "compacted: match(2), insert, match(2)") {
+    val result = matrixToAlignmentTreeNodes(m6, m6w0, m6w1)
+    val expected = Vector(
+      AgreementNode(Map("1" -> (20, 22), "0" -> (0, 2))),
+      AgreementIndelNode(Map("0" -> (2, 3))),
+      AgreementNode(Map("1" -> (22, 24), "0" -> (3, 5)))
+    )
+    assert(result == expected)
+  }

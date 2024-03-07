@@ -204,9 +204,9 @@ private def nwCreateAlignmentTreeNodesSingleStep(
     val bestScore: MatrixStep = Vector(scoreDiag, scoreLeft, scoreUp).min
     val nextMove: SingleStepAlignmentTreePath = bestScore match {
       case x: MatrixStep.Left =>
-        SingleStepInsert(w1(x.col))
+        SingleStepInsert(w1(x.row))
       case x: MatrixStep.Up =>
-        SingleStepDelete(w2(x.row))
+        SingleStepDelete(w2(x.col))
       case x: MatrixStep.Diag if x.distance == matrix(row)(col) =>
         SingleStepMatch(w2(x.col), w1(x.row))
       case x: MatrixStep.Diag =>
