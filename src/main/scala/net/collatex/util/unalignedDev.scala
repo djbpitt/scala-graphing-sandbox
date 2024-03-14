@@ -312,7 +312,7 @@ val matrixToAlignmentTreeNodes = nwCompactAlignmentTreeNodeSteps compose nwCreat
     .toMap // map object (key -> value pairs)
   println(nodeToClustersMap)
 
-  /* RESUME HERE 2024-03-01
+  /* RESUME HERE 2024-03-07
    * Done: We recognize SingletonSingleton and output path steps
    * In progress: Convert path steps to alignment tree nodes
    *   NB: Current CollateX aligns individual tokens and segmentation is a post-process;
