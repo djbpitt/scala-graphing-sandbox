@@ -322,8 +322,31 @@ val matrixToAlignmentTree =
     .toMap // map object (key -> value pairs)
   println(nodeToClustersMap)
 
+  def createSingletonTreeTokenArray(t: AlignmentTreeNode, s: List[Token], ta: List[Token]) =
+    var sep: Int = -1 // for unique separator value
+//    val tTokens = t match {
+//      case e:AgreementNode => ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
+//      case e:AgreementIndelNode => ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
+//      case e:VariationNode =>
+//        t.map((key, value) => ???)
+//      case e:VariationIndelNode => ???
+//      case e: ExpandedNode => ???
+//    }
+
   /* RESUME HERE 2024-03-16
-   * TODO: Process SingletonTree
+   * In progress: Process SingletonTree
+   * TODO: Resume with createSingletonTreeTokenArray()
+   *   Two levels:
+   *     First level is a totally ordered list of non-empty sets
+   *     Second level is non-empty sets of non-overlapping members: 
+   *       agreement has one member, which is non-empty
+   *       agreementIndel has two members, exactly one of which is empty, with the rest non-empty
+   *       variation has at least two members, none of which is empty
+   *       variationIndel has at least three members, exactly one of which is empty, with the rest non-empty
+   *     First level corresponds to sequence of alignment points in alignment ribbon
+   *     Second level corresponds to groupings with individual alignment points
+   *       The traditional ordered tree visualization wasn’t suitable for us because we don’t have a traditional
+   *         recursive ordered tree. We don’t have arbitrary depth and the levels are completely different.
    * TODO: Process TreeTree
    * TODO: Fix fake global token position numbers to make them consecutive within a witness
    * */
