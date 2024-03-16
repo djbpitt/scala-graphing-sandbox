@@ -312,30 +312,25 @@ val matrixToAlignmentTreeNodes = nwCompactAlignmentTreeNodeSteps compose nwCreat
     .toMap // map object (key -> value pairs)
   println(nodeToClustersMap)
 
-  /* RESUME HERE 2024-03-07
-   * Done: We recognize SingletonSingleton and output path steps
-   * In progress: Convert path steps to alignment tree nodes
-   *   NB: Current CollateX aligns individual tokens and segmentation is a post-process;
-   *     The new model combines as much as possible, that is, makes segmentation the default
-   *     Because this part of the alignment is progressive, this means that we may need to
-   *       undo a combination because incorporating a new witness has changed (split) the
-   *       path type
+  /* RESUME HERE 2024-03-16
    * TODO: Process SingletonTree
    * TODO: Process TreeTree
    * TODO: Fix fake global token position numbers to make them consecutive within a witness
    * */
 
   val results = nodeToClustersMap.values.head // list of ClusterInfo instances
+    .zipWithIndex
     .map {
-      case SingletonSingleton(item1: Int, item2: Int, height: Double) =>
+      case (SingletonSingleton(item1: Int, item2: Int, height: Double), i: Int) =>
         val w1: List[Token] = darwin.head.readings(item1)
         val w2: List[Token] = darwin.head.readings(item2)
         val m = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
 //        val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
 //        println(dfm.toString(dfm.size))
-        matrixToAlignmentTreeNodes(m, w1, w2)
-      case SingletonTree(item1: Int, item2: Int, height: Double) =>
-        "SingletonTree"
-      case TreeTree(item1: Int, item2: Int, height: Double) => "TreeTree"
-    }
-  results.foreach(println)
+        i + darwin.head.readings.size -> matrixToAlignmentTreeNodes(m, w1, w2)
+      case (SingletonTree(item1: Int, item2: Int, height: Double), i: Int) =>
+        i + darwin.head.readings.size -> "SingletonTree"
+      case (TreeTree(item1: Int, item2: Int, height: Double), i: Int) =>
+        i + darwin.head.readings.size -> "TreeTree"
+    }.toMap
+  results.toSeq.sortBy((k, v) => k).foreach(println)
