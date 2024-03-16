@@ -54,19 +54,19 @@ def readData(pathToData: Path): List[(String, String)] =
     * Sigla used for alignment table
     */
   val root: ExpandedNode = createAlignment(witnessStrings, sigla)
-  println(root)
+  println(root) // Tree before flattening
 
   /** Create views of tree
     *
     * Graphviz dot file HTML alignment table
     */
-//  val alignmentTreeAsDot = dot(root, tokenArray)
-//  val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
-//  os.write.over(alignmentGraphOutputPath, alignmentTreeAsDot)
+  val alignmentTreeAsDot = dot(root, tokenArray)
+  val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
+  os.write.over(alignmentGraphOutputPath, alignmentTreeAsDot)
 
-//  val flatAlignmentTreeAsDot = flatDot(root, tokenArray)
-//  val flatAlignmentTreeOutputPath = os.pwd / "src" / "main" / "output" / "flatAlignment.dot"
-//  os.write.over(flatAlignmentTreeOutputPath, flatAlignmentTreeAsDot)
+  val flatAlignmentTreeAsDot = flatDot(root, tokenArray)
+  val flatAlignmentTreeOutputPath = os.pwd / "src" / "main" / "output" / "flatAlignment.dot"
+  os.write.over(flatAlignmentTreeOutputPath, flatAlignmentTreeAsDot)
 
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html") // used for single-column and mixed output
 

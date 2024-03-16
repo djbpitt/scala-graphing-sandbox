@@ -103,8 +103,22 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
             .map(e => wrapTextToWidth(e, 30, 1))
             .mkString("\\l")
             .replaceAll("\"", "\\\\\"")
-        variationNodes.append(s"""${currentId.toString}
+        variationNodes.append(
+          s"""${currentId.toString}
              | [label=\"${currentId.toString}|$allWitnessTexts\"]
+           """.stripMargin.replaceAll("\n", ""))
+
+      case (currentId, VariationIndelNode(witnessReadings, witnessGroups)) =>
+        val allWitnessTexts: String =
+          witnessReadings
+            .map((k, v) =>
+              k + ": " + tokenArray.slice(v._1, v._2).map(_.n).mkString(" ")
+            )
+            .map(e => wrapTextToWidth(e, 30, 1))
+            .mkString("\\l")
+            .replaceAll("\"", "\\\\\"")
+        variationNodes.append(s"""${currentId.toString}
+                                 | [label=\"${currentId.toString}|$allWitnessTexts\"]
              """.stripMargin.replaceAll("\n", ""))
 
       case (currentId, AgreementNode(witnessReadings)) =>
@@ -464,6 +478,22 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
     val currentNode = nodesToProcess.head
     nodesToProcess = nodesToProcess.tail
     currentNode match {
+      case (currentId, VariationIndelNode(witnessReadings, witnessGroups)) =>
+        val allWitnessTexts: String =
+          witnessReadings
+            .map((k, v) =>
+              k + ": " + tokenArray.slice(v._1, v._2).map(_.n).mkString(" ")
+            )
+            .map(e => wrapTextToWidth(e, 30, 1))
+            .mkString("\\l")
+            .replaceAll("\"", "\\\\\"")
+        variationNodes.append(
+          s"""${currentId.toString}
+             | [label=\"${currentId.toString}|$allWitnessTexts\"]
+             """.stripMargin.replaceAll("\n", ""))
+        edges.append(s"$lastNodeProcessed -> $currentId")
+        lastNodeProcessed = currentId
+
       case (currentId, VariationNode(witnessReadings, witnessGroups)) =>
         val allWitnessTexts: String =
           witnessReadings
@@ -474,7 +504,7 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
             .mkString("\\l")
             .replaceAll("\"", "\\\\\"")
         variationNodes.append(s"""${currentId.toString}
-             | [label=\"${currentId.toString}|$allWitnessTexts\"]
+                                 | [label=\"${currentId.toString}|$allWitnessTexts\"]
                """.stripMargin.replaceAll("\n", ""))
         edges.append(s"$lastNodeProcessed -> $currentId")
         lastNodeProcessed = currentId
