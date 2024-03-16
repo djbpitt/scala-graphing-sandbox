@@ -44,7 +44,7 @@ private class UnalignedDevTest extends AnyFunSuite:
     assert(result == expected)
   }
   test(testName = "compacted: match, nonmatch, match") {
-    val result = matrixToAlignmentTreeNodes(m0, m0w0, m0w1)
+    val result = matrixToAlignmentTree(m0, m0w0, m0w1)
     val expected = Vector(
       AgreementNode(Map("1" -> (20, 21), "0" -> (0, 1))),
       VariationNode(Map("1" -> (21, 22), "0" -> (1, 2)), Vector(Vector("1"), Vector("0"))),
@@ -67,7 +67,7 @@ private class UnalignedDevTest extends AnyFunSuite:
     assert(result == expected)
   }
   test(testName = "compacted: match, delete, match") {
-    val result = matrixToAlignmentTreeNodes(m1, m1w0, m1w1)
+    val result = matrixToAlignmentTree(m1, m1w0, m1w1)
     val expected = Vector(
       AgreementNode(Map("1" -> (20, 21), "0" -> (0, 1))),
       AgreementIndelNode(Map("1" -> (21, 22))),
@@ -90,7 +90,7 @@ private class UnalignedDevTest extends AnyFunSuite:
     assert(result == expected)
   }
   test(testName = "compacted: match, insert, match") {
-    val result = matrixToAlignmentTreeNodes(m2, m2w0, m2w1)
+    val result = matrixToAlignmentTree(m2, m2w0, m2w1)
     val expected = Vector(
       AgreementNode(Map("1" -> (20, 21), "0" -> (0, 1))),
       AgreementIndelNode(Map("0" -> (1, 2))),
@@ -114,7 +114,7 @@ private class UnalignedDevTest extends AnyFunSuite:
     assert(result == expected)
   }
   test(testName = "compacted: match, nonmatch(2), match") {
-    val result = matrixToAlignmentTreeNodes(m3, m3w0, m3w1)
+    val result = matrixToAlignmentTree(m3, m3w0, m3w1)
     val expected = Vector(
       AgreementNode(Map("1" -> (20, 21), "0" -> (0, 1))),
       VariationNode(Map("1" -> (21, 23), "0" -> (1, 3)), Vector(Vector("1"), Vector("0"))),
@@ -138,7 +138,7 @@ private class UnalignedDevTest extends AnyFunSuite:
     assert(result == expected)
   }
   test(testName = "compacted match, delete(2), match") {
-    val result = matrixToAlignmentTreeNodes(m4, m4w0, m4w1)
+    val result = matrixToAlignmentTree(m4, m4w0, m4w1)
     val expected = Vector(
       AgreementNode(Map("1" -> (20, 21), "0" -> (0, 1))),
       AgreementIndelNode(Map("1" -> (21, 23))),
@@ -162,7 +162,7 @@ private class UnalignedDevTest extends AnyFunSuite:
     assert(result == expected)
   }
   test(testName = "compacted: match, insert(2), match") {
-    val result = matrixToAlignmentTreeNodes(m5, m5w0, m5w1)
+    val result = matrixToAlignmentTree(m5, m5w0, m5w1)
     val expected = Vector(
       AgreementNode(Map("1" -> (20, 21), "0" -> (0, 1))),
       AgreementIndelNode(Map("0" -> (1, 3))),
@@ -187,7 +187,7 @@ private class UnalignedDevTest extends AnyFunSuite:
     assert(result == expected)
   }
   test(testName = "compacted: match(2), insert, match(2)") {
-    val result = matrixToAlignmentTreeNodes(m6, m6w0, m6w1)
+    val result = matrixToAlignmentTree(m6, m6w0, m6w1)
     val expected = Vector(
       AgreementNode(Map("1" -> (20, 22), "0" -> (0, 2))),
       AgreementIndelNode(Map("0" -> (2, 3))),

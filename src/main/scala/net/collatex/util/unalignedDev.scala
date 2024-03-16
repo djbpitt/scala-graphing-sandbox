@@ -3,11 +3,13 @@ package net.collatex.util
 import net.collatex.reptilian.{
   AgreementIndelNode,
   AgreementNode,
-  VariationNode,
-  VariationIndelNode,
+  AlignmentTreeNode,
+  ExpandedNode,
   HasWitnessReadings,
-  WitnessReadings,
-  Token
+  Token,
+  VariationIndelNode,
+  VariationNode,
+  WitnessReadings
 }
 import smile.clustering.hclust
 import smile.data.DataFrame
@@ -16,6 +18,7 @@ import smile.nlp.vectorize
 import upickle.default.*
 
 import scala.annotation.tailrec
+import scala.collection.mutable.ListBuffer
 import scala.math.min
 
 /* Needleman-Wunsch alignment code from
@@ -303,7 +306,14 @@ def singletonSingletonPathStepsToAlignmentTreeNode(
     case Delete(start: MatrixPosition, end: MatrixPosition)   => ???
   }
 
-val matrixToAlignmentTreeNodes = nwCompactAlignmentTreeNodeSteps compose nwCreateAlignmentTreeNodesSingleStep.tupled
+def pathStepsToAlignmentTreeNode(in: Vector[HasWitnessReadings]): AlignmentTreeNode =
+  in.size match {
+    case 1 => in.head
+    case _ => ExpandedNode(ListBuffer.from(in))
+  }
+
+val matrixToAlignmentTree =
+  pathStepsToAlignmentTreeNode compose nwCompactAlignmentTreeNodeSteps compose nwCreateAlignmentTreeNodesSingleStep.tupled
 
 @main def unalignedDev(): Unit =
   val darwin: List[UnalignedFragment] = readJsonData // we know there's only one
@@ -319,15 +329,14 @@ val matrixToAlignmentTreeNodes = nwCompactAlignmentTreeNodeSteps compose nwCreat
    * */
 
   val results = nodeToClustersMap.values.head // list of ClusterInfo instances
-    .zipWithIndex
-    .map {
+    .zipWithIndex.map {
       case (SingletonSingleton(item1: Int, item2: Int, height: Double), i: Int) =>
         val w1: List[Token] = darwin.head.readings(item1)
         val w2: List[Token] = darwin.head.readings(item2)
         val m = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
 //        val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
 //        println(dfm.toString(dfm.size))
-        i + darwin.head.readings.size -> matrixToAlignmentTreeNodes(m, w1, w2)
+        i + darwin.head.readings.size -> matrixToAlignmentTree(m, w1, w2)
       case (SingletonTree(item1: Int, item2: Int, height: Double), i: Int) =>
         i + darwin.head.readings.size -> "SingletonTree"
       case (TreeTree(item1: Int, item2: Int, height: Double), i: Int) =>

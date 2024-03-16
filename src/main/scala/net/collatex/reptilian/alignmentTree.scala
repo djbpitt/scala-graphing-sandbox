@@ -19,7 +19,7 @@ sealed trait AlignmentTreeNode // supertype of all nodes
   * dot Reading nodes also have witness readings but do not use a ListMap
   * visualization, and therefore do not inherit this trait
   */
-trait HasWitnessReadings {
+trait HasWitnessReadings extends AlignmentTreeNode {
   def witnessReadings: WitnessReadings
   def formatWitnessReadings: String =
     s"${ListMap(witnessReadings.toSeq.sortBy(_._1): _*)}"
