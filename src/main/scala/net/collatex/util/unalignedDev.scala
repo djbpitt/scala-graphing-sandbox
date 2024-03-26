@@ -1,5 +1,6 @@
 package net.collatex.util
 
+import scala.collection.mutable
 import net.collatex.reptilian.{
   AgreementIndelNode,
   AgreementNode,
@@ -9,7 +10,8 @@ import net.collatex.reptilian.{
   Token,
   VariationIndelNode,
   VariationNode,
-  WitnessReadings
+  WitnessReadings,
+  makeTokenizer
 }
 import smile.clustering.hclust
 import smile.data.DataFrame
@@ -20,6 +22,7 @@ import upickle.default.*
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 import scala.math.min
+import scala.util.matching.Regex
 
 /* Needleman-Wunsch alignment code from
  * https://github.com/Philippus/osita (MPL-2.0)
@@ -317,52 +320,88 @@ val matrixToAlignmentTree =
 
 @main def unalignedDev(): Unit =
   val darwin: List[UnalignedFragment] = readJsonData // we know there's only one
+  println(darwin)
+  val darwinReadings = darwin.head.readings
+  val tokenArray =
+    darwinReadings.head ++ darwinReadings.tail.zipWithIndex
+      .flatMap((e, index) => List(Token(index.toString, index.toString, index, -1)) ++ e)
+      .toVector
+  println(tokenArray)
   val nodeToClustersMap: Map[Int, List[ClusterInfo]] = darwin
     .map(node => node.nodeno -> (vectorizeReadings andThen clusterReadings)(node)) // list of tuples
     .toMap // map object (key -> value pairs)
   println(nodeToClustersMap)
 
   def createSingletonTreeTokenArray(t: AlignmentTreeNode, s: List[Token], ta: List[Token]) =
-    var sep: Int = -1 // for unique separator value
-//    val tTokens = t match {
-//      case e:AgreementNode => ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
-//      case e:AgreementIndelNode => ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
-//      case e:VariationNode =>
-//        t.map((key, value) => ???)
-//      case e:VariationIndelNode => ???
-//      case e: ExpandedNode => ???
-//    }
-
+    // tree contains only ranges (not tokens), so we get token positions from global token array
+    var sep = -1
+    val nodeListToProcess: List[AlignmentTreeNode] =
+      t match {
+        case e: ExpandedNode => e.children.toList
+        case e               => List(e)
+      }
+    val tTokens = nodeListToProcess map {
+      case e: AgreementNode      => ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
+      case e: AgreementIndelNode => ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
+      case e: VariationNode =>
+        val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
+        val ts = groupHeads.map(f => ta.slice(e.witnessReadings(f)._1, e.witnessReadings(f)._2))
+        ts.head ++ ts.tail
+          .flatMap(e =>
+            sep += 1
+            List(Token(sep.toString, sep.toString, sep, -1)) ++ e
+          )
+      case e: VariationIndelNode =>
+        val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
+        val ts = groupHeads.map(f => ta.slice(e.witnessReadings(f)._1, e.witnessReadings(f)._2))
+        ts.head ++ ts.tail
+          .flatMap(e =>
+            sep += 1
+            List(Token(sep.toString, sep.toString, sep, -1)) ++ e
+          )
+    }
+    tTokens.head ++ tTokens
+      .tail.flatMap(e =>
+        sep += 1
+        List(Token(sep.toString, sep.toString, sep, -1)) ++ e
+      )
   /* RESUME HERE 2024-03-16
    * In progress: Process SingletonTree
    * TODO: Resume with createSingletonTreeTokenArray()
-   *   Two levels:
-   *     First level is a totally ordered list of non-empty sets
-   *     Second level is non-empty sets of non-overlapping members: 
-   *       agreement has one member, which is non-empty
-   *       agreementIndel has two members, exactly one of which is empty, with the rest non-empty
-   *       variation has at least two members, none of which is empty
-   *       variationIndel has at least three members, exactly one of which is empty, with the rest non-empty
-   *     First level corresponds to sequence of alignment points in alignment ribbon
-   *     Second level corresponds to groupings with individual alignment points
-   *       The traditional ordered tree visualization wasn’t suitable for us because we don’t have a traditional
-   *         recursive ordered tree. We don’t have arbitrary depth and the levels are completely different.
+   *   Currently SingletonTree token array has only tree tokens; need to add singleton tokens
    * TODO: Process TreeTree
    * TODO: Fix fake global token position numbers to make them consecutive within a witness
    * */
 
+//  val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
+//  val tokenizer = makeTokenizer(
+//    tokenPattern
+//  ) // Tokenizer function with user-supplied regex
+//  val witnessInputInfo: List[(String, String)] = readData(
+//    pathToDarwin
+//  ) // One string per witness
+//  val witnessStrings: List[String] = witnessInputInfo.map(_._2)
+//  val sigla: List[String] = witnessInputInfo.map(_._1)
+//  implicit val tokenArray: Vector[Token] = tokenize(tokenizer)(witnessStrings)
+
   val results = nodeToClustersMap.values.head // list of ClusterInfo instances
-    .zipWithIndex.map {
-      case (SingletonSingleton(item1: Int, item2: Int, height: Double), i: Int) =>
-        val w1: List[Token] = darwin.head.readings(item1)
-        val w2: List[Token] = darwin.head.readings(item2)
-        val m = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
+    .zipWithIndex.foldLeft(mutable.Map[Int, AlignmentTreeNode]()) { (acc, next) =>
+      next match
+        case (SingletonSingleton(item1: Int, item2: Int, height: Double), i: Int) =>
+          val w1: List[Token] = darwin.head.readings(item1)
+          val w2: List[Token] = darwin.head.readings(item2)
+          val m = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
 //        val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
 //        println(dfm.toString(dfm.size))
-        i + darwin.head.readings.size -> matrixToAlignmentTree(m, w1, w2)
-      case (SingletonTree(item1: Int, item2: Int, height: Double), i: Int) =>
-        i + darwin.head.readings.size -> "SingletonTree"
-      case (TreeTree(item1: Int, item2: Int, height: Double), i: Int) =>
-        i + darwin.head.readings.size -> "TreeTree"
-    }.toMap
+          acc(i + darwin.head.readings.size) = matrixToAlignmentTree(m, w1, w2)
+          acc
+        case (SingletonTree(item1: Int, item2: Int, height: Double), i: Int) =>
+          val stTokenArray = createSingletonTreeTokenArray(acc(item2), darwin.head.readings(item1), tokenArray)
+          println(stTokenArray)
+          acc(i + darwin.head.readings.size) = AgreementNode()
+          acc
+        case (TreeTree(item1: Int, item2: Int, height: Double), i: Int) =>
+          acc(i + darwin.head.readings.size) = AgreementNode()
+          acc
+    }
   results.toSeq.sortBy((k, v) => k).foreach(println)

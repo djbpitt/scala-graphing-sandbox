@@ -38,7 +38,7 @@ final case class ExpandedNode(
 
 final case class VariationNode(
     witnessReadings: WitnessReadings,
-    witnessGroups: Vector[Vector[String]]
+    witnessGroups: Vector[Vector[String]] // sigla
 ) extends AlignmentTreeNode
     with HasWitnessReadings
 
