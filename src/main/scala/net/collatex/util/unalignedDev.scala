@@ -320,7 +320,6 @@ val matrixToAlignmentTree =
 
 @main def unalignedDev(): Unit =
   val darwin: List[UnalignedFragment] = readJsonData // we know there's only one
-  println(darwin)
   val darwinReadings = darwin.head.readings
   val tokenArray =
     darwinReadings.head ++ darwinReadings.tail.zipWithIndex
@@ -340,6 +339,7 @@ val matrixToAlignmentTree =
         case e: ExpandedNode => e.children.toList
         case e               => List(e)
       }
+    println(s"nodeListToProcess: $nodeListToProcess")
     val tTokens = nodeListToProcess map {
       case e: AgreementNode      => ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
       case e: AgreementIndelNode => ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
@@ -360,15 +360,18 @@ val matrixToAlignmentTree =
             List(Token(sep.toString, sep.toString, sep, -1)) ++ e
           )
     }
+    sep += 1 // increment separator before singleton tokens
+    println(s"ta: $ta")
+    println(s"tTokens: $tTokens")
     tTokens.head ++ tTokens
       .tail.flatMap(e =>
         sep += 1
         List(Token(sep.toString, sep.toString, sep, -1)) ++ e
-      )
+      ) ++ List(Token(sep.toString, sep.toString, sep, -1)) ++ s
+
   /* RESUME HERE 2024-03-16
    * In progress: Process SingletonTree
    * TODO: Resume with createSingletonTreeTokenArray()
-   *   Currently SingletonTree token array has only tree tokens; need to add singleton tokens
    * TODO: Process TreeTree
    * TODO: Fix fake global token position numbers to make them consecutive within a witness
    * */
@@ -396,7 +399,7 @@ val matrixToAlignmentTree =
           acc(i + darwin.head.readings.size) = matrixToAlignmentTree(m, w1, w2)
           acc
         case (SingletonTree(item1: Int, item2: Int, height: Double), i: Int) =>
-          val stTokenArray = createSingletonTreeTokenArray(acc(item2), darwin.head.readings(item1), tokenArray)
+          val stTokenArray = createSingletonTreeTokenArray(acc(item2), darwinReadings(item1), tokenArray)
           println(stTokenArray)
           acc(i + darwin.head.readings.size) = AgreementNode()
           acc

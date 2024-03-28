@@ -7,1613 +7,1613 @@
           "t": "natural",
           "n": "natural",
           "w": 0,
-          "g": 10
+          "g": 0
         },
         {
           "t": "selection",
           "n": "selection",
           "w": 0,
-          "g": 16
+          "g": 1
         },
         {
           "t": ",",
           "n": ",",
           "w": 0,
-          "g": 22
+          "g": 2
         },
         {
           "t": "as",
           "n": "as",
           "w": 0,
-          "g": 28
+          "g": 3
         },
         {
           "t": "will",
           "n": "will",
           "w": 0,
-          "g": 34
+          "g": 4
         },
         {
           "t": "hereafter",
           "n": "hereafter",
           "w": 0,
+          "g": 5
+        },
+        {
+          "t": "be",
+          "n": "be",
+          "w": 0,
+          "g": 6
+        },
+        {
+          "t": "explained",
+          "n": "explained",
+          "w": 0,
+          "g": 7
+        },
+        {
+          "t": ",",
+          "n": ",",
+          "w": 0,
+          "g": 8
+        },
+        {
+          "t": "will",
+          "n": "will",
+          "w": 0,
+          "g": 9
+        },
+        {
+          "t": "determine",
+          "n": "determine",
+          "w": 0,
+          "g": 10
+        },
+        {
+          "t": "how",
+          "n": "how",
+          "w": 0,
+          "g": 11
+        },
+        {
+          "t": "far",
+          "n": "far",
+          "w": 0,
+          "g": 12
+        },
+        {
+          "t": "the",
+          "n": "the",
+          "w": 0,
+          "g": 13
+        },
+        {
+          "t": "new",
+          "n": "new",
+          "w": 0,
+          "g": 14
+        },
+        {
+          "t": "characters",
+          "n": "characters",
+          "w": 0,
+          "g": 15
+        },
+        {
+          "t": "thus",
+          "n": "thus",
+          "w": 0,
+          "g": 16
+        },
+        {
+          "t": "arising",
+          "n": "arising",
+          "w": 0,
+          "g": 17
+        },
+        {
+          "t": "shall",
+          "n": "shall",
+          "w": 0,
+          "g": 18
+        },
+        {
+          "t": "be",
+          "n": "be",
+          "w": 0,
+          "g": 19
+        },
+        {
+          "t": "preserved",
+          "n": "preserved",
+          "w": 0,
+          "g": 20
+        }
+      ],
+      [
+        {
+          "t": "natural",
+          "n": "natural",
+          "w": 1,
+          "g": 22
+        },
+        {
+          "t": "selection",
+          "n": "selection",
+          "w": 1,
+          "g": 23
+        },
+        {
+          "t": ",",
+          "n": ",",
+          "w": 1,
+          "g": 24
+        },
+        {
+          "t": "as",
+          "n": "as",
+          "w": 1,
+          "g": 25
+        },
+        {
+          "t": "will",
+          "n": "will",
+          "w": 1,
+          "g": 26
+        },
+        {
+          "t": "hereafter",
+          "n": "hereafter",
+          "w": 1,
+          "g": 27
+        },
+        {
+          "t": "be",
+          "n": "be",
+          "w": 1,
+          "g": 28
+        },
+        {
+          "t": "explained",
+          "n": "explained",
+          "w": 1,
+          "g": 29
+        },
+        {
+          "t": ",",
+          "n": ",",
+          "w": 1,
+          "g": 30
+        },
+        {
+          "t": "will",
+          "n": "will",
+          "w": 1,
+          "g": 31
+        },
+        {
+          "t": "determine",
+          "n": "determine",
+          "w": 1,
+          "g": 32
+        },
+        {
+          "t": "how",
+          "n": "how",
+          "w": 1,
+          "g": 33
+        },
+        {
+          "t": "far",
+          "n": "far",
+          "w": 1,
+          "g": 34
+        },
+        {
+          "t": "the",
+          "n": "the",
+          "w": 1,
+          "g": 35
+        },
+        {
+          "t": "new",
+          "n": "new",
+          "w": 1,
+          "g": 36
+        },
+        {
+          "t": "characters",
+          "n": "characters",
+          "w": 1,
+          "g": 37
+        },
+        {
+          "t": "thus",
+          "n": "thus",
+          "w": 1,
+          "g": 38
+        },
+        {
+          "t": "arising",
+          "n": "arising",
+          "w": 1,
+          "g": 39
+        },
+        {
+          "t": "shall",
+          "n": "shall",
+          "w": 1,
           "g": 40
         },
         {
           "t": "be",
           "n": "be",
-          "w": 0,
+          "w": 1,
+          "g": 41
+        },
+        {
+          "t": "preserved",
+          "n": "preserved",
+          "w": 1,
+          "g": 42
+        }
+      ],
+      [
+        {
+          "t": "natural",
+          "n": "natural",
+          "w": 2,
+          "g": 44
+        },
+        {
+          "t": "selection",
+          "n": "selection",
+          "w": 2,
+          "g": 45
+        },
+        {
+          "t": ",",
+          "n": ",",
+          "w": 2,
           "g": 46
         },
         {
+          "t": "as",
+          "n": "as",
+          "w": 2,
+          "g": 47
+        },
+        {
+          "t": "will",
+          "n": "will",
+          "w": 2,
+          "g": 48
+        },
+        {
+          "t": "hereafter",
+          "n": "hereafter",
+          "w": 2,
+          "g": 49
+        },
+        {
+          "t": "be",
+          "n": "be",
+          "w": 2,
+          "g": 50
+        },
+        {
           "t": "explained",
           "n": "explained",
-          "w": 0,
+          "w": 2,
+          "g": 51
+        },
+        {
+          "t": ",",
+          "n": ",",
+          "w": 2,
           "g": 52
         },
         {
-          "t": ",",
-          "n": ",",
-          "w": 0,
+          "t": "will",
+          "n": "will",
+          "w": 2,
+          "g": 53
+        },
+        {
+          "t": "determine",
+          "n": "determine",
+          "w": 2,
+          "g": 54
+        },
+        {
+          "t": "how",
+          "n": "how",
+          "w": 2,
+          "g": 55
+        },
+        {
+          "t": "far",
+          "n": "far",
+          "w": 2,
+          "g": 56
+        },
+        {
+          "t": "the",
+          "n": "the",
+          "w": 2,
+          "g": 57
+        },
+        {
+          "t": "new",
+          "n": "new",
+          "w": 2,
           "g": 58
         },
         {
-          "t": "will",
-          "n": "will",
-          "w": 0,
-          "g": 64
+          "t": "characters",
+          "n": "characters",
+          "w": 2,
+          "g": 59
         },
         {
-          "t": "determine",
-          "n": "determine",
-          "w": 0,
+          "t": "thus",
+          "n": "thus",
+          "w": 2,
+          "g": 60
+        },
+        {
+          "t": "arising",
+          "n": "arising",
+          "w": 2,
+          "g": 61
+        },
+        {
+          "t": "shall",
+          "n": "shall",
+          "w": 2,
+          "g": 62
+        },
+        {
+          "t": "be",
+          "n": "be",
+          "w": 2,
+          "g": 63
+        },
+        {
+          "t": "preserved",
+          "n": "preserved",
+          "w": 2,
+          "g": 64
+        }
+      ],
+      [
+        {
+          "t": "natural",
+          "n": "natural",
+          "w": 3,
+          "g": 66
+        },
+        {
+          "t": "selection",
+          "n": "selection",
+          "w": 3,
+          "g": 67
+        },
+        {
+          "t": ",",
+          "n": ",",
+          "w": 3,
+          "g": 68
+        },
+        {
+          "t": "as",
+          "n": "as",
+          "w": 3,
+          "g": 69
+        },
+        {
+          "t": "will",
+          "n": "will",
+          "w": 3,
           "g": 70
         },
         {
-          "t": "how",
-          "n": "how",
-          "w": 0,
+          "t": "hereafter",
+          "n": "hereafter",
+          "w": 3,
+          "g": 71
+        },
+        {
+          "t": "be",
+          "n": "be",
+          "w": 3,
+          "g": 72
+        },
+        {
+          "t": "explained",
+          "n": "explained",
+          "w": 3,
+          "g": 73
+        },
+        {
+          "t": ",",
+          "n": ",",
+          "w": 3,
+          "g": 74
+        },
+        {
+          "t": "will",
+          "n": "will",
+          "w": 3,
+          "g": 75
+        },
+        {
+          "t": "determine",
+          "n": "determine",
+          "w": 3,
           "g": 76
         },
         {
+          "t": "how",
+          "n": "how",
+          "w": 3,
+          "g": 77
+        },
+        {
           "t": "far",
           "n": "far",
-          "w": 0,
+          "w": 3,
+          "g": 78
+        },
+        {
+          "t": "the",
+          "n": "the",
+          "w": 3,
+          "g": 79
+        },
+        {
+          "t": "new",
+          "n": "new",
+          "w": 3,
+          "g": 80
+        },
+        {
+          "t": "characters",
+          "n": "characters",
+          "w": 3,
+          "g": 81
+        },
+        {
+          "t": "thus",
+          "n": "thus",
+          "w": 3,
           "g": 82
         },
         {
-          "t": "the",
-          "n": "the",
-          "w": 0,
+          "t": "arising",
+          "n": "arising",
+          "w": 3,
+          "g": 83
+        },
+        {
+          "t": "shall",
+          "n": "shall",
+          "w": 3,
+          "g": 84
+        },
+        {
+          "t": "be",
+          "n": "be",
+          "w": 3,
+          "g": 85
+        },
+        {
+          "t": "preserved",
+          "n": "preserved",
+          "w": 3,
+          "g": 86
+        },
+        {
+          "t": ".",
+          "n": ".",
+          "w": 3,
+          "g": 87
+        },
+        {
+          "t": "character",
+          "n": "character",
+          "w": 3,
           "g": 88
         },
         {
-          "t": "new",
-          "n": "new",
-          "w": 0,
+          "t": "of",
+          "n": "of",
+          "w": 3,
+          "g": 89
+        },
+        {
+          "t": "domestic",
+          "n": "domestic",
+          "w": 3,
+          "g": 90
+        },
+        {
+          "t": "varieties",
+          "n": "varieties",
+          "w": 3,
+          "g": 91
+        },
+        {
+          "t": ";",
+          "n": ";",
+          "w": 3,
+          "g": 92
+        },
+        {
+          "t": "difficulty",
+          "n": "difficulty",
+          "w": 3,
+          "g": 93
+        },
+        {
+          "t": "of",
+          "n": "of",
+          "w": 3,
           "g": 94
         },
         {
-          "t": "characters",
-          "n": "characters",
-          "w": 0,
+          "t": "distinguishing",
+          "n": "distinguishing",
+          "w": 3,
+          "g": 95
+        },
+        {
+          "t": "between",
+          "n": "between",
+          "w": 3,
+          "g": 96
+        },
+        {
+          "t": "varieties",
+          "n": "varieties",
+          "w": 3,
+          "g": 97
+        },
+        {
+          "t": "and",
+          "n": "and",
+          "w": 3,
+          "g": 98
+        },
+        {
+          "t": "species",
+          "n": "species",
+          "w": 3,
+          "g": 99
+        },
+        {
+          "t": ";",
+          "n": ";",
+          "w": 3,
           "g": 100
         },
         {
-          "t": "thus",
-          "n": "thus",
-          "w": 0,
+          "t": "origin",
+          "n": "origin",
+          "w": 3,
+          "g": 101
+        },
+        {
+          "t": "of",
+          "n": "of",
+          "w": 3,
+          "g": 102
+        },
+        {
+          "t": "domestic",
+          "n": "domestic",
+          "w": 3,
+          "g": 103
+        },
+        {
+          "t": "varieties",
+          "n": "varieties",
+          "w": 3,
+          "g": 104
+        },
+        {
+          "t": "from",
+          "n": "from",
+          "w": 3,
+          "g": 105
+        },
+        {
+          "t": "one",
+          "n": "one",
+          "w": 3,
           "g": 106
         },
         {
-          "t": "arising",
-          "n": "arising",
-          "w": 0,
+          "t": "or",
+          "n": "or",
+          "w": 3,
+          "g": 107
+        },
+        {
+          "t": "more",
+          "n": "more",
+          "w": 3,
+          "g": 108
+        },
+        {
+          "t": "species",
+          "n": "species",
+          "w": 3,
+          "g": 109
+        }
+      ],
+      [
+        {
+          "t": "there",
+          "n": "there",
+          "w": 4,
+          "g": 111
+        },
+        {
+          "t": "is",
+          "n": "is",
+          "w": 4,
           "g": 112
         },
         {
-          "t": "shall",
-          "n": "shall",
-          "w": 0,
+          "t": "not",
+          "n": "not",
+          "w": 4,
+          "g": 113
+        },
+        {
+          "t": "a",
+          "n": "a",
+          "w": 4,
+          "g": 114
+        },
+        {
+          "t": "shadow",
+          "n": "shadow",
+          "w": 4,
+          "g": 115
+        },
+        {
+          "t": "of",
+          "n": "of",
+          "w": 4,
+          "g": 116
+        },
+        {
+          "t": "evidence",
+          "n": "evidence",
+          "w": 4,
+          "g": 117
+        },
+        {
+          "t": "in",
+          "n": "in",
+          "w": 4,
           "g": 118
         },
         {
-          "t": "be",
-          "n": "be",
-          "w": 0,
+          "t": "favour",
+          "n": "favour",
+          "w": 4,
+          "g": 119
+        },
+        {
+          "t": "of",
+          "n": "of",
+          "w": 4,
+          "g": 120
+        },
+        {
+          "t": "this",
+          "n": "this",
+          "w": 4,
+          "g": 121
+        },
+        {
+          "t": "view",
+          "n": "view",
+          "w": 4,
+          "g": 122
+        },
+        {
+          "t": ":",
+          "n": ":",
+          "w": 4,
+          "g": 123
+        },
+        {
+          "t": "to",
+          "n": "to",
+          "w": 4,
           "g": 124
         },
         {
-          "t": "preserved",
-          "n": "preserved",
-          "w": 0,
-          "g": 130
-        }
-      ],
-      [
+          "t": "assert",
+          "n": "assert",
+          "w": 4,
+          "g": 125
+        },
         {
-          "t": "natural",
-          "n": "natural",
-          "w": 1,
+          "t": "that",
+          "n": "that",
+          "w": 4,
+          "g": 126
+        },
+        {
+          "t": "we",
+          "n": "we",
+          "w": 4,
+          "g": 127
+        },
+        {
+          "t": "could",
+          "n": "could",
+          "w": 4,
+          "g": 128
+        },
+        {
+          "t": "not",
+          "n": "not",
+          "w": 4,
+          "g": 129
+        },
+        {
+          "t": "breed",
+          "n": "breed",
+          "w": 4,
+          "g": 130
+        },
+        {
+          "t": "our",
+          "n": "our",
+          "w": 4,
+          "g": 131
+        },
+        {
+          "t": "cart",
+          "n": "cart",
+          "w": 4,
+          "g": 132
+        },
+        {
+          "t": "and",
+          "n": "and",
+          "w": 4,
+          "g": 133
+        },
+        {
+          "t": "race",
+          "n": "race",
+          "w": 4,
+          "g": 134
+        },
+        {
+          "t": "-",
+          "n": "-",
+          "w": 4,
+          "g": 135
+        },
+        {
+          "t": "horses",
+          "n": "horses",
+          "w": 4,
+          "g": 136
+        },
+        {
+          "t": ",",
+          "n": ",",
+          "w": 4,
+          "g": 137
+        },
+        {
+          "t": "long",
+          "n": "long",
+          "w": 4,
           "g": 138
         },
         {
-          "t": "selection",
-          "n": "selection",
-          "w": 1,
+          "t": "and",
+          "n": "and",
+          "w": 4,
+          "g": 139
+        },
+        {
+          "t": "short",
+          "n": "short",
+          "w": 4,
+          "g": 140
+        },
+        {
+          "t": "-",
+          "n": "-",
+          "w": 4,
+          "g": 141
+        },
+        {
+          "t": "horned",
+          "n": "horned",
+          "w": 4,
+          "g": 142
+        },
+        {
+          "t": "cattle",
+          "n": "cattle",
+          "w": 4,
+          "g": 143
+        },
+        {
+          "t": ",",
+          "n": ",",
+          "w": 4,
           "g": 144
         },
         {
+          "t": "and",
+          "n": "and",
+          "w": 4,
+          "g": 145
+        },
+        {
+          "t": "poultry",
+          "n": "poultry",
+          "w": 4,
+          "g": 146
+        },
+        {
+          "t": "of",
+          "n": "of",
+          "w": 4,
+          "g": 147
+        },
+        {
+          "t": "various",
+          "n": "various",
+          "w": 4,
+          "g": 148
+        },
+        {
+          "t": "breeds",
+          "n": "breeds",
+          "w": 4,
+          "g": 149
+        },
+        {
           "t": ",",
           "n": ",",
-          "w": 1,
+          "w": 4,
           "g": 150
         },
         {
-          "t": "as",
-          "n": "as",
-          "w": 1,
+          "t": "and",
+          "n": "and",
+          "w": 4,
+          "g": 151
+        },
+        {
+          "t": "esculent",
+          "n": "esculent",
+          "w": 4,
+          "g": 152
+        },
+        {
+          "t": "vegetables",
+          "n": "vegetables",
+          "w": 4,
+          "g": 153
+        },
+        {
+          "t": ",",
+          "n": ",",
+          "w": 4,
+          "g": 154
+        },
+        {
+          "t": "for",
+          "n": "for",
+          "w": 4,
+          "g": 155
+        },
+        {
+          "t": "an",
+          "n": "an",
+          "w": 4,
           "g": 156
         },
         {
-          "t": "will",
-          "n": "will",
-          "w": 1,
+          "t": "unlimited",
+          "n": "unlimited",
+          "w": 4,
+          "g": 157
+        },
+        {
+          "t": "number",
+          "n": "number",
+          "w": 4,
+          "g": 158
+        },
+        {
+          "t": "of",
+          "n": "of",
+          "w": 4,
+          "g": 159
+        },
+        {
+          "t": "generations",
+          "n": "generations",
+          "w": 4,
+          "g": 160
+        },
+        {
+          "t": ",",
+          "n": ",",
+          "w": 4,
+          "g": 161
+        },
+        {
+          "t": "would",
+          "n": "would",
+          "w": 4,
           "g": 162
         },
         {
-          "t": "hereafter",
-          "n": "hereafter",
-          "w": 1,
+          "t": "be",
+          "n": "be",
+          "w": 4,
+          "g": 163
+        },
+        {
+          "t": "opposed",
+          "n": "opposed",
+          "w": 4,
+          "g": 164
+        },
+        {
+          "t": "to",
+          "n": "to",
+          "w": 4,
+          "g": 165
+        },
+        {
+          "t": "all",
+          "n": "all",
+          "w": 4,
+          "g": 166
+        },
+        {
+          "t": "experience",
+          "n": "experience",
+          "w": 4,
+          "g": 167
+        },
+        {
+          "t": ".",
+          "n": ".",
+          "w": 4,
           "g": 168
         },
         {
-          "t": "be",
-          "n": "be",
-          "w": 1,
+          "t": "character",
+          "n": "character",
+          "w": 4,
+          "g": 169
+        },
+        {
+          "t": "of",
+          "n": "of",
+          "w": 4,
+          "g": 170
+        },
+        {
+          "t": "domestic",
+          "n": "domestic",
+          "w": 4,
+          "g": 171
+        },
+        {
+          "t": "varieties",
+          "n": "varieties",
+          "w": 4,
+          "g": 172
+        },
+        {
+          "t": ";",
+          "n": ";",
+          "w": 4,
+          "g": 173
+        },
+        {
+          "t": "difficulty",
+          "n": "difficulty",
+          "w": 4,
           "g": 174
         },
         {
-          "t": "explained",
-          "n": "explained",
-          "w": 1,
+          "t": "of",
+          "n": "of",
+          "w": 4,
+          "g": 175
+        },
+        {
+          "t": "distinguishing",
+          "n": "distinguishing",
+          "w": 4,
+          "g": 176
+        },
+        {
+          "t": "between",
+          "n": "between",
+          "w": 4,
+          "g": 177
+        },
+        {
+          "t": "varieties",
+          "n": "varieties",
+          "w": 4,
+          "g": 178
+        },
+        {
+          "t": "and",
+          "n": "and",
+          "w": 4,
+          "g": 179
+        },
+        {
+          "t": "species",
+          "n": "species",
+          "w": 4,
           "g": 180
         },
         {
-          "t": ",",
-          "n": ",",
-          "w": 1,
+          "t": ";",
+          "n": ";",
+          "w": 4,
+          "g": 181
+        },
+        {
+          "t": "origin",
+          "n": "origin",
+          "w": 4,
+          "g": 182
+        },
+        {
+          "t": "of",
+          "n": "of",
+          "w": 4,
+          "g": 183
+        },
+        {
+          "t": "domestic",
+          "n": "domestic",
+          "w": 4,
+          "g": 184
+        },
+        {
+          "t": "varieties",
+          "n": "varieties",
+          "w": 4,
+          "g": 185
+        },
+        {
+          "t": "from",
+          "n": "from",
+          "w": 4,
           "g": 186
         },
         {
-          "t": "will",
-          "n": "will",
-          "w": 1,
+          "t": "one",
+          "n": "one",
+          "w": 4,
+          "g": 187
+        },
+        {
+          "t": "or",
+          "n": "or",
+          "w": 4,
+          "g": 188
+        },
+        {
+          "t": "more",
+          "n": "more",
+          "w": 4,
+          "g": 189
+        },
+        {
+          "t": "species",
+          "n": "species",
+          "w": 4,
+          "g": 190
+        }
+      ],
+      [
+        {
+          "t": "there",
+          "n": "there",
+          "w": 5,
           "g": 192
         },
         {
-          "t": "determine",
-          "n": "determine",
-          "w": 1,
+          "t": "is",
+          "n": "is",
+          "w": 5,
+          "g": 193
+        },
+        {
+          "t": "not",
+          "n": "not",
+          "w": 5,
+          "g": 194
+        },
+        {
+          "t": "a",
+          "n": "a",
+          "w": 5,
+          "g": 195
+        },
+        {
+          "t": "shadow",
+          "n": "shadow",
+          "w": 5,
+          "g": 196
+        },
+        {
+          "t": "of",
+          "n": "of",
+          "w": 5,
+          "g": 197
+        },
+        {
+          "t": "evidence",
+          "n": "evidence",
+          "w": 5,
           "g": 198
         },
         {
-          "t": "how",
-          "n": "how",
-          "w": 1,
+          "t": "in",
+          "n": "in",
+          "w": 5,
+          "g": 199
+        },
+        {
+          "t": "favour",
+          "n": "favour",
+          "w": 5,
+          "g": 200
+        },
+        {
+          "t": "of",
+          "n": "of",
+          "w": 5,
+          "g": 201
+        },
+        {
+          "t": "this",
+          "n": "this",
+          "w": 5,
+          "g": 202
+        },
+        {
+          "t": "view",
+          "n": "view",
+          "w": 5,
+          "g": 203
+        },
+        {
+          "t": ":",
+          "n": ":",
+          "w": 5,
           "g": 204
         },
         {
-          "t": "far",
-          "n": "far",
-          "w": 1,
+          "t": "to",
+          "n": "to",
+          "w": 5,
+          "g": 205
+        },
+        {
+          "t": "assert",
+          "n": "assert",
+          "w": 5,
+          "g": 206
+        },
+        {
+          "t": "that",
+          "n": "that",
+          "w": 5,
+          "g": 207
+        },
+        {
+          "t": "we",
+          "n": "we",
+          "w": 5,
+          "g": 208
+        },
+        {
+          "t": "could",
+          "n": "could",
+          "w": 5,
+          "g": 209
+        },
+        {
+          "t": "not",
+          "n": "not",
+          "w": 5,
           "g": 210
         },
         {
-          "t": "the",
-          "n": "the",
-          "w": 1,
+          "t": "breed",
+          "n": "breed",
+          "w": 5,
+          "g": 211
+        },
+        {
+          "t": "our",
+          "n": "our",
+          "w": 5,
+          "g": 212
+        },
+        {
+          "t": "cart",
+          "n": "cart",
+          "w": 5,
+          "g": 213
+        },
+        {
+          "t": "and",
+          "n": "and",
+          "w": 5,
+          "g": 214
+        },
+        {
+          "t": "race",
+          "n": "race",
+          "w": 5,
+          "g": 215
+        },
+        {
+          "t": "-",
+          "n": "-",
+          "w": 5,
           "g": 216
         },
         {
-          "t": "new",
-          "n": "new",
-          "w": 1,
+          "t": "horses",
+          "n": "horses",
+          "w": 5,
+          "g": 217
+        },
+        {
+          "t": ",",
+          "n": ",",
+          "w": 5,
+          "g": 218
+        },
+        {
+          "t": "long",
+          "n": "long",
+          "w": 5,
+          "g": 219
+        },
+        {
+          "t": "and",
+          "n": "and",
+          "w": 5,
+          "g": 220
+        },
+        {
+          "t": "short",
+          "n": "short",
+          "w": 5,
+          "g": 221
+        },
+        {
+          "t": "-",
+          "n": "-",
+          "w": 5,
           "g": 222
         },
         {
-          "t": "characters",
-          "n": "characters",
-          "w": 1,
+          "t": "horned",
+          "n": "horned",
+          "w": 5,
+          "g": 223
+        },
+        {
+          "t": "cattle",
+          "n": "cattle",
+          "w": 5,
+          "g": 224
+        },
+        {
+          "t": ",",
+          "n": ",",
+          "w": 5,
+          "g": 225
+        },
+        {
+          "t": "and",
+          "n": "and",
+          "w": 5,
+          "g": 226
+        },
+        {
+          "t": "poultry",
+          "n": "poultry",
+          "w": 5,
+          "g": 227
+        },
+        {
+          "t": "of",
+          "n": "of",
+          "w": 5,
           "g": 228
         },
         {
-          "t": "thus",
-          "n": "thus",
-          "w": 1,
+          "t": "various",
+          "n": "various",
+          "w": 5,
+          "g": 229
+        },
+        {
+          "t": "breeds",
+          "n": "breeds",
+          "w": 5,
+          "g": 230
+        },
+        {
+          "t": ",",
+          "n": ",",
+          "w": 5,
+          "g": 231
+        },
+        {
+          "t": "and",
+          "n": "and",
+          "w": 5,
+          "g": 232
+        },
+        {
+          "t": "esculent",
+          "n": "esculent",
+          "w": 5,
+          "g": 233
+        },
+        {
+          "t": "vegetables",
+          "n": "vegetables",
+          "w": 5,
           "g": 234
         },
         {
-          "t": "arising",
-          "n": "arising",
-          "w": 1,
+          "t": ",",
+          "n": ",",
+          "w": 5,
+          "g": 235
+        },
+        {
+          "t": "for",
+          "n": "for",
+          "w": 5,
+          "g": 236
+        },
+        {
+          "t": "an",
+          "n": "an",
+          "w": 5,
+          "g": 237
+        },
+        {
+          "t": "unlimited",
+          "n": "unlimited",
+          "w": 5,
+          "g": 238
+        },
+        {
+          "t": "number",
+          "n": "number",
+          "w": 5,
+          "g": 239
+        },
+        {
+          "t": "of",
+          "n": "of",
+          "w": 5,
           "g": 240
         },
         {
-          "t": "shall",
-          "n": "shall",
-          "w": 1,
+          "t": "generations",
+          "n": "generations",
+          "w": 5,
+          "g": 241
+        },
+        {
+          "t": ",",
+          "n": ",",
+          "w": 5,
+          "g": 242
+        },
+        {
+          "t": "would",
+          "n": "would",
+          "w": 5,
+          "g": 243
+        },
+        {
+          "t": "be",
+          "n": "be",
+          "w": 5,
+          "g": 244
+        },
+        {
+          "t": "opposed",
+          "n": "opposed",
+          "w": 5,
+          "g": 245
+        },
+        {
+          "t": "to",
+          "n": "to",
+          "w": 5,
           "g": 246
         },
         {
-          "t": "be",
-          "n": "be",
-          "w": 1,
+          "t": "all",
+          "n": "all",
+          "w": 5,
+          "g": 247
+        },
+        {
+          "t": "experience",
+          "n": "experience",
+          "w": 5,
+          "g": 248
+        },
+        {
+          "t": ".",
+          "n": ".",
+          "w": 5,
+          "g": 249
+        },
+        {
+          "t": "character",
+          "n": "character",
+          "w": 5,
+          "g": 250
+        },
+        {
+          "t": "of",
+          "n": "of",
+          "w": 5,
+          "g": 251
+        },
+        {
+          "t": "domestic",
+          "n": "domestic",
+          "w": 5,
           "g": 252
         },
         {
-          "t": "preserved",
-          "n": "preserved",
-          "w": 1,
-          "g": 258
-        }
-      ],
-      [
+          "t": "varieties",
+          "n": "varieties",
+          "w": 5,
+          "g": 253
+        },
         {
-          "t": "natural",
-          "n": "natural",
-          "w": 2,
+          "t": ":",
+          "n": ":",
+          "w": 5,
+          "g": 254
+        },
+        {
+          "t": "difficulty",
+          "n": "difficulty",
+          "w": 5,
+          "g": 255
+        },
+        {
+          "t": "of",
+          "n": "of",
+          "w": 5,
+          "g": 256
+        },
+        {
+          "t": "distinguishing",
+          "n": "distinguishing",
+          "w": 5,
+          "g": 257
+        },
+        {
+          "t": "between",
+          "n": "between",
+          "w": 5,
+          "g": 258
+        },
+        {
+          "t": "varieties",
+          "n": "varieties",
+          "w": 5,
+          "g": 259
+        },
+        {
+          "t": "and",
+          "n": "and",
+          "w": 5,
+          "g": 260
+        },
+        {
+          "t": "species",
+          "n": "species",
+          "w": 5,
+          "g": 261
+        },
+        {
+          "t": ";",
+          "n": ";",
+          "w": 5,
+          "g": 262
+        },
+        {
+          "t": "origin",
+          "n": "origin",
+          "w": 5,
+          "g": 263
+        },
+        {
+          "t": "of",
+          "n": "of",
+          "w": 5,
+          "g": 264
+        },
+        {
+          "t": "domestic",
+          "n": "domestic",
+          "w": 5,
+          "g": 265
+        },
+        {
+          "t": "varieties",
+          "n": "varieties",
+          "w": 5,
           "g": 266
         },
         {
-          "t": "selection",
-          "n": "selection",
-          "w": 2,
-          "g": 272
-        },
-        {
-          "t": ",",
-          "n": ",",
-          "w": 2,
-          "g": 278
-        },
-        {
-          "t": "as",
-          "n": "as",
-          "w": 2,
-          "g": 284
-        },
-        {
-          "t": "will",
-          "n": "will",
-          "w": 2,
-          "g": 290
-        },
-        {
-          "t": "hereafter",
-          "n": "hereafter",
-          "w": 2,
-          "g": 296
-        },
-        {
-          "t": "be",
-          "n": "be",
-          "w": 2,
-          "g": 302
-        },
-        {
-          "t": "explained",
-          "n": "explained",
-          "w": 2,
-          "g": 308
-        },
-        {
-          "t": ",",
-          "n": ",",
-          "w": 2,
-          "g": 314
-        },
-        {
-          "t": "will",
-          "n": "will",
-          "w": 2,
-          "g": 320
-        },
-        {
-          "t": "determine",
-          "n": "determine",
-          "w": 2,
-          "g": 326
-        },
-        {
-          "t": "how",
-          "n": "how",
-          "w": 2,
-          "g": 332
-        },
-        {
-          "t": "far",
-          "n": "far",
-          "w": 2,
-          "g": 338
-        },
-        {
-          "t": "the",
-          "n": "the",
-          "w": 2,
-          "g": 344
-        },
-        {
-          "t": "new",
-          "n": "new",
-          "w": 2,
-          "g": 350
-        },
-        {
-          "t": "characters",
-          "n": "characters",
-          "w": 2,
-          "g": 356
-        },
-        {
-          "t": "thus",
-          "n": "thus",
-          "w": 2,
-          "g": 362
-        },
-        {
-          "t": "arising",
-          "n": "arising",
-          "w": 2,
-          "g": 368
-        },
-        {
-          "t": "shall",
-          "n": "shall",
-          "w": 2,
-          "g": 374
-        },
-        {
-          "t": "be",
-          "n": "be",
-          "w": 2,
-          "g": 380
-        },
-        {
-          "t": "preserved",
-          "n": "preserved",
-          "w": 2,
-          "g": 386
-        }
-      ],
-      [
-        {
-          "t": "natural",
-          "n": "natural",
-          "w": 3,
-          "g": 394
-        },
-        {
-          "t": "selection",
-          "n": "selection",
-          "w": 3,
-          "g": 400
-        },
-        {
-          "t": ",",
-          "n": ",",
-          "w": 3,
-          "g": 406
-        },
-        {
-          "t": "as",
-          "n": "as",
-          "w": 3,
-          "g": 412
-        },
-        {
-          "t": "will",
-          "n": "will",
-          "w": 3,
-          "g": 418
-        },
-        {
-          "t": "hereafter",
-          "n": "hereafter",
-          "w": 3,
-          "g": 424
-        },
-        {
-          "t": "be",
-          "n": "be",
-          "w": 3,
-          "g": 430
-        },
-        {
-          "t": "explained",
-          "n": "explained",
-          "w": 3,
-          "g": 436
-        },
-        {
-          "t": ",",
-          "n": ",",
-          "w": 3,
-          "g": 442
-        },
-        {
-          "t": "will",
-          "n": "will",
-          "w": 3,
-          "g": 448
-        },
-        {
-          "t": "determine",
-          "n": "determine",
-          "w": 3,
-          "g": 454
-        },
-        {
-          "t": "how",
-          "n": "how",
-          "w": 3,
-          "g": 460
-        },
-        {
-          "t": "far",
-          "n": "far",
-          "w": 3,
-          "g": 466
-        },
-        {
-          "t": "the",
-          "n": "the",
-          "w": 3,
-          "g": 472
-        },
-        {
-          "t": "new",
-          "n": "new",
-          "w": 3,
-          "g": 478
-        },
-        {
-          "t": "characters",
-          "n": "characters",
-          "w": 3,
-          "g": 484
-        },
-        {
-          "t": "thus",
-          "n": "thus",
-          "w": 3,
-          "g": 490
-        },
-        {
-          "t": "arising",
-          "n": "arising",
-          "w": 3,
-          "g": 496
-        },
-        {
-          "t": "shall",
-          "n": "shall",
-          "w": 3,
-          "g": 502
-        },
-        {
-          "t": "be",
-          "n": "be",
-          "w": 3,
-          "g": 508
-        },
-        {
-          "t": "preserved",
-          "n": "preserved",
-          "w": 3,
-          "g": 514
-        },
-        {
-          "t": ".",
-          "n": ".",
-          "w": 3,
-          "g": 520
-        },
-        {
-          "t": "character",
-          "n": "character",
-          "w": 3,
-          "g": 526
-        },
-        {
-          "t": "of",
-          "n": "of",
-          "w": 3,
-          "g": 532
-        },
-        {
-          "t": "domestic",
-          "n": "domestic",
-          "w": 3,
-          "g": 538
-        },
-        {
-          "t": "varieties",
-          "n": "varieties",
-          "w": 3,
-          "g": 544
-        },
-        {
-          "t": ";",
-          "n": ";",
-          "w": 3,
-          "g": 550
-        },
-        {
-          "t": "difficulty",
-          "n": "difficulty",
-          "w": 3,
-          "g": 556
-        },
-        {
-          "t": "of",
-          "n": "of",
-          "w": 3,
-          "g": 562
-        },
-        {
-          "t": "distinguishing",
-          "n": "distinguishing",
-          "w": 3,
-          "g": 568
-        },
-        {
-          "t": "between",
-          "n": "between",
-          "w": 3,
-          "g": 574
-        },
-        {
-          "t": "varieties",
-          "n": "varieties",
-          "w": 3,
-          "g": 580
-        },
-        {
-          "t": "and",
-          "n": "and",
-          "w": 3,
-          "g": 586
-        },
-        {
-          "t": "species",
-          "n": "species",
-          "w": 3,
-          "g": 592
-        },
-        {
-          "t": ";",
-          "n": ";",
-          "w": 3,
-          "g": 598
-        },
-        {
-          "t": "origin",
-          "n": "origin",
-          "w": 3,
-          "g": 604
-        },
-        {
-          "t": "of",
-          "n": "of",
-          "w": 3,
-          "g": 610
-        },
-        {
-          "t": "domestic",
-          "n": "domestic",
-          "w": 3,
-          "g": 616
-        },
-        {
-          "t": "varieties",
-          "n": "varieties",
-          "w": 3,
-          "g": 622
-        },
-        {
-          "t": "from",
-          "n": "from",
-          "w": 3,
-          "g": 628
-        },
-        {
-          "t": "one",
-          "n": "one",
-          "w": 3,
-          "g": 634
-        },
-        {
-          "t": "or",
-          "n": "or",
-          "w": 3,
-          "g": 640
-        },
-        {
-          "t": "more",
-          "n": "more",
-          "w": 3,
-          "g": 646
-        },
-        {
-          "t": "species",
-          "n": "species",
-          "w": 3,
-          "g": 652
-        }
-      ],
-      [
-        {
-          "t": "there",
-          "n": "there",
-          "w": 4,
-          "g": 660
-        },
-        {
-          "t": "is",
-          "n": "is",
-          "w": 4,
-          "g": 666
-        },
-        {
-          "t": "not",
-          "n": "not",
-          "w": 4,
-          "g": 672
-        },
-        {
-          "t": "a",
-          "n": "a",
-          "w": 4,
-          "g": 678
-        },
-        {
-          "t": "shadow",
-          "n": "shadow",
-          "w": 4,
-          "g": 684
-        },
-        {
-          "t": "of",
-          "n": "of",
-          "w": 4,
-          "g": 690
-        },
-        {
-          "t": "evidence",
-          "n": "evidence",
-          "w": 4,
-          "g": 696
-        },
-        {
-          "t": "in",
-          "n": "in",
-          "w": 4,
-          "g": 702
-        },
-        {
-          "t": "favour",
-          "n": "favour",
-          "w": 4,
-          "g": 708
-        },
-        {
-          "t": "of",
-          "n": "of",
-          "w": 4,
-          "g": 714
-        },
-        {
-          "t": "this",
-          "n": "this",
-          "w": 4,
-          "g": 720
-        },
-        {
-          "t": "view",
-          "n": "view",
-          "w": 4,
-          "g": 726
-        },
-        {
-          "t": ":",
-          "n": ":",
-          "w": 4,
-          "g": 732
-        },
-        {
-          "t": "to",
-          "n": "to",
-          "w": 4,
-          "g": 738
-        },
-        {
-          "t": "assert",
-          "n": "assert",
-          "w": 4,
-          "g": 744
-        },
-        {
-          "t": "that",
-          "n": "that",
-          "w": 4,
-          "g": 750
-        },
-        {
-          "t": "we",
-          "n": "we",
-          "w": 4,
-          "g": 756
-        },
-        {
-          "t": "could",
-          "n": "could",
-          "w": 4,
-          "g": 762
-        },
-        {
-          "t": "not",
-          "n": "not",
-          "w": 4,
-          "g": 768
-        },
-        {
-          "t": "breed",
-          "n": "breed",
-          "w": 4,
-          "g": 774
-        },
-        {
-          "t": "our",
-          "n": "our",
-          "w": 4,
-          "g": 780
-        },
-        {
-          "t": "cart",
-          "n": "cart",
-          "w": 4,
-          "g": 786
-        },
-        {
-          "t": "and",
-          "n": "and",
-          "w": 4,
-          "g": 792
-        },
-        {
-          "t": "race",
-          "n": "race",
-          "w": 4,
-          "g": 798
-        },
-        {
-          "t": "-",
-          "n": "-",
-          "w": 4,
-          "g": 804
-        },
-        {
-          "t": "horses",
-          "n": "horses",
-          "w": 4,
-          "g": 810
-        },
-        {
-          "t": ",",
-          "n": ",",
-          "w": 4,
-          "g": 816
-        },
-        {
-          "t": "long",
-          "n": "long",
-          "w": 4,
-          "g": 822
-        },
-        {
-          "t": "and",
-          "n": "and",
-          "w": 4,
-          "g": 828
-        },
-        {
-          "t": "short",
-          "n": "short",
-          "w": 4,
-          "g": 834
-        },
-        {
-          "t": "-",
-          "n": "-",
-          "w": 4,
-          "g": 840
-        },
-        {
-          "t": "horned",
-          "n": "horned",
-          "w": 4,
-          "g": 846
-        },
-        {
-          "t": "cattle",
-          "n": "cattle",
-          "w": 4,
-          "g": 852
-        },
-        {
-          "t": ",",
-          "n": ",",
-          "w": 4,
-          "g": 858
-        },
-        {
-          "t": "and",
-          "n": "and",
-          "w": 4,
-          "g": 864
-        },
-        {
-          "t": "poultry",
-          "n": "poultry",
-          "w": 4,
-          "g": 870
-        },
-        {
-          "t": "of",
-          "n": "of",
-          "w": 4,
-          "g": 876
-        },
-        {
-          "t": "various",
-          "n": "various",
-          "w": 4,
-          "g": 882
-        },
-        {
-          "t": "breeds",
-          "n": "breeds",
-          "w": 4,
-          "g": 888
-        },
-        {
-          "t": ",",
-          "n": ",",
-          "w": 4,
-          "g": 894
-        },
-        {
-          "t": "and",
-          "n": "and",
-          "w": 4,
-          "g": 900
-        },
-        {
-          "t": "esculent",
-          "n": "esculent",
-          "w": 4,
-          "g": 906
-        },
-        {
-          "t": "vegetables",
-          "n": "vegetables",
-          "w": 4,
-          "g": 912
-        },
-        {
-          "t": ",",
-          "n": ",",
-          "w": 4,
-          "g": 918
-        },
-        {
-          "t": "for",
-          "n": "for",
-          "w": 4,
-          "g": 924
-        },
-        {
-          "t": "an",
-          "n": "an",
-          "w": 4,
-          "g": 930
-        },
-        {
-          "t": "unlimited",
-          "n": "unlimited",
-          "w": 4,
-          "g": 936
-        },
-        {
-          "t": "number",
-          "n": "number",
-          "w": 4,
-          "g": 942
-        },
-        {
-          "t": "of",
-          "n": "of",
-          "w": 4,
-          "g": 948
-        },
-        {
-          "t": "generations",
-          "n": "generations",
-          "w": 4,
-          "g": 954
-        },
-        {
-          "t": ",",
-          "n": ",",
-          "w": 4,
-          "g": 960
-        },
-        {
-          "t": "would",
-          "n": "would",
-          "w": 4,
-          "g": 966
-        },
-        {
-          "t": "be",
-          "n": "be",
-          "w": 4,
-          "g": 972
-        },
-        {
-          "t": "opposed",
-          "n": "opposed",
-          "w": 4,
-          "g": 978
-        },
-        {
-          "t": "to",
-          "n": "to",
-          "w": 4,
-          "g": 984
-        },
-        {
-          "t": "all",
-          "n": "all",
-          "w": 4,
-          "g": 990
-        },
-        {
-          "t": "experience",
-          "n": "experience",
-          "w": 4,
-          "g": 996
-        },
-        {
-          "t": ".",
-          "n": ".",
-          "w": 4,
-          "g": 1002
-        },
-        {
-          "t": "character",
-          "n": "character",
-          "w": 4,
-          "g": 1008
-        },
-        {
-          "t": "of",
-          "n": "of",
-          "w": 4,
-          "g": 1014
-        },
-        {
-          "t": "domestic",
-          "n": "domestic",
-          "w": 4,
-          "g": 1020
-        },
-        {
-          "t": "varieties",
-          "n": "varieties",
-          "w": 4,
-          "g": 1026
-        },
-        {
-          "t": ";",
-          "n": ";",
-          "w": 4,
-          "g": 1032
-        },
-        {
-          "t": "difficulty",
-          "n": "difficulty",
-          "w": 4,
-          "g": 1038
-        },
-        {
-          "t": "of",
-          "n": "of",
-          "w": 4,
-          "g": 1044
-        },
-        {
-          "t": "distinguishing",
-          "n": "distinguishing",
-          "w": 4,
-          "g": 1050
-        },
-        {
-          "t": "between",
-          "n": "between",
-          "w": 4,
-          "g": 1056
-        },
-        {
-          "t": "varieties",
-          "n": "varieties",
-          "w": 4,
-          "g": 1062
-        },
-        {
-          "t": "and",
-          "n": "and",
-          "w": 4,
-          "g": 1068
-        },
-        {
-          "t": "species",
-          "n": "species",
-          "w": 4,
-          "g": 1074
-        },
-        {
-          "t": ";",
-          "n": ";",
-          "w": 4,
-          "g": 1080
-        },
-        {
-          "t": "origin",
-          "n": "origin",
-          "w": 4,
-          "g": 1086
-        },
-        {
-          "t": "of",
-          "n": "of",
-          "w": 4,
-          "g": 1092
-        },
-        {
-          "t": "domestic",
-          "n": "domestic",
-          "w": 4,
-          "g": 1098
-        },
-        {
-          "t": "varieties",
-          "n": "varieties",
-          "w": 4,
-          "g": 1104
-        },
-        {
-          "t": "from",
-          "n": "from",
-          "w": 4,
-          "g": 1110
-        },
-        {
-          "t": "one",
-          "n": "one",
-          "w": 4,
-          "g": 1116
-        },
-        {
-          "t": "or",
-          "n": "or",
-          "w": 4,
-          "g": 1122
-        },
-        {
-          "t": "more",
-          "n": "more",
-          "w": 4,
-          "g": 1128
-        },
-        {
-          "t": "species",
-          "n": "species",
-          "w": 4,
-          "g": 1134
-        }
-      ],
-      [
-        {
-          "t": "there",
-          "n": "there",
-          "w": 5,
-          "g": 1142
-        },
-        {
-          "t": "is",
-          "n": "is",
-          "w": 5,
-          "g": 1148
-        },
-        {
-          "t": "not",
-          "n": "not",
-          "w": 5,
-          "g": 1154
-        },
-        {
-          "t": "a",
-          "n": "a",
-          "w": 5,
-          "g": 1160
-        },
-        {
-          "t": "shadow",
-          "n": "shadow",
-          "w": 5,
-          "g": 1166
-        },
-        {
-          "t": "of",
-          "n": "of",
-          "w": 5,
-          "g": 1172
-        },
-        {
-          "t": "evidence",
-          "n": "evidence",
-          "w": 5,
-          "g": 1178
-        },
-        {
-          "t": "in",
-          "n": "in",
-          "w": 5,
-          "g": 1184
-        },
-        {
-          "t": "favour",
-          "n": "favour",
-          "w": 5,
-          "g": 1190
-        },
-        {
-          "t": "of",
-          "n": "of",
-          "w": 5,
-          "g": 1196
-        },
-        {
-          "t": "this",
-          "n": "this",
-          "w": 5,
-          "g": 1202
-        },
-        {
-          "t": "view",
-          "n": "view",
-          "w": 5,
-          "g": 1208
-        },
-        {
-          "t": ":",
-          "n": ":",
-          "w": 5,
-          "g": 1214
-        },
-        {
-          "t": "to",
-          "n": "to",
-          "w": 5,
-          "g": 1220
-        },
-        {
-          "t": "assert",
-          "n": "assert",
-          "w": 5,
-          "g": 1226
-        },
-        {
-          "t": "that",
-          "n": "that",
-          "w": 5,
-          "g": 1232
-        },
-        {
-          "t": "we",
-          "n": "we",
-          "w": 5,
-          "g": 1238
-        },
-        {
-          "t": "could",
-          "n": "could",
-          "w": 5,
-          "g": 1244
-        },
-        {
-          "t": "not",
-          "n": "not",
-          "w": 5,
-          "g": 1250
-        },
-        {
-          "t": "breed",
-          "n": "breed",
-          "w": 5,
-          "g": 1256
-        },
-        {
-          "t": "our",
-          "n": "our",
-          "w": 5,
-          "g": 1262
-        },
-        {
-          "t": "cart",
-          "n": "cart",
-          "w": 5,
-          "g": 1268
-        },
-        {
-          "t": "and",
-          "n": "and",
-          "w": 5,
-          "g": 1274
-        },
-        {
-          "t": "race",
-          "n": "race",
-          "w": 5,
-          "g": 1280
-        },
-        {
-          "t": "-",
-          "n": "-",
-          "w": 5,
-          "g": 1286
-        },
-        {
-          "t": "horses",
-          "n": "horses",
-          "w": 5,
-          "g": 1292
-        },
-        {
-          "t": ",",
-          "n": ",",
-          "w": 5,
-          "g": 1298
-        },
-        {
-          "t": "long",
-          "n": "long",
-          "w": 5,
-          "g": 1304
-        },
-        {
-          "t": "and",
-          "n": "and",
-          "w": 5,
-          "g": 1310
-        },
-        {
-          "t": "short",
-          "n": "short",
-          "w": 5,
-          "g": 1316
-        },
-        {
-          "t": "-",
-          "n": "-",
-          "w": 5,
-          "g": 1322
-        },
-        {
-          "t": "horned",
-          "n": "horned",
-          "w": 5,
-          "g": 1328
-        },
-        {
-          "t": "cattle",
-          "n": "cattle",
-          "w": 5,
-          "g": 1334
-        },
-        {
-          "t": ",",
-          "n": ",",
-          "w": 5,
-          "g": 1340
-        },
-        {
-          "t": "and",
-          "n": "and",
-          "w": 5,
-          "g": 1346
-        },
-        {
-          "t": "poultry",
-          "n": "poultry",
-          "w": 5,
-          "g": 1352
-        },
-        {
-          "t": "of",
-          "n": "of",
-          "w": 5,
-          "g": 1358
-        },
-        {
-          "t": "various",
-          "n": "various",
-          "w": 5,
-          "g": 1364
-        },
-        {
-          "t": "breeds",
-          "n": "breeds",
-          "w": 5,
-          "g": 1370
-        },
-        {
-          "t": ",",
-          "n": ",",
-          "w": 5,
-          "g": 1376
-        },
-        {
-          "t": "and",
-          "n": "and",
-          "w": 5,
-          "g": 1382
-        },
-        {
-          "t": "esculent",
-          "n": "esculent",
-          "w": 5,
-          "g": 1388
-        },
-        {
-          "t": "vegetables",
-          "n": "vegetables",
-          "w": 5,
-          "g": 1394
-        },
-        {
-          "t": ",",
-          "n": ",",
-          "w": 5,
-          "g": 1400
-        },
-        {
-          "t": "for",
-          "n": "for",
-          "w": 5,
-          "g": 1406
-        },
-        {
-          "t": "an",
-          "n": "an",
-          "w": 5,
-          "g": 1412
-        },
-        {
-          "t": "unlimited",
-          "n": "unlimited",
-          "w": 5,
-          "g": 1418
-        },
-        {
-          "t": "number",
-          "n": "number",
-          "w": 5,
-          "g": 1424
-        },
-        {
-          "t": "of",
-          "n": "of",
-          "w": 5,
-          "g": 1430
-        },
-        {
-          "t": "generations",
-          "n": "generations",
-          "w": 5,
-          "g": 1436
-        },
-        {
-          "t": ",",
-          "n": ",",
-          "w": 5,
-          "g": 1442
-        },
-        {
-          "t": "would",
-          "n": "would",
-          "w": 5,
-          "g": 1448
-        },
-        {
-          "t": "be",
-          "n": "be",
-          "w": 5,
-          "g": 1454
-        },
-        {
-          "t": "opposed",
-          "n": "opposed",
-          "w": 5,
-          "g": 1460
-        },
-        {
-          "t": "to",
-          "n": "to",
-          "w": 5,
-          "g": 1466
-        },
-        {
-          "t": "all",
-          "n": "all",
-          "w": 5,
-          "g": 1472
-        },
-        {
-          "t": "experience",
-          "n": "experience",
-          "w": 5,
-          "g": 1478
-        },
-        {
-          "t": ".",
-          "n": ".",
-          "w": 5,
-          "g": 1484
-        },
-        {
-          "t": "character",
-          "n": "character",
-          "w": 5,
-          "g": 1490
-        },
-        {
-          "t": "of",
-          "n": "of",
-          "w": 5,
-          "g": 1496
-        },
-        {
-          "t": "domestic",
-          "n": "domestic",
-          "w": 5,
-          "g": 1502
-        },
-        {
-          "t": "varieties",
-          "n": "varieties",
-          "w": 5,
-          "g": 1508
-        },
-        {
-          "t": ":",
-          "n": ":",
-          "w": 5,
-          "g": 1514
-        },
-        {
-          "t": "difficulty",
-          "n": "difficulty",
-          "w": 5,
-          "g": 1520
-        },
-        {
-          "t": "of",
-          "n": "of",
-          "w": 5,
-          "g": 1526
-        },
-        {
-          "t": "distinguishing",
-          "n": "distinguishing",
-          "w": 5,
-          "g": 1532
-        },
-        {
-          "t": "between",
-          "n": "between",
-          "w": 5,
-          "g": 1538
-        },
-        {
-          "t": "varieties",
-          "n": "varieties",
-          "w": 5,
-          "g": 1544
-        },
-        {
-          "t": "and",
-          "n": "and",
-          "w": 5,
-          "g": 1550
-        },
-        {
-          "t": "species",
-          "n": "species",
-          "w": 5,
-          "g": 1556
-        },
-        {
-          "t": ";",
-          "n": ";",
-          "w": 5,
-          "g": 1562
-        },
-        {
-          "t": "origin",
-          "n": "origin",
-          "w": 5,
-          "g": 1568
-        },
-        {
-          "t": "of",
-          "n": "of",
-          "w": 5,
-          "g": 1574
-        },
-        {
-          "t": "domestic",
-          "n": "domestic",
-          "w": 5,
-          "g": 1580
-        },
-        {
-          "t": "varieties",
-          "n": "varieties",
-          "w": 5,
-          "g": 1586
-        },
-        {
           "t": "from",
           "n": "from",
           "w": 5,
-          "g": 1592
+          "g": 267
         },
         {
           "t": "one",
           "n": "one",
           "w": 5,
-          "g": 1598
+          "g": 268
         },
         {
           "t": "or",
           "n": "or",
           "w": 5,
-          "g": 1604
+          "g": 269
         },
         {
           "t": "more",
           "n": "more",
           "w": 5,
-          "g": 1610
+          "g": 270
         },
         {
           "t": "species",
           "n": "species",
           "w": 5,
-          "g": 1616
+          "g": 271
         }
       ]
     ]
