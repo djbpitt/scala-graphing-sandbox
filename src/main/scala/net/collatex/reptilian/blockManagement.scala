@@ -139,17 +139,24 @@ def removeOverlappingBlocks(fullDepthBlocks: List[FullDepthBlock]): Iterable[Ful
     .map(fdBlocks => fdBlocks.maxBy(_.length))
 
 
-def createAlignedBlocks(tokenArray: Vector[Token], witnessCount: Int) =
+// When working with full-depth blocks it uses witnessCount; when processing
+// SingletonTree and not using full-depth, it requires witnessCount but doesn’t use it
+def createAlignedBlocks(tokenArray: Vector[Token], witnessCount: Int, keepOnlyFullDepth: Boolean = true) =
   val (vectorization, _) = vectorize(tokenArray)
   val suffixArray = createSuffixArray(vectorization)
   val lcpArray = calculateLcpArrayKasai(tokenArray.map(_.n), suffixArray)
   val blocks = createBlocks(lcpArray)
   val witnessesOfBlock = findWitnessesOfBlock(suffixArray, tokenArray) // Partially applied, requires Block
   val tmpFullDepthNonrepeatingBlocks =
-    blocks
-      .map(e => (e, e.end - e.start + 1))
-      .filter((_, occurrenceCount) => occurrenceCount == witnessCount)
-      .filter((block, depth) => witnessesOfBlock(block).length == depth)
+    if keepOnlyFullDepth then
+      blocks
+        .map(e => (e, e.end - e.start + 1))
+        .filter((_, occurrenceCount) => occurrenceCount == witnessCount)
+        .filter((block, depth) => witnessesOfBlock(block).length == depth)
+    else
+      blocks
+        .map(e => (e, e.end - e.start + 1))
+        .filter((block, depth) => witnessesOfBlock(block).length == depth)
   val blockLengths = tmpFullDepthNonrepeatingBlocks.map((block, _) => block.length)
   val blockStartPositions = tmpFullDepthNonrepeatingBlocks
     .map((block, _) => suffixArray.slice(block.start, block.end + 1))

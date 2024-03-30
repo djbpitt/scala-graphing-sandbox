@@ -11,6 +11,7 @@ import net.collatex.reptilian.{
   VariationIndelNode,
   VariationNode,
   WitnessReadings,
+  createAlignedBlocks,
   makeTokenizer
 }
 import smile.clustering.hclust
@@ -334,12 +335,11 @@ val matrixToAlignmentTree =
   def createSingletonTreeTokenArray(t: AlignmentTreeNode, s: List[Token], ta: List[Token]) =
     // tree contains only ranges (not tokens), so we get token positions from global token array
     var sep = -1
-    val nodeListToProcess: List[AlignmentTreeNode] =
+    val nodeListToProcess: List[HasWitnessReadings] =
       t match {
-        case e: ExpandedNode => e.children.toList
-        case e               => List(e)
+        case e: ExpandedNode => e.children.map(_.asInstanceOf[HasWitnessReadings]).toList
+        case e               => List(e.asInstanceOf[HasWitnessReadings])
       }
-    println(s"nodeListToProcess: $nodeListToProcess")
     val tTokens = nodeListToProcess map {
       case e: AgreementNode      => ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
       case e: AgreementIndelNode => ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
@@ -349,7 +349,7 @@ val matrixToAlignmentTree =
         ts.head ++ ts.tail
           .flatMap(e =>
             sep += 1
-            List(Token(sep.toString, sep.toString, sep, -1)) ++ e
+            List(Token(sep.toString, sep.toString, -1, -1)) ++ e
           )
       case e: VariationIndelNode =>
         val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
@@ -357,17 +357,16 @@ val matrixToAlignmentTree =
         ts.head ++ ts.tail
           .flatMap(e =>
             sep += 1
-            List(Token(sep.toString, sep.toString, sep, -1)) ++ e
+            List(Token(sep.toString, sep.toString, -1, -1)) ++ e
           )
     }
     sep += 1 // increment separator before singleton tokens
-    println(s"ta: $ta")
-    println(s"tTokens: $tTokens")
-    tTokens.head ++ tTokens
+    val localTa = (tTokens.head ++ tTokens // local token array
       .tail.flatMap(e =>
         sep += 1
-        List(Token(sep.toString, sep.toString, sep, -1)) ++ e
-      ) ++ List(Token(sep.toString, sep.toString, sep, -1)) ++ s
+        List(Token(sep.toString, sep.toString, -1, -1)) ++ e
+      ) ++ List(Token(sep.toString, sep.toString, -1, -1)) ++ s).toVector
+    (localTa, nodeListToProcess)
 
   /* RESUME HERE 2024-03-16
    * In progress: Process SingletonTree
@@ -399,9 +398,31 @@ val matrixToAlignmentTree =
           acc(i + darwin.head.readings.size) = matrixToAlignmentTree(m, w1, w2)
           acc
         case (SingletonTree(item1: Int, item2: Int, height: Double), i: Int) =>
-          val stTokenArray = createSingletonTreeTokenArray(acc(item2), darwinReadings(item1), tokenArray)
+          val singletonTokens = darwinReadings(item1)
+          val (stTokenArray: Vector[Token], alignmentRibbon: List[HasWitnessReadings]) =
+            createSingletonTreeTokenArray(acc(item2), singletonTokens, tokenArray)
           println(stTokenArray)
-          acc(i + darwin.head.readings.size) = AgreementNode()
+
+          // in FullDepthBlock((x, y), z) x is start, y is exclusive end, z is length; exclusive end includes separator
+          val (_, _, fdb) =
+            createAlignedBlocks(stTokenArray, -1, false) // tuple of (all blocks, suffix array, full-depth blocks)
+            // witnessCount (second argument) is fake because we don't use it
+          // match blocks with correct alignment-tree nodes and build new alignment nodes that incorporate singleton
+          // tree tokens already have global offsets; need to add global offsets for singleton when creating new node
+          // FIXME: We fake, for now, the situation with a single full-depth block
+          // FIXME: We are not yet tracking non-blocks, which could be located anywhere among blocks
+          // FIXME: The note above applies also to singleton-to-singleton alignment
+          // TODO: Indel status is based on number of witness in current cluster, and can change
+          //   If there’s just a single reading, it can only be AgreementIndel, although it might turn into
+          //     VariationIndel
+          val singletonPair = singletonTokens.head.w.toString -> (singletonTokens.head.g, singletonTokens.last.g)
+          val newAtn =
+            if fdb.size == 1 then // FIXME: Need also to verify that block isn’t split
+              AgreementNode(witnessReadings = alignmentRibbon.head.witnessReadings ++ Map(singletonPair))
+            else
+              AgreementNode()
+          println(s"newAtn: $newAtn")
+          acc(i + darwin.head.readings.size) = newAtn
           acc
         case (TreeTree(item1: Int, item2: Int, height: Double), i: Int) =>
           acc(i + darwin.head.readings.size) = AgreementNode()
