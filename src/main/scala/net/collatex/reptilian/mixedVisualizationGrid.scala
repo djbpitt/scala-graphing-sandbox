@@ -348,6 +348,12 @@ private def createNonspriteSvgGridColumnCells(
     val nodeNo = (index + 1).toString // Output is one-based
     val innerGs = createInnerGridGs(node)
     <div id={"t" + nodeNo}>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40"
+           preserveAspectRatio="none">
+        <rect x="0" y="0" width="108.0" height="300.0" fill="gainsboro"/>
+        <rect x="69" y="0" width="38.0" height="300.0" fill="gray"/>
+        <line x1="69" y1="0" x2="69" y2="40" stroke="black" stroke-width=".5"/>
+      </svg>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40">
         <g id={"v" + nodeNo}>
           {innerGs}
