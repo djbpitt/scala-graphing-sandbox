@@ -102,3 +102,7 @@ def readData(pathToData: Path): List[(String, String)] =
     os.pwd / "src" / "main" / "output" / "mixed-output-grid-backgrounds.svg"
   scala.xml.XML.save(mixedOutputGridPath.toString, mixedOutputGrid, "UTF-8", true, doctypeHtml)
   scala.xml.XML.save(mixedOutputGridBackgroundsPath.toString, backgroundSprites, "UTF-8", true)
+  
+  val nonspriteGrid = createNonspriteGrid(root, tokenArray)
+  val nonspriteGridPath = os.pwd / "src" / "main" / "output" / "nonsprite-grid.xhtml"
+  scala.xml.XML.save(nonspriteGridPath.toString, nonspriteGrid, "UTF-8", true, doctypeHtml)

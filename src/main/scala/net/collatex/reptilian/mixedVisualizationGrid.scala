@@ -49,9 +49,7 @@ private def createInnerGridGs(input: AlignmentPoint): Vector[Elem] =
         "translate(" + (verticalRuleXPos - (witDims("w") / 2)).toString + ")"
       }>
         {
-        input.missingGroup.zipWithIndex.map((reading, offset) =>
-          plotText(reading, offset)
-        )
+        input.missingGroup.zipWithIndex.map((reading, offset) => plotText(reading, offset))
       }
       <line x1="0" y1="5" x2={
         (witDims("w") * input.missingGroup.size).toString
@@ -127,8 +125,8 @@ private def createSvgGridColumnCells(
 
 /** Create vector of all text column cells
   *
-  * agreement and agreementIndel nodes are one-item lists, but nonetheless
-  * conceptually lists, and therefore tagged as <ul> with single <li>
+  * agreement and agreementIndel nodes are one-item lists, but nonetheless conceptually lists, and therefore tagged as
+  * <ul> with single <li>
   *
   * <div> wrappers are added later
   *
@@ -194,8 +192,8 @@ private def createTextGridColumnCells(
     }
   result
 
-/** Create vector of alignment-node types, converted from PascalCase to
-  * camelCase, used as HTML @class value on row <div>
+/** Create vector of alignment-node types, converted from PascalCase to camelCase, used as HTML @class value on row
+  * <div>
   *
   * @param nodes
   *   vector of NumberedNode instances
@@ -259,8 +257,7 @@ private def createGridBackgroundFlows(
 
   allPaths :+ lastPath
 
-/** Entry point to create html (main page) and svg (backgrounds sprites) for
-  * grid-based continuous flow visualization
+/** Entry point to create html (main page) and svg (backgrounds sprites) for grid-based continuous flow visualization
   *
   * Depends on static css authored separately
   *
@@ -279,7 +276,7 @@ def createFlowModelForGrid(root: ExpandedNode, tokenArray: Vector[Token]) =
   val alignmentPoints: Vector[AlignmentPoint] =
     createAlignmentPoints(nodeSequence, tokenArray)
   /*
-   * Create grid content (one column per alignment point)
+   * Create grid content (one row per alignment point)
    * */
   val gridRowClasses: Vector[String] = getGridRowClasses(nodeSequence)
   val gridColumnCellsSvg: Vector[Elem] = createSvgGridColumnCells(
@@ -343,3 +340,147 @@ def createFlowModelForGrid(root: ExpandedNode, tokenArray: Vector[Token]) =
    * Return tuple of html main page and svg background sprites
    */
   (html, spritesPage)
+
+private def createNonspriteSvgGridColumnCells(
+    nodes: Vector[AlignmentPoint]
+): Vector[scala.xml.Elem] =
+  val result = nodes.zipWithIndex map { (node, index) =>
+    val nodeNo = (index + 1).toString // Output is one-based
+    val innerGs = createInnerGridGs(node)
+    <div id={"t" + nodeNo}>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40">
+        <g id={"v" + nodeNo}>
+          {innerGs}
+        </g>
+      </svg>
+    </div>
+  }
+  result
+
+def createNonspriteGrid(root: ExpandedNode, tokenArray: Vector[Token]): scala.xml.Node =
+  /*
+   * Setup
+   * */
+  val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
+  val alignmentPoints: Vector[AlignmentPoint] =
+    createAlignmentPoints(nodeSequence, tokenArray)
+  /*
+   * Create grid content (one row per alignment point)
+   * */
+  val gridRowClasses: Vector[String] = getGridRowClasses(nodeSequence)
+  val gridColumnCellsSvg: Vector[Elem] = createNonspriteSvgGridColumnCells(
+    alignmentPoints
+  ) // <div>
+  val gridColumnNodeNos = (1 to alignmentPoints.size).toVector
+  val gridColumnCellsText: Vector[Elem] =
+    createTextGridColumnCells(nodeSequence, tokenArray) // <td>
+  val gridContent = gridRowClasses.indices map { e =>
+    val c = gridRowClasses(e) // "class" is a reserved word
+    val svg = gridColumnCellsSvg(
+      e
+    ) // already wrapped in <div> because needs background pointer
+    val nodeNo = gridColumnNodeNos(e)
+    val text = gridColumnCellsText(e)
+    <div class={c}>
+      {svg}
+      <div><ul><li>{nodeNo}</li></ul></div>
+      <div>{text}</div>
+    </div>
+  }
+  /*
+   * HTML grid output
+   * */
+  val gradients =
+    <svg xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="yellowGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+          <stop offset="0%" stop-color="yellow" stop-opacity="1"/>
+          <stop offset="6%" stop-color="yellow" stop-opacity="1"/>
+          <stop offset="20%" stop-color="yellow" stop-opacity=".6"/>
+          <stop offset="35%" stop-color="yellow" stop-opacity=".4"/>
+          <stop offset="50%" stop-color="yellow" stop-opacity=".3"/>
+          <stop offset="65%" stop-color="yellow" stop-opacity=".4"/>
+          <stop offset="80%" stop-color="yellow" stop-opacity=".6"/>
+          <stop offset="94%" stop-color="yellow" stop-opacity="1"/>
+          <stop offset="100%" stop-color="yellow" stop-opacity="1"/>
+        </linearGradient>
+        <linearGradient id="dodgerblueGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+          <stop offset="0%" stop-color="dodgerblue" stop-opacity="1"/>
+          <stop offset="6%" stop-color="dodgerblue" stop-opacity="1"/>
+          <stop offset="20%" stop-color="dodgerblue" stop-opacity=".6"/>
+          <stop offset="35%" stop-color="dodgerblue" stop-opacity=".4"/>
+          <stop offset="50%" stop-color="dodgerblue" stop-opacity=".3"/>
+          <stop offset="65%" stop-color="dodgerblue" stop-opacity=".4"/>
+          <stop offset="80%" stop-color="dodgerblue" stop-opacity=".6"/>
+          <stop offset="94%" stop-color="dodgerblue" stop-opacity="1"/>
+          <stop offset="100%" stop-color="dodgerblue" stop-opacity="1"/>
+        </linearGradient>
+        <linearGradient id="violetGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+          <stop offset="0%" stop-color="violet" stop-opacity="1"/>
+          <stop offset="6%" stop-color="violet" stop-opacity="1"/>
+          <stop offset="20%" stop-color="violet" stop-opacity=".6"/>
+          <stop offset="35%" stop-color="violet" stop-opacity=".4"/>
+          <stop offset="50%" stop-color="violet" stop-opacity=".3"/>
+          <stop offset="65%" stop-color="violet" stop-opacity=".4"/>
+          <stop offset="80%" stop-color="violet" stop-opacity=".6"/>
+          <stop offset="94%" stop-color="violet" stop-opacity="1"/>
+          <stop offset="100%" stop-color="violet" stop-opacity="1"/>
+        </linearGradient>
+        <linearGradient id="orangeGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+          <stop offset="0%" stop-color="orange" stop-opacity="1"/>
+          <stop offset="6%" stop-color="orange" stop-opacity="1"/>
+          <stop offset="20%" stop-color="orange" stop-opacity=".6"/>
+          <stop offset="35%" stop-color="orange" stop-opacity=".4"/>
+          <stop offset="50%" stop-color="orange" stop-opacity=".3"/>
+          <stop offset="65%" stop-color="orange" stop-opacity=".4"/>
+          <stop offset="80%" stop-color="orange" stop-opacity=".6"/>
+          <stop offset="94%" stop-color="orange" stop-opacity="1"/>
+          <stop offset="100%" stop-color="orange" stop-opacity="1"/>
+        </linearGradient>
+        <linearGradient id="peruGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+          <stop offset="0%" stop-color="peru" stop-opacity="1"/>
+          <stop offset="6%" stop-color="peru" stop-opacity="1"/>
+          <stop offset="20%" stop-color="peru" stop-opacity=".6"/>
+          <stop offset="35%" stop-color="peru" stop-opacity=".4"/>
+          <stop offset="50%" stop-color="peru" stop-opacity=".3"/>
+          <stop offset="65%" stop-color="peru" stop-opacity=".4"/>
+          <stop offset="80%" stop-color="peru" stop-opacity=".6"/>
+          <stop offset="94%" stop-color="peru" stop-opacity="1"/>
+          <stop offset="100%" stop-color="peru" stop-opacity="1"/>
+        </linearGradient>
+        <linearGradient id="limegreenGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+          <stop offset="0%" stop-color="limegreen" stop-opacity="1"/>
+          <stop offset="6%" stop-color="limegreen" stop-opacity="1"/>
+          <stop offset="20%" stop-color="limegreen" stop-opacity=".6"/>
+          <stop offset="35%" stop-color="limegreen" stop-opacity=".4"/>
+          <stop offset="50%" stop-color="limegreen" stop-opacity=".3"/>
+          <stop offset="65%" stop-color="limegreen" stop-opacity=".4"/>
+          <stop offset="80%" stop-color="limegreen" stop-opacity=".6"/>
+          <stop offset="94%" stop-color="limegreen" stop-opacity="1"/>
+          <stop offset="100%" stop-color="limegreen" stop-opacity="1"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  val html =
+    <html xmlns="http://www.w3.org/1999/xhtml">
+      <head>
+        <title>Alignments</title>
+        <link rel="stylesheet" type="text/css" href="nonsprite-grid.css"/>
+      </head>
+      <body>
+        <h1>Alignments</h1>
+        {gradients}
+        <main>
+          <div>
+            <div>Flow</div>
+            <div>Node</div>
+            <div>Text</div>
+          </div>
+          {gridContent}
+        </main>
+      </body>
+    </html>
+  /*
+   * Return html main page
+   */
+  html
