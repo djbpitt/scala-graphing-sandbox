@@ -401,7 +401,8 @@ val matrixToAlignmentTree =
           val singletonTokens = darwinReadings(item1)
           val (stTokenArray: Vector[Token], alignmentRibbon: List[HasWitnessReadings]) =
             createSingletonTreeTokenArray(acc(item2), singletonTokens, tokenArray)
-          println(stTokenArray)
+//          println(s"stTokenArray: $stTokenArray")
+//          println(stTokenArray.map(_.t).mkString(" "))
 
           // in FullDepthBlock((x, y), z) x is start, y is exclusive end, z is length; exclusive end includes separator
           val (_, _, fdb) =
@@ -415,12 +416,21 @@ val matrixToAlignmentTree =
           // TODO: Indel status is based on number of witness in current cluster, and can change
           //   If there’s just a single reading, it can only be AgreementIndel, although it might turn into
           //     VariationIndel
-          val singletonPair = singletonTokens.head.w.toString -> (singletonTokens.head.g, singletonTokens.last.g)
+//          val treeLength = acc(item2).asInstanceOf[HasWitnessReadings].witnessReadings.head._2._2 - acc(item2)
+//            .asInstanceOf[HasWitnessReadings]
+//            .witnessReadings
+//            .head
+//            ._2
+//            ._1
           val newAtn =
             if fdb.size == 1 then // FIXME: Need also to verify that block isn’t split
-              AgreementNode(witnessReadings = alignmentRibbon.head.witnessReadings ++ Map(singletonPair))
-            else
-              AgreementNode()
+              println(fdb.head)
+              AgreementNode(witnessReadings =
+                alignmentRibbon.head.witnessReadings ++ Map(
+                  singletonTokens.head.w.toString -> (stTokenArray(fdb.head.instances.last).g, stTokenArray(fdb.head.instances.last).g + fdb.head.length)
+                )
+              )
+            else AgreementNode()
           println(s"newAtn: $newAtn")
           acc(i + darwin.head.readings.size) = newAtn
           acc
