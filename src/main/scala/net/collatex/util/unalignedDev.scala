@@ -411,11 +411,8 @@ val matrixToAlignmentTree =
           // match blocks with correct alignment-tree nodes and build new alignment nodes that incorporate singleton
           // tree tokens already have global offsets; need to add global offsets for singleton when creating new node
           // FIXME: We fake, for now, the situation with a single full-depth block
-          // FIXME: We are not yet tracking non-blocks, which could be located anywhere among blocks
+          // FIXME: We are tracking non-blocks only at the end, but they could be located anywhere among blocks
           // FIXME: The note above applies also to singleton-to-singleton alignment
-          // TODO: Indel status is based on number of witness in current cluster, and can change
-          //   If there’s just a single reading, it can only be AgreementIndel, although it might turn into
-          //     VariationIndel
 //          val treeLength = acc(item2).asInstanceOf[HasWitnessReadings].witnessReadings.head._2._2 - acc(item2)
 //            .asInstanceOf[HasWitnessReadings]
 //            .witnessReadings
@@ -424,14 +421,20 @@ val matrixToAlignmentTree =
 //            ._1
           val newAtn =
             if fdb.size == 1 then // FIXME: Need also to verify that block isn’t split
-              println(fdb.head)
-              AgreementNode(witnessReadings =
+              val updatedAgreementNode = AgreementNode(witnessReadings =
                 alignmentRibbon.head.witnessReadings ++ Map(
                   singletonTokens.head.w.toString -> (stTokenArray(fdb.head.instances.last).g, stTokenArray(fdb.head.instances.last).g + fdb.head.length)
                 )
               )
+              val singletonSiglum = singletonTokens.head.w.toString
+              val singletonEndInAgreementNode = updatedAgreementNode.witnessReadings(singletonSiglum)._2 // global TA position
+              val endpointDifference = singletonTokens.last.g - (singletonEndInAgreementNode - 1)
+              if endpointDifference == 0 then
+                updatedAgreementNode
+              else
+                val trailingTokenNode = AgreementIndelNode(singletonSiglum -> (singletonEndInAgreementNode, singletonTokens.last.g + 1))
+                ExpandedNode(ListBuffer(updatedAgreementNode, trailingTokenNode))
             else AgreementNode()
-          println(s"newAtn: $newAtn")
           acc(i + darwin.head.readings.size) = newAtn
           acc
         case (TreeTree(item1: Int, item2: Int, height: Double), i: Int) =>
