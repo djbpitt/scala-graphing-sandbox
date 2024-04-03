@@ -210,10 +210,6 @@ private def createGridBackgroundFlows(
 ) =
   val cellWidth = totalWitnessCount * 3 * witDims("w")
   val cellHeight = verticalNodeSpacing * witDims("h")
-  val backgroundRect =
-    <rect x="0" y="0" width={cellWidth.toString} height={
-      cellHeight.toString
-    } fill="gainsboro"/>
   def absoluteXPos(a: AlignmentPoint, w: WitnessReading): Double =
     if a.missingGroup.contains(w) then
       verticalRuleXPos + witDims("w") / 2 + a.missingGroup.indexOf(w) * witDims(
@@ -251,7 +247,7 @@ private def createGridBackgroundFlows(
       } vector-effect="non-scaling-stroke" fill="none"/>
     }.toVector
     <g id={s"b${e._2 + 1}"}>
-      {backgroundRect}{pathsForPair}
+      {pathsForPair}
     </g>
   }
 
@@ -347,6 +343,7 @@ private def createNonspriteSvgGridColumnCells(
   // width is hard-coded for 6 witnesses with ribbon width of 6:
   //   6 * 6 left ribbons, 5 * 6 left separators, 1 * 6 straddles line, 5 * 6 right ribbons
   //   left: 69, right: 33, total: 102
+  val flows = createGridBackgroundFlows(nodes)
   val result = nodes.zipWithIndex map { (node, index) =>
     val nodeNo = (index + 1).toString // Output is one-based
     val innerGs = createInnerGridGs(node)
@@ -355,6 +352,7 @@ private def createNonspriteSvgGridColumnCells(
            preserveAspectRatio="none">
         <rect x="0" y="0" width="102.0" height="300.0" fill="gainsboro"/>
         <rect x="69" y="0" width="33.0" height="300.0" fill="darkgray"/>
+        {flows(index)}
         <line x1="69" y1="0" x2="69" y2="40" stroke="black" stroke-width=".5"/>
       </svg>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 102 40">
@@ -392,7 +390,7 @@ def createNonspriteGrid(root: ExpandedNode, tokenArray: Vector[Token]): scala.xm
     val text = gridColumnCellsText(e)
     <div class={c}>
       {svg}
-      <div><ul><li>{nodeNo}</li></ul></div>
+      <div>{nodeNo}</div>
       <div>{text}</div>
     </div>
   }
