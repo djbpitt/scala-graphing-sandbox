@@ -241,7 +241,7 @@ private def createGridBackgroundFlows(
       val sourceX = absoluteXPos(e._1._1, WitnessReading(f)) + 3
       val targetX = absoluteXPos(e._1._2, WitnessReading(f)) + 3.0001
       val d =
-        s"M $sourceX,$sourceY C $sourceX,${sourceY + handleOffset} $targetX,${targetY - handleOffset} $targetX,$targetY"
+        s"M $sourceX,$sourceY L $sourceX, ${sourceY + 5} C $sourceX,${sourceY + handleOffset} $targetX,${targetY - handleOffset} $targetX,$targetY"
       <path d={d} stroke={color} stroke-width={
         (witDims("w") * 3).toString // Multiply by 3 because column width is 300px (set in css)
       } vector-effect="non-scaling-stroke" fill="none"/>
