@@ -54,7 +54,6 @@ def readData(pathToData: Path): List[(String, String)] =
     * Sigla used for alignment table
     */
   val root: ExpandedNode = createAlignment(witnessStrings, sigla)
-  println(root) // Tree before flattening
 
   /** Create views of tree
     *

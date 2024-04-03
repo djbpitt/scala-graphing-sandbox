@@ -46,7 +46,7 @@ private def createInnerGridGs(input: AlignmentPoint): Vector[Elem] =
   then // process group of missing witnesses if present
     val missingTexts =
       <g transform={
-        "translate(" + (verticalRuleXPos - (witDims("w") / 2)).toString + ")"
+        "translate(" + (verticalRuleXPos + (witDims("w") / 2)).toString + ")"
       }>
         {
         input.missingGroup.zipWithIndex.map((reading, offset) => plotText(reading, offset))
@@ -344,17 +344,20 @@ def createFlowModelForGrid(root: ExpandedNode, tokenArray: Vector[Token]) =
 private def createNonspriteSvgGridColumnCells(
     nodes: Vector[AlignmentPoint]
 ): Vector[scala.xml.Elem] =
+  // width is hard-coded for 6 witnesses with ribbon width of 6:
+  //   6 * 6 left ribbons, 5 * 6 left separators, 1 * 6 straddles line, 5 * 6 right ribbons
+  //   left: 69, right: 33, total: 102
   val result = nodes.zipWithIndex map { (node, index) =>
     val nodeNo = (index + 1).toString // Output is one-based
     val innerGs = createInnerGridGs(node)
     <div id={"t" + nodeNo}>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40"
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 102 40"
            preserveAspectRatio="none">
-        <rect x="0" y="0" width="108.0" height="300.0" fill="gainsboro"/>
-        <rect x="69" y="0" width="38.0" height="300.0" fill="gray"/>
+        <rect x="0" y="0" width="102.0" height="300.0" fill="gainsboro"/>
+        <rect x="69" y="0" width="33.0" height="300.0" fill="darkgray"/>
         <line x1="69" y1="0" x2="69" y2="40" stroke="black" stroke-width=".5"/>
       </svg>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 102 40">
         <g id={"v" + nodeNo}>
           {innerGs}
         </g>
