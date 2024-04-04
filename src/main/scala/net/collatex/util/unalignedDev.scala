@@ -341,38 +341,104 @@ val matrixToAlignmentTree =
         case e               => List(e.asInstanceOf[HasWitnessReadings])
       }
     val tTokens = nodeListToProcess map {
-      case e: AgreementNode      => ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
-      case e: AgreementIndelNode => ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
+      case e: AgreementNode =>
+        sep += 1
+        List(Token(sep.toString, sep.toString, -1, -1)) ++
+          ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
+      case e: AgreementIndelNode =>
+        List(Token(sep.toString, sep.toString, -1, -1)) ++ ta.slice(
+          e.witnessReadings.head._2._1,
+          e.witnessReadings.head._2._2
+        )
       case e: VariationNode =>
         val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
         val ts = groupHeads.map(f => ta.slice(e.witnessReadings(f)._1, e.witnessReadings(f)._2))
-        ts.head ++ ts.tail
-          .flatMap(e =>
-            sep += 1
-            List(Token(sep.toString, sep.toString, -1, -1)) ++ e
-          )
+        sep += 1
+        List(Token(sep.toString, sep.toString, -1, -1)) ++
+          (ts.head ++ ts.tail
+            .flatMap(e =>
+              sep += 1
+              List(Token(sep.toString, sep.toString, -1, -1)) ++ e
+            ))
       case e: VariationIndelNode =>
         val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
         val ts = groupHeads.map(f => ta.slice(e.witnessReadings(f)._1, e.witnessReadings(f)._2))
-        ts.head ++ ts.tail
-          .flatMap(e =>
-            sep += 1
-            List(Token(sep.toString, sep.toString, -1, -1)) ++ e
-          )
+        sep += 1
+        List(Token(sep.toString, sep.toString, -1, -1)) ++
+          (ts.head ++ ts.tail
+            .flatMap(e =>
+              sep += 1
+              List(Token(sep.toString, sep.toString, -1, -1)) ++ e
+            ))
     }
     sep += 1 // increment separator before singleton tokens
     val localTa = (tTokens.head ++ tTokens // local token array
       .tail.flatMap(e =>
         sep += 1
         List(Token(sep.toString, sep.toString, -1, -1)) ++ e
-      ) ++ List(Token(sep.toString, sep.toString, -1, -1)) ++ s).toVector
+      ) ++ List(Token(sep.toString, sep.toString, -1, -1)) ++ s).toVector.tail
     (localTa, nodeListToProcess)
+
+  def createTreeTreeTokenArray(t1: AlignmentTreeNode, t2: AlignmentTreeNode, ta: List[Token]): Unit =
+    // trees contain only ranges (not tokens), so we get token positions from global token array
+    var sep = -1
+    def getNodeListToProcess(t: AlignmentTreeNode): List[HasWitnessReadings] =
+      t match {
+        case e: ExpandedNode => e.children.map(_.asInstanceOf[HasWitnessReadings]).toList
+        case e               => List(e.asInstanceOf[HasWitnessReadings])
+      }
+    def getTTokens(nodes: List[HasWitnessReadings]) = nodes map {
+      case e: AgreementNode =>
+        sep += 1
+        List(Token(sep.toString, sep.toString, -1, -1)) ++
+          ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
+      case e: AgreementIndelNode =>
+        sep += 1
+        List(Token(sep.toString, sep.toString, -1, -1)) ++
+          ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
+      case e: VariationNode =>
+        val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
+        val ts = groupHeads.map(f => ta.slice(e.witnessReadings(f)._1, e.witnessReadings(f)._2))
+        sep += 1
+        List(Token(sep.toString, sep.toString, -1, -1)) ++
+          (ts.head ++ ts.tail
+            .flatMap(e =>
+              sep += 1
+              List(Token(sep.toString, sep.toString, -1, -1)) ++ e
+            ))
+      case e: VariationIndelNode =>
+        val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
+        val ts = groupHeads.map(f => ta.slice(e.witnessReadings(f)._1, e.witnessReadings(f)._2))
+        sep += 1
+        List(Token(sep.toString, sep.toString, -1, -1)) ++
+          (ts.head ++ ts.tail
+            .flatMap(e =>
+              sep += 1
+              List(Token(sep.toString, sep.toString, -1, -1)) ++ e
+            ))
+    }
+    val nodeListToProcess =
+      sep += 1
+      getTTokens(getNodeListToProcess(t1)).flatten.tail ++ List(Token(sep.toString, sep.toString, -1, -1)) ++
+        getTTokens(getNodeListToProcess(t2)).flatten.tail
+    println(s"t1: $t1")
+    println(s"t2: $t2")
+    println("Start of TreeTree tokens")
+    println(nodeListToProcess)
+    println("End of TreeTree tokens")
+
+//    sep += 1 // increment separator before singleton tokens
+//    val localTa = (tTokens.head ++ tTokens // local token array
+//      .tail.flatMap(e =>
+//        sep += 1
+//        List(Token(sep.toString, sep.toString, -1, -1)) ++ e
+//      ) ++ List(Token(sep.toString, sep.toString, -1, -1)) ++ s).toVector
+//    (localTa, nodeListToProcess)
 
   /* RESUME HERE 2024-03-16
    * In progress: Process SingletonTree
-   * TODO: Resume with createSingletonTreeTokenArray()
+   * TODO: Complete createSingletonTreeTokenArray()
    * TODO: Process TreeTree
-   * TODO: Fix fake global token position numbers to make them consecutive within a witness
    * */
 
 //  val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
@@ -390,6 +456,7 @@ val matrixToAlignmentTree =
     .zipWithIndex.foldLeft(mutable.Map[Int, AlignmentTreeNode]()) { (acc, next) =>
       next match
         case (SingletonSingleton(item1: Int, item2: Int, height: Double), i: Int) =>
+          // TODO: We have not yet explored Indels in SingletonSingleton patterns
           val w1: List[Token] = darwin.head.readings(item1)
           val w2: List[Token] = darwin.head.readings(item2)
           val m = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
@@ -412,7 +479,6 @@ val matrixToAlignmentTree =
           // tree tokens already have global offsets; need to add global offsets for singleton when creating new node
           // FIXME: We fake, for now, the situation with a single full-depth block
           // FIXME: We are tracking non-blocks only at the end, but they could be located anywhere among blocks
-          // FIXME: The note above applies also to singleton-to-singleton alignment
 //          val treeLength = acc(item2).asInstanceOf[HasWitnessReadings].witnessReadings.head._2._2 - acc(item2)
 //            .asInstanceOf[HasWitnessReadings]
 //            .witnessReadings
@@ -423,21 +489,25 @@ val matrixToAlignmentTree =
             if fdb.size == 1 then // FIXME: Need also to verify that block isn’t split
               val updatedAgreementNode = AgreementNode(witnessReadings =
                 alignmentRibbon.head.witnessReadings ++ Map(
-                  singletonTokens.head.w.toString -> (stTokenArray(fdb.head.instances.last).g, stTokenArray(fdb.head.instances.last).g + fdb.head.length)
+                  singletonTokens.head.w.toString -> (stTokenArray(fdb.head.instances.last).g, stTokenArray(
+                    fdb.head.instances.last
+                  ).g + fdb.head.length)
                 )
               )
               val singletonSiglum = singletonTokens.head.w.toString
-              val singletonEndInAgreementNode = updatedAgreementNode.witnessReadings(singletonSiglum)._2 // global TA position
+              val singletonEndInAgreementNode =
+                updatedAgreementNode.witnessReadings(singletonSiglum)._2 // global TA position
               val endpointDifference = singletonTokens.last.g - (singletonEndInAgreementNode - 1)
-              if endpointDifference == 0 then
-                updatedAgreementNode
+              if endpointDifference == 0 then updatedAgreementNode
               else
-                val trailingTokenNode = AgreementIndelNode(singletonSiglum -> (singletonEndInAgreementNode, singletonTokens.last.g + 1))
+                val trailingTokenNode =
+                  AgreementIndelNode(singletonSiglum -> (singletonEndInAgreementNode, singletonTokens.last.g + 1))
                 ExpandedNode(ListBuffer(updatedAgreementNode, trailingTokenNode))
             else AgreementNode()
           acc(i + darwin.head.readings.size) = newAtn
           acc
         case (TreeTree(item1: Int, item2: Int, height: Double), i: Int) =>
+          createTreeTreeTokenArray(acc(item1), acc(item2), tokenArray)
           acc(i + darwin.head.readings.size) = AgreementNode()
           acc
     }
