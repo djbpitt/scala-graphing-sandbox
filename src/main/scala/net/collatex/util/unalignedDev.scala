@@ -379,7 +379,7 @@ val matrixToAlignmentTree =
       ) ++ List(Token(sep.toString, sep.toString, -1, -1)) ++ s).toVector.tail
     (localTa, nodeListToProcess)
 
-  def createTreeTreeTokenArray(t1: AlignmentTreeNode, t2: AlignmentTreeNode, ta: List[Token]): Unit =
+  def createTreeTreeTokenArray(t1: AlignmentTreeNode, t2: AlignmentTreeNode, ta: List[Token]): List[Token] =
     // trees contain only ranges (not tokens), so we get token positions from global token array
     var sep = -1
     def getNodeListToProcess(t: AlignmentTreeNode): List[HasWitnessReadings] =
@@ -417,15 +417,59 @@ val matrixToAlignmentTree =
               List(Token(sep.toString, sep.toString, -1, -1)) ++ e
             ))
     }
-    val nodeListToProcess =
+
+    def getTTokenNodeMappings(nodes: List[HasWitnessReadings]): List[Vector[AlignmentTreeNode]] = nodes map {
+      case e: AgreementNode =>
+        sep += 1
+        val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
+          ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)).size
+        Vector.fill(tokenSize)(e)
+      case e: AgreementIndelNode =>
+        sep += 1
+        val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
+          ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)).size
+        Vector.fill(tokenSize)(e)
+      case e: VariationNode =>
+        val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
+        val ts = groupHeads.map(f => ta.slice(e.witnessReadings(f)._1, e.witnessReadings(f)._2))
+        sep += 1
+        val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
+          (ts.head ++ ts.tail
+            .flatMap(e =>
+              sep += 1
+              List(Token(sep.toString, sep.toString, -1, -1)) ++ e
+            ))).size
+        Vector.fill(tokenSize)(e)
+      case e: VariationIndelNode =>
+        val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
+        val ts = groupHeads.map(f => ta.slice(e.witnessReadings(f)._1, e.witnessReadings(f)._2))
+        sep += 1
+        val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
+          (ts.head ++ ts.tail
+            .flatMap(e =>
+              sep += 1
+              List(Token(sep.toString, sep.toString, -1, -1)) ++ e
+            ))).size
+        Vector.fill(tokenSize)(e)
+    }
+    val tokenNodeMappings = getTTokenNodeMappings(getNodeListToProcess(t1)).flatten.tail ++ Vector(AgreementNode()) ++
+      getTTokenNodeMappings(getNodeListToProcess(t2)).flatten.tail
+
+    val localTa =
       sep += 1
       getTTokens(getNodeListToProcess(t1)).flatten.tail ++ List(Token(sep.toString, sep.toString, -1, -1)) ++
         getTTokens(getNodeListToProcess(t2)).flatten.tail
-    println(s"t1: $t1")
-    println(s"t2: $t2")
-    println("Start of TreeTree tokens")
-    println(nodeListToProcess)
-    println("End of TreeTree tokens")
+    println(s"localTA length: ${localTa.size}")
+    println("Start of tokenNodeMappings:")
+    println(tokenNodeMappings)
+    println(s"tokenNodeMappings length: ${tokenNodeMappings.size}")
+    println("End of tokenNodeMappings")
+    println(s"tokenNodeMapping 67: ${tokenNodeMappings(67)}")
+    println(s"67 tokens: ${ta.slice(localTa(67).g, localTa(67).g + 17).map(_.n).mkString(" ")}")
+    println(s"tokenNodeMapping 113: ${tokenNodeMappings(113)}")
+    println(s"113 tokens: ${ta.slice(localTa(113).g, localTa(113).g + 17).map(_.n).mkString(" ")}")
+
+    localTa
 
 //    sep += 1 // increment separator before singleton tokens
 //    val localTa = (tTokens.head ++ tTokens // local token array
@@ -507,7 +551,13 @@ val matrixToAlignmentTree =
           acc(i + darwin.head.readings.size) = newAtn
           acc
         case (TreeTree(item1: Int, item2: Int, height: Double), i: Int) =>
-          createTreeTreeTokenArray(acc(item1), acc(item2), tokenArray)
+          val ttTokenArray = createTreeTreeTokenArray(acc(item1), acc(item2), tokenArray).toVector
+          val (_, _, blocks) =
+            createAlignedBlocks(ttTokenArray, -1, false) // tuple of (all blocks, suffix array, full-depth blocks)
+          println(s"blocks: $blocks")
+          println("Tokens for blocks:")
+          blocks.map(e => ttTokenArray.slice(e.instances.head, e.instances.head + e.length).map(_.n)).map(_.mkString(" ")).foreach(println)
+          println("End of tokens for blocks")
           acc(i + darwin.head.readings.size) = AgreementNode()
           acc
     }
