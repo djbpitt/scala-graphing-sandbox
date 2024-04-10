@@ -14,12 +14,14 @@
             }
             .sigla {
               font-weight: bold;
+              font-size: small;
             }
             foreignObject > div {
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
               font-size: 16px; /* needed by Safari */
+              padding: 0 .1em;
             }</style>
     </head>
     <body>
@@ -39,7 +41,7 @@
                         <stop offset="94%" stop-color="yellow" stop-opacity="1"/>
                         <stop offset="100%" stop-color="yellow" stop-opacity="1"/>
                     </linearGradient>
-                    <linearGradient id="dodgerblueGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+                    <linearGradient id="dodgerblueGradient" x1="0%" x2="100%" y1="0%" y2="0%">
                         <stop offset="0%" stop-color="dodgerblue" stop-opacity="1"/>
                         <stop offset="6%" stop-color="dodgerblue" stop-opacity="1"/>
                         <stop offset="20%" stop-color="dodgerblue" stop-opacity=".6"/>
@@ -50,7 +52,7 @@
                         <stop offset="94%" stop-color="dodgerblue" stop-opacity="1"/>
                         <stop offset="100%" stop-color="dodgerblue" stop-opacity="1"/>
                     </linearGradient>
-                    <linearGradient id="violetGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+                    <linearGradient id="violetGradient" x1="0%" x2="100%" y1="0%" y2="0%">
                         <stop offset="0%" stop-color="violet" stop-opacity="1"/>
                         <stop offset="6%" stop-color="violet" stop-opacity="1"/>
                         <stop offset="20%" stop-color="violet" stop-opacity=".6"/>
@@ -61,7 +63,7 @@
                         <stop offset="94%" stop-color="violet" stop-opacity="1"/>
                         <stop offset="100%" stop-color="violet" stop-opacity="1"/>
                     </linearGradient>
-                    <linearGradient id="orangeGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+                    <linearGradient id="orangeGradient" x1="0%" x2="100%" y1="0%" y2="0%">
                         <stop offset="0%" stop-color="orange" stop-opacity="1"/>
                         <stop offset="6%" stop-color="orange" stop-opacity="1"/>
                         <stop offset="20%" stop-color="orange" stop-opacity=".6"/>
@@ -72,7 +74,7 @@
                         <stop offset="94%" stop-color="orange" stop-opacity="1"/>
                         <stop offset="100%" stop-color="orange" stop-opacity="1"/>
                     </linearGradient>
-                    <linearGradient id="peruGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+                    <linearGradient id="peruGradient" x1="0%" x2="100%" y1="0%" y2="0%">
                         <stop offset="0%" stop-color="peru" stop-opacity="1"/>
                         <stop offset="6%" stop-color="peru" stop-opacity="1"/>
                         <stop offset="20%" stop-color="peru" stop-opacity=".6"/>
@@ -95,271 +97,335 @@
                         <stop offset="100%" stop-color="limegreen" stop-opacity="1"/>
                     </linearGradient>
                 </defs>
-                <svg>
+                <g>
+                    <!-- ============================================ -->
+                    <!-- Background                                   -->
+                    <!-- ============================================ -->
+                    <rect x="0" y="0" width="2000" height="202" fill="gainsboro" stroke="none"/>
+                    <rect x="0" y="202" width="2000" height="99" fill="gray" stroke="none"/>
+                </g>
+                <g transform="translate(0)">
+                    <!-- ============================================ -->
+                    <!-- Node 1                                       -->
+                    <!-- ============================================ -->
                     <g>
-                        <!-- ============================================ -->
-                        <!-- Background                                   -->
-                        <!-- ============================================ -->
-                        <rect x="0" y="0" width="2000" height="201" fill="gainsboro" stroke="none"/>
-                        <rect x="0" y="202" width="2000" height="99" fill="gray" stroke="none"/>
-                        <line x1="0" y1="202" x2="2000" y2="201" stroke="black" stroke-width="1"/>
-                    </g>
-                    <g transform="translate(0)">
-                        <!-- ============================================ -->
-                        <!-- Node 1                                       -->
-                        <!-- ============================================ -->
+                        <!-- ======================================== -->
+                        <!-- Present                                  -->
+                        <!-- ======================================== -->
                         <g>
-                            <!-- ======================================== -->
-                            <!-- Present                                  -->
-                            <!-- ======================================== -->
-                            <g>
-                                <!-- ==================================== -->
-                                <!-- Group 1-1                            -->
-                                <!-- ==================================== -->
-                                <rect x="0" y="0" width="160" height="18" stroke="none"
-                                    fill="limegreen"/>
-                                <foreignObject x="1" y="0" width="160" height="18"><div
-                                        xmlns="http://www.w3.org/1999/xhtml">
-                                        <span class="sigla">66:</span> causes of variability
-                                    </div></foreignObject>
-                                <rect x="0" y="18" width="160" height="18" stroke="none"
-                                    fill="dodgerBlue"/>
-                                <foreignObject x="1" y="18" width="160" height="18"><div
-                                        xmlns="http://www.w3.org/1999/xhtml">
-                                        <span class="sigla">69:</span> causes of variability
-                                    </div></foreignObject>
-                                <rect x="0" y="36" width="160" height="18" stroke="none"
-                                    fill="violet"/>
-                                <foreignObject x="1" y="36" width="160" height="18"><div
-                                        xmlns="http://www.w3.org/1999/xhtml">
-                                        <span class="sigla">71:</span> causes of variability
-                                    </div></foreignObject>
-                                <rect x="0" y="0" width="160" height="54" fill="none" stroke="black"
-                                    stroke-width="1"/>
-                            </g>
-                        </g>
-                        <g transform="translate(0, 202)">
-                            <!-- ======================================== -->
-                            <!-- Missing                                  -->
-                            <!-- ======================================== -->
-                            <rect x="0" y="0" width="160" height="18" stroke="none" fill="peru"/>
+                            <!-- ==================================== -->
+                            <!-- Group 1-1                            -->
+                            <!-- ==================================== -->
+                            <rect x="0" y="0" width="160" height="18" stroke="none" fill="limegreen"/>
                             <foreignObject x="1" y="0" width="160" height="18"><div
                                     xmlns="http://www.w3.org/1999/xhtml">
-                                    <span class="sigla">(59)</span>
-                                </div></foreignObject>
-                            <rect x="0" y="18" width="160" height="18" stroke="none" fill="orange"/>
+                                    <span class="sigla">66:</span> causes of
+                                variability</div></foreignObject>
+                            <rect x="0" y="18" width="160" height="18" stroke="none"
+                                fill="dodgerBlue"/>
                             <foreignObject x="1" y="18" width="160" height="18"><div
                                     xmlns="http://www.w3.org/1999/xhtml">
-                                    <span class="sigla">(61)</span>
-                                </div></foreignObject>
-                            <rect x="0" y="36" width="160" height="18" stroke="none" fill="yellow"/>
+                                    <span class="sigla">69:</span> causes of
+                                variability</div></foreignObject>
+                            <rect x="0" y="36" width="160" height="18" stroke="none" fill="violet"/>
                             <foreignObject x="1" y="36" width="160" height="18"><div
                                     xmlns="http://www.w3.org/1999/xhtml">
-                                    <span class="sigla">(66)</span>
-                                </div></foreignObject>
+                                    <span class="sigla">72:</span> causes of
+                                variability</div></foreignObject>
                             <rect x="0" y="0" width="160" height="54" fill="none" stroke="black"
                                 stroke-width="1"/>
                         </g>
                     </g>
+                    <g transform="translate(0, 202)">
+                        <!-- ======================================== -->
+                        <!-- Missing                                  -->
+                        <!-- ======================================== -->
+                        <rect x="0" y="0" width="160" height="18" stroke="none" fill="peru"/>
+                        <foreignObject x="1" y="0" width="160" height="18"><div
+                                xmlns="http://www.w3.org/1999/xhtml">
+                                <span class="sigla">(59)</span>
+                            </div></foreignObject>
+                        <rect x="0" y="18" width="160" height="18" stroke="none" fill="orange"/>
+                        <foreignObject x="1" y="18" width="160" height="18"><div
+                                xmlns="http://www.w3.org/1999/xhtml">
+                                <span class="sigla">(60)</span>
+                            </div></foreignObject>
+                        <rect x="0" y="36" width="160" height="18" stroke="none" fill="yellow"/>
+                        <foreignObject x="1" y="36" width="160" height="18"><div
+                                xmlns="http://www.w3.org/1999/xhtml">
+                                <span class="sigla">(61)</span>
+                            </div></foreignObject>
+                        <rect x="0" y="0" width="160" height="54" fill="none" stroke="black"
+                            stroke-width="1"/>
+                    </g>
+                </g>
+                <g transform="translate(160)">
                     <!-- ================================================ -->
                     <!-- Transition: node 1 to 2                          -->
                     <!-- ================================================ -->
-                    <g transform="translate(160)">
-                        <path d="M 0,9 L 10,9 C 40,9 40,72 70,72 L 80,72"
-                            stroke="url(#limegreenGradient)" stroke-width="18"
-                            vector-effect="non-scaling-stroke" fill="none"/>
-                        <path d="M 0,27 L 10,27 C 40,27 40,90 70,90 L 80,90"
-                            stroke="url(#dodgerblueGradient)" stroke-width="18"
-                            vector-effect="non-scaling-stroke" fill="none"/>
-                        <path d="M 0,45 L 10,45 C 40,45 40,108 70,108 L 80,108"
-                            stroke="url(#violetGradient)" stroke-width="18"
-                            vector-effect="non-scaling-stroke" fill="none"/>
-                        <path d="M 0,211 L 10,211 C 40,211 40,9 70,9 L 80,9"
-                            stroke="url(#peruGradient)" stroke-width="18"
-                            vector-effect="non-scaling-stroke" fill="none"/>
-                        <!--<path d="M 81.0,0 L 81,5 C 81.0,15.0 9.0001,25.0 9.0001,40.0"
-                            stroke="url(#orangeGradient)" stroke-width="6.0"
-                            vector-effect="non-scaling-stroke" fill="none"/>-->
-                        <!--<path d="M 87.0,0 L 87,5 C 87.0,15.0 15.0001,25.0 15.0001,40.0"
-                            stroke="url(#yellowGradient)" stroke-width="6.0"
-                            vector-effect="non-scaling-stroke" fill="none"/>-->
+                    <path d="M 0,9 L 10,9 C 40,9 40,63 70,63 L 80,63"
+                        stroke="url(#limegreenGradient)" stroke-width="18"
+                        vector-effect="non-scaling-stroke" fill="none"/>
+                    <path d="M 0,27 L 10,27 C 40,27 40,81 70,81 L 80,81"
+                        stroke="url(#dodgerblueGradient)" stroke-width="18"
+                        vector-effect="non-scaling-stroke" fill="none"/>
+                    <path d="M 0,45 L 10,45 C 40,45 40,99 70,99 L 80,99"
+                        stroke="url(#violetGradient)" stroke-width="18"
+                        vector-effect="non-scaling-stroke" fill="none"/>
+                    <path d="M 0,211 L 10,211 C 40,211 40,9 70,9 L 80,9" stroke="url(#peruGradient)"
+                        stroke-width="18" vector-effect="non-scaling-stroke" fill="none"/>
+                    <path d="M 0,229 L 10,229 C 40,229 40,27 70,27 L 80,27"
+                        stroke="url(#orangeGradient)" stroke-width="18"
+                        vector-effect="non-scaling-stroke" fill="none"/>
+                    <path d="M 0,247 L 10,247 C 40,247 40,45 70,45 L 80, 45"
+                        stroke="url(#yellowGradient)" stroke-width="18"
+                        vector-effect="non-scaling-stroke" fill="none"/>
+                </g>
+                <g transform="translate(240)">
+                    <!-- ============================================ -->
+                    <!-- Node 2                                       -->
+                    <!-- ============================================ -->
+                    <g>
+                        <!-- ======================================== -->
+                        <!-- Present                                  -->
+                        <!-- ======================================== -->
+                        <g transform="translate(0)">
+                            <!-- ==================================== -->
+                            <!-- Group 2-1                            -->
+                            <!-- ==================================== -->
+                            <rect x="0" y="0" width="160" height="18" stroke="none" fill="peru"/>
+                            <foreignObject x="1" y="0" width="160" height="18"><div
+                                    xmlns="http://www.w3.org/1999/xhtml">
+                                    <span class="sigla">59:</span> when we</div></foreignObject>
+                            <rect x="0" y="18" width="160" height="18" stroke="none" fill="orange"/>
+                            <foreignObject x="1" y="18" width="160" height="18"><div
+                                    xmlns="http://www.w3.org/1999/xhtml">
+                                    <span class="sigla">60:</span> when we</div></foreignObject>
+                            <rect x="0" y="36" width="160" height="18" stroke="none" fill="yellow"/>
+                            <foreignObject x="1" y="36" width="160" height="18"><div
+                                    xmlns="http://www.w3.org/1999/xhtml">
+                                    <span class="sigla">61:</span> when we</div></foreignObject>
+                            <rect x="0" y="54" width="160" height="18" stroke="none"
+                                fill="limegreen"/>
+                            <foreignObject x="1" y="54" width="160" height="18"><div
+                                    xmlns="http://www.w3.org/1999/xhtml">
+                                    <span class="sigla">66:</span> when we</div></foreignObject>
+                            <rect x="0" y="72" width="160" height="18" stroke="none"
+                                fill="dodgerBlue"/>
+                            <foreignObject x="1" y="72" width="160" height="18"><div
+                                    xmlns="http://www.w3.org/1999/xhtml">
+                                    <span class="sigla">69:</span> when we</div></foreignObject>
+                            <rect x="0" y="90" width="160" height="18" stroke="none" fill="violet"/>
+                            <foreignObject x="1" y="90" width="160" height="18"><div
+                                    xmlns="http://www.w3.org/1999/xhtml">
+                                    <span class="sigla">72:</span> when we</div></foreignObject>
+                            <rect x="0" y="0" width="160" height="108" fill="none" stroke="black"
+                                stroke-width="1"/>
+                        </g>
                     </g>
-                    <!--                <svg viewBox="0 0 100 10" xmlns="http://www.w3.org/2000/svg">
-                    <g transform="translate(0.0)">
-                        <text x="3.0" y="4.0" text-anchor="middle" font-size="4.199999999999999"
-                            >66</text>
-                        <text x="9.0" y="4.0" text-anchor="middle" font-size="4.199999999999999"
-                            >69</text>
-                        <text x="15.0" y="4.0" text-anchor="middle" font-size="4.199999999999999"
-                            >72</text>
-                        <line x1="0" y1="5" x2="18.0" y2="5" stroke="black" stroke-width=".5"/>
-                    </g>-->
-                    <!--                    <g transform="translate(72.0)">
-                        <text x="3.0" y="4.0" text-anchor="middle" font-size="4.199999999999999"
-                            >59</text>
-                        <text x="9.0" y="4.0" text-anchor="middle" font-size="4.199999999999999"
-                            >60</text>
-                        <text x="15.0" y="4.0" text-anchor="middle" font-size="4.199999999999999"
-                            >61</text>
-                        <line x1="0" y1="5" x2="18.0" y2="5" stroke="black" stroke-width=".5"/>
-                    </g>-->
-                </svg>
-                <!--                <div class="agreement">
-                    <div id="t2">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40"
-                            preserveAspectRatio="none">
-                            <rect x="0" y="0" width="108.0" height="300.0" fill="gainsboro"/>
-                            <rect x="69" y="0" width="38.0" height="300.0" fill="gray"/>
-                            <path d="M 15.0,0 L 15,5 C 15.0,15.0 15.0001,25.0 15.0001,40.0"
-                                stroke="url(#yellowGradient)" stroke-width="6.0"
-                                vector-effect="non-scaling-stroke" fill="none"/>
-                            <path d="M 21.0,0 L 21,5 C 21.0,15.0 21.0001,25.0 21.0001,40.0"
-                                stroke="url(#limegreenGradient)" stroke-width="6.0"
-                                vector-effect="non-scaling-stroke" fill="none"/>
-                            <path d="M 9.0,0 L 9,5 C 9.0,15.0 9.0001,25.0 9.0001,40.0"
-                                stroke="url(#orangeGradient)" stroke-width="6.0"
-                                vector-effect="non-scaling-stroke" fill="none"/>
-                            <path d="M 33.0,0 L 33,5 C 33.0,15.0 39.0001,25.0 39.0001,40.0"
-                                stroke="url(#violetGradient)" stroke-width="6.0"
-                                vector-effect="non-scaling-stroke" fill="none"/>
-                            <path d="M 27.0,0 L 27,5 C 27.0,15.0 33.0001,25.0 33.0001,40.0"
-                                stroke="url(#dodgerblueGradient)" stroke-width="6.0"
-                                vector-effect="non-scaling-stroke" fill="none"/>
-                            <path d="M 3.0,0 L 3,5 C 3.0,15.0 3.0001,25.0 3.0001,40.0"
-                                stroke="url(#peruGradient)" stroke-width="6.0"
-                                vector-effect="non-scaling-stroke" fill="none"/>
-                            <line x1="69" y1="0" x2="69" y2="40" stroke="black" stroke-width=".5"/>
-                        </svg>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 10">
-                            <g transform="translate(0.0)"><text x="3.0" y="4.0" text-anchor="middle"
-                                    font-size="4.199999999999999">59</text><text x="9.0" y="4.0"
-                                    text-anchor="middle" font-size="4.199999999999999"
-                                    >60</text><text x="15.0" y="4.0" text-anchor="middle"
-                                    font-size="4.199999999999999">61</text><text x="21.0" y="4.0"
-                                    text-anchor="middle" font-size="4.199999999999999"
-                                    >66</text><text x="27.0" y="4.0" text-anchor="middle"
-                                    font-size="4.199999999999999">69</text><text x="33.0" y="4.0"
-                                    text-anchor="middle" font-size="4.199999999999999"
-                                    >72</text><line x1="0" y1="5" x2="36.0" y2="5" stroke="black"
-                                    stroke-width=".5"/></g>
-                        </svg>
-                    </div>
-                    <div>2</div>
-                    <div>
-                        <ul>
-                            <li><span class="sigla">all: </span>when we</li>
-                        </ul>
-                    </div>
-                </div>
--->
-                <!--                <div class="variation">
-                    <div id="t3">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40"
-                            preserveAspectRatio="none">
-                            <rect x="0" y="0" width="108.0" height="300.0" fill="gainsboro"/>
-                            <rect x="69" y="0" width="38.0" height="300.0" fill="gray"/>
-                            <path d="M 3.0,0 L 3,5 C 3.0,15.0 3.0001,25.0 3.0001,40.0"
-                                stroke="url(#peruGradient)" stroke-width="6.0"
-                                vector-effect="non-scaling-stroke" fill="none"/>
-                            <path d="M 15.0,0 L 15,5 C 15.0,15.0 15.0001,25.0 15.0001,40.0"
-                                stroke="url(#yellowGradient)" stroke-width="6.0"
-                                vector-effect="non-scaling-stroke" fill="none"/>
-                            <path d="M 21.0,0 L 21,5 C 21.0,15.0 21.0001,25.0 21.0001,40.0"
-                                stroke="url(#limegreenGradient)" stroke-width="6.0"
-                                vector-effect="non-scaling-stroke" fill="none"/>
-                            <path d="M 33.0,0 L 33,5 C 33.0,15.0 27.0001,25.0 27.0001,40.0"
-                                stroke="url(#dodgerblueGradient)" stroke-width="6.0"
-                                vector-effect="non-scaling-stroke" fill="none"/>
-                            <path d="M 9.0,0 L 9,5 C 9.0,15.0 9.0001,25.0 9.0001,40.0"
-                                stroke="url(#orangeGradient)" stroke-width="6.0"
-                                vector-effect="non-scaling-stroke" fill="none"/>
-                            <path d="M 39.0,0 L 39,5 C 39.0,15.0 33.0001,25.0 33.0001,40.0"
-                                stroke="url(#violetGradient)" stroke-width="6.0"
-                                vector-effect="non-scaling-stroke" fill="none"/>
-                            <line x1="69" y1="0" x2="69" y2="40" stroke="black" stroke-width=".5"/>
-                        </svg>
-                        <svg viewBox="0 0 100 10" xmlns="http://www.w3.org/2000/svg">
-                            <g transform="translate(0.0)"><text x="3.0" y="4.0" text-anchor="middle"
-                                    font-size="4.199999999999999">59</text><text x="9.0" y="4.0"
-                                    text-anchor="middle" font-size="4.199999999999999"
-                                    >60</text><text x="15.0" y="4.0" text-anchor="middle"
-                                    font-size="4.199999999999999">61</text><text x="21.0" y="4.0"
-                                    text-anchor="middle" font-size="4.199999999999999"
-                                    >66</text><line x1="0" y1="5" x2="24.0" y2="5" stroke="black"
-                                    stroke-width=".5"/></g><g transform="translate(30.0)"><text
-                                    x="3.0" y="4.0" text-anchor="middle"
-                                    font-size="4.199999999999999">69</text><text x="9.0" y="4.0"
-                                    text-anchor="middle" font-size="4.199999999999999"
-                                    >72</text><line x1="0" y1="5" x2="12.0" y2="5" stroke="black"
-                                    stroke-width=".5"/></g>
-                        </svg>
-                    </div>
-                    <div>3</div>
-                    <div>
-                        <ul>
-                            <li><span class="sigla">59 60 61 66: </span>look to</li>
-                            <li><span class="sigla">69 72: </span>compare</li>
-                        </ul>
-                    </div>
-                </div>-->
-                <!--                <div class="agreement">
-                    <div id="t4">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40"
-                            preserveAspectRatio="none">
-                            <rect x="0" y="0" width="108.0" height="300.0" fill="gainsboro"/>
-                            <rect x="69" y="0" width="38.0" height="300.0" fill="gray"/>
-                            <path d="M 33.0,0 L 33,5 C 33.0,15.0 81.0001,25.0 81.0001,40.0"
-                                stroke="url(#violetGradient)" stroke-width="6.0"
-                                vector-effect="non-scaling-stroke" fill="none"/>
-                            <path d="M 15.0,0 L 15,5 C 15.0,15.0 15.0001,25.0 15.0001,40.0"
-                                stroke="url(#yellowGradient)" stroke-width="6.0"
-                                vector-effect="non-scaling-stroke" fill="none"/>
-                            <path d="M 21.0,0 L 21,5 C 21.0,15.0 21.0001,25.0 21.0001,40.0"
-                                stroke="url(#limegreenGradient)" stroke-width="6.0"
-                                vector-effect="non-scaling-stroke" fill="none"/>
-                            <path d="M 9.0,0 L 9,5 C 9.0,15.0 9.0001,25.0 9.0001,40.0"
-                                stroke="url(#orangeGradient)" stroke-width="6.0"
-                                vector-effect="non-scaling-stroke" fill="none"/>
-                            <path d="M 27.0,0 L 27,5 C 27.0,15.0 75.0001,25.0 75.0001,40.0"
-                                stroke="url(#dodgerblueGradient)" stroke-width="6.0"
-                                vector-effect="non-scaling-stroke" fill="none"/>
-                            <path d="M 3.0,0 L 3,5 C 3.0,15.0 3.0001,25.0 3.0001,40.0"
-                                stroke="url(#peruGradient)" stroke-width="6.0"
-                                vector-effect="non-scaling-stroke" fill="none"/>
-                            <line x1="69" y1="0" x2="69" y2="40" stroke="black" stroke-width=".5"/>
-                        </svg>
-                        <svg viewBox="0 0 100 10" xmlns="http://www.w3.org/2000/svg">
-                            <g transform="translate(0.0)"><text x="3.0" y="4.0" text-anchor="middle"
-                                    font-size="4.199999999999999">59</text><text x="9.0" y="4.0"
-                                    text-anchor="middle" font-size="4.199999999999999"
-                                    >60</text><text x="15.0" y="4.0" text-anchor="middle"
-                                    font-size="4.199999999999999">61</text><text x="21.0" y="4.0"
-                                    text-anchor="middle" font-size="4.199999999999999"
-                                    >66</text><text x="27.0" y="4.0" text-anchor="middle"
-                                    font-size="4.199999999999999">69</text><text x="33.0" y="4.0"
-                                    text-anchor="middle" font-size="4.199999999999999"
-                                    >72</text><line x1="0" y1="5" x2="36.0" y2="5" stroke="black"
-                                    stroke-width=".5"/></g>
-                        </svg>
-                    </div>
-                    <div>4</div>
-                    <div>
-                        <ul>
-                            <li><span class="sigla">all: </span>the individuals of the same variety
-                                or sub - variety of our older cultivated plants and animals , one of
-                                the first points which strikes us </li>
-                        </ul>
-                    </div>
-                </div>-->
+                </g>
+                <g transform="translate(400)">
+                    <!-- ================================================ -->
+                    <!-- Transition: node 2 to 3                          -->
+                    <!-- ================================================ -->
+                    <path d="M 0,9 L 10,9 C 40,9 40,9.0001 70,9.0001 L 80,9.0001"
+                        stroke="url(#peruGradient)" stroke-width="18"
+                        vector-effect="non-scaling-stroke" fill="none"/>
+                    <path d="M 0,27 L 10,27 C 40,27 40,27.0001 70,27.0001 L 80,27.0001"
+                        stroke="url(#orangeGradient)" stroke-width="18"
+                        vector-effect="non-scaling-stroke" fill="none"/>
+                    <path d="M 0,45 L 10,45 C 40,45 40,45.0001 70,45.0001 L 80,45.0001"
+                        stroke="url(#yellowGradient)" stroke-width="18"
+                        vector-effect="non-scaling-stroke" fill="none"/>
+                    <path d="M 0,63 L 10,63 C 40,63 40,63.0001 70,63.0001 L 80,63.0001"
+                        stroke="url(#limegreenGradient)" stroke-width="18"
+                        vector-effect="non-scaling-stroke" fill="none"/>
+                    <path d="M 0,81 L 10,81 C 40,81 40,99.0001 70,99.0001 L 80,99.0001"
+                        stroke="url(#dodgerblueGradient)" stroke-width="18"
+                        vector-effect="non-scaling-stroke" fill="none"/>
+                    <path d="M 0,99 L 10,99 C 40,99 40,117.0001 70,117.0001 L 80, 117.0001"
+                        stroke="url(#violetGradient)" stroke-width="18"
+                        vector-effect="non-scaling-stroke" fill="none"/>
+                </g>
+                <g transform="translate(480)">
+                    <!-- ============================================ -->
+                    <!-- Node 3                                       -->
+                    <!-- ============================================ -->
+                    <g>
+                        <g>
+                            <!-- ======================================== -->
+                            <!-- Present                                  -->
+                            <!-- ======================================== -->
+                            <g transform="translate(0)">
+                                <!-- ==================================== -->
+                                <!-- Group 3-1                            -->
+                                <!-- ==================================== -->
+                                <rect x="0" y="0" width="160" height="18" stroke="none" fill="peru"/>
+                                <foreignObject x="1" y="0" width="160" height="18"><div
+                                        xmlns="http://www.w3.org/1999/xhtml">
+                                        <span class="sigla">59:</span> look to</div></foreignObject>
+                                <rect x="0" y="18" width="160" height="18" stroke="none"
+                                    fill="orange"/>
+                                <foreignObject x="1" y="18" width="160" height="18"><div
+                                        xmlns="http://www.w3.org/1999/xhtml">
+                                        <span class="sigla">60:</span> look to</div></foreignObject>
+                                <rect x="0" y="36" width="160" height="18" stroke="none"
+                                    fill="yellow"/>
+                                <foreignObject x="1" y="36" width="160" height="18"><div
+                                        xmlns="http://www.w3.org/1999/xhtml">
+                                        <span class="sigla">61:</span> look to</div></foreignObject>
+                                <rect x="0" y="54" width="160" height="18" stroke="none"
+                                    fill="limegreen"/>
+                                <foreignObject x="1" y="54" width="160" height="18"><div
+                                        xmlns="http://www.w3.org/1999/xhtml">
+                                        <span class="sigla">66:</span> look to</div></foreignObject>
+                                <rect x="0" y="0" width="160" height="72" fill="none" stroke="black"
+                                    stroke-width="1"/>
+                            </g>
+                            <g transform="translate(0)">
+                                <!-- ==================================== -->
+                                <!-- Group 3-2                            -->
+                                <!-- ==================================== -->
+                                <rect x="0" y="90" width="160" height="18" stroke="none"
+                                    fill="dodgerBlue"/>
+                                <foreignObject x="1" y="90" width="160" height="18"><div
+                                        xmlns="http://www.w3.org/1999/xhtml">
+                                        <span class="sigla">69:</span> compare</div></foreignObject>
+                                <rect x="0" y="108" width="160" height="18" stroke="none"
+                                    fill="violet"/>
+                                <foreignObject x="1" y="108" width="160" height="18"><div
+                                        xmlns="http://www.w3.org/1999/xhtml">
+                                        <span class="sigla">72:</span> compare</div></foreignObject>
+                                <rect x="0" y="90" width="160" height="36" fill="none"
+                                    stroke="black" stroke-width="1"/>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+                <g transform="translate(640)">
+                    <!-- ================================================ -->
+                    <!-- Transition: node 3 to 4                          -->
+                    <!-- ================================================ -->
+                    <path d="M 0,9 L 10,9 C 40,9 40,9.0001 70,9.0001 L 80,9.0001"
+                        stroke="url(#peruGradient)" stroke-width="18"
+                        vector-effect="non-scaling-stroke" fill="none"/>
+                    <path d="M 0,27 L 10,27 C 40,27 40,27.0001 70,27.0001 L 80,27.0001"
+                        stroke="url(#orangeGradient)" stroke-width="18"
+                        vector-effect="non-scaling-stroke" fill="none"/>
+                    <path d="M 0,45 L 10,45 C 40,45 40,45.0001 70,45.0001 L 80,45.0001"
+                        stroke="url(#yellowGradient)" stroke-width="18"
+                        vector-effect="non-scaling-stroke" fill="none"/>
+                    <path d="M 0,63 L 10,63 C 40,63 40,63.0001 70,63.0001 L 80,63.0001"
+                        stroke="url(#limegreenGradient)" stroke-width="18"
+                        vector-effect="non-scaling-stroke" fill="none"/>
+                    <path d="M 0,99 L 10,99 C 40,99 40,81.0001 70,81.0001 L 80,81.0001"
+                        stroke="url(#dodgerblueGradient)" stroke-width="18"
+                        vector-effect="non-scaling-stroke" fill="none"/>
+                    <path d="M 0,117 L 10,117 C 40,117 40,99.0001 70,99.0001 L 80, 99.0001"
+                        stroke="url(#violetGradient)" stroke-width="18"
+                        vector-effect="non-scaling-stroke" fill="none"/>
+                </g>
+                <g transform="translate(720)">
+                    <!-- ============================================ -->
+                    <!-- Node 4                                       -->
+                    <!-- ============================================ -->
+                    <g>
+                        <g>
+                            <!-- ======================================== -->
+                            <!-- Present                                  -->
+                            <!-- ======================================== -->
+                            <g transform="translate(0)">
+                                <!-- ==================================== -->
+                                <!-- Group 4-1                            -->
+                                <!-- ==================================== -->
+                                <rect x="0" y="0" width="160" height="18" stroke="none" fill="peru"/>
+                                <foreignObject x="1" y="0" width="160" height="18"><div
+                                        xmlns="http://www.w3.org/1999/xhtml">
+                                        <span class="sigla">59:</span> the individuals of the same
+                                        variety or sub - variety of our older cultivated plants and
+                                        animals , one of the first points which strikes us
+                                    </div></foreignObject>
+                                <rect x="0" y="18" width="160" height="18" stroke="none"
+                                    fill="orange"/>
+                                <foreignObject x="1" y="18" width="160" height="18"><div
+                                        xmlns="http://www.w3.org/1999/xhtml">
+                                        <span class="sigla">60:</span> the individuals of the same
+                                        variety or sub - variety of our older cultivated plants and
+                                        animals , one of the first points which strikes us
+                                    </div></foreignObject>
+                                <rect x="0" y="36" width="160" height="18" stroke="none"
+                                    fill="yellow"/>
+                                <foreignObject x="1" y="36" width="160" height="18"><div
+                                        xmlns="http://www.w3.org/1999/xhtml">
+                                        <span class="sigla">61:</span> the individuals of the same
+                                        variety or sub - variety of our older cultivated plants and
+                                        animals , one of the first points which strikes us
+                                    </div></foreignObject>
+                                <rect x="0" y="54" width="160" height="18" stroke="none"
+                                    fill="limegreen"/>
+                                <foreignObject x="1" y="54" width="160" height="18"><div
+                                        xmlns="http://www.w3.org/1999/xhtml">
+                                        <span class="sigla">66:</span> the individuals of the same
+                                        variety or sub - variety of our older cultivated plants and
+                                        animals , one of the first points which strikes us
+                                    </div></foreignObject>
+                                <rect x="0" y="72" width="160" height="18" stroke="none"
+                                    fill="dodgerBlue"/>
+                                <foreignObject x="1" y="72" width="160" height="18"><div
+                                        xmlns="http://www.w3.org/1999/xhtml">
+                                        <span class="sigla">69:</span> the individuals of the same
+                                        variety or sub - variety of our older cultivated plants and
+                                        animals , one of the first points which strikes us
+                                    </div></foreignObject>
+                                <rect x="0" y="90" width="160" height="18" stroke="none"
+                                    fill="violet"/>
+                                <foreignObject x="1" y="90" width="160" height="18"><div
+                                        xmlns="http://www.w3.org/1999/xhtml">
+                                        <span class="sigla">72:</span> the individuals of the same
+                                        variety or sub - variety of our older cultivated plants and
+                                        animals , one of the first points which strikes us
+                                    </div></foreignObject>
+                                <rect x="0" y="0" width="160" height="108" fill="none"
+                                    stroke="black" stroke-width="1"/>
+                            </g>
+                        </g>
+                    </g>
+                </g>
                 <g>
                     <!-- ============================================ -->
                     <!-- All ruling                                   -->
                     <!-- ============================================ -->
                     <g>
+                        <!-- ======================================== -->
+                        <!-- Surrounding rectangle for backgrounds    -->
+                        <!-- ======================================== -->
                         <rect x="0" y="0" width="2000" height="300" stroke="black" stroke-width="2"
                             fill="none"/>
-                        <line x1="0" y1="0" x2="0" y2="202" stroke="black" stroke-width="1"/>
-                        <line x1="160" y1="0" x2="160" y2="300" stroke="black" stroke-width="1"/>
+                        <!-- ======================================== -->
+                        <!-- Node 1 group border                      -->
+                        <!-- ======================================== -->
+                        <g transform="translate(0)">
+                            <rect x="0" y="0" width="160" height="54" stroke="black"
+                                stroke-width="1" fill="none"/>
+                            <rect x="0" y="202" width="160" height="54" stroke="black"
+                                stroke-width="1" fill="none"/>
+                        </g>
+                        <!-- ======================================== -->
+                        <!-- Node 2 group border                      -->
+                        <!-- ======================================== -->
+                        <g transform="translate(240)">
+                            <rect x="0" y="0" width="160" height="108" stroke="black"
+                                stroke-width="1" fill="none"/>
+                        </g>
+                        <!-- ======================================== -->
+                        <!-- Node 3 group border                     -->
+                        <!-- ======================================== -->
+                        <g transform="translate(480)">
+                            <rect x="0" y="0" width="160" height="72" stroke="black"
+                                stroke-width="1" fill="none"/>
+                            <rect x="0" y="90" width="160" height="36" stroke="black"
+                                stroke-width="1" fill="none"/>
+                        </g>
                     </g>
                 </g>
             </svg>
