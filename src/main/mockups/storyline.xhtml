@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
+    <!-- TODO
+        Determine witness order by clustering (with complete linkage? parsimony?)
+        Compute length of rectangles for text (based on font size)
+        Round corners of rectangles (outline vs border)
+        Remove general rectangle but keep gray backgrounds
+        Show full text (esp. where abbreviated by ellipsis)
+        Adjust line height and vertical position of text in rectangle
+        Convert to variant graph (since we say that it’s easy)
+        Color selection and color order
+    -->
     <head>
         <title>Alignment mockup</title>
         <style type="text/css">
@@ -22,6 +32,7 @@
               text-overflow: ellipsis;
               font-size: 16px; /* needed by Safari */
               padding: .1em .1em 0 .1em;
+              line-height: 17px;
             }</style>
     </head>
     <body>
@@ -117,23 +128,23 @@
                             <!-- Group 1-1                            -->
                             <!-- ==================================== -->
                             <rect x="0" y="0" width="160" height="18" stroke="none" fill="limegreen"/>
-                            <foreignObject x="1" y="0" width="160" height="18"><div
+                            <foreignObject x="1" y="-1.5" width="160" height="18"><div
                                     xmlns="http://www.w3.org/1999/xhtml">
                                     <span class="sigla">66:</span> causes of
                                 variability</div></foreignObject>
                             <rect x="0" y="18" width="160" height="18" stroke="none"
                                 fill="dodgerBlue"/>
-                            <foreignObject x="1" y="18" width="160" height="18"><div
+                            <foreignObject x="1" y="16.5" width="160" height="18"><div
                                     xmlns="http://www.w3.org/1999/xhtml">
                                     <span class="sigla">69:</span> causes of
                                 variability</div></foreignObject>
                             <rect x="0" y="36" width="160" height="18" stroke="none" fill="violet"/>
-                            <foreignObject x="1" y="36" width="160" height="18"><div
+                            <foreignObject x=".5" y="34.5" width="160" height="18"><div
                                     xmlns="http://www.w3.org/1999/xhtml">
                                     <span class="sigla">72:</span> causes of
                                 variability</div></foreignObject>
                             <rect x="0" y="0" width="160" height="54" fill="none" stroke="black"
-                                stroke-width="1"/>
+                                stroke-width="1" rx="5"/>
                         </g>
                     </g>
                     <g transform="translate(0, 202)">
@@ -156,7 +167,7 @@
                                 <span class="sigla">(61)</span>
                             </div></foreignObject>
                         <rect x="0" y="0" width="160" height="54" fill="none" stroke="black"
-                            stroke-width="1"/>
+                            stroke-width="1" rx="5"/>
                     </g>
                 </g>
                 <g transform="translate(160)">
@@ -279,8 +290,8 @@
                                 <foreignObject x="1" y="54" width="160" height="18"><div
                                         xmlns="http://www.w3.org/1999/xhtml">
                                         <span class="sigla">66:</span> look to</div></foreignObject>
-                                <rect x="0" y="0" width="160" height="72" fill="none" stroke="black"
-                                    stroke-width="1"/>
+                                <rect x="0" y="0" width="159" height="72" fill="none" stroke="black"
+                                    stroke-width="2" rx="2"/>
                             </g>
                             <g transform="translate(0)">
                                 <!-- ==================================== -->
@@ -296,8 +307,8 @@
                                 <foreignObject x="1" y="108" width="160" height="18"><div
                                         xmlns="http://www.w3.org/1999/xhtml">
                                         <span class="sigla">72:</span> compare</div></foreignObject>
-                                <rect x="0" y="90" width="160" height="36" fill="none"
-                                    stroke="black" stroke-width="1"/>
+                                <rect x="0" y="90" width="159" height="36" fill="none"
+                                    stroke="black" stroke-width="2" rx="2"/>
                             </g>
                         </g>
                     </g>
@@ -399,16 +410,16 @@
                         <!-- ======================================== -->
                         <!-- Surrounding rectangle for backgrounds    -->
                         <!-- ======================================== -->
-                        <rect x="0" y="0" width="2000" height="300" stroke="black" stroke-width="2"
-                            fill="none"/>
+                        <!--<rect x="0" y="0" width="2000" height="300" stroke="black" stroke-width="2"
+                            fill="none"/>-->
                         <!-- ======================================== -->
                         <!-- Node 1 group border                      -->
                         <!-- ======================================== -->
                         <g transform="translate(0)">
                             <rect x="0" y="0" width="160" height="54" stroke="black"
-                                stroke-width="1" fill="none"/>
+                                stroke-width="1" fill="none" rx="5"/>
                             <rect x="0" y="202" width="160" height="54" stroke="black"
-                                stroke-width="1" fill="none"/>
+                                stroke-width="1" fill="none" rx="5"/>
                         </g>
                         <!-- ======================================== -->
                         <!-- Node 2 group border                      -->
@@ -420,12 +431,12 @@
                         <!-- ======================================== -->
                         <!-- Node 3 group border                     -->
                         <!-- ======================================== -->
-                        <g transform="translate(480)">
+                        <!--<g transform="translate(480)">
                             <rect x="0" y="0" width="160" height="72" stroke="black"
                                 stroke-width="1" fill="none"/>
                             <rect x="0" y="90" width="160" height="36" stroke="black"
                                 stroke-width="1" fill="none"/>
-                        </g>
+                        </g>-->
                     </g>
                 </g>
             </svg>
