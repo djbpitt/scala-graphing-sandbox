@@ -105,3 +105,5 @@ def readData(pathToData: Path): List[(String, String)] =
   val nonspriteGrid = createNonspriteGrid(root, tokenArray)
   val nonspriteGridPath = os.pwd / "src" / "main" / "output" / "nonsprite-grid.xhtml"
   scala.xml.XML.save(nonspriteGridPath.toString, nonspriteGrid, "UTF-8", true, doctypeHtml)
+
+  println(computeTextLength("hi"))

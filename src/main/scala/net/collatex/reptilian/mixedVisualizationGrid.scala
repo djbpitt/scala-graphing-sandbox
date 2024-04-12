@@ -364,6 +364,22 @@ private def createNonspriteSvgGridColumnCells(
   }
   result
 
+/** computeTextLength
+ * 
+ * NB: Hard-codes 8 as width of any missing characters to avoid overhead
+ *   of computing average width (which, for tnr 16, is 7.952200940860215)
+ * 
+ * @param in string to measure
+ * @return length of string as double
+ */
+def computeTextLength(in: String): Double =
+  val tnr16Metrics = xml.XML.loadFile("src/main/python/tnr_16_metrics.xml")
+  val tnrCharLengths = (tnr16Metrics \ "character")
+    .map(e => ((e \ "@str").toString, e \ "@width"))
+    .toMap
+  val result = in.map(e => tnrCharLengths(e.toString).toString.toDouble).sum
+  result
+
 def createNonspriteGrid(root: ExpandedNode, tokenArray: Vector[Token]): scala.xml.Node =
   /*
    * Setup
