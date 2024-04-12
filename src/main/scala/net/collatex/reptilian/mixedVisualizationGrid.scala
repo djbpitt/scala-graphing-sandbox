@@ -364,11 +364,13 @@ private def createNonspriteSvgGridColumnCells(
   }
   result
 
-/** computeTextLength
- * 
- * NB: Hard-codes 8 as width of any missing characters to avoid overhead
- *   of computing average width (which, for tnr 16, is 7.952200940860215)
- * 
+/** computeTextLength()
+ *
+ * Summary: Return text length of a single string in TNR 16
+ *
+ * NB: Not trapping missing characters; if this is desirable, we
+ *   could default to average character width (7.95 for tnr 16)
+ *
  * @param in string to measure
  * @return length of string as double
  */
