@@ -365,15 +365,17 @@ private def createNonspriteSvgGridColumnCells(
   result
 
 /** computeTextLength()
- *
- * Summary: Return text length of a single string in TNR 16
- *
- * NB: Not trapping missing characters; if this is desirable, we
- *   could default to average character width (7.95 for tnr 16)
- *
- * @param in string to measure
- * @return length of string as double
- */
+  *
+  * Summary: Return text length of a single string in TNR 16
+  *
+  * NB: Not trapping missing characters; if this is desirable, we could default to average character width (7.95 for tnr
+  * 16)
+  *
+  * @param in
+  *   string to measure
+  * @return
+  *   length of string as double
+  */
 def computeTextLength(in: String): Double =
   val tnr16Metrics = xml.XML.loadFile("src/main/python/tnr_16_metrics.xml")
   val tnrCharLengths = (tnr16Metrics \ "character")
@@ -381,6 +383,117 @@ def computeTextLength(in: String): Double =
     .toMap
   val result = in.map(e => tnrCharLengths(e.toString).toString.toDouble).sum
   result
+
+def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scala.xml.Node =
+  val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
+  val alignmentPoints: Vector[AlignmentPoint] =
+    createAlignmentPoints(nodeSequence, tokenArray)
+  val witnessCount = 6
+  val ribbonWidth = 18
+  val flowLength = 80
+  val maxAlignmentPointWidth = 160
+  val totalWidth = "2000"
+  val totalHeight = (ribbonWidth * (witnessCount * 3 - 1)).toString
+  val viewBox = s"0 0 $totalWidth $totalHeight"
+  val gradients =
+    <defs>
+      <linearGradient id="yellowGradient" x1="0%" x2="100%" y1="0%" y2="0%">
+        <stop offset="0%" stop-color="yellow" stop-opacity="1"/>
+        <stop offset="6%" stop-color="yellow" stop-opacity="1"/>
+        <stop offset="20%" stop-color="yellow" stop-opacity=".6"/>
+        <stop offset="35%" stop-color="yellow" stop-opacity=".4"/>
+        <stop offset="50%" stop-color="yellow" stop-opacity=".3"/>
+        <stop offset="65%" stop-color="yellow" stop-opacity=".4"/>
+        <stop offset="80%" stop-color="yellow" stop-opacity=".6"/>
+        <stop offset="94%" stop-color="yellow" stop-opacity="1"/>
+        <stop offset="100%" stop-color="yellow" stop-opacity="1"/>
+      </linearGradient>
+      <linearGradient id="dodgerblueGradient" x1="0%" x2="100%" y1="0%" y2="0%">
+        <stop offset="0%" stop-color="dodgerblue" stop-opacity="1"/>
+        <stop offset="6%" stop-color="dodgerblue" stop-opacity="1"/>
+        <stop offset="20%" stop-color="dodgerblue" stop-opacity=".6"/>
+        <stop offset="35%" stop-color="dodgerblue" stop-opacity=".4"/>
+        <stop offset="50%" stop-color="dodgerblue" stop-opacity=".3"/>
+        <stop offset="65%" stop-color="dodgerblue" stop-opacity=".4"/>
+        <stop offset="80%" stop-color="dodgerblue" stop-opacity=".6"/>
+        <stop offset="94%" stop-color="dodgerblue" stop-opacity="1"/>
+        <stop offset="100%" stop-color="dodgerblue" stop-opacity="1"/>
+      </linearGradient>
+      <linearGradient id="violetGradient" x1="0%" x2="100%" y1="0%" y2="0%">
+        <stop offset="0%" stop-color="violet" stop-opacity="1"/>
+        <stop offset="6%" stop-color="violet" stop-opacity="1"/>
+        <stop offset="20%" stop-color="violet" stop-opacity=".6"/>
+        <stop offset="35%" stop-color="violet" stop-opacity=".4"/>
+        <stop offset="50%" stop-color="violet" stop-opacity=".3"/>
+        <stop offset="65%" stop-color="violet" stop-opacity=".4"/>
+        <stop offset="80%" stop-color="violet" stop-opacity=".6"/>
+        <stop offset="94%" stop-color="violet" stop-opacity="1"/>
+        <stop offset="100%" stop-color="violet" stop-opacity="1"/>
+      </linearGradient>
+      <linearGradient id="orangeGradient" x1="0%" x2="100%" y1="0%" y2="0%">
+        <stop offset="0%" stop-color="orange" stop-opacity="1"/>
+        <stop offset="6%" stop-color="orange" stop-opacity="1"/>
+        <stop offset="20%" stop-color="orange" stop-opacity=".6"/>
+        <stop offset="35%" stop-color="orange" stop-opacity=".4"/>
+        <stop offset="50%" stop-color="orange" stop-opacity=".3"/>
+        <stop offset="65%" stop-color="orange" stop-opacity=".4"/>
+        <stop offset="80%" stop-color="orange" stop-opacity=".6"/>
+        <stop offset="94%" stop-color="orange" stop-opacity="1"/>
+        <stop offset="100%" stop-color="orange" stop-opacity="1"/>
+      </linearGradient>
+      <linearGradient id="peruGradient" x1="0%" x2="100%" y1="0%" y2="0%">
+        <stop offset="0%" stop-color="peru" stop-opacity="1"/>
+        <stop offset="6%" stop-color="peru" stop-opacity="1"/>
+        <stop offset="20%" stop-color="peru" stop-opacity=".6"/>
+        <stop offset="35%" stop-color="peru" stop-opacity=".4"/>
+        <stop offset="50%" stop-color="peru" stop-opacity=".3"/>
+        <stop offset="65%" stop-color="peru" stop-opacity=".4"/>
+        <stop offset="80%" stop-color="peru" stop-opacity=".6"/>
+        <stop offset="94%" stop-color="peru" stop-opacity="1"/>
+        <stop offset="100%" stop-color="peru" stop-opacity="1"/>
+      </linearGradient>
+      <linearGradient id="limegreenGradient" x1="0%" x2="100%" y1="0%" y2="0%">
+        <stop offset="0%" stop-color="limegreen" stop-opacity="1"/>
+        <stop offset="6%" stop-color="limegreen" stop-opacity="1"/>
+        <stop offset="20%" stop-color="limegreen" stop-opacity=".6"/>
+        <stop offset="35%" stop-color="limegreen" stop-opacity=".4"/>
+        <stop offset="50%" stop-color="limegreen" stop-opacity=".3"/>
+        <stop offset="65%" stop-color="limegreen" stop-opacity=".4"/>
+        <stop offset="80%" stop-color="limegreen" stop-opacity=".6"/>
+        <stop offset="94%" stop-color="limegreen" stop-opacity="1"/>
+        <stop offset="100%" stop-color="limegreen" stop-opacity="1"/>
+      </linearGradient>
+    </defs>
+  val html =
+    <html xmlns="http://www.w3.org/1999/xhtml">
+      <head>
+        <title>Alignments</title>
+        <link rel="stylesheet" type="text/css" href="horizontal-ribbons.css"/>
+      </head>
+      <body>
+        <h1>Alignments</h1>
+        <main>
+          <div id="wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 viewBox={viewBox}
+                 width={totalWidth}
+                 height={totalHeight}
+                 preserveAspectRatio="none">
+              {gradients}
+              <g>
+                <!-- Backgrounds -->
+                <rect x="0" y="0" width={totalWidth} height={(witnessCount * ribbonWidth * 2 - ribbonWidth / 2).toString} fill="gainsboro" stroke="none"/>
+                <rect x="0" y="202" width={totalWidth} height={(witnessCount * ribbonWidth - ribbonWidth / 2).toString} fill="gray" stroke="none"/>
+              </g>
+            </svg>
+          </div>
+        </main>
+      </body>
+    </html>
+  /*
+   * Return html main page
+   */
+  html
 
 def createNonspriteGrid(root: ExpandedNode, tokenArray: Vector[Token]): scala.xml.Node =
   /*

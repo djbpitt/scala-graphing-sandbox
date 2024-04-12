@@ -106,4 +106,6 @@ def readData(pathToData: Path): List[(String, String)] =
   val nonspriteGridPath = os.pwd / "src" / "main" / "output" / "nonsprite-grid.xhtml"
   scala.xml.XML.save(nonspriteGridPath.toString, nonspriteGrid, "UTF-8", true, doctypeHtml)
 
-  println(computeTextLength("hi"))
+  val horizontalRibbons = createHorizontalRibbons(root, tokenArray)
+  val horizontalRibbonsPath = os.pwd / "src" / "main" / "output" / "horizontal-ribbons.xhtml"
+  scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true)
