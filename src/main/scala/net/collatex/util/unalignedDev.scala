@@ -12,6 +12,7 @@ import net.collatex.reptilian.{
   VariationNode,
   WitnessReadings,
   createAlignedBlocks,
+  dot,
   makeTokenizer
 }
 import smile.clustering.hclust
@@ -379,14 +380,56 @@ val matrixToAlignmentTree =
       ) ++ List(Token(sep.toString, sep.toString, -1, -1)) ++ s).toVector.tail
     (localTa, nodeListToProcess)
 
+  def getNodeListToProcess(t: AlignmentTreeNode): List[HasWitnessReadings] =
+    t match {
+      case e: ExpandedNode => e.children.map(_.asInstanceOf[HasWitnessReadings]).toList
+      case e               => List(e.asInstanceOf[HasWitnessReadings])
+    }
+
+  def getTTokenNodeMappings(t1: AlignmentTreeNode, t2: AlignmentTreeNode, ta: List[Token]): List[AlignmentTreeNode] =
+    var sep = -1
+    def processOneTree(nodes: List[AlignmentTreeNode]) =
+      nodes map {
+        case e: AgreementNode =>
+          sep += 1
+          val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
+            ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)).size
+          Vector.fill(tokenSize)(e)
+        case e: AgreementIndelNode =>
+          sep += 1
+          val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
+            ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)).size
+          Vector.fill(tokenSize)(e)
+        case e: VariationNode =>
+          val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
+          val ts = groupHeads.map(f => ta.slice(e.witnessReadings(f)._1, e.witnessReadings(f)._2))
+          sep += 1
+          val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
+            (ts.head ++ ts.tail
+              .flatMap(e =>
+                sep += 1
+                List(Token(sep.toString, sep.toString, -1, -1)) ++ e
+              ))).size
+          Vector.fill(tokenSize)(e)
+        case e: VariationIndelNode =>
+          val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
+          val ts = groupHeads.map(f => ta.slice(e.witnessReadings(f)._1, e.witnessReadings(f)._2))
+          sep += 1
+          val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
+            (ts.head ++ ts.tail
+              .flatMap(e =>
+                sep += 1
+                List(Token(sep.toString, sep.toString, -1, -1)) ++ e
+              ))).size
+          Vector.fill(tokenSize)(e)
+      }
+    val tokenNodeMappings = processOneTree(getNodeListToProcess(t1)).flatten.tail ++ Vector(AgreementNode()) ++
+      processOneTree(getNodeListToProcess(t2)).flatten.tail
+    tokenNodeMappings
+
   def createTreeTreeTokenArray(t1: AlignmentTreeNode, t2: AlignmentTreeNode, ta: List[Token]): List[Token] =
     // trees contain only ranges (not tokens), so we get token positions from global token array
     var sep = -1
-    def getNodeListToProcess(t: AlignmentTreeNode): List[HasWitnessReadings] =
-      t match {
-        case e: ExpandedNode => e.children.map(_.asInstanceOf[HasWitnessReadings]).toList
-        case e               => List(e.asInstanceOf[HasWitnessReadings])
-      }
     def getTTokens(nodes: List[HasWitnessReadings]) = nodes map {
       case e: AgreementNode =>
         sep += 1
@@ -418,57 +461,10 @@ val matrixToAlignmentTree =
             ))
     }
 
-    def getTTokenNodeMappings(nodes: List[HasWitnessReadings]): List[Vector[AlignmentTreeNode]] = nodes map {
-      case e: AgreementNode =>
-        sep += 1
-        val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
-          ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)).size
-        Vector.fill(tokenSize)(e)
-      case e: AgreementIndelNode =>
-        sep += 1
-        val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
-          ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)).size
-        Vector.fill(tokenSize)(e)
-      case e: VariationNode =>
-        val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
-        val ts = groupHeads.map(f => ta.slice(e.witnessReadings(f)._1, e.witnessReadings(f)._2))
-        sep += 1
-        val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
-          (ts.head ++ ts.tail
-            .flatMap(e =>
-              sep += 1
-              List(Token(sep.toString, sep.toString, -1, -1)) ++ e
-            ))).size
-        Vector.fill(tokenSize)(e)
-      case e: VariationIndelNode =>
-        val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
-        val ts = groupHeads.map(f => ta.slice(e.witnessReadings(f)._1, e.witnessReadings(f)._2))
-        sep += 1
-        val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
-          (ts.head ++ ts.tail
-            .flatMap(e =>
-              sep += 1
-              List(Token(sep.toString, sep.toString, -1, -1)) ++ e
-            ))).size
-        Vector.fill(tokenSize)(e)
-    }
-    val tokenNodeMappings = getTTokenNodeMappings(getNodeListToProcess(t1)).flatten.tail ++ Vector(AgreementNode()) ++
-      getTTokenNodeMappings(getNodeListToProcess(t2)).flatten.tail
-
     val localTa =
       sep += 1
       getTTokens(getNodeListToProcess(t1)).flatten.tail ++ List(Token(sep.toString, sep.toString, -1, -1)) ++
         getTTokens(getNodeListToProcess(t2)).flatten.tail
-    println(s"localTA length: ${localTa.size}")
-    println("Start of tokenNodeMappings:")
-    println(tokenNodeMappings)
-    println(s"tokenNodeMappings length: ${tokenNodeMappings.size}")
-    println("End of tokenNodeMappings")
-    println(s"tokenNodeMapping 67: ${tokenNodeMappings(67)}")
-    println(s"67 tokens: ${ta.slice(localTa(67).g, localTa(67).g + 17).map(_.n).mkString(" ")}")
-    println(s"tokenNodeMapping 113: ${tokenNodeMappings(113)}")
-    println(s"113 tokens: ${ta.slice(localTa(113).g, localTa(113).g + 17).map(_.n).mkString(" ")}")
-
     localTa
 
 //    sep += 1 // increment separator before singleton tokens
@@ -552,12 +548,39 @@ val matrixToAlignmentTree =
           acc
         case (TreeTree(item1: Int, item2: Int, height: Double), i: Int) =>
           val ttTokenArray = createTreeTreeTokenArray(acc(item1), acc(item2), tokenArray).toVector
+          println(s"ttTokenArray: $ttTokenArray")
+          val ttTokenToAlignmentTreeNodeMapping = getTTokenNodeMappings(acc(item1), acc(item2), tokenArray).toVector
+          println(s"ttTokenToAlignmentTreeNodeMapping: $ttTokenToAlignmentTreeNodeMapping")
           val (_, _, blocks) =
             createAlignedBlocks(ttTokenArray, -1, false) // tuple of (all blocks, suffix array, full-depth blocks)
           println(s"blocks: $blocks")
           println("Tokens for blocks:")
-          blocks.map(e => ttTokenArray.slice(e.instances.head, e.instances.head + e.length).map(_.n)).map(_.mkString(" ")).foreach(println)
+          blocks
+            .map(e => ttTokenArray.slice(e.instances.head, e.instances.head + e.length).map(_.n))
+            .map(_.mkString(" "))
+            .foreach(println)
           println("End of tokens for blocks")
+          println("Alignment tree nodes for block starts:")
+          val x = blocks.flatMap(_.instances).map(e => ttTokenToAlignmentTreeNodeMapping(e))
+          println(x)
+          println("End of alignment tree nodes for block starts")
+          println(s"ttTokenArray: $ttTokenArray")
+          println(s"t2: ${acc(item2)}")
+          val t2readings = getNodeListToProcess(acc(item2))
+            .map(_.witnessReadings)
+            .flatMap(_.map(e => tokenArray.slice(e._2._1, e._2._2).map(_.n).mkString(" ")))
+          println("Start t2 readings:")
+          t2readings.foreach(println)
+          println("End t2 readings")
+          val t2witnesses = getNodeListToProcess(acc(item2))
+            .map(_.witnessReadings).flatMap(_.keys).distinct
+          println(s"t2witnesses: $t2witnesses")
+          val alignmentTreeAsDot1 = dot(acc(item1).asInstanceOf[ExpandedNode], tokenArray.toVector)
+          val alignmentGraphOutputPath1 = os.pwd / "src" / "main" / "output" / "t1.dot"
+          os.write.over(alignmentGraphOutputPath1, alignmentTreeAsDot1)
+          val alignmentTreeAsDot2 = dot(acc(item2).asInstanceOf[ExpandedNode], tokenArray.toVector)
+          val alignmentGraphOutputPath2 = os.pwd / "src" / "main" / "output" / "t2.dot"
+          os.write.over(alignmentGraphOutputPath2, alignmentTreeAsDot2)
           acc(i + darwin.head.readings.size) = AgreementNode()
           acc
     }
