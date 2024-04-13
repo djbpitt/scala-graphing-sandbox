@@ -467,20 +467,6 @@ val matrixToAlignmentTree =
         getTTokens(getNodeListToProcess(t2)).flatten.tail
     localTa
 
-//    sep += 1 // increment separator before singleton tokens
-//    val localTa = (tTokens.head ++ tTokens // local token array
-//      .tail.flatMap(e =>
-//        sep += 1
-//        List(Token(sep.toString, sep.toString, -1, -1)) ++ e
-//      ) ++ List(Token(sep.toString, sep.toString, -1, -1)) ++ s).toVector
-//    (localTa, nodeListToProcess)
-
-  /* RESUME HERE 2024-03-16
-   * In progress: Process SingletonTree
-   * TODO: Complete createSingletonTreeTokenArray()
-   * TODO: Process TreeTree
-   * */
-
 //  val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
 //  val tokenizer = makeTokenizer(
 //    tokenPattern
