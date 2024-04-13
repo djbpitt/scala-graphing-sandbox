@@ -368,8 +368,8 @@ private def createNonspriteSvgGridColumnCells(
   *
   * Summary: Return text length of a single string in TNR 16
   *
-  * NB: Not trapping missing characters; if this is desirable, we could default to average character width (7.95 for tnr
-  * 16)
+  * NB: Returns 8 for characters not in font (7.95 is average character width for tnr16).
+  * TODO: Specify font as parameter and compute average character width instead of hard-coding
   *
   * @param in
   *   string to measure
@@ -381,7 +381,7 @@ def computeTextLength(in: String): Double =
   val tnrCharLengths = (tnr16Metrics \ "character")
     .map(e => ((e \ "@str").toString, e \ "@width"))
     .toMap
-  val result = in.map(e => tnrCharLengths(e.toString).toString.toDouble).sum
+  val result = in.map(e => tnrCharLengths.getOrElse(e.toString, 8).toString.toDouble).sum
   result
 
 def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scala.xml.Node =
