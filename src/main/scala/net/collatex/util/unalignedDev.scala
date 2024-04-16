@@ -505,12 +505,6 @@ val matrixToAlignmentTree =
           // tree tokens already have global offsets; need to add global offsets for singleton when creating new node
           // FIXME: We fake, for now, the situation with a single full-depth block
           // FIXME: We are tracking non-blocks only at the end, but they could be located anywhere among blocks
-//          val treeLength = acc(item2).asInstanceOf[HasWitnessReadings].witnessReadings.head._2._2 - acc(item2)
-//            .asInstanceOf[HasWitnessReadings]
-//            .witnessReadings
-//            .head
-//            ._2
-//            ._1
           val newAtn =
             if fdb.size == 1 then // FIXME: Need also to verify that block isn’t split
               val updatedAgreementNode = AgreementNode(witnessReadings =
@@ -533,6 +527,21 @@ val matrixToAlignmentTree =
           acc(i + darwin.head.readings.size) = newAtn
           acc
         case (TreeTree(item1: Int, item2: Int, height: Double), i: Int) =>
+          /* Resume here 2024-04-16
+           * TODO: We assume (incorrectly) no transposition
+           * Function to merge trees has, as input, exactly one block and two trees
+           * For each block
+           *   For each tree, find the node where the block begins
+           *   For each tree create a new tree; for each node in the old tree
+           *     Copy node to new tree unless it contains the beginning of the block
+           *     For the exactly one node that contains the beginning of the block, call function to split node
+           *       If the block is coextensive with the node, copy the node
+           *       Else create two (or three) nodes, one matching the block and the other(s) not
+           *     Return new tree for each old tree
+           *   Return two new trees for the two old trees
+           *
+           *  Find first alignment points in both trees; everything before is variation (similar to full-depth alignment)
+           * */
           val ttTokenArray = createTreeTreeTokenArray(acc(item1), acc(item2), tokenArray).toVector
           println(s"ttTokenArray: $ttTokenArray")
           val ttTokenToAlignmentTreeNodeMapping = getTTokenNodeMappings(acc(item1), acc(item2), tokenArray).toVector
@@ -559,7 +568,9 @@ val matrixToAlignmentTree =
           t2readings.foreach(println)
           println("End t2 readings")
           val t2witnesses = getNodeListToProcess(acc(item2))
-            .map(_.witnessReadings).flatMap(_.keys).distinct
+            .map(_.witnessReadings)
+            .flatMap(_.keys)
+            .distinct
           println(s"t2witnesses: $t2witnesses")
           val alignmentTreeAsDot1 = dot(acc(item1).asInstanceOf[ExpandedNode], tokenArray.toVector)
           val alignmentGraphOutputPath1 = os.pwd / "src" / "main" / "output" / "t1.dot"
