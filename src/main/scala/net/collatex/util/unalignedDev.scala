@@ -6,6 +6,7 @@ import net.collatex.reptilian.{
   AgreementNode,
   AlignmentTreeNode,
   ExpandedNode,
+  FullDepthBlock,
   HasWitnessReadings,
   Token,
   VariationIndelNode,
@@ -108,6 +109,13 @@ enum SingleStepAlignmentTreePath:
   case SingleStepDelete(tok: Token)
 
 export SingleStepAlignmentTreePath._
+
+case class TreeTreeData(
+    t1: AlignmentTreeNode,
+    t2: AlignmentTreeNode,
+    ttTokenToAlignmentTreeNodeMapping: Vector[AlignmentTreeNode],
+    lTa: Vector[Token]
+)
 
 /*
  * Functions to manipulate unaligned nodes
@@ -320,6 +328,26 @@ def pathStepsToAlignmentTreeNode(in: Vector[HasWitnessReadings]): AlignmentTreeN
 val matrixToAlignmentTree =
   pathStepsToAlignmentTreeNode compose nwCompactAlignmentTreeNodeSteps compose nwCreateAlignmentTreeNodesSingleStep.tupled
 
+/** split_trees()
+  *
+  * Split nodes in trees as needed
+  *
+  * Input: treeTreeData (contains both trees, token-to-node mapping, local token array) Returns: treeTreeData (adjusted
+  * as needed)
+  */
+def split_tree(
+    tree: List[HasWitnessReadings],
+    tokenToNodeMapping: Vector[HasWitnessReadings],
+    blockRange: (Int, Int)
+): (List[HasWitnessReadings], Vector[HasWitnessReadings]) =
+  val newTree = tree map {
+    case e if blockRange._1 >= e.witnessReadings.head._2._1 && blockRange._2 <= e.witnessReadings.head._2._2 =>
+      ??? // Resume here 2024-04-19 Split node (we may have a function in the main code) and update tokenToNodeMapping
+    case e => e
+  }
+  val newTokenToNodeMapping = tokenToNodeMapping
+  (newTree, newTokenToNodeMapping)
+
 @main def unalignedDev(): Unit =
   val darwin: List[UnalignedFragment] = readJsonData // we know there's only one
   val darwinReadings = darwin.head.readings
@@ -386,9 +414,9 @@ val matrixToAlignmentTree =
       case e               => List(e.asInstanceOf[HasWitnessReadings])
     }
 
-  def getTTokenNodeMappings(t1: AlignmentTreeNode, t2: AlignmentTreeNode, ta: List[Token]): List[AlignmentTreeNode] =
+  def getTTokenNodeMappings(t1: AlignmentTreeNode, t2: AlignmentTreeNode, ta: List[Token]): List[HasWitnessReadings] =
     var sep = -1
-    def processOneTree(nodes: List[AlignmentTreeNode]) =
+    def processOneTree(nodes: List[HasWitnessReadings]) =
       nodes map {
         case e: AgreementNode =>
           sep += 1
@@ -423,7 +451,9 @@ val matrixToAlignmentTree =
               ))).size
           Vector.fill(tokenSize)(e)
       }
-    val tokenNodeMappings = processOneTree(getNodeListToProcess(t1)).flatten.tail ++ Vector(AgreementNode()) ++
+    val tokenNodeMappings = processOneTree(getNodeListToProcess(t1)).flatten.tail ++ Vector(
+      AgreementNode().asInstanceOf[HasWitnessReadings] // Ugh!
+    ) ++
       processOneTree(getNodeListToProcess(t2)).flatten.tail
     tokenNodeMappings
 
@@ -529,6 +559,7 @@ val matrixToAlignmentTree =
         case (TreeTree(item1: Int, item2: Int, height: Double), i: Int) =>
           /* Resume here 2024-04-16
            * TODO: We assume (incorrectly) no transposition
+           * Begin by splitting trees where necessary (which means splitting nodes):
            * Function to merge trees has, as input, exactly one block and two trees
            * For each block
            *   For each tree, find the node where the block begins
@@ -555,29 +586,55 @@ val matrixToAlignmentTree =
             .map(_.mkString(" "))
             .foreach(println)
           println("End of tokens for blocks")
-          println("Alignment tree nodes for block starts:")
-          val x = blocks.flatMap(_.instances).map(e => ttTokenToAlignmentTreeNodeMapping(e))
-          println(x)
-          println("End of alignment tree nodes for block starts")
-          println(s"ttTokenArray: $ttTokenArray")
-          println(s"t2: ${acc(item2)}")
-          val t2readings = getNodeListToProcess(acc(item2))
-            .map(_.witnessReadings)
-            .flatMap(_.map(e => tokenArray.slice(e._2._1, e._2._2).map(_.n).mkString(" ")))
-          println("Start t2 readings:")
-          t2readings.foreach(println)
-          println("End t2 readings")
-          val t2witnesses = getNodeListToProcess(acc(item2))
-            .map(_.witnessReadings)
-            .flatMap(_.keys)
-            .distinct
-          println(s"t2witnesses: $t2witnesses")
+//          println("Alignment tree nodes for block starts:")
+//          val x = blocks.flatMap(_.instances).map(e => ttTokenToAlignmentTreeNodeMapping(e))
+//          println(x)
+//          println("End of alignment tree nodes for block starts")
+//          println(s"ttTokenArray: $ttTokenArray")
+//          println(s"t2: ${acc(item2)}")
+//          val t2readings = getNodeListToProcess(acc(item2))
+//            .map(_.witnessReadings)
+//            .flatMap(_.map(e => tokenArray.slice(e._2._1, e._2._2).map(_.n).mkString(" ")))
+//          println("Start t2 readings:")
+//          t2readings.foreach(println)
+//          println("End t2 readings")
+//          val t2witnesses = getNodeListToProcess(acc(item2))
+//            .map(_.witnessReadings)
+//            .flatMap(_.keys)
+//            .distinct
+//          println(s"t2witnesses: $t2witnesses")
           val alignmentTreeAsDot1 = dot(acc(item1).asInstanceOf[ExpandedNode], tokenArray.toVector)
           val alignmentGraphOutputPath1 = os.pwd / "src" / "main" / "output" / "t1.dot"
           os.write.over(alignmentGraphOutputPath1, alignmentTreeAsDot1)
           val alignmentTreeAsDot2 = dot(acc(item2).asInstanceOf[ExpandedNode], tokenArray.toVector)
           val alignmentGraphOutputPath2 = os.pwd / "src" / "main" / "output" / "t2.dot"
           os.write.over(alignmentGraphOutputPath2, alignmentTreeAsDot2)
+          val splitBlocks = blocks
+            .foldLeft(TreeTreeData(acc(item1), acc(item2), ttTokenToAlignmentTreeNodeMapping, ttTokenArray))(
+              (inData: TreeTreeData, currentBlock: FullDepthBlock) =>
+                // for each tree: find node where block begins
+                val blockBeginnings = currentBlock.instances
+                  .map(e => inData.lTa(e)) // lTa = local token array
+                  .map(_.g) // global offset of first token of block in each tree
+                val blockLength = currentBlock.length
+                val globalBlockRanges = blockBeginnings.map(e => (e, e + blockLength))
+                /*
+                For each tree create a new tree; for each node in the old tree
+                Copy node to new tree unless it contains the beginning of the block
+                For the exactly one node that contains the beginning of the block, call function to split node
+                If the block is coextensive with the node , copy the node
+                Else create two(or three) nodes , one matching the block and the other(s) not
+                Return new tree for each old tree
+                 */
+                val treeNodes =
+                  List(inData.t1, inData.t2).map(e => getNodeListToProcess(e))
+                val x = Range(0, globalBlockRanges.size - 1).map(e =>
+                  split_tree(treeNodes(e), ttTokenToAlignmentTreeNodeMapping, globalBlockRanges(e))
+                )
+                inData
+            )
+
+          /** PLACEHOLDER: Add real new node here */
           acc(i + darwin.head.readings.size) = AgreementNode()
           acc
     }
