@@ -89,25 +89,23 @@ def readData(pathToData: Path): List[(String, String)] =
 //  val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
 //  os.write.over(outputPath, output)
 
-  val alignmentBrowser = createAlignmentBrowser(root, tokenArray)
-  val alignmentBrowserOutputPath =
-    os.pwd / "src" / "main" / "output" / "alignment-browser.xhtml"
-  xml.XML.save(alignmentBrowserOutputPath.toString, alignmentBrowser, "UTF-8", true, doctypeHtml)
+//  val alignmentBrowser = createAlignmentBrowser(root, tokenArray)
+//  val alignmentBrowserOutputPath =
+//    os.pwd / "src" / "main" / "output" / "alignment-browser.xhtml"
+//  xml.XML.save(alignmentBrowserOutputPath.toString, alignmentBrowser, "UTF-8", true, doctypeHtml)
 
-  val (mixedOutputGrid, backgroundSprites) = createFlowModelForGrid(root, tokenArray)
-  val mixedOutputGridPath =
-    os.pwd / "src" / "main" / "output" / "mixed-output-grid.xhtml"
-  val mixedOutputGridBackgroundsPath =
-    os.pwd / "src" / "main" / "output" / "mixed-output-grid-backgrounds.svg"
-  scala.xml.XML.save(mixedOutputGridPath.toString, mixedOutputGrid, "UTF-8", true, doctypeHtml)
-  scala.xml.XML.save(mixedOutputGridBackgroundsPath.toString, backgroundSprites, "UTF-8", true)
+//  val (mixedOutputGrid, backgroundSprites) = createFlowModelForGrid(root, tokenArray)
+//  val mixedOutputGridPath =
+//    os.pwd / "src" / "main" / "output" / "mixed-output-grid.xhtml"
+//  val mixedOutputGridBackgroundsPath =
+//    os.pwd / "src" / "main" / "output" / "mixed-output-grid-backgrounds.svg"
+//  scala.xml.XML.save(mixedOutputGridPath.toString, mixedOutputGrid, "UTF-8", true, doctypeHtml)
+//  scala.xml.XML.save(mixedOutputGridBackgroundsPath.toString, backgroundSprites, "UTF-8", true)
   
-  val nonspriteGrid = createNonspriteGrid(root, tokenArray)
-  val nonspriteGridPath = os.pwd / "src" / "main" / "output" / "nonsprite-grid.xhtml"
-  scala.xml.XML.save(nonspriteGridPath.toString, nonspriteGrid, "UTF-8", true, doctypeHtml)
+//  val nonspriteGrid = createNonspriteGrid(root, tokenArray)
+//  val nonspriteGridPath = os.pwd / "src" / "main" / "output" / "nonsprite-grid.xhtml"
+//  scala.xml.XML.save(nonspriteGridPath.toString, nonspriteGrid, "UTF-8", true, doctypeHtml)
 
   val horizontalRibbons = createHorizontalRibbons(root, tokenArray)
   val horizontalRibbonsPath = os.pwd / "src" / "main" / "output" / "horizontal-ribbons.xhtml"
   scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true)
-
-  println(computeTextLength("You should retire"))

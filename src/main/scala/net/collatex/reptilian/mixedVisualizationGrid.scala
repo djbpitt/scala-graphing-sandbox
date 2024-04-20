@@ -368,8 +368,8 @@ private def createNonspriteSvgGridColumnCells(
   *
   * Summary: Return text length of a single string in TNR 16
   *
-  * NB: Returns 8 for characters not in font (7.95 is average character width for tnr16).
-  * TODO: Specify font as parameter and compute average character width instead of hard-coding
+  * NB: Returns 8 for characters not in font (7.95 is average character width for tnr16). TODO: Specify font as
+  * parameter and compute average character width instead of hard-coding
   *
   * @param in
   *   string to measure
@@ -384,6 +384,33 @@ def computeTextLength(in: String): Double =
   val result = in.map(e => tnrCharLengths.getOrElse(e.toString, 8).toString.toDouble).sum
   result
 
+/** plotOneAlignmentPoint()
+  *
+  * Plot backgrounds and text for single alignment point
+  *
+  * @param ap
+  *   Alignment point to plot
+  * @param pos
+  *   Offset of alignment point in sequence of all alignment points
+  *
+  * @return
+  *   Tuple of (<g> Alignment point, Double: Width of alignment group)
+  */
+def plotOneAlignmentPoint(ap: AlignmentPoint, leftEdge: Double): xml.Elem = ???
+//  val horizontalShift =
+//    <g transform="translate()"></g>
+
+def plotLeadingRibbons(currentAlignment: xml.Elem, precedingAlignment: xml.Elem): xml.Elem =
+  <g></g>
+
+def plotOneAlignmentPointAndLeadingRibbons(ap: AlignmentPoint, pos: Int, acc: Vector[xml.Elem]) = ???
+//  def next() =
+//    val alignment = plotOneAlignmentPoint(ap, pos)
+//    val leadingRibbons = plotLeadingRibbons(acc.last, alignment)
+//    next(acc = acc ++ Vector(leadingRibbons, alignment))
+
+def plotAllAlignmentPointsAndRibbons(points: Vector[AlignmentPoint]) = ???
+
 def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scala.xml.Node =
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val alignmentPoints: Vector[AlignmentPoint] =
@@ -392,7 +419,8 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
   val ribbonWidth = 18
   val flowLength = 80
   val maxAlignmentPointWidth = 160
-  val totalWidth = "2000"
+  val contents = plotAllAlignmentPointsAndRibbons(alignmentPoints)
+  val totalWidth = "2000" // TODO: Compute this
   val totalHeight = (ribbonWidth * (witnessCount * 3 - 1)).toString
   val viewBox = s"0 0 $totalWidth $totalHeight"
   val gradients =
@@ -482,8 +510,12 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
               {gradients}
               <g>
                 <!-- Backgrounds -->
-                <rect x="0" y="0" width={totalWidth} height={(witnessCount * ribbonWidth * 2 - ribbonWidth / 2).toString} fill="gainsboro" stroke="none"/>
-                <rect x="0" y="202" width={totalWidth} height={(witnessCount * ribbonWidth - ribbonWidth / 2).toString} fill="gray" stroke="none"/>
+                <rect x="0" y="0" width={totalWidth} height={
+      (witnessCount * ribbonWidth * 2 - ribbonWidth / 2).toString
+    } fill="gainsboro" stroke="none"/>
+                <rect x="0" y="202" width={totalWidth} height={
+      (witnessCount * ribbonWidth - ribbonWidth / 2).toString
+    } fill="gray" stroke="none"/>
               </g>
             </svg>
           </div>
