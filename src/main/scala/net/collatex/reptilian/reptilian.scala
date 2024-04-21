@@ -59,31 +59,31 @@ def readData(pathToData: Path): List[(String, String)] =
     *
     * Graphviz dot file HTML alignment table
     */
-  val alignmentTreeAsDot = dot(root, tokenArray)
-  val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
-  os.write.over(alignmentGraphOutputPath, alignmentTreeAsDot)
+//  val alignmentTreeAsDot = dot(root, tokenArray)
+//  val alignmentGraphOutputPath = os.pwd / "src" / "main" / "output" / "alignment.dot"
+//  os.write.over(alignmentGraphOutputPath, alignmentTreeAsDot)
 
-  val flatAlignmentTreeAsDot = flatDot(root, tokenArray)
-  val flatAlignmentTreeOutputPath = os.pwd / "src" / "main" / "output" / "flatAlignment.dot"
-  os.write.over(flatAlignmentTreeOutputPath, flatAlignmentTreeAsDot)
+//  val flatAlignmentTreeAsDot = flatDot(root, tokenArray)
+//  val flatAlignmentTreeOutputPath = os.pwd / "src" / "main" / "output" / "flatAlignment.dot"
+//  os.write.over(flatAlignmentTreeOutputPath, flatAlignmentTreeAsDot)
 
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html") // used for single-column and mixed output
 
-  val tableOutput = createSingleColumnAlignmentTable(root, tokenArray)
-  val singleColumnOutputPath =
-    os.pwd / "src" / "main" / "output" / "single-column-alignment.xhtml"
-  scala.xml.XML.save(singleColumnOutputPath.toString, tableOutput, "UTF-8", true, doctypeHtml)
+//  val tableOutput = createSingleColumnAlignmentTable(root, tokenArray)
+//  val singleColumnOutputPath =
+//    os.pwd / "src" / "main" / "output" / "single-column-alignment.xhtml"
+//  scala.xml.XML.save(singleColumnOutputPath.toString, tableOutput, "UTF-8", true, doctypeHtml)
 
-  val flowOutput: xml.Elem =
-    createSvgFlowModel(flattenNodeSeq(root), tokenArray)
-  val flowOutputPath =
-    os.pwd / "src" / "main" / "output" / "flow-visualization.svg"
-  xml.XML.save(flowOutputPath.toString, flowOutput)
+//  val flowOutput: xml.Elem =
+//    createSvgFlowModel(flattenNodeSeq(root), tokenArray)
+//  val flowOutputPath =
+//    os.pwd / "src" / "main" / "output" / "flow-visualization.svg"
+//  xml.XML.save(flowOutputPath.toString, flowOutput)
 
-  val mixedOutput = createMixedVisualization(flattenNodeSeq(root), tokenArray)
-  val mixedOutputPath =
-    os.pwd / "src" / "main" / "output" / "mixed-visualization.xhtml"
-  scala.xml.XML.save(mixedOutputPath.toString, mixedOutput, "UTF-8", true, doctypeHtml)
+//  val mixedOutput = createMixedVisualization(flattenNodeSeq(root), tokenArray)
+//  val mixedOutputPath =
+//    os.pwd / "src" / "main" / "output" / "mixed-visualization.xhtml"
+//  scala.xml.XML.save(mixedOutputPath.toString, mixedOutput, "UTF-8", true, doctypeHtml)
 
 //  val output = createAlignmentTable(root, tokenArray, sigla)
 //  val outputPath = os.pwd / "src" / "main" / "output" / "traversal-alignment.xhtml"
