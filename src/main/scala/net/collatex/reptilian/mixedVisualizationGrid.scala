@@ -390,9 +390,6 @@ def computeTextLength(in: String): Double =
   *
   * @param ap
   *   Alignment point to plot
-  * @param pos
-  *   Offset of alignment point in sequence of all alignment points
-  *
   * @return
   *   Tuple of (<g> Alignment point, Double: Width of alignment group)
   */
@@ -409,17 +406,35 @@ def plotOneAlignmentPointAndLeadingRibbons(ap: AlignmentPoint, pos: Int, acc: Ve
 //    val leadingRibbons = plotLeadingRibbons(acc.last, alignment)
 //    next(acc = acc ++ Vector(leadingRibbons, alignment))
 
-def plotAllAlignmentPointsAndRibbons(points: Vector[AlignmentPoint]) = ???
+def plotAllAlignmentPointsAndRibbons(nodes: Vector[NumberedNode], gTa: Vector[Token], sigla: Set[String]) =
+  /* Map from siglum (string) to t value (string) */
+  def retrieveWitnessReadings(n: HasWitnessReadings) =
+    val witnessReadings = n.witnessReadings.map((k, v) => k -> gTa.slice(v._1, v._2).map(_.t).mkString)
+    witnessReadings
+  /* Sorted vector of missing sigla*/
+  def findMissingWitnesses(n: HasWitnessReadings): Vector[String] =
+    val missingWitnesses = sigla.diff(n.witnessReadings.keySet).toVector.sorted
+    missingWitnesses
+  /* Vector of vectors of sigla, one inner vector for each group */
+  def groupReadings(n: HasWitnessGroups) =
+    val groups: Vector[Vector[String]] =
+      n.witnessGroups
+    groups
+  val results = nodes.slice(0, 10).map(_.node).map {
+    case e:VariationNode => groupReadings(e)
+    case e:VariationIndelNode => groupReadings(e)
+    case _ => Vector(Vector("hi"))
+  }
+  results.foreach(println)
+
 
 def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scala.xml.Node =
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
-  val alignmentPoints: Vector[AlignmentPoint] =
-    createAlignmentPoints(nodeSequence, tokenArray)
   val witnessCount = 6
   val ribbonWidth = 18
   val flowLength = 80
   val maxAlignmentPointWidth = 160
-  val contents = plotAllAlignmentPointsAndRibbons(alignmentPoints)
+  val contents = plotAllAlignmentPointsAndRibbons(nodeSequence, tokenArray, allSigla)
   val totalWidth = "2000" // TODO: Compute this
   val totalHeight = (ribbonWidth * (witnessCount * 3 - 1)).toString
   val viewBox = s"0 0 $totalWidth $totalHeight"
