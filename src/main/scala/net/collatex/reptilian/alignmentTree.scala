@@ -12,17 +12,19 @@ sealed trait AlignmentTreeNode // supertype of all nodes
 
 /** Some alignment tree nodes that must have witness readings inherit this trait
   *
-  * The trait 1) requires witness readings and 2) creates a human-readable
-  * rendering
+  * The trait 1) requires witness readings and 2) creates a human-readable rendering
   *
-  * Expanded and unexpanded nodes render format witness readings as a ListMap in
-  * dot Reading nodes also have witness readings but do not use a ListMap
-  * visualization, and therefore do not inherit this trait
+  * Expanded and unexpanded nodes render format witness readings as a ListMap in dot Reading nodes also have witness
+  * readings but do not use a ListMap visualization, and therefore do not inherit this trait
   */
 trait HasWitnessReadings extends AlignmentTreeNode {
   def witnessReadings: WitnessReadings
   def formatWitnessReadings: String =
     s"${ListMap(witnessReadings.toSeq.sortBy(_._1): _*)}"
+}
+
+trait HasWitnessGroups extends AlignmentTreeNode {
+  def witnessGroups: Vector[Vector[String]]
 }
 
 /** ExpandedNode
@@ -41,23 +43,22 @@ final case class VariationNode(
     witnessGroups: Vector[Vector[String]] // sigla
 ) extends AlignmentTreeNode
     with HasWitnessReadings
+    with HasWitnessGroups
 
 final case class VariationIndelNode(
     witnessReadings: WitnessReadings,
     witnessGroups: Vector[Vector[String]]
 ) extends AlignmentTreeNode
     with HasWitnessReadings
+    with HasWitnessGroups
 
-final case class AgreementNode(witnessReadings: WitnessReadings)
-    extends AlignmentTreeNode
-    with HasWitnessReadings
+final case class AgreementNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode with HasWitnessReadings
 
 /** Custom constructor to simplify creation of LeafNode
   *
-  * Input is a varargs of (Int, (Int, Int)) Constructor converts it to a Map,
-  * which is wraps in LeafNode Can create new LeafNode as: LeafNode(1 -> (2, 3),
-  * 4 -> (5, 6)) Catch and report empty parameter, which is always a mistake
-  * because leaf nodes cannot be empty
+  * Input is a varargs of (Int, (Int, Int)) Constructor converts it to a Map, which is wraps in LeafNode Can create new
+  * LeafNode as: LeafNode(1 -> (2, 3), 4 -> (5, 6)) Catch and report empty parameter, which is always a mistake because
+  * leaf nodes cannot be empty
   */
 object AgreementNode {
   def apply(m: (String, (Int, Int))*): AlignmentTreeNode =
@@ -66,28 +67,21 @@ object AgreementNode {
 
 /** Indel node
   *
-  * Like a AgreementNode in that all witnesses agree, except that not all corpus
-  * witnesses are present
+  * Like a AgreementNode in that all witnesses agree, except that not all corpus witnesses are present
   *
   * @param witnessReadings
-  *   map from siglum to tuple of start and end offsets into the global token
-  *   array (end is exclusive)
+  *   map from siglum to tuple of start and end offsets into the global token array (end is exclusive)
   *
-  * Companion object is a convenience constructor (see documentation of
-  * companion object for AgreementNode, above)
+  * Companion object is a convenience constructor (see documentation of companion object for AgreementNode, above)
   */
-final case class AgreementIndelNode(witnessReadings: WitnessReadings)
-    extends AlignmentTreeNode
-    with HasWitnessReadings
+final case class AgreementIndelNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode with HasWitnessReadings
 object AgreementIndelNode {
   def apply(m: (String, (Int, Int))*): AlignmentTreeNode =
     AgreementIndelNode(m.toMap)
 }
 
 // Temporary; eventually the alignment graph will have no unexpanded nodes
-final case class UnexpandedNode(witnessReadings: WitnessReadings)
-    extends AlignmentTreeNode
-    with HasWitnessReadings
+final case class UnexpandedNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode with HasWitnessReadings
 // When we expand an UnexpandedNode we replace it with an ExpandedNode
 // UnexpandedNode cannot have children (it has only WitnessReadings)
 // ExpandedNode must have children
@@ -100,8 +94,8 @@ def show(node: AlignmentTreeNode): Unit =
     case ExpandedNode(children)              => println(children)
   }
 
-/** Input is Vector[Int], representing FullDepthBlock instances Output is
-  * Vector[AlignmentNode], where the nodes are all of type AgreementNode
+/** Input is Vector[Int], representing FullDepthBlock instances Output is Vector[AlignmentNode], where the nodes are all
+  * of type AgreementNode
   *
   * Will need to deal with non-full-depth locations in the alignment
   */
