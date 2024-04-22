@@ -339,10 +339,12 @@ def split_tree(
     tree: List[HasWitnessReadings],
     tokenToNodeMapping: Vector[HasWitnessReadings],
     blockRange: (Int, Int)
-): (List[HasWitnessReadings], Vector[HasWitnessReadings]) =
+)
+//: (List[HasWitnessReadings], Vector[HasWitnessReadings])
+=
   val newTree = tree map {
     case e if blockRange._1 >= e.witnessReadings.head._2._1 && blockRange._2 <= e.witnessReadings.head._2._2 =>
-      ??? // Resume here 2024-04-19 Split node (we may have a function in the main code) and update tokenToNodeMapping
+      "Split me" // Resume here 2024-04-19 Split node (we may have a function in the main code) and update tokenToNodeMapping
     case e => e
   }
   val newTokenToNodeMapping = tokenToNodeMapping
@@ -557,9 +559,8 @@ def split_tree(
           acc(i + darwin.head.readings.size) = newAtn
           acc
         case (TreeTree(item1: Int, item2: Int, height: Double), i: Int) =>
-          /* Resume here 2024-04-16
-           * TODO: We assume (incorrectly) no transposition
-           * Begin by splitting trees where necessary (which means splitting nodes):
+          /* TODO: We assume (incorrectly) no transposition
+           * In progress: Begin by splitting trees where necessary (which means splitting nodes):
            * Function to merge trees has, as input, exactly one block and two trees
            * For each block
            *   For each tree, find the node where the block begins
@@ -631,6 +632,7 @@ def split_tree(
                 val x = Range(0, globalBlockRanges.size - 1).map(e =>
                   split_tree(treeNodes(e), ttTokenToAlignmentTreeNodeMapping, globalBlockRanges(e))
                 )
+                println(x)
                 inData
             )
 

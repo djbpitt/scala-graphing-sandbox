@@ -15,10 +15,10 @@ import scala.collection.mutable.{ListBuffer, Map}
 // yet to be align and that it then calls the suffix array, traversal graph code it self
 // Basically an inverse of the current control flow.
 
-def split_reading_node(
-                        current: AgreementNode,
-                        position_to_split: immutable.Map[String, Int]
-): (AgreementNode, AgreementNode) = {
+def split_reading_node[C <: HasWitnessReadings](
+    current: C,
+    position_to_split: immutable.Map[String, Int]
+): (HasWitnessReadings, HasWitnessReadings) = {
   // For witness ranges, last value is exclusive
   // We filter out all the witnesses that have an empty range after the split
   //  // TODO: Simplify duplicate code
@@ -53,15 +53,20 @@ def split_reading_node(
     .filter((_, v) => v._1 != v._2)
 
   // TODO: if the whole map is empty we should return a special type, e.g., EmptyReadingNode
-  val result: (AgreementNode, AgreementNode) =
-    (AgreementNode(changedMap), AgreementNode(changedMap2))
+  // TODO: Workaround to mimic copy() method on trait (https://groups.google.com/g/scala-internals/c/O1yrB1xetUA)
+  val result: (HasWitnessReadings, HasWitnessReadings) =
+    current match
+      case e: AgreementNode      => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
+      case e: AgreementIndelNode => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
+      case e: VariationNode      => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
+      case e: VariationIndelNode => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
   result
 }
 
 def alignTokenArray(
     tokenArray: Vector[Token],
     sigla: List[String],
-    selection: AgreementNode
+    selection: HasWitnessReadings
 ) = {
   // find the full depth blocks for the alignment
   // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
@@ -173,7 +178,7 @@ def createAlignmentTree(
 def setupNodeExpansion(
     tokenArray: Vector[Token],
     sigla: List[String],
-    selection: AgreementNode
+    selection: HasWitnessReadings
 ) = {
   val blocks = alignTokenArray(tokenArray, sigla, selection)
   if blocks.isEmpty
@@ -190,10 +195,11 @@ def setupNodeExpansion(
       .toVector
       .sorted // outer container is also a vector, producing Vector[Vector[String]]
     selection.witnessReadings.size match {
-      case 1 => AgreementIndelNode(
-        witnessReadings = selection.witnessReadings
-      )
-      case e:Int if e == sigla.size =>
+      case 1 =>
+        AgreementIndelNode(
+          witnessReadings = selection.witnessReadings
+        )
+      case e: Int if e == sigla.size =>
         ExpandedNode( // no blocks, so the single child is a VariationNode
           children = ListBuffer(
             VariationNode(
@@ -225,11 +231,11 @@ def setupNodeExpansion(
 
 @tailrec
 def recursiveBuildAlignmentTreeLevel(
-                                      result: ListBuffer[AlignmentTreeNode],
-                                      treeReadingNode: AgreementNode,
-                                      remainingAlignment: List[AgreementNode],
-                                      tokenArray: Vector[Token],
-                                      sigla: List[String]
+    result: ListBuffer[AlignmentTreeNode],
+    treeReadingNode: HasWitnessReadings,
+    remainingAlignment: List[HasWitnessReadings],
+    tokenArray: Vector[Token],
+    sigla: List[String]
 ): ExpandedNode = {
   // On first run, treeReadingNode contains full token ranges and remainingAlignment contains all sortedReadingNodes
   // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
@@ -267,8 +273,7 @@ def recursiveBuildAlignmentTreeLevel(
   val undecidedPart = tempSplit2._1
   // NOTE: This segment could be optional, empty.
   // println(undecidedPart.witnessReadings)
-  if undecidedPart.witnessReadings.nonEmpty then
-    result += setupNodeExpansion(tokenArray, sigla, undecidedPart)
+  if undecidedPart.witnessReadings.nonEmpty then result += setupNodeExpansion(tokenArray, sigla, undecidedPart)
   result += (
     if firstReadingNode.witnessReadings.size == sigla.size then firstReadingNode
     else AgreementIndelNode(witnessReadings = firstReadingNode.witnessReadings)
@@ -288,8 +293,7 @@ def recursiveBuildAlignmentTreeLevel(
   else
     // The alignment results are all processed,so we check for trailing non-aligned content and then end the recursion.
     // This repeats the treatment as unaligned leading content
-    if tempSplit._2.witnessReadings.nonEmpty then
-      result += setupNodeExpansion(tokenArray, sigla, tempSplit._2)
+    if tempSplit._2.witnessReadings.nonEmpty then result += setupNodeExpansion(tokenArray, sigla, tempSplit._2)
     val rootNode = ExpandedNode(
       children = result
     )
