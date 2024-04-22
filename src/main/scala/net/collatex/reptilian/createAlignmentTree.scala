@@ -54,6 +54,8 @@ def split_reading_node[C <: HasWitnessReadings](
 
   // TODO: if the whole map is empty we should return a special type, e.g., EmptyReadingNode
   // TODO: Workaround to mimic copy() method on trait (https://groups.google.com/g/scala-internals/c/O1yrB1xetUA)
+  // TODO: Would like return type of be (C, C) instead of (HasWitnessReadings, HasWitnessReadings)
+  // TODO: Might need to revise witnessGroups property, as well, since some ranges might be empty after split
   val result: (HasWitnessReadings, HasWitnessReadings) =
     current match
       case e: AgreementNode      => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))

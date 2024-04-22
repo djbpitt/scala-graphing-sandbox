@@ -14,7 +14,8 @@ import net.collatex.reptilian.{
   WitnessReadings,
   createAlignedBlocks,
   dot,
-  makeTokenizer
+  makeTokenizer,
+  split_reading_node
 }
 import smile.clustering.hclust
 import smile.data.DataFrame
@@ -344,7 +345,13 @@ def split_tree(
 =
   val newTree = tree map {
     case e if blockRange._1 >= e.witnessReadings.head._2._1 && blockRange._2 <= e.witnessReadings.head._2._2 =>
-      "Split me" // Resume here 2024-04-19 Split node (we may have a function in the main code) and update tokenToNodeMapping
+      val delta1: Int = blockRange._1 - e.witnessReadings.head._2._1
+      val newMap1 = e.witnessReadings.map((k, v) => k -> (v._1 + delta1))
+      val result1 = split_reading_node(e, newMap1)
+      val newMap2 = newMap1 map ((k, v) => k -> (v + (blockRange._2 - blockRange._1)))
+      val result2 = split_reading_node(result1._2, newMap2)
+      val combinedResult = Vector(result1._1, result2._1, result2._2).filterNot(_.witnessReadings.isEmpty)
+      combinedResult
     case e => e
   }
   val newTokenToNodeMapping = tokenToNodeMapping
@@ -499,17 +506,6 @@ def split_tree(
         getTTokens(getNodeListToProcess(t2)).flatten.tail
     localTa
 
-//  val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
-//  val tokenizer = makeTokenizer(
-//    tokenPattern
-//  ) // Tokenizer function with user-supplied regex
-//  val witnessInputInfo: List[(String, String)] = readData(
-//    pathToDarwin
-//  ) // One string per witness
-//  val witnessStrings: List[String] = witnessInputInfo.map(_._2)
-//  val sigla: List[String] = witnessInputInfo.map(_._1)
-//  implicit val tokenArray: Vector[Token] = tokenize(tokenizer)(witnessStrings)
-
   val results = nodeToClustersMap.values.head // list of ClusterInfo instances
     .zipWithIndex.foldLeft(mutable.Map[Int, AlignmentTreeNode]()) { (acc, next) =>
       next match
@@ -560,7 +556,7 @@ def split_tree(
           acc
         case (TreeTree(item1: Int, item2: Int, height: Double), i: Int) =>
           /* TODO: We assume (incorrectly) no transposition
-           * In progress: Begin by splitting trees where necessary (which means splitting nodes):
+           * DONE: Begin by splitting trees where necessary (which means splitting nodes):
            * Function to merge trees has, as input, exactly one block and two trees
            * For each block
            *   For each tree, find the node where the block begins
@@ -575,41 +571,10 @@ def split_tree(
            *  Find first alignment points in both trees; everything before is variation (similar to full-depth alignment)
            * */
           val ttTokenArray = createTreeTreeTokenArray(acc(item1), acc(item2), tokenArray).toVector
-          println(s"ttTokenArray: $ttTokenArray")
           val ttTokenToAlignmentTreeNodeMapping = getTTokenNodeMappings(acc(item1), acc(item2), tokenArray).toVector
-          println(s"ttTokenToAlignmentTreeNodeMapping: $ttTokenToAlignmentTreeNodeMapping")
           val (_, _, blocks) =
             createAlignedBlocks(ttTokenArray, -1, false) // tuple of (all blocks, suffix array, full-depth blocks)
-          println(s"blocks: $blocks")
-          println("Tokens for blocks:")
-          blocks
-            .map(e => ttTokenArray.slice(e.instances.head, e.instances.head + e.length).map(_.n))
-            .map(_.mkString(" "))
-            .foreach(println)
-          println("End of tokens for blocks")
-//          println("Alignment tree nodes for block starts:")
-//          val x = blocks.flatMap(_.instances).map(e => ttTokenToAlignmentTreeNodeMapping(e))
-//          println(x)
-//          println("End of alignment tree nodes for block starts")
-//          println(s"ttTokenArray: $ttTokenArray")
-//          println(s"t2: ${acc(item2)}")
-//          val t2readings = getNodeListToProcess(acc(item2))
-//            .map(_.witnessReadings)
-//            .flatMap(_.map(e => tokenArray.slice(e._2._1, e._2._2).map(_.n).mkString(" ")))
-//          println("Start t2 readings:")
-//          t2readings.foreach(println)
-//          println("End t2 readings")
-//          val t2witnesses = getNodeListToProcess(acc(item2))
-//            .map(_.witnessReadings)
-//            .flatMap(_.keys)
-//            .distinct
-//          println(s"t2witnesses: $t2witnesses")
-          val alignmentTreeAsDot1 = dot(acc(item1).asInstanceOf[ExpandedNode], tokenArray.toVector)
-          val alignmentGraphOutputPath1 = os.pwd / "src" / "main" / "output" / "t1.dot"
-          os.write.over(alignmentGraphOutputPath1, alignmentTreeAsDot1)
-          val alignmentTreeAsDot2 = dot(acc(item2).asInstanceOf[ExpandedNode], tokenArray.toVector)
-          val alignmentGraphOutputPath2 = os.pwd / "src" / "main" / "output" / "t2.dot"
-          os.write.over(alignmentGraphOutputPath2, alignmentTreeAsDot2)
+
           val splitBlocks = blocks
             .foldLeft(TreeTreeData(acc(item1), acc(item2), ttTokenToAlignmentTreeNodeMapping, ttTokenArray))(
               (inData: TreeTreeData, currentBlock: FullDepthBlock) =>
@@ -629,15 +594,23 @@ def split_tree(
                  */
                 val treeNodes =
                   List(inData.t1, inData.t2).map(e => getNodeListToProcess(e))
-                val x = Range(0, globalBlockRanges.size - 1).map(e =>
+                val newTree = Range(0, globalBlockRanges.size - 1).map(e =>
                   split_tree(treeNodes(e), ttTokenToAlignmentTreeNodeMapping, globalBlockRanges(e))
                 )
-                println(x)
-                inData
+                inData // 2024-04-22: RESUME HERE: We return original input data; need to update with split results
             )
 
           /** PLACEHOLDER: Add real new node here */
-          acc(i + darwin.head.readings.size) = AgreementNode()
+          println(s"splitBlocks: $splitBlocks")
+          acc(i + darwin.head.readings.size) = ExpandedNode()
           acc
     }
+
   results.toSeq.sortBy((k, v) => k).foreach(println)
+
+//val alignmentTreeAsDot1 = dot(inData.t1.asInstanceOf[ExpandedNode], tokenArray.toVector)
+//val alignmentGraphOutputPath1 = os.pwd / "src" / "main" / "output" / "t1.dot"
+//os.write.over(alignmentGraphOutputPath1, alignmentTreeAsDot1)
+//val alignmentTreeAsDot2 = dot(inData.t2.asInstanceOf[ExpandedNode], tokenArray.toVector)
+//val alignmentGraphOutputPath2 = os.pwd / "src" / "main" / "output" / "t2.dot"
+//os.write.over(alignmentGraphOutputPath2, alignmentTreeAsDot2)
