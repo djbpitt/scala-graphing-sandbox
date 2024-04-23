@@ -340,10 +340,14 @@ def split_tree(
     tree: List[HasWitnessReadings],
     tokenToNodeMapping: Vector[HasWitnessReadings],
     blockRange: (Int, Int)
-)
-//: (List[HasWitnessReadings], Vector[HasWitnessReadings])
+): (AlignmentTreeNode, Vector[HasWitnessReadings])
 =
-  val newTree = tree map {
+  def createWrapperIfNeeded(wr: List[HasWitnessReadings]): AlignmentTreeNode =
+    if wr.size == 1 then
+      wr.head
+    else
+      ExpandedNode(wr.to(ListBuffer))
+  val newTree = tree flatMap {
     case e if blockRange._1 >= e.witnessReadings.head._2._1 && blockRange._2 <= e.witnessReadings.head._2._2 =>
       val delta1: Int = blockRange._1 - e.witnessReadings.head._2._1
       val newMap1 = e.witnessReadings.map((k, v) => k -> (v._1 + delta1))
@@ -352,10 +356,10 @@ def split_tree(
       val result2 = split_reading_node(result1._2, newMap2)
       val combinedResult = Vector(result1._1, result2._1, result2._2).filterNot(_.witnessReadings.isEmpty)
       combinedResult
-    case e => e
+    case e => Vector(e)
   }
   val newTokenToNodeMapping = tokenToNodeMapping
-  (newTree, newTokenToNodeMapping)
+  (createWrapperIfNeeded(newTree), newTokenToNodeMapping)
 
 @main def unalignedDev(): Unit =
   val darwin: List[UnalignedFragment] = readJsonData // we know there's only one
