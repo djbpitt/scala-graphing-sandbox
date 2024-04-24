@@ -384,57 +384,72 @@ def computeTextLength(in: String): Double =
   val result = in.map(e => tnrCharLengths.getOrElse(e.toString, 8).toString.toDouble).sum
   result
 
-/** plotOneAlignmentPoint()
-  *
-  * Plot backgrounds and text for single alignment point
-  *
-  * @param ap
-  *   Alignment point to plot
-  * @return
-  *   Tuple of (<g> Alignment point, Double: Width of alignment group)
-  */
-def plotOneAlignmentPoint(ap: AlignmentPoint, leftEdge: Double): xml.Elem = ???
-//  val horizontalShift =
-//    <g transform="translate()"></g>
-
-def plotLeadingRibbons(currentAlignment: xml.Elem, precedingAlignment: xml.Elem): xml.Elem =
-  <g></g>
-
-def plotOneAlignmentPointAndLeadingRibbons(ap: AlignmentPoint, pos: Int, acc: Vector[xml.Elem]) = ???
-//  def next() =
-//    val alignment = plotOneAlignmentPoint(ap, pos)
-//    val leadingRibbons = plotLeadingRibbons(acc.last, alignment)
-//    next(acc = acc ++ Vector(leadingRibbons, alignment))
-
-def plotAllAlignmentPointsAndRibbons(nodes: Vector[NumberedNode], gTa: Vector[Token], sigla: Set[String]) =
-  /* Map from siglum (string) to t value (string) */
-  def retrieveWitnessReadings(n: HasWitnessReadings) =
-    val witnessReadings = n.witnessReadings.map((k, v) => k -> gTa.slice(v._1, v._2).map(_.t).mkString)
-    witnessReadings
-  /* Sorted vector of missing sigla*/
-  def findMissingWitnesses(n: HasWitnessReadings): Vector[String] =
-    val missingWitnesses = sigla.diff(n.witnessReadings.keySet).toVector.sorted
-    missingWitnesses
-  /* Vector of vectors of sigla, one inner vector for each group */
-  def groupReadings(n: HasWitnessGroups) =
-    val groups: Vector[Vector[String]] =
-      n.witnessGroups
-    groups
-  val results = nodes.slice(0, 10).map(_.node).map {
-    case e:VariationNode => groupReadings(e)
-    case e:VariationIndelNode => groupReadings(e)
-    case _ => Vector(Vector("hi"))
-  }
-  results.foreach(println)
-
-
 def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scala.xml.Node =
+
+  /** plotOneAlignmentPoint()
+    *
+    * Plot backgrounds and text for single alignment point
+    *
+    * @param node NumberedNode
+    *   Alignment point to plot
+    * @param leftEdge Double
+    *   Left edge of <g> to plot
+    * @param width Double
+    *   Width of alignment point to plot
+    * @return
+    *   Tuple of (<g> Alignment point, Double: Width of alignment group)
+    */
+  def plotOneAlignmentPoint(node: NumberedNode, leftEdge: Double, width: Double): xml.Elem =
+    val horizontalShift = s"translate($leftEdge)"
+    <g transform={horizontalShift}></g>
+
+  def plotLeadingRibbons(currentAlignment: xml.Elem, precedingAlignment: xml.Elem, rightEdge: Double): xml.Elem =
+    val horizontalShift = s"translate($rightEdge)"
+    <g transform={horizontalShift}></g>
+
+  val flowLength = 80
+
+  def plotAllAlignmentPointsAndRibbons(
+      nodes: Vector[NumberedNode],
+      gTa: Vector[Token],
+      sigla: Set[String]
+  ) =
+    /* Map from siglum (string) to t value (string) */
+    def retrieveWitnessReadings(n: HasWitnessReadings) =
+      val witnessReadings = n.witnessReadings.map((k, v) => k -> gTa.slice(v._1, v._2).map(_.t).mkString)
+      witnessReadings
+
+    /* Sorted vector of missing sigla*/
+    def findMissingWitnesses(n: HasWitnessReadings): Vector[String] =
+      val missingWitnesses = sigla.diff(n.witnessReadings.keySet).toVector.sorted
+      missingWitnesses
+
+    /* Vector of vectors of sigla, one inner vector for each group */
+    def groupReadings(n: HasWitnessGroups) =
+      val groups: Vector[Vector[String]] =
+        n.witnessGroups
+      groups
+
+    @tailrec
+    def nextNode(nodes: Vector[NumberedNode], rightEdge: Double, acc: Vector[xml.Elem]): Vector[xml.Elem] =
+      if nodes.isEmpty then acc
+      else
+        val alignmentWidth = 80 // TODO: Compute this based on text length
+        val alignment = plotOneAlignmentPoint(nodes.head, rightEdge, alignmentWidth)
+        val ribbons = plotLeadingRibbons(alignment, acc.head, rightEdge - flowLength)
+        nextNode(nodes.tail, rightEdge + alignmentWidth + flowLength, acc ++ Vector(ribbons, alignment))
+
+    // First alignment has no leading ribbons
+    val firstAlignmentWidth = 80
+    val firstAlignment = plotOneAlignmentPoint(nodes.head, 0, firstAlignmentWidth)
+    nextNode(nodes, firstAlignmentWidth + flowLength, Vector(firstAlignment))
+
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val witnessCount = 6
   val ribbonWidth = 18
-  val flowLength = 80
   val maxAlignmentPointWidth = 160
   val contents = plotAllAlignmentPointsAndRibbons(nodeSequence, tokenArray, allSigla)
+  contents.foreach(println)
   val totalWidth = "2000" // TODO: Compute this
   val totalHeight = (ribbonWidth * (witnessCount * 3 - 1)).toString
   val viewBox = s"0 0 $totalWidth $totalHeight"
