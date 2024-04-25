@@ -390,12 +390,12 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
     *
     * Plot backgrounds and text for single alignment point
     *
-    * @param node NumberedNode
-    *   Alignment point to plot
-    * @param leftEdge Double
-    *   Left edge of <g> to plot
-    * @param width Double
-    *   Width of alignment point to plot
+    * @param node
+    *   NumberedNode Alignment point to plot
+    * @param leftEdge
+    *   Double Left edge of <g> to plot
+    * @param width
+    *   Double Width of alignment point to plot
     * @return
     *   Tuple of (<g> Alignment point, Double: Width of alignment group)
     */
@@ -408,6 +408,7 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
     <g transform={horizontalShift}></g>
 
   val flowLength = 80
+  val maxAlignmentPointWidth = 160.0
 
   def plotAllAlignmentPointsAndRibbons(
       nodes: Vector[NumberedNode],
@@ -415,7 +416,7 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
       sigla: Set[String]
   ) =
     /* Map from siglum (string) to t value (string) */
-    def retrieveWitnessReadings(n: HasWitnessReadings) =
+    def retrieveWitnessReadings(n: HasWitnessReadings): Map[String, String] =
       val witnessReadings = n.witnessReadings.map((k, v) => k -> gTa.slice(v._1, v._2).map(_.t).mkString)
       witnessReadings
 
@@ -434,7 +435,9 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
     def nextNode(nodes: Vector[NumberedNode], rightEdge: Double, acc: Vector[xml.Elem]): Vector[xml.Elem] =
       if nodes.isEmpty then acc
       else
-        val alignmentWidth = 80 // TODO: Compute this based on text length
+        // Computing the lengths of all of the readings is very slow; can we make it faster?
+        val alignmentWidth =
+          List(retrieveWitnessReadings(nodes.head.node).values.map(computeTextLength).max, maxAlignmentPointWidth).min
         val alignment = plotOneAlignmentPoint(nodes.head, rightEdge, alignmentWidth)
         val ribbons = plotLeadingRibbons(alignment, acc.head, rightEdge - flowLength)
         nextNode(nodes.tail, rightEdge + alignmentWidth + flowLength, acc ++ Vector(ribbons, alignment))
@@ -447,7 +450,6 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val witnessCount = 6
   val ribbonWidth = 18
-  val maxAlignmentPointWidth = 160
   val contents = plotAllAlignmentPointsAndRibbons(nodeSequence, tokenArray, allSigla)
   contents.foreach(println)
   val totalWidth = "2000" // TODO: Compute this
