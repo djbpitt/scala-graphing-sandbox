@@ -21,7 +21,7 @@ libraryDependencies += ("com.github.haifengl" %% "smile-scala" % "3.0.0")
 libraryDependencies += ("org.scalatest" %% "scalatest" % "3.2.15" % "test")
 libraryDependencies += "com.lihaoyi" %% "scalatags" % "0.12.0"
 libraryDependencies += "de.sciss" %% "fingertree" % "1.5.5"
-libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "2.2.0"
+libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "2.3.0"
 libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "2.0.4",
   "org.slf4j" % "slf4j-nop" % "2.0.4")
 libraryDependencies += "io.github.pityka" %% "pairwisealignment" % "2.2.7"
