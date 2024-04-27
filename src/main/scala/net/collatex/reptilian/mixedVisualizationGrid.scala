@@ -364,27 +364,44 @@ private def createNonspriteSvgGridColumnCells(
   }
   result
 
+/* Constants for computeTokenTextLength() */
 val tnr16Metrics = xml.XML.loadFile("src/main/python/tnr_16_metrics.xml")
-val tnrCharLengths = (tnr16Metrics \ "character")
-  .map(e => ((e \ "@str").toString.head, (e \ "@width").toString.toDouble))
-  .toMap
-/** computeTextLength()
-  *
-  * Summary: Return text length of a single string in TNR 16
-  *
-  * NB: Returns 8 for characters not in font (7.95 is average character width for tnr16). TODO: Specify font as
-  * parameter and compute average character width instead of hard-coding
-  *
-  * @param in
-  *   string to measure
-  * @return
-  *   length of string as double
-  */
-def computeTextLength(in: String): Double =
-  val result = in.map(e => tnrCharLengths.getOrElse(e, 8.0)).sum
+val tnrCharLengths = ((tnr16Metrics \ "character")
+  .map(e => ((e \ "@str").text.head, (e \ "@width").toString.toDouble))
+  ++ Seq(("\u000a".head, 0.0))).toMap
+
+// https://medium.com/musings-on-functional-programming/scala-optimizing-expensive-functions-with-memoization-c05b781ae826
+def memoizeFnc[K, V](f: K => V): K => V = {
+  val cache = collection.mutable.Map.empty[K, V]
+
+  k =>
+    cache.getOrElse(
+      k, {
+        cache update (k, f(k))
+        cache(k)
+      }
+    )
+}
+
+def computeTokenTextLength(in: String): Double =
+  val result = in.map(e => tnrCharLengths(e)).sum
   result
 
+val memoizedComputeTokenTextLength = memoizeFnc(computeTokenTextLength)
+
+val spaceCharWidth: Double = computeTokenTextLength(" ") // Width of space character
+
 def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scala.xml.Node =
+  /** computeReadingTextLength()
+    *
+    * @param in
+    *   Vector[Token] tokens in reading
+    *
+    * @return
+    *   Size of reading (sum of lengths of t values of tokens plus intertoken spaces)
+    */
+  def computeReadingTextLength(in: Vector[Token]): Double =
+    in.map(e => memoizedComputeTokenTextLength(e.t)).sum + spaceCharWidth * (in.size - 1)
 
   /** plotOneAlignmentPoint()
     *
@@ -416,8 +433,8 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
       sigla: Set[String]
   ) =
     /* Map from siglum (string) to t value (string) */
-    def retrieveWitnessReadings(n: HasWitnessReadings): Map[String, String] =
-      val witnessReadings = n.witnessReadings.map((k, v) => k -> gTa.slice(v._1, v._2).map(_.t).mkString)
+    def retrieveWitnessReadings(n: HasWitnessReadings): Map[String, Vector[Token]] =
+      val witnessReadings = n.witnessReadings.map((k, v) => k -> gTa.slice(v._1, v._2))
       witnessReadings
 
     /* Sorted vector of missing sigla*/
@@ -435,15 +452,20 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
     def nextNode(nodes: Vector[NumberedNode], rightEdge: Double, acc: Vector[xml.Elem]): Vector[xml.Elem] =
       if nodes.isEmpty then acc
       else
-        // Computing the lengths of all of the readings is very slow; can we make it faster?
         val alignmentWidth =
-          List(retrieveWitnessReadings(nodes.head.node).values.map(computeTextLength).max, maxAlignmentPointWidth).min
+          List(
+            retrieveWitnessReadings(nodes.head.node).values.map(computeReadingTextLength).max,
+            maxAlignmentPointWidth
+          ).min
         val alignment = plotOneAlignmentPoint(nodes.head, rightEdge, alignmentWidth)
         val ribbons = plotLeadingRibbons(alignment, acc.head, rightEdge - flowLength)
         nextNode(nodes.tail, rightEdge + alignmentWidth + flowLength, acc ++ Vector(ribbons, alignment))
 
     // First alignment has no leading ribbons
-    val firstAlignmentWidth = 80
+    val firstAlignmentWidth = List(
+      retrieveWitnessReadings(nodes.head.node).values.map(computeReadingTextLength).max,
+      maxAlignmentPointWidth
+    ).min
     val firstAlignment = plotOneAlignmentPoint(nodes.head, 0, firstAlignmentWidth)
     nextNode(nodes, firstAlignmentWidth + flowLength, Vector(firstAlignment))
 
