@@ -364,6 +364,10 @@ private def createNonspriteSvgGridColumnCells(
   }
   result
 
+val tnr16Metrics = xml.XML.loadFile("src/main/python/tnr_16_metrics.xml")
+val tnrCharLengths = (tnr16Metrics \ "character")
+  .map(e => ((e \ "@str").toString.head, (e \ "@width").toString.toDouble))
+  .toMap
 /** computeTextLength()
   *
   * Summary: Return text length of a single string in TNR 16
@@ -377,11 +381,7 @@ private def createNonspriteSvgGridColumnCells(
   *   length of string as double
   */
 def computeTextLength(in: String): Double =
-  val tnr16Metrics = xml.XML.loadFile("src/main/python/tnr_16_metrics.xml")
-  val tnrCharLengths = (tnr16Metrics \ "character")
-    .map(e => ((e \ "@str").toString, e \ "@width"))
-    .toMap
-  val result = in.map(e => tnrCharLengths.getOrElse(e.toString, 8).toString.toDouble).sum
+  val result = in.map(e => tnrCharLengths.getOrElse(e, 8.0)).sum
   result
 
 def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scala.xml.Node =
