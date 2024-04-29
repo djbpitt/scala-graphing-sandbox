@@ -364,16 +364,27 @@ private def createNonspriteSvgGridColumnCells(
   }
   result
 
+/* ====================================================================== */
+/* Horizontal ribbons                                                     */
+/* ====================================================================== */
+
 /* Constants for computeTokenTextLength() */
 val tnr16Metrics = xml.XML.loadFile("src/main/python/tnr_16_metrics.xml")
 val tnrCharLengths = ((tnr16Metrics \ "character")
   .map(e => ((e \ "@str").text.head, (e \ "@width").toString.toDouble))
   ++ Seq(("\u000a".head, 0.0))).toMap
 
-// https://medium.com/musings-on-functional-programming/scala-optimizing-expensive-functions-with-memoization-c05b781ae826
+/** memoizeFnc()
+  *
+  * https://medium.com/musings-on-functional-programming/scala-optimizing-expensive-functions-with-memoization-c05b781ae826
+  *
+  * @param f
+  *   Single-parameter function to memoize
+  * @return
+  *   Memoized version of f
+  */
 def memoizeFnc[K, V](f: K => V): K => V = {
   val cache = collection.mutable.Map.empty[K, V]
-
   k =>
     cache.getOrElse(
       k, {
@@ -383,20 +394,46 @@ def memoizeFnc[K, V](f: K => V): K => V = {
     )
 }
 
+/** computeTokenTextLength()
+  *
+  * Relies on global trnCharLengths: Map[Char, Double] Memoized and then called as memoizedComputeTokenTextLength()
+  *
+  * @param in
+  *   Input string
+  * @return
+  *   Double
+  */
 def computeTokenTextLength(in: String): Double =
   val result = in.map(e => tnrCharLengths(e)).sum
   result
 
 val memoizedComputeTokenTextLength = memoizeFnc(computeTokenTextLength)
-
 val spaceCharWidth: Double = computeTokenTextLength(" ") // Width of space character
 
+/** createHorizontalRibbons()
+  *
+  * Entry point for creating horizontal alignment ribbon plot
+  *
+  * @param root
+  *   Expanded node root of entire alignment tree
+  * @param tokenArray
+  *   Global token array
+  * @return
+  *   <html> element in HTML namespace, with embedded SVG
+  */
 def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scala.xml.Node =
+  /** Constants */
+  val flowLength = 80
+  val maxAlignmentPointWidth = 160.0
+  val ribbonWidth = 18
+
   /** computeReadingTextLength()
+    *
+    * Sum of widths of t values of tokens (using memoizedComputeTokenTextLength() in reading) Plus interword spaces
+    * TODO: Include width of siglum followed by colon
     *
     * @param in
     *   Vector[Token] tokens in reading
-    *
     * @return
     *   Size of reading (sum of lengths of t values of tokens plus intertoken spaces)
     */
@@ -420,18 +457,48 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
     val horizontalShift = s"translate($leftEdge)"
     <g transform={horizontalShift}></g>
 
+  /** plotLeadingRibbons()
+    *
+    * Plot ribbons from preceding alignment point to current one
+    *
+    * TODO: Currently vertical position is stored in alignment-point <g>; replace with values and create <g> during
+    * serialization
+    *
+    * @param currentAlignment
+    *   <g> holding current alignment
+    * @param precedingAlignment
+    *   <g> holding preceding alignment
+    * @param rightEdge
+    *   <g> used to compute position
+    * @return
+    *   <g> containing ribbon splines between points
+    */
   def plotLeadingRibbons(currentAlignment: xml.Elem, precedingAlignment: xml.Elem, rightEdge: Double): xml.Elem =
     val horizontalShift = s"translate($rightEdge)"
     <g transform={horizontalShift}></g>
 
-  val flowLength = 80
-  val maxAlignmentPointWidth = 160.0
-
+  /** plotAllAlignmentPointsAndRibbons()
+    *
+    * Call plotOneAlignmentPoint() and (except for first) plotLeadingRibbons() for each alignment point
+    *
+    * Recursive to maintain horizontal position
+    *
+    * TODO: Work with case class that holds info instead of XML; create <g> elements during serialization
+    *
+    * @param nodes
+    *   Vector[NumberedNode] nodes to plot
+    * @param gTa
+    *   Vector[Token] global token array
+    * @param sigla
+    *   Set[String] all sigla (used to find missing witnesses)
+    * @return
+    *   Vector[Elem] <g> elements for all nodes and internode flows
+    */
   def plotAllAlignmentPointsAndRibbons(
       nodes: Vector[NumberedNode],
       gTa: Vector[Token],
       sigla: Set[String]
-  ) =
+  ): Vector[Elem] =
     /* Map from siglum (string) to t value (string) */
     def retrieveWitnessReadings(n: HasWitnessReadings): Map[String, Vector[Token]] =
       val witnessReadings = n.witnessReadings.map((k, v) => k -> gTa.slice(v._1, v._2))
@@ -470,8 +537,7 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
     nextNode(nodes, firstAlignmentWidth + flowLength, Vector(firstAlignment))
 
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
-  val witnessCount = 6
-  val ribbonWidth = 18
+  val witnessCount = 6 // TODO: Pass or compute
   val contents = plotAllAlignmentPointsAndRibbons(nodeSequence, tokenArray, allSigla)
   contents.foreach(println)
   val totalWidth = "2000" // TODO: Compute this
