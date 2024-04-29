@@ -369,8 +369,8 @@ private def createNonspriteSvgGridColumnCells(
 /* ====================================================================== */
 
 /* Constants for computeTokenTextLength() */
-val tnr16Metrics = xml.XML.loadFile("src/main/python/tnr_16_metrics.xml")
-val tnrCharLengths = ((tnr16Metrics \ "character")
+private val tnr16Metrics = xml.XML.loadFile("src/main/python/tnr_16_metrics.xml")
+private val tnrCharLengths = ((tnr16Metrics \ "character")
   .map(e => ((e \ "@str").text.head, (e \ "@width").toString.toDouble))
   ++ Seq(("\u000a".head, 0.0))).toMap
 
@@ -383,7 +383,7 @@ val tnrCharLengths = ((tnr16Metrics \ "character")
   * @return
   *   Memoized version of f
   */
-def memoizeFnc[K, V](f: K => V): K => V = {
+private def memoizeFnc[K, V](f: K => V): K => V = {
   val cache = collection.mutable.Map.empty[K, V]
   k =>
     cache.getOrElse(
@@ -403,12 +403,23 @@ def memoizeFnc[K, V](f: K => V): K => V = {
   * @return
   *   Double
   */
-def computeTokenTextLength(in: String): Double =
+private def computeTokenTextLength(in: String): Double =
   val result = in.map(e => tnrCharLengths(e)).sum
   result
 
-val memoizedComputeTokenTextLength = memoizeFnc(computeTokenTextLength)
-val spaceCharWidth: Double = computeTokenTextLength(" ") // Width of space character
+/** retrieveWitnessReadings()
+  *
+  * @param n
+  *   Node with witness readings
+  * @return
+  *   All witness readings on node as map from siglum (String) to vector of tokens
+  */
+def retrieveWitnessReadings(n: HasWitnessReadings, gTa: Vector[Token]): Map[String, Vector[Token]] =
+  val witnessReadings = n.witnessReadings.map((k, v) => k -> gTa.slice(v._1, v._2))
+  witnessReadings
+
+private val memoizedComputeTokenTextLength = memoizeFnc(computeTokenTextLength)
+private val spaceCharWidth: Double = computeTokenTextLength(" ") // Width of space character
 
 /** createHorizontalRibbons()
   *
@@ -438,7 +449,10 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
     *   Size of reading (sum of lengths of t values of tokens plus intertoken spaces)
     */
   def computeReadingTextLength(in: Vector[Token]): Double =
-    in.map(e => memoizedComputeTokenTextLength(e.t)).sum + spaceCharWidth * (in.size - 1)
+    in.map(e => memoizedComputeTokenTextLength(e.t)).sum
+
+  def formatSiglum(siglum: String): String = siglum.slice(8, 10).mkString
+  // def plotOneWitnessReading() = ???
 
   /** plotOneAlignmentPoint()
     *
@@ -454,8 +468,19 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
     *   Tuple of (<g> Alignment point, Double: Width of alignment group)
     */
   def plotOneAlignmentPoint(node: NumberedNode, leftEdge: Double, width: Double): xml.Elem =
+    val witnessReadings = retrieveWitnessReadings(node.node, tokenArray) map ((k, v) => k -> v.map(_.t).mkString)
+    val rectsAndTexts = witnessReadings.zipWithIndex.map((wr, i) =>
+      <rect x="0" y={(i * ribbonWidth).toString} width={width.toString} height={
+        ribbonWidth.toString
+      } stroke="none" fill="turquoise"/>
+      <foreignObject x="1" y={(i * ribbonWidth - 1.5).toString} width={width.toString} height={ribbonWidth.toString}>
+        <div xmlns="http://www.w3.org/1999/xhtml">
+          <span class="sigla">{formatSiglum(wr._1)}: </span>{wr._2}
+        </div>
+      </foreignObject>
+    )
     val horizontalShift = s"translate($leftEdge)"
-    <g transform={horizontalShift}></g>
+    <g transform={horizontalShift}>{rectsAndTexts}</g>
 
   /** plotLeadingRibbons()
     *
@@ -499,17 +524,6 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
       gTa: Vector[Token],
       sigla: Set[String]
   ): Vector[Elem] =
-    /** retrieveWitnessReadings()
-      *
-      * @param n
-      *   Node with witness readings
-      * @return
-      *   All witness readings on node as map from siglum (String) to vector of tokens
-      */
-    def retrieveWitnessReadings(n: HasWitnessReadings): Map[String, Vector[Token]] =
-      val witnessReadings = n.witnessReadings.map((k, v) => k -> gTa.slice(v._1, v._2))
-      witnessReadings
-
     /** findMissingWitnesses()
       *
       * Sigla of missing witnesses
@@ -536,8 +550,9 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
       groups
 
     def computeAlignmentNodeRenderingWidth(n: HasWitnessReadings): Double =
+      // FIXME: Temporarily add 24 to allow for two-character siglum plus colon plus space
       List(
-        retrieveWitnessReadings(n).values.map(computeReadingTextLength).max,
+        retrieveWitnessReadings(n, tokenArray).values.map(computeReadingTextLength).max + 24,
         maxAlignmentPointWidth
       ).min
 
@@ -566,12 +581,12 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
     // First alignment has no leading ribbons
     val firstAlignmentWidth = computeAlignmentNodeRenderingWidth(nodes.head.node)
     val firstAlignment = plotOneAlignmentPoint(nodes.head, 0, firstAlignmentWidth)
-    nextNode(nodes, firstAlignmentWidth + flowLength, Vector(firstAlignment))
+    nextNode(nodes.tail, firstAlignmentWidth + flowLength, Vector(firstAlignment))
 
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
-  val witnessCount = 6 // TODO: Pass or compute
+  val witnessCount = 6 // TODO: Pass or compute value
   val contents = plotAllAlignmentPointsAndRibbons(nodeSequence, tokenArray, allSigla)
-  // contents.slice(0, 10).foreach(println)
+  contents.slice(0, 10).foreach(println)
   val totalWidth = "2000" // TODO: Compute this
   val totalHeight = (ribbonWidth * (witnessCount * 3 - 1)).toString
   val viewBox = s"0 0 $totalWidth $totalHeight"
@@ -668,7 +683,7 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
                 <rect x="0" y="202" width={totalWidth} height={
       (witnessCount * ribbonWidth - ribbonWidth / 2).toString
     } fill="gray" stroke="none"/>
-              </g>
+              </g>{contents}
             </svg>
           </div>
         </main>
