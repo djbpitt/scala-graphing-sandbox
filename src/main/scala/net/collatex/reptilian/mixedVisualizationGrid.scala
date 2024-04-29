@@ -499,47 +499,79 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
       gTa: Vector[Token],
       sigla: Set[String]
   ): Vector[Elem] =
-    /* Map from siglum (string) to t value (string) */
+    /** retrieveWitnessReadings()
+      *
+      * @param n
+      *   Node with witness readings
+      * @return
+      *   All witness readings on node as map from siglum (String) to vector of tokens
+      */
     def retrieveWitnessReadings(n: HasWitnessReadings): Map[String, Vector[Token]] =
       val witnessReadings = n.witnessReadings.map((k, v) => k -> gTa.slice(v._1, v._2))
       witnessReadings
 
-    /* Sorted vector of missing sigla*/
+    /** findMissingWitnesses()
+      *
+      * Sigla of missing witnesses
+      *
+      * @param n
+      *   Node with witness readings
+      * @return
+      *   Vector of sigla of missing witnesses as strings
+      */
     def findMissingWitnesses(n: HasWitnessReadings): Vector[String] =
       val missingWitnesses = sigla.diff(n.witnessReadings.keySet).toVector.sorted
       missingWitnesses
 
-    /* Vector of vectors of sigla, one inner vector for each group */
+    /** groupReadings()
+      *
+      * @param n
+      *   Node with witness groups (Variation or VariationIndel)
+      * @return
+      *   Vector of vector of strings, where inner vectors are groups and strings are sigla
+      */
     def groupReadings(n: HasWitnessGroups) =
       val groups: Vector[Vector[String]] =
         n.witnessGroups
       groups
 
+    def computeAlignmentNodeRenderingWidth(n: HasWitnessReadings): Double =
+      List(
+        retrieveWitnessReadings(n).values.map(computeReadingTextLength).max,
+        maxAlignmentPointWidth
+      ).min
+
     @tailrec
+    /** nextNode()
+      *
+      * Add <g> elements for each node and leading ribbons to vector of <g> elements and return
+      *
+      * @param nodes
+      *   Flattened sequence of all alignment nodes
+      * @param rightEdge
+      *   Right edge of alignment so far (updated during recursion)
+      * @param acc
+      *   Vector of <g> elements to return
+      * @return
+      *   Vector of <g> elements for alignment points and leading ribbons
+      */
     def nextNode(nodes: Vector[NumberedNode], rightEdge: Double, acc: Vector[xml.Elem]): Vector[xml.Elem] =
       if nodes.isEmpty then acc
       else
-        val alignmentWidth =
-          List(
-            retrieveWitnessReadings(nodes.head.node).values.map(computeReadingTextLength).max,
-            maxAlignmentPointWidth
-          ).min
+        val alignmentWidth = computeAlignmentNodeRenderingWidth(nodes.head.node)
         val alignment = plotOneAlignmentPoint(nodes.head, rightEdge, alignmentWidth)
         val ribbons = plotLeadingRibbons(alignment, acc.head, rightEdge - flowLength)
         nextNode(nodes.tail, rightEdge + alignmentWidth + flowLength, acc ++ Vector(ribbons, alignment))
 
     // First alignment has no leading ribbons
-    val firstAlignmentWidth = List(
-      retrieveWitnessReadings(nodes.head.node).values.map(computeReadingTextLength).max,
-      maxAlignmentPointWidth
-    ).min
+    val firstAlignmentWidth = computeAlignmentNodeRenderingWidth(nodes.head.node)
     val firstAlignment = plotOneAlignmentPoint(nodes.head, 0, firstAlignmentWidth)
     nextNode(nodes, firstAlignmentWidth + flowLength, Vector(firstAlignment))
 
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val witnessCount = 6 // TODO: Pass or compute
   val contents = plotAllAlignmentPointsAndRibbons(nodeSequence, tokenArray, allSigla)
-  contents.foreach(println)
+  // contents.slice(0, 10).foreach(println)
   val totalWidth = "2000" // TODO: Compute this
   val totalHeight = (ribbonWidth * (witnessCount * 3 - 1)).toString
   val viewBox = s"0 0 $totalWidth $totalHeight"
