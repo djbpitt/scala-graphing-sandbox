@@ -586,8 +586,7 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val witnessCount = 6 // TODO: Pass or compute value
   val contents = plotAllAlignmentPointsAndRibbons(nodeSequence, tokenArray, allSigla)
-  contents.slice(0, 10).foreach(println)
-  val totalWidth = "2000" // TODO: Compute this
+  val totalWidth = "251100" // TODO: Compute value
   val totalHeight = (ribbonWidth * (witnessCount * 3 - 1)).toString
   val viewBox = s"0 0 $totalWidth $totalHeight"
   val gradients =
@@ -659,11 +658,32 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token]): scal
         <stop offset="100%" stop-color="limegreen" stop-opacity="1"/>
       </linearGradient>
     </defs>
+  val css = s"""svg {
+               |  height: ${totalHeight}px;
+               |  width: ${totalWidth}px;
+               |}
+               |#wrapper {
+               |  padding: 0;
+               |  overflow-x: scroll;
+               |}
+               |.sigla {
+               |  font-weight: bold;
+               |  font-size: small;
+               |}
+               |foreignObject > div {
+               |  white-space: nowrap;
+               |  overflow: hidden;
+               |  text-overflow: ellipsis;
+               |  font-family: "Times New Roman"; /* Match font metrics */
+               |  font-size: 16px; /* needed by Safari */
+               |  padding: .1em .1em 0 .1em;
+               |  line-height: ${ribbonWidth - 1}px;
+               |}""".stripMargin
   val html =
     <html xmlns="http://www.w3.org/1999/xhtml">
       <head>
         <title>Alignments</title>
-        <link rel="stylesheet" type="text/css" href="horizontal-ribbons.css"/>
+        <style type="text/css">{css}</style>
       </head>
       <body>
         <h1>Alignments</h1>
