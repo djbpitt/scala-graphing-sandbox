@@ -549,6 +549,75 @@ def retrieveWitnessReadings(n: HasWitnessReadings, gTa: Vector[Token]): Map[Stri
 private val memoizedComputeTokenTextLength = memoizeFnc(computeTokenTextLength)
 private val spaceCharWidth: Double = computeTokenTextLength(" ") // Width of space character
 
+/** computeReadingTextLength()
+  *
+  * Sum of widths of t values of tokens (using memoizedComputeTokenTextLength() in reading) Plus interword spaces TODO:
+  * Include width of siglum followed by colon
+  *
+  * @param in
+  *   Vector[Token] tokens in reading
+  * @return
+  *   Size of reading (sum of lengths of t values of tokens plus intertoken spaces)
+  */
+private def computeReadingTextLength(in: Vector[Token]): Double =
+  in.map(e => memoizedComputeTokenTextLength(e.t)).sum
+
+/** findMissingWitnesses()
+  *
+  * Sigla of missing witnesses
+  *
+  * @param n
+  *   Node with witness readings
+  * @return
+  *   Vector of sigla of missing witnesses as strings
+  */
+private def findMissingWitnesses(n: HasWitnessReadings, sigla: Set[String]): Vector[String] =
+  val missingWitnesses = sigla.diff(n.witnessReadings.keySet).toVector.sorted
+  missingWitnesses
+
+/** groupReadings()
+  *
+  * @param n
+  *   Node with witness groups (Variation or VariationIndel)
+  * @return
+  *   Vector of vector of strings, where inner vectors are groups and strings are sigla
+  */
+private def groupReadings(n: HasWitnessGroups) =
+  val groups: Vector[Vector[String]] =
+    n.witnessGroups
+  groups
+
+private def computeAlignmentNodeRenderingWidth(n: HasWitnessReadings, gTa: Vector[Token]): Double =
+  // FIXME: Temporarily add 24 to allow for two-character siglum plus colon plus space
+  val maxAlignmentPointWidth = 160.0
+  List(
+    retrieveWitnessReadings(n, gTa).values.map(computeReadingTextLength).max + 24,
+    maxAlignmentPointWidth
+  ).min
+
+private def createHorizNodeData(
+    nodeSequence: Vector[NumberedNode],
+    tokenArray: Vector[Token],
+    sigla: Set[String]
+): Vector[HorizNodeData] =
+  @tailrec
+  def nextNode(nodes: Vector[NumberedNode], pos: Int, acc: Vector[HorizNodeData]): Vector[HorizNodeData] =
+    if nodes.isEmpty then acc
+    else
+      val nodeType = nodes.head.node.getClass.getSimpleName
+      val xOffset = 0
+      val missing = findMissingWitnesses(nodes.head.node, sigla)
+      val newNode = HorizNodeData(
+        treeNumber = nodes.head.nodeNo,
+        seqNumber = pos,
+        nodeType = nodeType,
+        xOffset = xOffset,
+        groups = Vector.empty,
+        missing = missing
+      )
+      nextNode(nodes.tail, pos + 1, acc :+ newNode)
+  nextNode(nodeSequence, 1, Vector.empty[HorizNodeData])
+
 /** createHorizontalRibbons()
   *
   * Entry point for creating horizontal alignment ribbon plot
@@ -560,24 +629,10 @@ private val spaceCharWidth: Double = computeTokenTextLength(" ") // Width of spa
   * @return
   *   <html> element in HTML namespace, with embedded SVG
   */
-def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla: Vector[String]): scala.xml.Node =
+def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla: Set[String]): scala.xml.Node =
   /** Constants */
   val flowLength = 80
-  val maxAlignmentPointWidth = 160.0
   val ribbonWidth = 18
-
-  /** computeReadingTextLength()
-    *
-    * Sum of widths of t values of tokens (using memoizedComputeTokenTextLength() in reading) Plus interword spaces
-    * TODO: Include width of siglum followed by colon
-    *
-    * @param in
-    *   Vector[Token] tokens in reading
-    * @return
-    *   Size of reading (sum of lengths of t values of tokens plus intertoken spaces)
-    */
-  def computeReadingTextLength(in: Vector[Token]): Double =
-    in.map(e => memoizedComputeTokenTextLength(e.t)).sum
 
   def formatSiglum(siglum: String): String = siglum.slice(8, 10).mkString
   // def plotOneWitnessReading() = ???
@@ -652,37 +707,6 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla
       gTa: Vector[Token],
       sigla: Set[String]
   ): Vector[Elem] =
-    /** findMissingWitnesses()
-      *
-      * Sigla of missing witnesses
-      *
-      * @param n
-      *   Node with witness readings
-      * @return
-      *   Vector of sigla of missing witnesses as strings
-      */
-    def findMissingWitnesses(n: HasWitnessReadings): Vector[String] =
-      val missingWitnesses = sigla.diff(n.witnessReadings.keySet).toVector.sorted
-      missingWitnesses
-
-    /** groupReadings()
-      *
-      * @param n
-      *   Node with witness groups (Variation or VariationIndel)
-      * @return
-      *   Vector of vector of strings, where inner vectors are groups and strings are sigla
-      */
-    def groupReadings(n: HasWitnessGroups) =
-      val groups: Vector[Vector[String]] =
-        n.witnessGroups
-      groups
-
-    def computeAlignmentNodeRenderingWidth(n: HasWitnessReadings): Double =
-      // FIXME: Temporarily add 24 to allow for two-character siglum plus colon plus space
-      List(
-        retrieveWitnessReadings(n, tokenArray).values.map(computeReadingTextLength).max + 24,
-        maxAlignmentPointWidth
-      ).min
 
     @tailrec
     /** nextNode()
@@ -701,20 +725,23 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla
     def nextNode(nodes: Vector[NumberedNode], rightEdge: Double, acc: Vector[xml.Elem]): Vector[xml.Elem] =
       if nodes.isEmpty then acc
       else
-        val alignmentWidth = computeAlignmentNodeRenderingWidth(nodes.head.node)
+        val alignmentWidth = computeAlignmentNodeRenderingWidth(nodes.head.node, tokenArray)
         val alignment = plotOneAlignmentPoint(nodes.head, rightEdge, alignmentWidth)
         val ribbons = plotLeadingRibbons(alignment, acc.head, rightEdge - flowLength)
         nextNode(nodes.tail, rightEdge + alignmentWidth + flowLength, acc ++ Vector(ribbons, alignment))
 
     // First alignment has no leading ribbons
-    val firstAlignmentWidth = computeAlignmentNodeRenderingWidth(nodes.head.node)
+    val firstAlignmentWidth = computeAlignmentNodeRenderingWidth(nodes.head.node, tokenArray)
     val firstAlignment = plotOneAlignmentPoint(nodes.head, 0, firstAlignmentWidth)
     nextNode(nodes.tail, firstAlignmentWidth + flowLength, Vector(firstAlignment))
 
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
-  println(nodeSequence.head)
   val witnessCount = sigla.size
+  val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
+  println(horizNodes.size)
+  horizNodes.foreach(println)
   val contents = plotAllAlignmentPointsAndRibbons(nodeSequence, tokenArray, allSigla)
+
   val totalWidth = "251100" // TODO: Compute value
   val totalHeight = (ribbonWidth * (witnessCount * 3 - 1)).toString
   val viewBox = s"0 0 $totalWidth $totalHeight"
@@ -843,7 +870,7 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla
    */
   html
 
-case class HorizontalNodeData(
+case class HorizNodeData(
     treeNumber: Int,
     seqNumber: Int,
     nodeType: String,
