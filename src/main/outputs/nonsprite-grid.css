@@ -1,0 +1,92 @@
+/* =========================================================== */
+/* Three-column grid for svg, node number, text                */
+/* Contents of each column are wrapped in transparent div      */
+/* =========================================================== */
+main {
+  display: grid;
+  grid-template-columns: 300px 3em 1fr;
+}
+main > div { /* Look through grouping div to its three children*/
+  display: contents;
+}
+div > div {
+  box-sizing: border-box;
+  border: 1px solid black;
+  margin: -1px 0 0 -1px; /* https://stackoverflow.com/questions/17915865/how-to-make-borders-collapse-on-a-div */
+}
+/* =========================================================== */
+/* Flow column                                                 */
+/* =========================================================== */
+body > svg {
+  height: 0;
+}
+main > div > div:first-child { /* svg flow */
+  grid-column: 1/2;
+  padding: 0;
+  min-height: 40px;
+  position: relative;
+}
+main > div > div:first-child > svg:first-child {
+  width: 100%;
+  height: 100%;
+}
+svg {
+  display: block;
+}
+svg + svg {
+  position: absolute;
+  top: 0;
+}
+/* =========================================================== */
+/* Node number column                                          */
+/* =========================================================== */
+main > div > div:nth-child(2) { /* node number */
+  grid-column: 2/3;
+  text-align: right;
+  font-size: small;
+  line-height: 1.33em;
+  padding: 4.4px 3px 0 3px;
+}
+/* =========================================================== */
+/* Text column                                                 */
+/* =========================================================== */
+main > div > div:nth-child(3) { /* text */
+  grid-column: 3/4;
+  padding: 4px 3px 3px 3px;
+}
+ul {
+  margin: -1px 0 0 0;
+  padding-left: 1em;
+  list-style-type: none;
+  text-indent: -1em;
+}
+.sigla {
+  font-size: small;
+  font-weight: bold;
+}
+/* =========================================================== */
+/* Header row                                                  */
+/* =========================================================== */
+main > div:first-child > div {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  font-size: medium;
+  background-color: lightgray;
+  background-image: none;
+}
+/* =========================================================== */
+/* Node-type background colors (columns 2 and 3)               */
+/* =========================================================== */
+div.agreement > div:not(:first-child) {
+  background-color: lightblue;
+}
+div.agreementIndel > div:not(:first-child) {
+  background-color: lightgoldenrodyellow;
+}
+div.variation > div:not(:first-child) {
+  background-color: bisque;
+}
+div.variationIndel > div:not(:first-child) {
+  background-color: thistle;
+}

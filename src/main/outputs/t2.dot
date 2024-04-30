@@ -1,0 +1,14 @@
+digraph MyGraph {
+	ranksep=0.25
+	node [shape=record, style=filled]
+	
+0  ->  1
+	0  ->  2
+1 [label="1|natural selection , as will hereafter be explained , will \ldetermine how far the new characters thus arising shall be \lpreserved \l}" tooltip="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved \n\n(0, 1, 2, 3)" fillcolor="lightblue"]
+2 [label="2|. character of domestic varieties ; difficulty of \ldistinguishing between varieties and species ; origin of \ldomestic varieties from one or more species \l}" tooltip=". character of domestic varieties ; difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species \n\n(3)" fillcolor="lightgoldenrodyellow"]
+
+
+0 [label="0|expanded" tooltip="Expanded node" fillcolor="plum"]
+0 [label="0|expanded" tooltip="Expanded node" fillcolor="plum"]
+
+}
