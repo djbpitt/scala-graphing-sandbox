@@ -648,12 +648,12 @@ private def createHorizNodeData(
   * @return
   *   <html> element in HTML namespace, with embedded SVG
   */
-def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla: Set[String]): scala.xml.Node =
+private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla: Set[String]): scala.xml.Node =
   /** Constants */
   val ribbonWidth = 18
+  val missingTop = allSigla.size * ribbonWidth * 2 - ribbonWidth / 2
 
   def formatSiglum(siglum: String): String = siglum.slice(8, 10).mkString
-  // def plotOneWitnessReading() = ???
 
   /** plotOneAlignmentPoint()
     *
@@ -665,7 +665,19 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla
     *   <g> Alignment point
     */
   def plotOneAlignmentPoint(node: HorizNodeData): xml.Elem =
-    <g transform={s"translate(${node.xOffset})"}>Node</g>
+    val missing = node.missing.zipWithIndex.map(e =>
+      <rect x="0" y={(e._2 * ribbonWidth + missingTop).toString} width={node.alignmentWidth.toString}
+        height={ribbonWidth.toString} fill="turquoise"/>
+      <foreignObject x="1"
+                     y={(e._2 * ribbonWidth + missingTop).toString} 
+                     width={node.alignmentWidth.toString}
+                     height={ribbonWidth.toString}>
+        <div xmlns="http://www.w3.org/1999/xhtml">
+          <span class="sigla">{s"(${formatSiglum(e._1)})"}</span>
+        </div>
+      </foreignObject>
+    )
+    <g transform={s"translate(${node.xOffset})"}>{missing}</g>
 
   /** plotLeadingRibbons()
     *
@@ -690,11 +702,12 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla
     * @return
     *   Vector[Elem] <g> elements for all nodes and internode flows
     */
-  def plotAllAlignmentPointsAndRibbons(nodes: Vector[HorizNodeData]): Vector[Node] =
-    Vector(plotOneAlignmentPoint(nodes.head)) ++ // No flow before first node
+  def plotAllAlignmentPointsAndRibbons(nodes: Vector[HorizNodeData]) =
+    val result = Vector(plotOneAlignmentPoint(nodes.head)) ++
       nodes
         .sliding(2)
         .flatMap(e => Vector(plotLeadingRibbons(e.last, e.head), plotOneAlignmentPoint(e.last)))
+    result
 
   val witnessCount = sigla.size
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
