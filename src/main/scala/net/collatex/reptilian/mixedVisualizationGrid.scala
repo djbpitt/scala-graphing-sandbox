@@ -683,11 +683,7 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla
 
   /** plotAllAlignmentPointsAndRibbons()
     *
-    * Call plotOneAlignmentPoint() and (except for first) plotLeadingRibbons() for each alignment point
-    *
-    * Recursive to maintain horizontal position
-    *
-    * TODO: Work with case class that holds info instead of XML; create <g> elements during serialization
+    * Calls plotOneAlignmentPoint() and (except for first) plotLeadingRibbons() for each alignment point
     *
     * @param nodes
     *   Vector[HorizNodeData] nodes to plot
@@ -696,12 +692,9 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla
     */
   def plotAllAlignmentPointsAndRibbons(nodes: Vector[HorizNodeData]): Vector[Node] =
     Vector(plotOneAlignmentPoint(nodes.head)) ++ // No flow before first node
-    nodes
-      .sliding(2)
-      .flatMap(e =>
-        Vector(plotLeadingRibbons(e.last, e.head),
-        plotOneAlignmentPoint(e.last))
-      ).toVector
+      nodes
+        .sliding(2)
+        .flatMap(e => Vector(plotLeadingRibbons(e.last, e.head), plotOneAlignmentPoint(e.last)))
 
   val witnessCount = sigla.size
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
