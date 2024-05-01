@@ -1,7 +1,7 @@
 package net.collatex.reptilian
 
 import scala.annotation.tailrec
-import scala.xml.Elem
+import scala.xml.{Elem, Node}
 
 /** Create inner <g> elements with <text> only (no <rect>)
   *
@@ -496,6 +496,9 @@ def createNonspriteGrid(root: ExpandedNode, tokenArray: Vector[Token]): scala.xm
 /* Horizontal ribbons                                                     */
 /* ====================================================================== */
 
+/* Constants for plotting */
+val flowLength = 80d
+
 /* Constants for computeTokenTextLength() */
 private val tnr16Metrics = xml.XML.loadFile("src/main/python/tnr_16_metrics.xml")
 private val tnrCharLengths = ((tnr16Metrics \ "character")
@@ -605,14 +608,30 @@ private def createHorizNodeData(
     if nodes.isEmpty then acc
     else
       val nodeType = nodes.head.node.getClass.getSimpleName
-      val xOffset = 0
+      // TODO: Combine computation of wr and alignmentWidth, which share operations
+      val wr = retrieveWitnessReadings(nodes.head.node, tokenArray)
+      val alignmentWidth = computeAlignmentNodeRenderingWidth(nodes.head.node, tokenArray)
+      val xOffset = acc.lastOption match {
+        case Some(e) => e.xOffset + e.alignmentWidth + flowLength
+        case None    => 0d
+      }
       val missing = findMissingWitnesses(nodes.head.node, sigla)
       val newNode = HorizNodeData(
         treeNumber = nodes.head.nodeNo,
         seqNumber = pos,
         nodeType = nodeType,
+        alignmentWidth = alignmentWidth,
         xOffset = xOffset,
-        groups = Vector.empty,
+        groups = nodes.head.node match {
+          case e: AgreementNode =>
+            Vector(HorizNodeGroup(wr.map((k, v) => HorizNodeGroupMember(k, v.map(_.t).mkString)).toVector))
+          case e: AgreementIndelNode =>
+            Vector(HorizNodeGroup(wr.map((k, v) => HorizNodeGroupMember(k, v.map(_.t).mkString)).toVector))
+          case e: VariationNode =>
+            e.witnessGroups.map(f => HorizNodeGroup(f.map(g => HorizNodeGroupMember(g, wr(g).map(_.t).mkString))))
+          case e: VariationIndelNode =>
+            e.witnessGroups.map(f => HorizNodeGroup(f.map(g => HorizNodeGroupMember(g, wr(g).map(_.t).mkString))))
+        },
         missing = missing
       )
       nextNode(nodes.tail, pos + 1, acc :+ newNode)
@@ -631,7 +650,6 @@ private def createHorizNodeData(
   */
 def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla: Set[String]): scala.xml.Node =
   /** Constants */
-  val flowLength = 80
   val ribbonWidth = 18
 
   def formatSiglum(siglum: String): String = siglum.slice(8, 10).mkString
@@ -694,55 +712,25 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla
     * TODO: Work with case class that holds info instead of XML; create <g> elements during serialization
     *
     * @param nodes
-    *   Vector[NumberedNode] nodes to plot
-    * @param gTa
-    *   Vector[Token] global token array
-    * @param sigla
-    *   Set[String] all sigla (used to find missing witnesses)
+    *   Vector[HorizNodeData] nodes to plot
     * @return
     *   Vector[Elem] <g> elements for all nodes and internode flows
     */
-  def plotAllAlignmentPointsAndRibbons(
-      nodes: Vector[NumberedNode],
-      gTa: Vector[Token],
-      sigla: Set[String]
-  ): Vector[Elem] =
-
-    @tailrec
-    /** nextNode()
-      *
-      * Add <g> elements for each node and leading ribbons to vector of <g> elements and return
-      *
-      * @param nodes
-      *   Flattened sequence of all alignment nodes
-      * @param rightEdge
-      *   Right edge of alignment so far (updated during recursion)
-      * @param acc
-      *   Vector of <g> elements to return
-      * @return
-      *   Vector of <g> elements for alignment points and leading ribbons
-      */
-    def nextNode(nodes: Vector[NumberedNode], rightEdge: Double, acc: Vector[xml.Elem]): Vector[xml.Elem] =
-      if nodes.isEmpty then acc
-      else
-        val alignmentWidth = computeAlignmentNodeRenderingWidth(nodes.head.node, tokenArray)
-        val alignment = plotOneAlignmentPoint(nodes.head, rightEdge, alignmentWidth)
-        val ribbons = plotLeadingRibbons(alignment, acc.head, rightEdge - flowLength)
-        nextNode(nodes.tail, rightEdge + alignmentWidth + flowLength, acc ++ Vector(ribbons, alignment))
-
-    // First alignment has no leading ribbons
-    val firstAlignmentWidth = computeAlignmentNodeRenderingWidth(nodes.head.node, tokenArray)
-    val firstAlignment = plotOneAlignmentPoint(nodes.head, 0, firstAlignmentWidth)
-    nextNode(nodes.tail, firstAlignmentWidth + flowLength, Vector(firstAlignment))
+  def plotAllAlignmentPointsAndRibbons(nodes: Vector[HorizNodeData]): Vector[Node] =
+    Vector(<g transform="translate(0.0)">Node 1</g>) ++
+    nodes
+      .sliding(2)
+      .flatMap(e =>
+        <g transform={(e.last.xOffset - flowLength).toString}>Flow</g>
+        <g transform={e.last.xOffset.toString}>Node</g>
+      )
 
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val witnessCount = sigla.size
   val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
-  println(horizNodes.size)
-  horizNodes.foreach(println)
-  val contents = plotAllAlignmentPointsAndRibbons(nodeSequence, tokenArray, allSigla)
-
-  val totalWidth = "251100" // TODO: Compute value
+  val contents = plotAllAlignmentPointsAndRibbons(horizNodes)
+  contents.foreach(println)
+  val totalWidth = (horizNodes.last.xOffset + horizNodes.last.alignmentWidth).toString
   val totalHeight = (ribbonWidth * (witnessCount * 3 - 1)).toString
   val viewBox = s"0 0 $totalWidth $totalHeight"
   val gradients =
@@ -874,6 +862,7 @@ case class HorizNodeData(
     treeNumber: Int,
     seqNumber: Int,
     nodeType: String,
+    alignmentWidth: Double,
     xOffset: Double,
     groups: Vector[HorizNodeGroup],
     missing: Vector[String]
