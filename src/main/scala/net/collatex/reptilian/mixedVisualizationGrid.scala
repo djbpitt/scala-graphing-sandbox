@@ -842,7 +842,7 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla
         <style type="text/css">{css}</style>
       </head>
       <body>
-        <h1>Alignments x</h1>
+        <h1>Alignments</h1>
         <main>
           <div id="wrapper">
             <svg xmlns="http://www.w3.org/2000/svg"
