@@ -660,48 +660,26 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla
     * Plot backgrounds and text for single alignment point
     *
     * @param node
-    *   NumberedNode Alignment point to plot
-    * @param leftEdge
-    *   Double Left edge of <g> to plot
-    * @param width
-    *   Double Width of alignment point to plot
+    *   HorizNodeData for one node to plot
     * @return
-    *   Tuple of (<g> Alignment point, Double: Width of alignment group)
+    *   <g> Alignment point
     */
-  def plotOneAlignmentPoint(node: NumberedNode, leftEdge: Double, width: Double): xml.Elem =
-    val witnessReadings = retrieveWitnessReadings(node.node, tokenArray) map ((k, v) => k -> v.map(_.t).mkString)
-    val rectsAndTexts = witnessReadings.zipWithIndex.map((wr, i) =>
-      <rect x="0" y={(i * ribbonWidth).toString} width={width.toString} height={
-        ribbonWidth.toString
-      } stroke="none" fill="turquoise"/>
-      <foreignObject x="1" y={(i * ribbonWidth - 1.5).toString} width={width.toString} height={ribbonWidth.toString}>
-        <div xmlns="http://www.w3.org/1999/xhtml">
-          <span class="sigla">{formatSiglum(wr._1)}: </span>{wr._2}
-        </div>
-      </foreignObject>
-    )
-    val horizontalShift = s"translate($leftEdge)"
-    <g transform={horizontalShift}>{rectsAndTexts}</g>
+  def plotOneAlignmentPoint(node: HorizNodeData): xml.Elem =
+    <g transform={s"translate(${node.xOffset})"}>Node</g>
 
   /** plotLeadingRibbons()
     *
     * Plot ribbons from preceding alignment point to current one
     *
-    * TODO: Currently vertical position is stored in alignment-point <g>; replace with values and create <g> during
-    * serialization
-    *
-    * @param currentAlignment
-    *   <g> holding current alignment
-    * @param precedingAlignment
-    *   <g> holding preceding alignment
-    * @param rightEdge
-    *   <g> used to compute position
+    * @param currentNode
+    *   HorizNodeData
+    * @param precedingNode
+    *   HorizNodeData
     * @return
     *   <g> containing ribbon splines between points
     */
-  def plotLeadingRibbons(currentAlignment: xml.Elem, precedingAlignment: xml.Elem, rightEdge: Double): xml.Elem =
-    val horizontalShift = s"translate($rightEdge)"
-    <g transform={horizontalShift}></g>
+  def plotLeadingRibbons(currentNode: HorizNodeData, precedingNode: HorizNodeData): xml.Elem =
+    <g transform={s"translate(${currentNode.xOffset - flowLength})"}>Flow</g>
 
   /** plotAllAlignmentPointsAndRibbons()
     *
@@ -717,16 +695,16 @@ def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla
     *   Vector[Elem] <g> elements for all nodes and internode flows
     */
   def plotAllAlignmentPointsAndRibbons(nodes: Vector[HorizNodeData]): Vector[Node] =
-    Vector(<g transform="translate(0.0)">Node 1</g>) ++
+    Vector(plotOneAlignmentPoint(nodes.head)) ++ // No flow before first node
     nodes
       .sliding(2)
       .flatMap(e =>
-        <g transform={(e.last.xOffset - flowLength).toString}>Flow</g>
-        <g transform={e.last.xOffset.toString}>Node</g>
-      )
+        Vector(plotLeadingRibbons(e.last, e.head),
+        plotOneAlignmentPoint(e.last))
+      ).toVector
 
-  val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val witnessCount = sigla.size
+  val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
   val contents = plotAllAlignmentPointsAndRibbons(horizNodes)
   contents.foreach(println)
