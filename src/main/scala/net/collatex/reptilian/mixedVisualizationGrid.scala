@@ -658,6 +658,14 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   val ribbonWidth = 18
   val missingTop = allSigla.size * ribbonWidth * 2 - ribbonWidth / 2
   val witnessToColor: Map[String, String] = Map(
+    "darwin1859.txt" -> "peru",
+    "darwin1860.txt" -> "orange",
+    "darwin1861.txt" -> "yellow",
+    "darwin1866.txt" -> "limegreen",
+    "darwin1869.txt" -> "dodgerblue",
+    "darwin1872.txt" -> "violet"
+  )
+  val witnessToGradient: Map[String, String] = Map(
     "darwin1859.txt" -> "url(#peruGradient)",
     "darwin1860.txt" -> "url(#orangeGradient)",
     "darwin1861.txt" -> "url(#yellowGradient)",
@@ -764,7 +772,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
       <path d={
         s"M 0,$leftYPos L 10,$leftYPos C 40,$leftYPos 40,$rightYPos 70,$rightYPos L 80,$rightYPos"
       }
-            stroke={witnessToColor(e)}
+            stroke={witnessToGradient(e)}
             stroke-width={ribbonWidth.toString}
             vector-effect="non-scaling-stroke"
             fill="none"/>
