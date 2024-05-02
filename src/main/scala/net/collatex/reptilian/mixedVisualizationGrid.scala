@@ -652,6 +652,14 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   /** Constants */
   val ribbonWidth = 18
   val missingTop = allSigla.size * ribbonWidth * 2 - ribbonWidth / 2
+  val witnessToColor: Map[String, String] = Map(
+    "darwin1859.txt" -> "peru",
+    "darwin1860.txt" -> "orange",
+    "darwin1861.txt" -> "yellow",
+    "darwin1866.txt" -> "limegreen",
+    "darwin1869.txt" -> "dodgerblue",
+    "darwin1872.txt" -> "violet"
+  )
 
   def formatSiglum(siglum: String): String = siglum.slice(8, 10).mkString
 
@@ -666,8 +674,12 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
     */
   def plotOneAlignmentPoint(node: HorizNodeData): xml.Elem =
     val missing = node.missing.zipWithIndex.map(e =>
-      <rect x="0" y={(e._2 * ribbonWidth + missingTop).toString} width={node.alignmentWidth.toString}
-        height={ribbonWidth.toString} fill="turquoise"/>
+      val fillColor = witnessToColor(e._1)
+      <rect x="0" 
+            y={(e._2 * ribbonWidth + missingTop).toString}
+            width={node.alignmentWidth.toString}
+            height={ribbonWidth.toString} 
+            fill={fillColor}/>
       <foreignObject x="1"
                      y={(e._2 * ribbonWidth + missingTop).toString} 
                      width={node.alignmentWidth.toString}
