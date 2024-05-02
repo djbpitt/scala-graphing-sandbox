@@ -681,7 +681,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
             height={ribbonWidth.toString} 
             fill={fillColor}/>
       <foreignObject x="1"
-                     y={(e._2 * ribbonWidth + missingTop).toString} 
+                     y={(e._2 * ribbonWidth + missingTop - 2).toString} 
                      width={node.alignmentWidth.toString}
                      height={ribbonWidth.toString}>
         <div xmlns="http://www.w3.org/1999/xhtml">
