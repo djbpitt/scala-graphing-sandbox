@@ -623,7 +623,7 @@ private def createHorizNodeData(
         nodeType = nodeType,
         alignmentWidth = alignmentWidth,
         xOffset = xOffset,
-        groups = nodes.head.node match {
+        groups = (nodes.head.node match {
           case e: AgreementNode =>
             Vector(HorizNodeGroup(wr.map((k, v) => HorizNodeGroupMember(k, v.map(_.t).mkString)).toVector.sorted))
           case e: AgreementIndelNode =>
@@ -632,7 +632,7 @@ private def createHorizNodeData(
             e.witnessGroups.map(f => HorizNodeGroup(f.map(g => HorizNodeGroupMember(g, wr(g).map(_.t).mkString)).sorted))
           case e: VariationIndelNode =>
             e.witnessGroups.map(f => HorizNodeGroup(f.map(g => HorizNodeGroupMember(g, wr(g).map(_.t).mkString)).sorted))
-        },
+        }).sorted,
         missing = missing
       )
       nextNode(nodes.tail, pos + 1, acc :+ newNode)
