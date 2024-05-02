@@ -791,7 +791,21 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
     def wrapGroups(groups: Vector[HorizNodeGroup]): Elem =
       @tailrec
       def nextGroup(groups: Vector[HorizNodeGroup], top: Double, acc: Vector[Elem]): Elem =
-        if groups.isEmpty then <g transform={s"translate(${node.xOffset})"}>{acc}</g>
+        if groups.isEmpty then
+          if node.missing.isEmpty then <g transform={s"translate(${node.xOffset})"}>{acc}</g>
+          else
+            <g transform={s"translate(${node.xOffset})"}>{
+              acc :+
+                <rect x="0" 
+                      y={missingTop.toString} 
+                      width={node.alignmentWidth.toString}
+                      height={(node.missing.size * ribbonWidth).toString}
+                      fill="none"
+                      stroke="black"
+                      stroke-width="2"
+                      rx="2"
+                />
+            }</g>
         else
           val newAcc = acc :+ <rect x="0"
                 y={top.toString}
