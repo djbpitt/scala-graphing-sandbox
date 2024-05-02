@@ -787,10 +787,30 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
         .flatMap(e => Vector(plotLeadingRibbons(e.last, e.head), plotOneAlignmentPoint(e.last)))
     result
 
+  def plotGroupNodeWrappers(node: HorizNodeData): Elem =
+    def wrapGroups(groups: Vector[HorizNodeGroup]): Elem =
+      @tailrec
+      def nextGroup(groups: Vector[HorizNodeGroup], top: Double, acc: Vector[Elem]): Elem =
+        if groups.isEmpty then <g transform={s"translate(${node.xOffset})"}>{acc}</g>
+        else
+          val newAcc = acc :+ <rect x="0"
+                y={top.toString}
+                width={node.alignmentWidth.toString}
+                height={(groups.head.members.size * ribbonWidth).toString}
+                fill="none"
+                stroke="black"
+                stroke-width="2"
+                rx="2"/>
+          val newTop = top + (groups.head.members.size + 1) * ribbonWidth
+          nextGroup(groups.tail, newTop, newAcc)
+      nextGroup(groups, 0, Vector.empty[Elem])
+    wrapGroups(node.groups)
+
   val witnessCount = sigla.size
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
   val contents = plotAllAlignmentPointsAndRibbons(horizNodes)
+  val wrappers = horizNodes.map(plotGroupNodeWrappers)
   val totalWidth = (horizNodes.last.xOffset + horizNodes.last.alignmentWidth).toString
   val totalHeight = (ribbonWidth * (witnessCount * 3 - 1)).toString
   val viewBox = s"0 0 $totalWidth $totalHeight"
@@ -908,7 +928,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
                 <rect x="0" y="202" width={totalWidth} height={
       (witnessCount * ribbonWidth - ribbonWidth / 2).toString
     } fill="gray" stroke="none"/>
-              </g>{contents}
+              </g>{contents}{wrappers}
             </svg>
           </div>
         </main>
