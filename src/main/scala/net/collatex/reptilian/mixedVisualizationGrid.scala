@@ -658,12 +658,12 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   val ribbonWidth = 18
   val missingTop = allSigla.size * ribbonWidth * 2 - ribbonWidth / 2
   val witnessToColor: Map[String, String] = Map(
-    "darwin1859.txt" -> "peru",
-    "darwin1860.txt" -> "orange",
-    "darwin1861.txt" -> "yellow",
-    "darwin1866.txt" -> "limegreen",
-    "darwin1869.txt" -> "dodgerblue",
-    "darwin1872.txt" -> "violet"
+    "darwin1859.txt" -> "url(#peruGradient)",
+    "darwin1860.txt" -> "url(#orangeGradient)",
+    "darwin1861.txt" -> "url(#yellowGradient)",
+    "darwin1866.txt" -> "url(#limegreenGradient)",
+    "darwin1869.txt" -> "url(#dodgerblueGradient)",
+    "darwin1872.txt" -> "url(#violetGradient)"
   )
 
   def formatSiglum(siglum: String): String = siglum.slice(8, 10).mkString
@@ -681,7 +681,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
     def processGroups(groups: Vector[HorizNodeGroup]): Vector[Elem] =
       @tailrec
       def nextGroup(groups: Vector[HorizNodeGroup], top: Double, acc: Vector[Elem]): Vector[Elem] =
-        if (groups.isEmpty) then acc
+        if groups.isEmpty then acc
         else
           val groupHeight = (groups.head.members.size + 1) * ribbonWidth // Include space below group
           val newG =
@@ -740,13 +740,14 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
     */
   def plotLeadingRibbons(currentNode: HorizNodeData, precedingNode: HorizNodeData): xml.Elem =
     /* Coordinates for witnesses in groups */
+    @tailrec
     def nextGroup(groups: Vector[HorizNodeGroup], top: Double, acc: Map[String, Double]): Map[String, Double] =
       if groups.isEmpty then acc
       else
-        val newAcc = acc ++ groups.head.members.zipWithIndex.map(e => (e._1.siglum -> (top + e._2 * ribbonWidth))).toMap
+        val newAcc = acc ++ groups.head.members.zipWithIndex.map(e => e._1.siglum -> (top + e._2 * ribbonWidth)).toMap
         nextGroup(groups.tail, top + (groups.head.members.size + 1) * ribbonWidth, newAcc)
     def missings(missings: Vector[String], top: Double): Map[String, Double] =
-      missings.zipWithIndex.map(e => (e._1 -> (top + e._2 * ribbonWidth))).toMap
+      missings.zipWithIndex.map(e => e._1 -> (top + e._2 * ribbonWidth)).toMap
     def computeRibbonYPos(node: HorizNodeData): Map[String, Double] =
       nextGroup(node.groups, ribbonWidth / 2, Map.empty[String, Double]) ++
         missings(
@@ -755,18 +756,20 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
         )
 
     val leftEdge = (currentNode.xOffset - flowLength).toString
-    val rightEdge = (currentNode.xOffset).toString
-    val leftYPos = computeRibbonYPos(precedingNode)
-    val rightYPos = computeRibbonYPos(currentNode)
+    val leftYPosMap = computeRibbonYPos(precedingNode)
+    val rightYPosMap = computeRibbonYPos(currentNode)
     val ribbons = sigla.toSeq.sorted.map(e =>
-      <line x1="0"
-            y1={leftYPos(e).toString}
-            x2={flowLength.toString}
-            y2={rightYPos(e).toString}
-            stroke="turquoise"
-            stroke-width="2"/>
+      val leftYPos = leftYPosMap(e)
+      val rightYPos = rightYPosMap(e) + 0.0001
+      <path d={
+        s"M 0,$leftYPos L 10,$leftYPos C 40,$leftYPos 40,$rightYPos 70,$rightYPos L 80,$rightYPos"
+      }
+            stroke={witnessToColor(e)}
+            stroke-width={ribbonWidth.toString}
+            vector-effect="non-scaling-stroke"
+            fill="none"/>
     )
-    <g transform={s"translate(${leftEdge})"}>{ribbons}</g>
+    <g transform={s"translate($leftEdge)"}>{ribbons}</g>
 
   /** plotAllAlignmentPointsAndRibbons()
     *
