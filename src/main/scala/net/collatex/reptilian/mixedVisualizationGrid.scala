@@ -2,6 +2,7 @@ package net.collatex.reptilian
 
 import scala.annotation.tailrec
 import scala.xml.{Elem, Node}
+import math.Ordered.orderingToOrdered
 
 /** Create inner <g> elements with <text> only (no <rect>)
   *
@@ -624,13 +625,13 @@ private def createHorizNodeData(
         xOffset = xOffset,
         groups = nodes.head.node match {
           case e: AgreementNode =>
-            Vector(HorizNodeGroup(wr.map((k, v) => HorizNodeGroupMember(k, v.map(_.t).mkString)).toVector))
+            Vector(HorizNodeGroup(wr.map((k, v) => HorizNodeGroupMember(k, v.map(_.t).mkString)).toVector.sorted))
           case e: AgreementIndelNode =>
-            Vector(HorizNodeGroup(wr.map((k, v) => HorizNodeGroupMember(k, v.map(_.t).mkString)).toVector))
+            Vector(HorizNodeGroup(wr.map((k, v) => HorizNodeGroupMember(k, v.map(_.t).mkString)).toVector.sorted))
           case e: VariationNode =>
-            e.witnessGroups.map(f => HorizNodeGroup(f.map(g => HorizNodeGroupMember(g, wr(g).map(_.t).mkString))))
+            e.witnessGroups.map(f => HorizNodeGroup(f.map(g => HorizNodeGroupMember(g, wr(g).map(_.t).mkString)).sorted))
           case e: VariationIndelNode =>
-            e.witnessGroups.map(f => HorizNodeGroup(f.map(g => HorizNodeGroupMember(g, wr(g).map(_.t).mkString))))
+            e.witnessGroups.map(f => HorizNodeGroup(f.map(g => HorizNodeGroupMember(g, wr(g).map(_.t).mkString)).sorted))
         },
         missing = missing
       )
@@ -673,6 +674,37 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
     *   <g> Alignment point
     */
   def plotOneAlignmentPoint(node: HorizNodeData): xml.Elem =
+    def processGroups(groups: Vector[HorizNodeGroup]): Vector[Elem] =
+      @tailrec
+      def nextGroup(groups: Vector[HorizNodeGroup], top: Double, acc: Vector[Elem]): Vector[Elem] =
+        if (groups.isEmpty) then acc
+        else
+          val groupHeight = (groups.head.members.size + 1) * ribbonWidth // Include space below group
+          val newG =
+            <g>{
+              groups.head.members.zipWithIndex.map(e =>
+                val fillColor = witnessToColor(e._1.siglum)
+                <rect x="0"
+                  y={(e._2 * ribbonWidth + top).toString}
+                  width={node.alignmentWidth.toString}
+                  height={ribbonWidth.toString}
+                  fill={fillColor}
+                  />
+                <foreignObject x="1"
+                               y={(e._2 * ribbonWidth + top - 2).toString}
+                               width={node.alignmentWidth.toString}
+                               height={ribbonWidth.toString}>
+                  <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">{
+                  s"${formatSiglum(e._1.siglum)}: "
+                }</span>
+                    {e._1.reading}</div>              
+                </foreignObject>
+              )
+            }</g>
+          nextGroup(groups.tail, top + groupHeight, acc :+ newG)
+      nextGroup(groups, 0, Vector.empty[Elem])
+    val groups = processGroups(node.groups)
+    /* Missing witnesses */
     val missing = node.missing.zipWithIndex.map(e =>
       val fillColor = witnessToColor(e._1)
       <rect x="0" 
@@ -681,7 +713,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
             height={ribbonWidth.toString} 
             fill={fillColor}/>
       <foreignObject x="1"
-                     y={(e._2 * ribbonWidth + missingTop - 2).toString} 
+                     y={(e._2 * ribbonWidth + missingTop - 2).toString}
                      width={node.alignmentWidth.toString}
                      height={ribbonWidth.toString}>
         <div xmlns="http://www.w3.org/1999/xhtml">
@@ -689,7 +721,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
         </div>
       </foreignObject>
     )
-    <g transform={s"translate(${node.xOffset})"}>{missing}</g>
+    <g transform={s"translate(${node.xOffset})"}>{groups}{missing}</g>
 
   /** plotLeadingRibbons()
     *
@@ -725,7 +757,6 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
   val contents = plotAllAlignmentPointsAndRibbons(horizNodes)
-  contents.foreach(println)
   val totalWidth = (horizNodes.last.xOffset + horizNodes.last.alignmentWidth).toString
   val totalHeight = (ribbonWidth * (witnessCount * 3 - 1)).toString
   val viewBox = s"0 0 $totalWidth $totalHeight"
@@ -849,9 +880,6 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
         </main>
       </body>
     </html>
-  /*
-   * Return html main page
-   */
   html
 
 case class HorizNodeData(
@@ -865,5 +893,13 @@ case class HorizNodeData(
 )
 
 case class HorizNodeGroup(members: Vector[HorizNodeGroupMember])
+object HorizNodeGroup {
+  implicit def ordering: Ordering[HorizNodeGroup] =
+    (a: HorizNodeGroup, b: HorizNodeGroup) => a.members.head.compare(b.members.head)
+}
 
 case class HorizNodeGroupMember(siglum: String, reading: String)
+object HorizNodeGroupMember {
+  implicit def ordering: Ordering[HorizNodeGroupMember] =
+    (a: HorizNodeGroupMember, b: HorizNodeGroupMember) => a.siglum.compare(b.siglum)
+}
