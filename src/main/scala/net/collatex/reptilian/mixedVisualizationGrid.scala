@@ -629,9 +629,13 @@ private def createHorizNodeData(
           case e: AgreementIndelNode =>
             Vector(HorizNodeGroup(wr.map((k, v) => HorizNodeGroupMember(k, v.map(_.t).mkString)).toVector.sorted))
           case e: VariationNode =>
-            e.witnessGroups.map(f => HorizNodeGroup(f.map(g => HorizNodeGroupMember(g, wr(g).map(_.t).mkString)).sorted))
+            e.witnessGroups.map(f =>
+              HorizNodeGroup(f.map(g => HorizNodeGroupMember(g, wr(g).map(_.t).mkString)).sorted)
+            )
           case e: VariationIndelNode =>
-            e.witnessGroups.map(f => HorizNodeGroup(f.map(g => HorizNodeGroupMember(g, wr(g).map(_.t).mkString)).sorted))
+            e.witnessGroups.map(f =>
+              HorizNodeGroup(f.map(g => HorizNodeGroupMember(g, wr(g).map(_.t).mkString)).sorted)
+            )
         }).sorted,
         missing = missing
       )
@@ -735,7 +739,34 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
     *   <g> containing ribbon splines between points
     */
   def plotLeadingRibbons(currentNode: HorizNodeData, precedingNode: HorizNodeData): xml.Elem =
-    <g transform={s"translate(${currentNode.xOffset - flowLength})"}>Flow</g>
+    /* Coordinates for witnesses in groups */
+    def nextGroup(groups: Vector[HorizNodeGroup], top: Double, acc: Map[String, Double]): Map[String, Double] =
+      if groups.isEmpty then acc
+      else
+        val newAcc = acc ++ groups.head.members.zipWithIndex.map(e => (e._1.siglum -> (top + e._2 * ribbonWidth))).toMap
+        nextGroup(groups.tail, top + (groups.head.members.size + 1) * ribbonWidth, newAcc)
+    def missings(missings: Vector[String], top: Double): Map[String, Double] =
+      missings.zipWithIndex.map(e => (e._1 -> (top + e._2 * ribbonWidth))).toMap
+    def computeRibbonYPos(node: HorizNodeData): Map[String, Double] =
+      nextGroup(node.groups, ribbonWidth / 2, Map.empty[String, Double]) ++
+        missings(
+          node.missing,
+          missingTop + ribbonWidth / 2
+        )
+
+    val leftEdge = (currentNode.xOffset - flowLength).toString
+    val rightEdge = (currentNode.xOffset).toString
+    val leftYPos = computeRibbonYPos(precedingNode)
+    val rightYPos = computeRibbonYPos(currentNode)
+    val ribbons = sigla.toSeq.sorted.map(e =>
+      <line x1="0"
+            y1={leftYPos(e).toString}
+            x2={flowLength.toString}
+            y2={rightYPos(e).toString}
+            stroke="turquoise"
+            stroke-width="2"/>
+    )
+    <g transform={s"translate(${leftEdge})"}>{ribbons}</g>
 
   /** plotAllAlignmentPointsAndRibbons()
     *
