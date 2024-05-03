@@ -833,9 +833,9 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
   val contents = plotAllAlignmentPointsAndRibbons(horizNodes)
   val wrappers = horizNodes.map(plotGroupNodeWrappers)
-  val totalWidth = (horizNodes.last.xOffset + horizNodes.last.alignmentWidth).toString
-  val totalHeight = (ribbonWidth * (witnessCount * 3 - 1)).toString
-  val viewBox = s"0 0 $totalWidth $totalHeight"
+  val totalWidth = horizNodes.last.xOffset + horizNodes.last.alignmentWidth + 2
+  val totalHeight = ribbonWidth * (witnessCount * 3 - 1) + 2
+  val viewBox = s"-1 -1 $totalWidth $totalHeight"
   val gradients =
     <defs>
       <linearGradient id="yellowGradient" x1="0%" x2="100%" y1="0%" y2="0%">
@@ -938,16 +938,16 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
           <div id="wrapper">
             <svg xmlns="http://www.w3.org/2000/svg"
                  viewBox={viewBox}
-                 width={totalWidth}
-                 height={totalHeight}
+                 width={totalWidth.toString}
+                 height={totalHeight.toString}
                  preserveAspectRatio="none">
               {gradients}
               <g>
                 <!-- Backgrounds -->
-                <rect x="0" y="0" width={totalWidth} height={
+                <rect x="0" y="0" width={totalWidth.toString} height={
       (witnessCount * ribbonWidth * 2 - ribbonWidth / 2).toString
     } fill="gainsboro" stroke="none"/>
-                <rect x="0" y="202" width={totalWidth} height={
+                <rect x="0" y="202" width={totalWidth.toString} height={
       (witnessCount * ribbonWidth - ribbonWidth / 2).toString
     } fill="gray" stroke="none"/>
               </g>{contents}{wrappers}
