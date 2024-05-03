@@ -592,10 +592,10 @@ private def groupReadings(n: HasWitnessGroups) =
   groups
 
 private def computeAlignmentNodeRenderingWidth(n: HasWitnessReadings, gTa: Vector[Token]): Double =
-  // FIXME: Temporarily add 24 to allow for two-character siglum plus colon plus space
+  // FIXME: Temporarily add 28 to allow for two-character siglum plus colon plus space
   val maxAlignmentPointWidth = 160.0
   List(
-    retrieveWitnessReadings(n, gTa).values.map(computeReadingTextLength).max + 24,
+    retrieveWitnessReadings(n, gTa).values.map(computeReadingTextLength).max + 28,
     maxAlignmentPointWidth
   ).min
 
