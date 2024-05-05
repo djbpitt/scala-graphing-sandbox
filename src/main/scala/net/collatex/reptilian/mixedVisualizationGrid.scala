@@ -811,7 +811,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
                       fill="none"
                       stroke="black"
                       stroke-width="2"
-                      rx="2"
+                      rx="3"
                 />
             }</g>
         else
@@ -822,7 +822,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
                 fill="none"
                 stroke="black"
                 stroke-width="2"
-                rx="2"/>
+                rx="3"/>
           val newTop = top + (groups.head.members.size + 1) * ribbonWidth
           nextGroup(groups.tail, newTop, newAcc)
       nextGroup(groups, 0, Vector.empty[Elem])
