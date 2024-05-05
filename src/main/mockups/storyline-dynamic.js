@@ -7,10 +7,13 @@ document.addEventListener("DOMContentLoaded", function () {
 })
 function toggleSize() {
   var newWidth;
-  if (this.getAttribute("width") == this.dataset.maxwidth) {
-    newWidth = this.dataset.minwidth;
-  } else {
-    newWidth = this.dataset.maxwidth;
+  if (this.dataset.maxwidth > 160) {
+    if (this.getAttribute("width") == this.dataset.maxwidth) {
+      newWidth = 160;
+    } else {
+      newWidth = this.dataset.maxwidth;
+    }
+    this.setAttribute("width", newWidth);
+    console.log(newWidth);
   }
-  this.setAttribute("width", newWidth);
 }
