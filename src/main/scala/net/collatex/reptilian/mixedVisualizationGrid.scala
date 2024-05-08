@@ -832,7 +832,6 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
   val contents = plotAllAlignmentPointsAndRibbons(horizNodes)
-  val wrappers = horizNodes.map(plotGroupNodeWrappers)
   val totalWidth = horizNodes.last.xOffset + horizNodes.last.alignmentWidth + 2
   val totalHeight = ribbonWidth * (witnessCount * 3 - 1) + 2
   val viewBox = s"-1 -1 $totalWidth $totalHeight"
@@ -926,11 +925,31 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
                |  padding: .1em .1em 0 .1em;
                |  line-height: ${ribbonWidth - 1}px;
                |}""".stripMargin
+  val js = """"use strict";
+             |document.addEventListener("DOMContentLoaded", function () {
+             |  const alignments = document.getElementsByClassName("alignment");
+             |  for (var i = 0, len = alignments.length; i < len; i++) {
+             |    alignments[i].addEventListener("click", toggleSize);
+             |  }
+             |})
+             |function toggleSize() {
+             |  var newWidth;
+             |  if (this.dataset.maxwidth > 160) {
+             |    if (this.getAttribute("width") == this.dataset.maxwidth) {
+             |      newWidth = 160;
+             |    } else {
+             |      newWidth = this.dataset.maxwidth;
+             |    }
+             |    this.setAttribute("width", newWidth);
+             |    console.log(newWidth);
+             |  }
+             |}""".stripMargin
   val html =
     <html xmlns="http://www.w3.org/1999/xhtml">
       <head>
         <title>Alignments</title>
         <style type="text/css">{css}</style>
+        <script type="text/css">{js}</script>
       </head>
       <body>
         <h1>Alignments</h1>
@@ -950,7 +969,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
                 <rect x="0" y="202" width={totalWidth.toString} height={
       (witnessCount * ribbonWidth - ribbonWidth / 2).toString
     } fill="gray" stroke="none"/>
-              </g>{contents}{wrappers}
+              </g>{contents}
             </svg>
           </div>
         </main>
