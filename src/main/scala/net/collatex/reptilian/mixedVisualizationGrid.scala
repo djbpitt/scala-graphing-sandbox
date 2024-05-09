@@ -832,6 +832,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
   val contents = plotAllAlignmentPointsAndRibbons(horizNodes)
+  val groupWrappers = horizNodes.map(plotGroupNodeWrappers)
   val totalWidth = horizNodes.last.xOffset + horizNodes.last.alignmentWidth + 2
   val totalHeight = ribbonWidth * (witnessCount * 3 - 1) + 2
   val viewBox = s"-1 -1 $totalWidth $totalHeight"
@@ -969,7 +970,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
                 <rect x="0" y="202" width={totalWidth.toString} height={
       (witnessCount * ribbonWidth - ribbonWidth / 2).toString
     } fill="gray" stroke="none"/>
-              </g>{contents}
+              </g>{contents}{groupWrappers}
             </svg>
           </div>
         </main>
