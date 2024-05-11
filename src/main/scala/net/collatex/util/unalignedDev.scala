@@ -336,7 +336,7 @@ val matrixToAlignmentTree =
   * Input: treeTreeData (contains both trees, token-to-node mapping, local token array) Returns: treeTreeData (adjusted
   * as needed)
   */
-def split_tree(
+def splitTree(
     tree: List[HasWitnessReadings],
     tokenToNodeMapping: Vector[HasWitnessReadings],
     blockRange: (Int, Int)
@@ -560,7 +560,6 @@ def split_tree(
           acc
         case (TreeTree(item1: Int, item2: Int, height: Double), i: Int) =>
           /* TODO: We assume (incorrectly) no transposition
-           * DONE: Begin by splitting trees where necessary (which means splitting nodes):
            * Function to merge trees has, as input, exactly one block and two trees
            * For each block
            *   For each tree, find the node where the block begins
@@ -579,7 +578,7 @@ def split_tree(
           val (_, _, blocks) =
             createAlignedBlocks(ttTokenArray, -1, false) // tuple of (all blocks, suffix array, full-depth blocks)
 
-          val splitBlocks = blocks
+          val resultOfTreeSplitting = blocks
             .foldLeft(TreeTreeData(acc(item1), acc(item2), ttTokenToAlignmentTreeNodeMapping, ttTokenArray))(
               (inData: TreeTreeData, currentBlock: FullDepthBlock) =>
                 // for each tree: find node where block begins
@@ -596,25 +595,29 @@ def split_tree(
                 Else create two(or three) nodes , one matching the block and the other(s) not
                 Return new tree for each old tree
                  */
-                val treeNodes =
-                  List(inData.t1, inData.t2).map(e => getNodeListToProcess(e))
-                val newTree = Range(0, globalBlockRanges.size - 1).map(e =>
-                  split_tree(treeNodes(e), ttTokenToAlignmentTreeNodeMapping, globalBlockRanges(e))
-                )
-                inData // 2024-04-22: RESUME HERE: We return original input data; need to update with split results
+
+                val tree1Nodes = getNodeListToProcess(inData.t1)
+                val tree2Nodes = getNodeListToProcess(inData.t2)
+
+                val newTree1 = splitTree(tree1Nodes, ttTokenToAlignmentTreeNodeMapping, globalBlockRanges.head)._1
+                val newTree2 = splitTree(tree2Nodes, ttTokenToAlignmentTreeNodeMapping, globalBlockRanges.last)._1
+
+                val newTree1AsDot = dot(newTree1.asInstanceOf[ExpandedNode], tokenArray.toVector)
+                val newTree2AsDot = dot(newTree2.asInstanceOf[ExpandedNode], tokenArray.toVector)
+                val alignmentGraphOutputPath1 = os.pwd / "src" / "main" / "outputs" / "t1.dot"
+                val alignmentGraphOutputPath2 = os.pwd / "src" / "main" / "outputs" / "t2.dot"
+                os.write.over(alignmentGraphOutputPath1, newTree1AsDot)
+                os.write.over(alignmentGraphOutputPath2, newTree2AsDot)
+
+                val newTtTokenToAlignmentTreeNodeMapping = getTTokenNodeMappings(newTree1, newTree2, tokenArray).toVector
+                TreeTreeData(newTree1, newTree2, newTtTokenToAlignmentTreeNodeMapping,ttTokenArray)
             )
 
-          /** PLACEHOLDER: Add real new node here */
-          println(s"splitBlocks: $splitBlocks")
+          println(s"resultOfTreeSplitting: $resultOfTreeSplitting")
           acc(i + darwin.head.readings.size) = ExpandedNode()
           acc
     }
-
+  println("Results:")
   results.toSeq.sortBy((k, v) => k).foreach(println)
+  println("End of results")
 
-//val alignmentTreeAsDot1 = dot(inData.t1.asInstanceOf[ExpandedNode], tokenArray.toVector)
-//val alignmentGraphOutputPath1 = os.pwd / "src" / "main" / "output" / "t1.dot"
-//os.write.over(alignmentGraphOutputPath1, alignmentTreeAsDot1)
-//val alignmentTreeAsDot2 = dot(inData.t2.asInstanceOf[ExpandedNode], tokenArray.toVector)
-//val alignmentGraphOutputPath2 = os.pwd / "src" / "main" / "output" / "t2.dot"
-//os.write.over(alignmentGraphOutputPath2, alignmentTreeAsDot2)
