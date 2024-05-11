@@ -555,8 +555,9 @@ private val spaceCharWidth: Double = computeTokenTextLength(" ") // Width of spa
 
 /** computeReadingTextLength()
   *
-  * Sum of widths of t values of tokens (using memoizedComputeTokenTextLength() in reading) Plus interword spaces TODO:
-  * Include width of siglum followed by colon
+  * Sum of widths of t values of tokens (using memoizedComputeTokenTextLength() in reading)
+  *
+  * TODO: Include width of siglum followed by colon
   *
   * @param in
   *   Vector[Token] tokens in reading
@@ -564,7 +565,7 @@ private val spaceCharWidth: Double = computeTokenTextLength(" ") // Width of spa
   *   Size of reading (sum of lengths of t values of tokens plus intertoken spaces)
   */
 private def computeReadingTextLength(in: Vector[Token]): Double =
-  in.map(e => memoizedComputeTokenTextLength(e.t)).sum
+  in.foldLeft(0d)((e, f) => e + memoizedComputeTokenTextLength(f.t))
 
 /** findMissingWitnesses()
   *
