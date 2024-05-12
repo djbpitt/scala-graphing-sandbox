@@ -742,7 +742,10 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
     )
     <div class="ap">
       <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"
-           width={node.alignmentWidth.toString} data-maxwidth={node.alignmentWidth.toString} class="alignment">
+           width={node.alignmentWidth.toString} 
+           data-maxwidth={node.alignmentWidth.toString}  
+           height={totalHeight.toString} 
+           class="alignment">
       {groups}{missing}
       </svg>
     </div>
