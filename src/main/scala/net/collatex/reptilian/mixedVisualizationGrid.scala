@@ -658,6 +658,12 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   /** Constants */
   val ribbonWidth = 18
   val missingTop = allSigla.size * ribbonWidth * 2 - ribbonWidth / 2
+  val witnessCount = sigla.size
+  val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
+  val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
+  val totalWidth = horizNodes.last.xOffset + horizNodes.last.alignmentWidth + 2
+  val totalHeight = ribbonWidth * (witnessCount * 3 - 1) + 2
+
   val witnessToColor: Map[String, String] = Map(
     "darwin1859.txt" -> "peru",
     "darwin1860.txt" -> "orange",
@@ -734,7 +740,12 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
         </div>
       </foreignObject>
     )
-    <g transform={s"translate(${node.xOffset})"}>{groups}{missing}</g>
+    <div class="ap">
+      <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"
+           width={node.alignmentWidth.toString} data-maxwidth={node.alignmentWidth.toString} class="alignment">
+      {groups}{missing}
+      </svg>
+    </div>
 
   /** plotLeadingRibbons()
     *
@@ -778,7 +789,11 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
             vector-effect="non-scaling-stroke"
             fill="none"/>
     )
-    <g transform={s"translate($leftEdge)"}>{ribbons}</g>
+    <div class="flow">
+      <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" width="80" height={totalHeight.toString}>{
+      ribbons
+    }</svg>
+    </div>
 
   /** plotAllAlignmentPointsAndRibbons()
     *
@@ -790,10 +805,12 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
     *   Vector[Elem] <g> elements for all nodes and internode flows
     */
   def plotAllAlignmentPointsAndRibbons(nodes: Vector[HorizNodeData]) =
-    val result = Vector(plotOneAlignmentPoint(nodes.head)) ++
+    val result = <div class="group">{Vector(plotOneAlignmentPoint(nodes.head))}</div> ++
       nodes
         .sliding(2)
-        .flatMap(e => Vector(plotLeadingRibbons(e.last, e.head), plotOneAlignmentPoint(e.last)))
+        .flatMap(e =>
+          <div class="group">{Vector(plotLeadingRibbons(e.last, e.head), plotOneAlignmentPoint(e.last))}</div>
+        )
     result
 
   def plotGroupNodeWrappers(node: HorizNodeData): Elem =
@@ -829,13 +846,8 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
       nextGroup(groups, 0, Vector.empty[Elem])
     wrapGroups(node.groups)
 
-  val witnessCount = sigla.size
-  val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
-  val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
   val contents = plotAllAlignmentPointsAndRibbons(horizNodes)
   val groupWrappers = horizNodes.map(plotGroupNodeWrappers)
-  val totalWidth = horizNodes.last.xOffset + horizNodes.last.alignmentWidth + 2
-  val totalHeight = ribbonWidth * (witnessCount * 3 - 1) + 2
   val viewBox = s"-1 -1 $totalWidth $totalHeight"
   val gradients =
     <defs>
@@ -906,13 +918,17 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
         <stop offset="100%" stop-color="limegreen" stop-opacity="1"/>
       </linearGradient>
     </defs>
-  val css = s"""svg {
+  val css = s"""#wrapper {
+               |  padding: 0;
+               |  overflow-x: scroll;
+               |  display: flex;
+               |  flex-direction: row;
                |  height: ${totalHeight}px;
                |  width: ${totalWidth}px;
                |}
-               |#wrapper {
-               |  padding: 0;
-               |  overflow-x: scroll;
+               |.group {
+               |  display: flex;
+               |  flex-direction: row;
                |}
                |.sigla {
                |  font-weight: bold;
@@ -959,20 +975,20 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
           <div id="wrapper">
             <svg xmlns="http://www.w3.org/2000/svg"
                  viewBox={viewBox}
-                 width={totalWidth.toString}
-                 height={totalHeight.toString}
+                 width="0"
+                 height="0"
                  preserveAspectRatio="none">
               {gradients}
               <g>
                 <!-- Backgrounds -->
-                <rect x="0" y="0" width={totalWidth.toString} height={
+                <!--<rect x="0" y="0" width={totalWidth.toString} height={
       (witnessCount * ribbonWidth * 2 - ribbonWidth / 2).toString
     } fill="gainsboro" stroke="none"/>
                 <rect x="0" y="202" width={totalWidth.toString} height={
       (witnessCount * ribbonWidth - ribbonWidth / 2).toString
-    } fill="gray" stroke="none"/>
-              </g>{contents}{groupWrappers}
-            </svg>
+    } fill="gray" stroke="none"/>-->
+              </g>
+            </svg>{contents}
           </div>
         </main>
       </body>
