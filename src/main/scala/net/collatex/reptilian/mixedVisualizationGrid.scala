@@ -819,10 +819,12 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
             plotGroupNodeWrappers(e.head)
           )
         }</div>
-      ) ++ <div>{Vector(
-      plotOneAlignmentPoint(nodes.last),
-      plotGroupNodeWrappers(nodes.last)
-    )}</div>
+      ) ++ <div>{
+      Vector(
+        plotOneAlignmentPoint(nodes.last),
+        plotGroupNodeWrappers(nodes.last)
+      )
+    }</div>
     result
 
   def plotGroupNodeWrappers(node: HorizNodeData): Elem =
@@ -983,22 +985,25 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   val js = """"use strict";
              |document.addEventListener("DOMContentLoaded", function () {
              |  const groups = document.getElementsByClassName("group");
-             |  console.log(groups.length);
              |  for (var i = 0, len = groups.length; i < len; i++) {
              |    groups[i].addEventListener("click", toggleSize);
              |  }
              |})
              |function toggleSize() {
-             |  var newWidth, targets;
+             |  var newWidth, targets, i, len;
              |  if (this.dataset.maxwidth > 160) {
-             |    targets = this.querySelectorAll("rect, foreignObject");
-             |    console.log(targets);
-             |    if (targets[0].style.width == this.dataset.maxwidth) {
+             |    targets = this.querySelectorAll("rect, foreignObject, div.ap > svg.alignment, div.innerWrapper > svg");
+             |    if (targets[0].getAttribute("width") == this.dataset.maxwidth) {
              |      newWidth = 160;
              |    } else {
              |      newWidth = this.dataset.maxwidth;
              |    }
+             |    console.log(targets[0].getAttribute("width"));
+             |    console.log(this.dataset.maxwidth);
              |    console.log(newWidth);
+             |    for (i = 0, len = targets.length; i < len; i++) {
+             |      targets[i].setAttribute("width", newWidth);
+             |    }
              |  }
              |}""".stripMargin
   val html =
