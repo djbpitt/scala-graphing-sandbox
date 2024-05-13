@@ -657,7 +657,7 @@ private def createHorizNodeData(
 private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla: Set[String]): scala.xml.Node =
   /** Constants */
   val ribbonWidth = 18
-  val missingTop = allSigla.size * ribbonWidth * 2 - ribbonWidth / 2
+  val missingTop = allSigla.size * ribbonWidth * 2 + ribbonWidth / 2
   val witnessCount = sigla.size
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
@@ -946,6 +946,13 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
                |  flex-direction: row;
                |  height: ${totalHeight + 2 + 4}px;
                |  width: ${totalWidth}px;
+               |  background: linear-gradient(
+               |    to bottom,
+               |    gainsboro 0,
+               |    gainsboro ${missingTop - ribbonWidth / 2}px,
+               |    gray ${missingTop - ribbonWidth / 2}px,
+               |    gray 100%
+               |  );
                |}
                |div {
                |  position: relative;
