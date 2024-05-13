@@ -793,7 +793,9 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
             fill="none"/>
     )
     <div class="flow">
-      <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" width="80" height={(totalHeight + 2).toString}>{
+      <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" width="80" height={
+      (totalHeight + 2).toString
+    }>{
       ribbons
     }</svg>
     </div>
@@ -809,16 +811,19 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
     */
   def plotAllAlignmentPointsAndRibbons(nodes: Vector[HorizNodeData]) =
     val result = nodes
-        .sliding(2)
-        .flatMap(e =>
-          <div class="group">{
-            Vector(
-              plotOneAlignmentPoint(e.head),
-              plotLeadingRibbons(e.last, e.head),
-              plotGroupNodeWrappers(e.head)
-            )
-          }</div>
-        )
+      .sliding(2)
+      .flatMap(e =>
+        <div class="group">{
+          Vector(
+            plotOneAlignmentPoint(e.head),
+            plotLeadingRibbons(e.last, e.head),
+            plotGroupNodeWrappers(e.head)
+          )
+        }</div>
+      ) ++ <div>{Vector(
+      plotOneAlignmentPoint(nodes.last),
+      plotGroupNodeWrappers(nodes.last)
+    )}</div>
     result
 
   def plotGroupNodeWrappers(node: HorizNodeData): Elem =
