@@ -744,7 +744,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
       <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"
            width={node.alignmentWidth.toString} 
            data-maxwidth={node.alignmentWidth.toString}  
-           height={totalHeight.toString} 
+           height={(totalHeight + 2).toString}
            class="alignment">
       {groups}{missing}
       </svg>
@@ -793,7 +793,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
             fill="none"/>
     )
     <div class="flow">
-      <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" width="80" height={totalHeight.toString}>{
+      <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" width="80" height={(totalHeight + 2).toString}>{
       ribbons
     }</svg>
     </div>
@@ -808,20 +808,14 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
     *   Vector[Elem] <g> elements for all nodes and internode flows
     */
   def plotAllAlignmentPointsAndRibbons(nodes: Vector[HorizNodeData]) =
-    val result = <div class="group">{
-      Vector(
-        plotOneAlignmentPoint(nodes.head),
-        plotGroupNodeWrappers(nodes.head)
-      )
-    }</div> ++
-      nodes
+    val result = nodes
         .sliding(2)
         .flatMap(e =>
           <div class="group">{
             Vector(
+              plotOneAlignmentPoint(e.head),
               plotLeadingRibbons(e.last, e.head),
-              plotOneAlignmentPoint(e.last),
-              plotGroupNodeWrappers(e.last)
+              plotGroupNodeWrappers(e.head)
             )
           }</div>
         )
@@ -836,16 +830,16 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
             <div class="innerWrapper">
             <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" width={
               (node.alignmentWidth + 2).toString
-            } height={totalHeight.toString}>{acc}</svg>
+            } height={(totalHeight + 2).toString}>{acc}</svg>
           </div>
           else
             <div class="innerWrapper">
               <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" 
                    width={(node.alignmentWidth + 2).toString}
-                   height={totalHeight.toString}>{
+                   height={(totalHeight + 2).toString}>{
               acc :+
-                <rect x="0" 
-                      y={missingTop.toString} 
+                <rect x="1"
+                      y={(missingTop + 1).toString}
                       width={node.alignmentWidth.toString}
                       height={(node.missing.size * ribbonWidth).toString}
                       fill="none"
@@ -855,8 +849,8 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
                 />
             }</svg></div>
         else
-          val newAcc = acc :+ <rect x="0"
-                y={top.toString}
+          val newAcc = acc :+ <rect x="1"
+                y={(top + 1).toString}
                 width={node.alignmentWidth.toString}
                 height={(groups.head.members.size * ribbonWidth).toString}
                 fill="none"
@@ -945,7 +939,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
                |  overflow-x: scroll;
                |  display: flex;
                |  flex-direction: row;
-               |  height: ${totalHeight}px;
+               |  height: ${totalHeight + 2 + 4}px;
                |  width: ${totalWidth}px;
                |}
                |div {
@@ -960,7 +954,8 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
                |  position: absolute;
                |  display: block;
                |  top: -1px;
-               |  left: 79px;
+               |  left: -1px;
+               |  height: ${totalHeight + 2}px;
                |}
                |.sigla {
                |  font-weight: bold;
