@@ -742,8 +742,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
     )
     <div class="ap">
       <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"
-           width={node.alignmentWidth.toString} 
-           data-maxwidth={node.alignmentWidth.toString}  
+           width={node.alignmentWidth.toString}
            height={(totalHeight + 2).toString}
            class="alignment">
       {groups}{missing}
@@ -813,7 +812,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
     val result = nodes
       .sliding(2)
       .flatMap(e =>
-        <div class="group">{
+        <div class="group" data-maxwidth={e.head.alignmentWidth.toString}>{
           Vector(
             plotOneAlignmentPoint(e.head),
             plotLeadingRibbons(e.last, e.head),
@@ -956,7 +955,6 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
                |}
                |div {
                |  position: relative;
-               |
                |}
                |.group {
                |  display: flex;
@@ -984,20 +982,22 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
                |}""".stripMargin
   val js = """"use strict";
              |document.addEventListener("DOMContentLoaded", function () {
-             |  const alignments = document.getElementsByClassName("alignment");
-             |  for (var i = 0, len = alignments.length; i < len; i++) {
-             |    alignments[i].addEventListener("click", toggleSize);
+             |  const groups = document.getElementsByClassName("group");
+             |  console.log(groups.length);
+             |  for (var i = 0, len = groups.length; i < len; i++) {
+             |    groups[i].addEventListener("click", toggleSize);
              |  }
              |})
              |function toggleSize() {
-             |  var newWidth;
+             |  var newWidth, targets;
              |  if (this.dataset.maxwidth > 160) {
-             |    if (this.getAttribute("width") == this.dataset.maxwidth) {
+             |    targets = this.querySelectorAll("rect, foreignObject");
+             |    console.log(targets);
+             |    if (targets[0].style.width == this.dataset.maxwidth) {
              |      newWidth = 160;
              |    } else {
              |      newWidth = this.dataset.maxwidth;
              |    }
-             |    this.setAttribute("width", newWidth);
              |    console.log(newWidth);
              |  }
              |}""".stripMargin
@@ -1006,7 +1006,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
       <head>
         <title>Alignments</title>
         <style type="text/css">{css}</style>
-        <script type="text/css">{js}</script>
+        <script type="text/javascript">{js}</script>
       </head>
       <body>
         <h1>Alignments</h1>
@@ -1017,15 +1017,6 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
                  height="0"
                  preserveAspectRatio="none">
               {gradients}
-              <g>
-                <!-- Backgrounds -->
-                <!--<rect x="0" y="0" width={totalWidth.toString} height={
-      (witnessCount * ribbonWidth * 2 - ribbonWidth / 2).toString
-    } fill="gainsboro" stroke="none"/>
-                <rect x="0" y="202" width={totalWidth.toString} height={
-      (witnessCount * ribbonWidth - ribbonWidth / 2).toString
-    } fill="gray" stroke="none"/>-->
-              </g>
             </svg>{contents}
           </div>
         </main>
