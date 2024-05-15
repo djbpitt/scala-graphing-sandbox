@@ -946,7 +946,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
                |  display: flex;
                |  flex-direction: row;
                |  height: ${totalHeight + 2 + 4}px;
-               |  width: ${totalWidth}px;
+               |  width: 100%;
                |  background: linear-gradient(
                |    to bottom,
                |    gainsboro 0,
