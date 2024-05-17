@@ -1031,14 +1031,19 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
              |  }
              |}
              |function truncateAll() {
-             |  var i, len;
-             |  const allAps = document.querySelectorAll("rect, foreignObject, div.ap > svg.alignment");
-             |  const allWrappers = document.querySelectorAll("div.innerWrapper > svg");
-             |  for (i = 0, len = allAps.length; i < len; i++) {
-             |    toggleOne(allAps[i], 160);
-             |  }
-             |  for (i = 0, len = allWrappers.length; i < len; i++) {
-             |    toggleOne(allWrappers[i], 162);
+             |  var i, j, groupLen, aps, apsLen, wrappers, wrapperLen, fullWidth, wrapperWidth;
+             |  const allGroups = document.getElementsByClassName("group");
+             |  for (i = 0, groupLen = allGroups.length; i < groupLen; i++) {
+             |    if (allGroups[i].dataset.maxwidth > 160) {
+             |    aps = allGroups[i].querySelectorAll("rect, foreignObject, div.ap > svg.alignment");
+             |    wrappers = allGroups[i].querySelectorAll("div.innerWrapper > svg");
+             |      for (j = 0, apsLen = aps.length; j < apsLen; j++) {
+             |        toggleOne(aps[j], 160);
+             |      }
+             |      for (j = 0, wrapperLen = wrappers.length; j < wrapperLen; j++) {
+             |        toggleOne(wrappers[j], 162);
+             |      }
+             |    }
              |  }
              |}
              |function expandAll() {
