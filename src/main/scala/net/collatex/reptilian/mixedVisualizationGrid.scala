@@ -990,19 +990,28 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
              |  }
              |})
              |function toggleSize() {
-             |  var newWidth, targets, i, len;
+             |  var newWidth, apTargets, innerWrapTargets, i, len;
              |  if (this.dataset.maxwidth > 160) {
-             |    targets = this.querySelectorAll("rect, foreignObject, div.ap > svg.alignment, div.innerWrapper > svg");
-             |    if (targets[0].getAttribute("width") == this.dataset.maxwidth) {
+             |    apTargets = this.querySelectorAll("rect, foreignObject, div.ap > svg.alignment");
+             |    // Determine width
+             |    if (apTargets[0].getAttribute("width") == this.dataset.maxwidth) {
              |      newWidth = 160;
              |    } else {
              |      newWidth = this.dataset.maxwidth;
              |    }
-             |    console.log(targets[0].getAttribute("width"));
-             |    console.log(this.dataset.maxwidth);
-             |    console.log(newWidth);
-             |    for (i = 0, len = targets.length; i < len; i++) {
-             |      targets[i].setAttribute("width", newWidth);
+             |    // Reset width of alignment point groups
+             |    for (i = 0, len = apTargets.length; i < len; i++) {
+             |      apTargets[i].setAttribute("width", newWidth);
+             |    }
+             |    // Reset width of wrapper rects
+             |    innerWrapTargets = this.querySelectorAll("div.innerWrapper > svg");
+             |    if (newWidth == 160) {
+             |      newWrapperWidth = 162;
+             |    } else {
+             |      newWrapperWidth = newWidth + 2;
+             |    }
+             |    for (i = 0, len = innerWrapTargets.length; i < len; i++) {
+             |      innerWrapTargets[i].setAttribute("width", newWrapperWidth);
              |    }
              |  }
              |}""".stripMargin
