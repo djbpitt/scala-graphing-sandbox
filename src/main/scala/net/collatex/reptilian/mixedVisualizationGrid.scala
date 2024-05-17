@@ -1014,7 +1014,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
              |    }
              |    // Reset width of alignment point groups
              |    for (i = 0, len = apTargets.length; i < len; i++) {
-             |      apTargets[i].setAttribute("width", newWidth);
+             |      toggleOne(apTargets[i], newWidth);
              |    }
              |    // Reset width of wrapper rects
              |    innerWrapTargets = this.querySelectorAll("div.innerWrapper > svg");
@@ -1024,9 +1024,12 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
              |      newWrapperWidth = parseFloat(newWidth) + 2;
              |    }
              |    for (i = 0, len = innerWrapTargets.length; i < len; i++) {
-             |      innerWrapTargets[i].setAttribute("width", newWrapperWidth);
+             |      toggleOne(innerWrapTargets[i], newWrapperWidth);
              |    }
              |  }
+             |}
+             |function toggleOne(target, width) {
+             |  target.setAttribute("width", width);
              |}""".stripMargin
   val html =
     <html xmlns="http://www.w3.org/1999/xhtml">
