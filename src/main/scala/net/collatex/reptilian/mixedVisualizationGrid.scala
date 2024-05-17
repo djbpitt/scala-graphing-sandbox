@@ -990,7 +990,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
              |  }
              |})
              |function toggleSize() {
-             |  var newWidth, apTargets, innerWrapTargets, i, len;
+             |  var newWidth, newWrapperWidth, apTargets, innerWrapTargets, i, len;
              |  if (this.dataset.maxwidth > 160) {
              |    apTargets = this.querySelectorAll("rect, foreignObject, div.ap > svg.alignment");
              |    // Determine width
