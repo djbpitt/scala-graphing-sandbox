@@ -1001,6 +1001,8 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
              |  for (var i = 0, len = groups.length; i < len; i++) {
              |    groups[i].addEventListener("click", toggleSize);
              |  }
+             |  document.getElementById("expand_all").addEventListener("click", expandAll);
+             |  document.getElementById("truncate_all").addEventListener("click", truncateAll);
              |})
              |function toggleSize() {
              |  var newWidth, newWrapperWidth, apTargets, innerWrapTargets, i, len;
@@ -1027,6 +1029,20 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
              |      toggleOne(innerWrapTargets[i], newWrapperWidth);
              |    }
              |  }
+             |}
+             |function truncateAll() {
+             |  var i, len;
+             |  const allAps = document.querySelectorAll("rect, foreignObject, div.ap > svg.alignment");
+             |  const allWrappers = document.querySelectorAll("div.innerWrapper > svg");
+             |  for (i = 0, len = allAps.length; i < len; i++) {
+             |    toggleOne(allAps[i], 160);
+             |  }
+             |  for (i = 0, len = allWrappers.length; i < len; i++) {
+             |    toggleOne(allWrappers[i], 162);
+             |  }
+             |}
+             |function expandAll() {
+             |  console.log("Inside expandAll");
              |}
              |function toggleOne(target, width) {
              |  target.setAttribute("width", width);
