@@ -1017,13 +1017,15 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
              |    for (i = 0, len = apTargets.length; i < len; i++) {
              |      apTargets[i].setAttribute("width", newWidth);
              |    }
+             |    console.log("newWidth: " + newWidth);
              |    // Reset width of wrapper rects
              |    innerWrapTargets = this.querySelectorAll("div.innerWrapper > svg");
              |    if (newWidth == 160) {
              |      newWrapperWidth = 162;
              |    } else {
-             |      newWrapperWidth = newWidth + 2;
+             |      newWrapperWidth = parseFloat(newWidth) + 2;
              |    }
+             |    console.log("newWrapperWidth: " + newWrapperWidth);
              |    for (i = 0, len = innerWrapTargets.length; i < len; i++) {
              |      innerWrapTargets[i].setAttribute("width", newWrapperWidth);
              |    }
