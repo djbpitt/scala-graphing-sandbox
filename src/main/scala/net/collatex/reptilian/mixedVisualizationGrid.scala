@@ -1042,7 +1042,22 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
              |  }
              |}
              |function expandAll() {
-             |  console.log("Inside expandAll");
+             |  var i, j, groupLen, aps, apsLen, wrappers, wrapperLen, fullWidth, wrapperWidth;
+             |  const allGroups = document.getElementsByClassName("group");
+             |  for (i = 0, groupLen = allGroups.length; i < groupLen; i++) {
+             |    fullWidth = allGroups[i].dataset.maxwidth;
+             |    if (fullWidth > 160) {
+             |      wrapperWidth = parseFloat(fullWidth) + 2;
+             |      aps = allGroups[i].querySelectorAll("rect, foreignObject, div.ap > svg.alignment");
+             |      wrappers = allGroups[i].querySelectorAll("div.innerWrapper > svg");
+             |      for (j = 0, apsLen = aps.length; j < apsLen; j++) {
+             |        toggleOne(aps[j], fullWidth);
+             |      }
+             |      for (j = 0, wrapperLen = wrappers.length; j < wrapperLen; j++) {
+             |        toggleOne(wrappers[j], wrapperWidth);
+             |      }
+             |    }
+             |  }
              |}
              |function toggleOne(target, width) {
              |  target.setAttribute("width", width);
