@@ -945,14 +945,13 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
                |  flex-direction: row;
                |  justify-content: space-between;
                |}
-               |#radios {
+               |#set_all {
                |  display: flex;
+               |  gap: .5em;
                |  flex-direction: column;
-               |  justify-content: space-evenly;
-               |  block-size: fit-content;
                |  margin: auto 0 auto 0;
                |  padding: .1em .3em .2em .2em;
-               |  font-size: smaller;
+               |  font-size: .8rem;
                |}
                |#wrapper {
                |  padding: 2px;
@@ -1017,7 +1016,6 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
              |    for (i = 0, len = apTargets.length; i < len; i++) {
              |      apTargets[i].setAttribute("width", newWidth);
              |    }
-             |    console.log("newWidth: " + newWidth);
              |    // Reset width of wrapper rects
              |    innerWrapTargets = this.querySelectorAll("div.innerWrapper > svg");
              |    if (newWidth == 160) {
@@ -1025,7 +1023,6 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
              |    } else {
              |      newWrapperWidth = parseFloat(newWidth) + 2;
              |    }
-             |    console.log("newWrapperWidth: " + newWrapperWidth);
              |    for (i = 0, len = innerWrapTargets.length; i < len; i++) {
              |      innerWrapTargets[i].setAttribute("width", newWrapperWidth);
              |    }
@@ -1041,10 +1038,10 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
       <body>
         <header>
           <h1>Alignments</h1>
-          <fieldset id="radios">
-            <label><input type="radio" name="radios" id="expand" value="expand" checked="checked"/> Expand all</label>
-            <label><input type="radio" name="radios" id="truncate" value="truncate"/> Truncate all</label>
-          </fieldset>
+          <div id="set_all">
+            <button id="expand_all" type="button">Expand all</button>
+            <button id="truncate_all" type="button">Truncate all</button>
+          </div>
         </header>
         <main>
           <div id="wrapper">
