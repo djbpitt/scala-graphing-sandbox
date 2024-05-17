@@ -940,7 +940,21 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
         <stop offset="100%" stop-color="limegreen" stop-opacity="1"/>
       </linearGradient>
     </defs>
-  val css = s"""#wrapper {
+  val css = s"""header {
+               |  display: flex;
+               |  flex-direction: row;
+               |  justify-content: space-between;
+               |}
+               |#radios {
+               |  display: flex;
+               |  flex-direction: column;
+               |  justify-content: space-evenly;
+               |  block-size: fit-content;
+               |  margin: auto 0 auto 0;
+               |  padding: .1em .3em .2em .2em;
+               |  font-size: smaller;
+               |}
+               |#wrapper {
                |  padding: 2px;
                |  overflow-x: scroll;
                |  display: flex;
@@ -1023,7 +1037,13 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
         <script type="text/javascript">{js}</script>
       </head>
       <body>
-        <h1>Alignments</h1>
+        <header>
+          <h1>Alignments</h1>
+          <fieldset id="radios">
+            <label><input type="radio" name="radios" id="expand" value="expand" checked="checked"/> Expand all</label>
+            <label><input type="radio" name="radios" id="truncate" value="truncate"/> Truncate all</label>
+          </fieldset>
+        </header>
         <main>
           <div id="wrapper">
             <svg xmlns="http://www.w3.org/2000/svg"
