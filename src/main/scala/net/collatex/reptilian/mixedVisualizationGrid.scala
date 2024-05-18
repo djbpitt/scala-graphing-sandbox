@@ -662,7 +662,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
   val totalWidth = horizNodes.last.xOffset + horizNodes.last.alignmentWidth + 2
-  val totalHeight = ribbonWidth * (witnessCount * 3 - 1) + 2
+  val totalHeight = ribbonWidth * (witnessCount * 3) - ribbonWidth / 2
 
   val witnessToColor: Map[String, String] = Map(
     "darwin1859.txt" -> "peru",
