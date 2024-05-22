@@ -643,6 +643,41 @@ private def createHorizNodeData(
       nextNode(nodes.tail, pos + 1, acc :+ newNode)
   nextNode(nodeSequence, 1, Vector.empty[HorizNodeData])
 
+/** selfCartesianProduct
+  *
+  * Excludes self-pairs, that is, (a, b) x (a, c) excludes (a, a)
+  *
+  * @param input
+  *   : Iterable of anything
+  * @tparam A
+  *   Type of content items of input iterable
+  * @return
+  *   Set of sets, representing Cartesian product of input with itself without self-pairings
+  */
+private def selfCartesianProduct[A](input: Iterable[A]) =
+  val result = input
+    .flatMap(e =>
+      input
+        .map(f => Set(e, f))
+    )
+    .filter(_.size > 1)
+  result
+
+private def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
+  def nextPair(pair: Set[String], acc: Map[Set[String], Int]): Map[Set[String], Int] =
+    val newAcc = acc ++ Map(pair -> (acc.getOrElse(pair, 0) + 1))
+    newAcc
+  @tailrec
+  def nextInput(ins: Vector[Iterable[Set[String]]], acc: Map[Set[String], Int]): Map[Set[String], Int] =
+    if (ins.isEmpty) then
+      acc
+    else
+      val newAcc: Map[Set[String], Int] = ins
+        .head
+        .foldLeft(acc)((x, y) => nextPair(y, x))
+      nextInput(ins.tail, newAcc)
+  nextInput(inputs, Map[Set[String], Int]())
+
 /** createHorizontalRibbons()
   *
   * Entry point for creating horizontal alignment ribbon plot
@@ -661,6 +696,20 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   val witnessCount = sigla.size
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
+  /* Compute optimal witness order */
+  val cartesianProducts: Vector[Iterable[Set[String]]] = nodeSequence.slice(0, 10).map(_.node) map {
+    case AgreementNode(witnessReadings)                => selfCartesianProduct(witnessReadings.keys)
+    case AgreementIndelNode(witnessReadings)           => selfCartesianProduct(witnessReadings.keys)
+    case VariationNode(witnessReadings, witnessGroups) => witnessGroups.flatMap(e => selfCartesianProduct(e)).toSet
+    case VariationIndelNode(witnessReadings, witnessGroups) => witnessGroups.flatMap(e => selfCartesianProduct(e)).toSet
+  }
+  /* Compute witness distances */
+  val witnessSimilarities: Map[Set[String], Int] = computeWitnessSimilarities(cartesianProducts)
+  /* Look at the results; the sorting is for legibility, and not otherwise needed */
+  val keys = witnessSimilarities.keySet.toSeq.sortBy(e => (e.min, e.max))
+  val sortedSims: Seq[(Set[String], Int)] = keys.map(e => (e, witnessSimilarities(e)))
+  sortedSims.foreach(println)
+  /* End of computing optimal witness order */
   val totalWidth = horizNodes.last.xOffset + horizNodes.last.alignmentWidth + 2
   val totalHeight = ribbonWidth * (witnessCount * 3) - ribbonWidth / 2
 
