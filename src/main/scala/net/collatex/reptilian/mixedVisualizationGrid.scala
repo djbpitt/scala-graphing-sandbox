@@ -1,5 +1,6 @@
 package net.collatex.reptilian
 
+import de.sciss.tsp.LinKernighan
 import smile.data.DataFrame
 
 import scala.annotation.tailrec
@@ -697,7 +698,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
   /* Compute optimal witness order */
-  val cartesianProducts: Vector[Iterable[Set[String]]] = nodeSequence.slice(0, 10).map(_.node) map {
+  val cartesianProducts: Vector[Iterable[Set[String]]] = nodeSequence.map(_.node) map {
     case AgreementNode(witnessReadings)                     => selfCartesianProduct(witnessReadings.keys)
     case AgreementIndelNode(witnessReadings)                => selfCartesianProduct(witnessReadings.keys)
     case VariationNode(witnessReadings, witnessGroups)      => witnessGroups.flatMap(e => selfCartesianProduct(e)).toSet
@@ -707,26 +708,32 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   val witnessSimilarities: Map[Set[String], Int] = computeWitnessSimilarities(cartesianProducts)
   /* Look at the results; the sorting is for legibility, and not otherwise needed */
   val keys = witnessSimilarities.keySet.toSeq.flatten.distinct.sorted // sorted list of sigla
+  println(keys)
   val keyCount = keys.size
-  val m = Array.ofDim[Double](keyCount, keyCount)
+  val m = Array.ofDim[Double](keyCount, keyCount) // will hold distance matrix of witnesses
   val cells = for
     i <- keys.zipWithIndex
     j <- keys.zipWithIndex if j != i
-  yield Set(i, j)
+  yield Set(i, j) // all witness pairs except self-pairs
   val results = cells.map (e =>
     val loc1 = e.map(_._2).toVector
     val loc2 = Vector(loc1.last, loc1.head)
     val weight = witnessSimilarities(e.map(_._1))
-    (loc1, loc2, 8 - weight.toDouble)
+    (loc1, loc2, 1033 - weight.toDouble) // subtract from max + 1 to convert shared readings to distance (invert)
   )
-  for r <- results yield {
+  for r <- results yield { // populate array
     val loc1 = r.head
     val loc2 = r(1)
     val weight = r.last
     m(loc1.head)(loc1.last) = weight
     m(loc2.head)(loc2.last) = weight
   }
-  println(DataFrame.of(m))
+  println(DataFrame.of(m)) // take a look
+
+  val tour0 = LinKernighan.createRandomTour(keys.size, seed = 0L)
+  val lk = LinKernighan(m, tour0)
+  lk.run()
+  println(lk.tour.map(e => keys(e).mkString).toVector)
 
   // cells.map(e => witnessSimilarities(e)).foreach(println)
 
