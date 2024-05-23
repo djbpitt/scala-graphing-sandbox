@@ -26,3 +26,4 @@ libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "2.0.4",
   "org.slf4j" % "slf4j-nop" % "2.0.4")
 libraryDependencies += "io.github.pityka" %% "pairwisealignment" % "2.2.7"
 libraryDependencies += ("nl.gn0s1s" %% "osita" % "0.0.2").cross(CrossVersion.for3Use2_13)
+libraryDependencies += "de.sciss" %% "linkernighantsp" % "0.1.3"

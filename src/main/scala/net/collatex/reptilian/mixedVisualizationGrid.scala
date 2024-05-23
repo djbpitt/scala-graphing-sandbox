@@ -1,5 +1,7 @@
 package net.collatex.reptilian
 
+import smile.data.DataFrame
+
 import scala.annotation.tailrec
 import scala.xml.{Elem, Node}
 import math.Ordered.orderingToOrdered
@@ -669,11 +671,9 @@ private def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
     newAcc
   @tailrec
   def nextInput(ins: Vector[Iterable[Set[String]]], acc: Map[Set[String], Int]): Map[Set[String], Int] =
-    if (ins.isEmpty) then
-      acc
+    if ins.isEmpty then acc
     else
-      val newAcc: Map[Set[String], Int] = ins
-        .head
+      val newAcc: Map[Set[String], Int] = ins.head
         .foldLeft(acc)((x, y) => nextPair(y, x))
       nextInput(ins.tail, newAcc)
   nextInput(inputs, Map[Set[String], Int]())
@@ -698,17 +698,38 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
   /* Compute optimal witness order */
   val cartesianProducts: Vector[Iterable[Set[String]]] = nodeSequence.slice(0, 10).map(_.node) map {
-    case AgreementNode(witnessReadings)                => selfCartesianProduct(witnessReadings.keys)
-    case AgreementIndelNode(witnessReadings)           => selfCartesianProduct(witnessReadings.keys)
-    case VariationNode(witnessReadings, witnessGroups) => witnessGroups.flatMap(e => selfCartesianProduct(e)).toSet
+    case AgreementNode(witnessReadings)                     => selfCartesianProduct(witnessReadings.keys)
+    case AgreementIndelNode(witnessReadings)                => selfCartesianProduct(witnessReadings.keys)
+    case VariationNode(witnessReadings, witnessGroups)      => witnessGroups.flatMap(e => selfCartesianProduct(e)).toSet
     case VariationIndelNode(witnessReadings, witnessGroups) => witnessGroups.flatMap(e => selfCartesianProduct(e)).toSet
   }
   /* Compute witness distances */
   val witnessSimilarities: Map[Set[String], Int] = computeWitnessSimilarities(cartesianProducts)
   /* Look at the results; the sorting is for legibility, and not otherwise needed */
-  val keys = witnessSimilarities.keySet.toSeq.sortBy(e => (e.min, e.max))
-  val sortedSims: Seq[(Set[String], Int)] = keys.map(e => (e, witnessSimilarities(e)))
-  sortedSims.foreach(println)
+  val keys = witnessSimilarities.keySet.toSeq.flatten.distinct.sorted // sorted list of sigla
+  val keyCount = keys.size
+  val m = Array.ofDim[Double](keyCount, keyCount)
+  val cells = for
+    i <- keys.zipWithIndex
+    j <- keys.zipWithIndex if j != i
+  yield Set(i, j)
+  val results = cells.map (e =>
+    val loc1 = e.map(_._2).toVector
+    val loc2 = Vector(loc1.last, loc1.head)
+    val weight = witnessSimilarities(e.map(_._1))
+    (loc1, loc2, 8 - weight.toDouble)
+  )
+  for r <- results yield {
+    val loc1 = r.head
+    val loc2 = r(1)
+    val weight = r.last
+    m(loc1.head)(loc1.last) = weight
+    m(loc2.head)(loc2.last) = weight
+  }
+  println(DataFrame.of(m))
+
+  // cells.map(e => witnessSimilarities(e)).foreach(println)
+
   /* End of computing optimal witness order */
   val totalWidth = horizNodes.last.xOffset + horizNodes.last.alignmentWidth + 2
   val totalHeight = ribbonWidth * (witnessCount * 3) - ribbonWidth / 2
