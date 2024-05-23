@@ -706,6 +706,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   }
   /* Compute witness distances */
   val witnessSimilarities: Map[Set[String], Int] = computeWitnessSimilarities(cartesianProducts)
+  val maxDistance = witnessSimilarities.values.max
   /* Look at the results; the sorting is for legibility, and not otherwise needed */
   val keys = witnessSimilarities.keySet.toSeq.flatten.distinct.sorted // sorted list of sigla
   println(keys)
@@ -719,7 +720,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
     val loc1 = e.map(_._2).toVector
     val loc2 = Vector(loc1.last, loc1.head)
     val weight = witnessSimilarities(e.map(_._1))
-    (loc1, loc2, 1033 - weight.toDouble) // subtract from max + 1 to convert shared readings to distance (invert)
+    (loc1, loc2, maxDistance + 1 - weight.toDouble) // subtract from max + 1 to convert shared readings to distance (invert)
   )
   for r <- results yield { // populate array
     val loc1 = r.head
