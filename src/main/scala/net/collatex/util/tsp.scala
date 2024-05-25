@@ -2,19 +2,14 @@ package net.collatex.util
 
 // https://www.geeksforgeeks.org/traveling-salesman-problem-using-branch-and-bound-2/
 
-import java.util._
-// Java program to solve Traveling Salesman Problem
-// using Branch and Bound.
-
-
 object tsp {
   val N = 4
   // final_path[] stores the final solution ie, the
   // path of the salesman.
-  val final_path = new Array[Int](N + 1)
+  val final_path: Array[Int] = Array.fill[Int](N + 1)(0)
   // visited[] keeps track of the already visited nodes
   // in a particular path
-  val visited = new Array[Boolean](N)
+  var visited: Array[Boolean] = Array.fill[Boolean](N)(false)
   // Stores the final minimum weight of shortest tour.
   var final_res: Int = Integer.MAX_VALUE
 
@@ -109,7 +104,7 @@ object tsp {
         curr_weight_copy -= adj(curr_path(level - 1))(i)
         curr_bound_copy = temp
         // Also reset the visited array
-        java.util.Arrays.fill(visited, false)
+        visited = Array.fill(N)(false)
         for (j <- 0 until level) {
           visited(curr_path(j)) = true
         }
@@ -119,14 +114,13 @@ object tsp {
 
   // This function sets up final_path[]
   def TSP(adj: Array[Array[Int]]): Unit = {
-    val curr_path = new Array[Int](N + 1)
+    val curr_path = Array.fill[Int](N + 1)(-1)
     // Calculate initial lower bound for the root node
     // using the formula 1/2 * (sum of first min +
     // second min) for all edges.
     // Also initialize the curr_path and visited array
     var curr_bound = 0
-    java.util.Arrays.fill(curr_path, -1)
-    java.util.Arrays.fill(visited, false)
+    visited = Array.fill(N)(false)
     // Compute initial bound
     for (i <- 0 until N) {
       curr_bound += (firstMin(adj, i) + secondMin(adj, i))
