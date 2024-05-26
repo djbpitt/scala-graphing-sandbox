@@ -3,7 +3,7 @@ package net.collatex.reptilian
 import java.util._
 import scala.util.boundary, boundary.break
 
-object Main {
+object Main_tse {
 
   def travllingSalesmanProblem(graph: Array[Array[Int]], s: Int, v: Int): Int = {
     val vertex = java.util.ArrayList[Integer]
