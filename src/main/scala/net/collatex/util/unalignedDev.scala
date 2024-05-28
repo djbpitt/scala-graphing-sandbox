@@ -340,13 +340,10 @@ def splitTree(
     tree: List[HasWitnessReadings],
     tokenToNodeMapping: Vector[HasWitnessReadings],
     blockRange: (Int, Int)
-): AlignmentTreeNode
-=
+): AlignmentTreeNode =
   def createWrapperIfNeeded(wr: List[HasWitnessReadings]): AlignmentTreeNode =
-    if wr.size == 1 then
-      wr.head
-    else
-      ExpandedNode(wr.to(ListBuffer))
+    if wr.size == 1 then wr.head
+    else ExpandedNode(wr.to(ListBuffer))
   val newTree = tree flatMap {
     case e if blockRange._1 >= e.witnessReadings.head._2._1 && blockRange._2 <= e.witnessReadings.head._2._2 =>
       val delta1: Int = blockRange._1 - e.witnessReadings.head._2._1
@@ -601,22 +598,55 @@ def splitTree(
                 val newTree1 = splitTree(tree1Nodes, ttTokenToAlignmentTreeNodeMapping, globalBlockRanges.head)
                 val newTree2 = splitTree(tree2Nodes, ttTokenToAlignmentTreeNodeMapping, globalBlockRanges.last)
 
-                val newTree1AsDot = dot(newTree1.asInstanceOf[ExpandedNode], tokenArray.toVector)
-                val newTree2AsDot = dot(newTree2.asInstanceOf[ExpandedNode], tokenArray.toVector)
-                val alignmentGraphOutputPath1 = os.pwd / "src" / "main" / "outputs" / "t1.dot"
-                val alignmentGraphOutputPath2 = os.pwd / "src" / "main" / "outputs" / "t2.dot"
-                os.write.over(alignmentGraphOutputPath1, newTree1AsDot)
-                os.write.over(alignmentGraphOutputPath2, newTree2AsDot)
+//                val newTree1AsDot = dot(newTree1.asInstanceOf[ExpandedNode], tokenArray.toVector)
+//                val newTree2AsDot = dot(newTree2.asInstanceOf[ExpandedNode], tokenArray.toVector)
+//                val alignmentGraphOutputPath1 = os.pwd / "src" / "main" / "outputs" / "t1.dot"
+//                val alignmentGraphOutputPath2 = os.pwd / "src" / "main" / "outputs" / "t2.dot"
+//                os.write.over(alignmentGraphOutputPath1, newTree1AsDot)
+//                os.write.over(alignmentGraphOutputPath2, newTree2AsDot)
 
-                val newTtTokenToAlignmentTreeNodeMapping = getTTokenNodeMappings(newTree1, newTree2, tokenArray).toVector
-                TreeTreeData(newTree1, newTree2, newTtTokenToAlignmentTreeNodeMapping,ttTokenArray)
+                val newTtTokenToAlignmentTreeNodeMapping =
+                  getTTokenNodeMappings(newTree1, newTree2, tokenArray).toVector
+                val newTreeData = TreeTreeData(newTree1, newTree2, newTtTokenToAlignmentTreeNodeMapping, ttTokenArray)
+                newTreeData
             )
 
           println(s"resultOfTreeSplitting: $resultOfTreeSplitting")
+          println(s"blocks (local token array): $blocks")
+          println(s"tree1: ${resultOfTreeSplitting.t1}")
+
+          def mergeSplitTrees(splitTreeData: TreeTreeData) =
+            // Walk over trees to find alignment point
+            // Merge everything before alignment point in a variation node of some kind
+            // NB: We can merge clusters horizontally only if they are of the same type
+            // NB: Number of nodes in trees will not always be the same
+            val globalBlockBeginnings = blocks.map(e => e.instances)
+              .map(_.map(f => splitTreeData.lTa(f))) // lTa = local token array
+              .map(_.map(g => g.g)) // global offset of first token of block in each tree
+            println(s"globalBlockBeginnings: $globalBlockBeginnings")
+            val globalBlockBeginningsFlat = globalBlockBeginnings.flatten.toSet
+            println(s"globalBlockBeginningsFlat: $globalBlockBeginningsFlat")
+            val tree1FirstBlockNode = resultOfTreeSplitting.t1.asInstanceOf[ExpandedNode]
+              .children
+              .map(e => e.asInstanceOf[HasWitnessReadings].witnessReadings.values)
+              .map(_.map(_.head).toSet)
+              .zipWithIndex
+              .filter(f => f._1.intersect(globalBlockBeginningsFlat).nonEmpty)
+
+            println(s"tree1FirstBlockNode: $tree1FirstBlockNode")
+
+          //            val blockLength = currentBlock.length
+//            val globalBlockRanges = blockBeginnings.map(e => (e, e + blockLength))
+//
+//            val newTree = tree flatMap {
+//                case e if blockRange._1 >= e.witnessReadings.head._2._1 && blockRange._2 <= e.witnessReadings.head._2._2 =>
+//                  val delta1: Int = blockRange._1 - e.witnessReadings.head._2._1
+//                  val newMap1 = e.witnessReadings.map((k, v) => k -> (v._1 + delta1))
+
+          mergeSplitTrees(resultOfTreeSplitting)
           acc(i + darwin.head.readings.size) = ExpandedNode()
           acc
     }
   println("Results:")
   results.toSeq.sortBy((k, v) => k).foreach(println)
   println("End of results")
-
