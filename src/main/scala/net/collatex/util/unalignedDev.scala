@@ -340,7 +340,7 @@ def splitTree(
     tree: List[HasWitnessReadings],
     tokenToNodeMapping: Vector[HasWitnessReadings],
     blockRange: (Int, Int)
-): (AlignmentTreeNode, Vector[HasWitnessReadings])
+): AlignmentTreeNode
 =
   def createWrapperIfNeeded(wr: List[HasWitnessReadings]): AlignmentTreeNode =
     if wr.size == 1 then
@@ -359,7 +359,7 @@ def splitTree(
     case e => Vector(e)
   }
   val newTokenToNodeMapping = tokenToNodeMapping
-  (createWrapperIfNeeded(newTree), newTokenToNodeMapping)
+  createWrapperIfNeeded(newTree)
 
 @main def unalignedDev(): Unit =
   val darwin: List[UnalignedFragment] = readJsonData // we know there's only one
@@ -599,8 +599,8 @@ def splitTree(
                 val tree1Nodes = getNodeListToProcess(inData.t1)
                 val tree2Nodes = getNodeListToProcess(inData.t2)
 
-                val newTree1 = splitTree(tree1Nodes, ttTokenToAlignmentTreeNodeMapping, globalBlockRanges.head)._1
-                val newTree2 = splitTree(tree2Nodes, ttTokenToAlignmentTreeNodeMapping, globalBlockRanges.last)._1
+                val newTree1 = splitTree(tree1Nodes, ttTokenToAlignmentTreeNodeMapping, globalBlockRanges.head)
+                val newTree2 = splitTree(tree2Nodes, ttTokenToAlignmentTreeNodeMapping, globalBlockRanges.last)
 
                 val newTree1AsDot = dot(newTree1.asInstanceOf[ExpandedNode], tokenArray.toVector)
                 val newTree2AsDot = dot(newTree2.asInstanceOf[ExpandedNode], tokenArray.toVector)
