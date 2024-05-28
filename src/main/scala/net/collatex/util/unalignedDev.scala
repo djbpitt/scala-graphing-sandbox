@@ -358,7 +358,6 @@ def splitTree(
       combinedResult
     case e => Vector(e)
   }
-  val newTokenToNodeMapping = tokenToNodeMapping
   createWrapperIfNeeded(newTree)
 
 @main def unalignedDev(): Unit =
