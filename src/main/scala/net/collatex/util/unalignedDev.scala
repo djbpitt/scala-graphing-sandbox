@@ -569,6 +569,19 @@ def splitTree(
            *
            *  Find first alignment points in both trees; everything before is variation (similar to full-depth alignment)
            * */
+          def mergeTreeNodes(a1: HasWitnessReadings, a2: HasWitnessReadings): HasWitnessReadings =
+            (a1, a2) match {
+              case (b1: AgreementNode, b2: AgreementNode) =>
+                val mergedWitnessReadings = a1.witnessReadings ++ a2.witnessReadings
+                val mergedWitnessGroups = Vector(a1.witnessReadings.keys.toVector, a2.witnessReadings.keys.toVector)
+                val result = VariationNode(witnessReadings = mergedWitnessReadings, witnessGroups = mergedWitnessGroups)
+                result
+              case _ =>
+                AgreementNode(
+                  Map("w" -> (0, 1))
+                ) // FIXME: Fake AgreementNode to fool compiler—temporarily, of course!
+            }
+
           val ttTokenArray = createTreeTreeTokenArray(acc(item1), acc(item2), tokenArray).toVector
           val ttTokenToAlignmentTreeNodeMapping = getTTokenNodeMappings(acc(item1), acc(item2), tokenArray).toVector
           val (_, _, blocks) =
@@ -620,20 +633,48 @@ def splitTree(
             // Merge everything before alignment point in a variation node of some kind
             // NB: We can merge clusters horizontally only if they are of the same type
             // NB: Number of nodes in trees will not always be the same
-            val globalBlockBeginnings = blocks.map(e => e.instances)
+            val globalBlockBeginnings = blocks
+              .map(e => e.instances)
               .map(_.map(f => splitTreeData.lTa(f))) // lTa = local token array
               .map(_.map(g => g.g)) // global offset of first token of block in each tree
             println(s"globalBlockBeginnings: $globalBlockBeginnings")
             val globalBlockBeginningsFlat = globalBlockBeginnings.flatten.toSet
             println(s"globalBlockBeginningsFlat: $globalBlockBeginningsFlat")
-            val tree1FirstBlockNode = resultOfTreeSplitting.t1.asInstanceOf[ExpandedNode]
+            val tree1FirstBlockNode = resultOfTreeSplitting.t1
+              .asInstanceOf[ExpandedNode]
+              .children
+              .map(e => e.asInstanceOf[HasWitnessReadings].witnessReadings.values)
+              .map(_.map(_.head).toSet)
+              .zipWithIndex
+              .filter(f => f._1.intersect(globalBlockBeginningsFlat).nonEmpty)
+            val tree2FirstBlockNode = resultOfTreeSplitting.t2
+              .asInstanceOf[ExpandedNode]
               .children
               .map(e => e.asInstanceOf[HasWitnessReadings].witnessReadings.values)
               .map(_.map(_.head).toSet)
               .zipWithIndex
               .filter(f => f._1.intersect(globalBlockBeginningsFlat).nonEmpty)
 
-            println(s"tree1FirstBlockNode: $tree1FirstBlockNode")
+            println(s"tree1BlockNodes: $tree1FirstBlockNode")
+            println(s"tree2BlockNodes: $tree2FirstBlockNode")
+
+            val pairs = getNodeListToProcess(resultOfTreeSplitting.t1) // FIXME: Simplifying assumption for whole tree
+              .zip(getNodeListToProcess(resultOfTreeSplitting.t2))
+              .zipWithIndex
+            val blockNodeOffsets =
+              tree1FirstBlockNode.map(_._2).toSet // FIXME: Positions in both trees happen to be the same
+            pairs foreach { // NB: Blocks may not be full-depth witin their trees or between trees
+              case ((e: HasWitnessReadings, f: HasWitnessReadings), g: Int) if blockNodeOffsets.contains(g) =>
+                println("Block")
+              case x => println("Nonblock")
+            }
+
+            val mergedNode0: HasWitnessReadings = mergeTreeNodes(
+              getNodeListToProcess(resultOfTreeSplitting.t1).head,
+              getNodeListToProcess(resultOfTreeSplitting.t2).head
+            )
+            println(s"mergedNode0: $mergedNode0")
+            mergedNode0
 
           //            val blockLength = currentBlock.length
 //            val globalBlockRanges = blockBeginnings.map(e => (e, e + blockLength))
@@ -643,7 +684,7 @@ def splitTree(
 //                  val delta1: Int = blockRange._1 - e.witnessReadings.head._2._1
 //                  val newMap1 = e.witnessReadings.map((k, v) => k -> (v._1 + delta1))
 
-          mergeSplitTrees(resultOfTreeSplitting)
+          val mergeResult = mergeSplitTrees(resultOfTreeSplitting)
           acc(i + darwin.head.readings.size) = ExpandedNode()
           acc
     }
