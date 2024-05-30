@@ -866,7 +866,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
       }
             stroke={witnessToGradient(e)}
             stroke-width={ribbonWidth.toString}
-            />
+            fill="none"/>
     )
     <div class="flow">
       <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" width="80" height={
