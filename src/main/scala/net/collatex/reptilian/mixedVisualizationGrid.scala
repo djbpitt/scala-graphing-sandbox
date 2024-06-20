@@ -148,14 +148,14 @@ private def createTextGridColumnCells(
   val result =
     nodes.map { e =>
       val rowContent = e.node match {
-        case AgreementNode(witnessReadings) =>
+        case AgreementNode(witnessReadings, witnessGroups) =>
           val (_, value) = witnessReadings.head
           val text = tokenArray
             .slice(value._1, value._2)
             .map(_.n)
             .mkString(" ")
           <ul><li><span class="sigla">all:</span> {text}</li></ul>
-        case AgreementIndelNode(witnessReadings) =>
+        case AgreementIndelNode(witnessReadings, witnessGroups) =>
           val sigla = witnessReadings.keys
             .map(_.slice(8, 10))
             .toVector
@@ -590,7 +590,7 @@ private def findMissingWitnesses(n: HasWitnessReadings, sigla: Set[String]): Vec
   * @return
   *   Vector of vector of strings, where inner vectors are groups and strings are sigla
   */
-private def groupReadings(n: HasWitnessGroups) =
+private def groupReadings(n: HasWitnessReadings) =
   val groups: Vector[Vector[String]] =
     n.witnessGroups
   groups
@@ -699,8 +699,8 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
   /* Compute optimal witness order */
   val cartesianProducts: Vector[Iterable[Set[String]]] = nodeSequence.map(_.node) map {
-    case AgreementNode(witnessReadings)                     => selfCartesianProduct(witnessReadings.keys)
-    case AgreementIndelNode(witnessReadings)                => selfCartesianProduct(witnessReadings.keys)
+    case AgreementNode(witnessReadings, witnessGroups)      => selfCartesianProduct(witnessReadings.keys)
+    case AgreementIndelNode(witnessReadings, witnessGroups) => selfCartesianProduct(witnessReadings.keys)
     case VariationNode(witnessReadings, witnessGroups)      => witnessGroups.flatMap(e => selfCartesianProduct(e)).toSet
     case VariationIndelNode(witnessReadings, witnessGroups) => witnessGroups.flatMap(e => selfCartesianProduct(e)).toSet
   }
@@ -716,11 +716,15 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
     i <- keys.zipWithIndex
     j <- keys.zipWithIndex if j != i
   yield Set(i, j) // all witness pairs except self-pairs
-  val results = cells.map (e =>
+  val results = cells.map(e =>
     val loc1 = e.map(_._2).toVector
     val loc2 = Vector(loc1.last, loc1.head)
     val weight = witnessSimilarities(e.map(_._1))
-    (loc1, loc2, maxDistance + 1 - weight.toDouble) // subtract from max + 1 to convert shared readings to distance (invert)
+    (
+      loc1,
+      loc2,
+      maxDistance + 1 - weight.toDouble
+    ) // subtract from max + 1 to convert shared readings to distance (invert)
   )
   for r <- results yield { // populate array
     val loc1 = r.head

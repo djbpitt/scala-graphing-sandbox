@@ -19,8 +19,7 @@ import scala.collection.mutable.ListBuffer
   * @param targetLineLength
   *   target length of individual lines
   * @param targetLineCount
-  *   truncate with added ellipsis points after this number of lines (defaults
-  *   to Int.MaxValue)
+  *   truncate with added ellipsis points after this number of lines (defaults to Int.MaxValue)
   * @return
   *   string with newlines inserted
   */
@@ -97,23 +96,18 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
       case (currentId, VariationNode(witnessReadings, witnessGroups)) =>
         val allWitnessTexts: String =
           witnessReadings
-            .map((k, v) =>
-              k + ": " + tokenArray.slice(v._1, v._2).map(_.n).mkString(" ")
-            )
+            .map((k, v) => k + ": " + tokenArray.slice(v._1, v._2).map(_.n).mkString(" "))
             .map(e => wrapTextToWidth(e, 30, 1))
             .mkString("\\l")
             .replaceAll("\"", "\\\\\"")
-        variationNodes.append(
-          s"""${currentId.toString}
+        variationNodes.append(s"""${currentId.toString}
              | [label=\"${currentId.toString}|$allWitnessTexts\"]
            """.stripMargin.replaceAll("\n", ""))
 
       case (currentId, VariationIndelNode(witnessReadings, witnessGroups)) =>
         val allWitnessTexts: String =
           witnessReadings
-            .map((k, v) =>
-              k + ": " + tokenArray.slice(v._1, v._2).map(_.n).mkString(" ")
-            )
+            .map((k, v) => k + ": " + tokenArray.slice(v._1, v._2).map(_.n).mkString(" "))
             .map(e => wrapTextToWidth(e, 30, 1))
             .mkString("\\l")
             .replaceAll("\"", "\\\\\"")
@@ -121,7 +115,7 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
                                  | [label=\"${currentId.toString}|$allWitnessTexts\"]
              """.stripMargin.replaceAll("\n", ""))
 
-      case (currentId, AgreementNode(witnessReadings)) =>
+      case (currentId, AgreementNode(witnessReadings, witnessGroups)) =>
         val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
         val nValues = tokenArray
           .slice(tokenArrayPointers._1, tokenArrayPointers._2)
@@ -145,7 +139,7 @@ def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
               .mkString(", ")})\"
              | fillcolor=\"lightblue\"]""".stripMargin.replaceAll("\n", "")
         )
-      case (currentId, AgreementIndelNode(witnessReadings)) =>
+      case (currentId, AgreementIndelNode(witnessReadings, witnessGroups)) =>
         val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
         val nValues = tokenArray
           .slice(tokenArrayPointers._1, tokenArrayPointers._2)
@@ -247,7 +241,7 @@ def createAlignmentTable(
           }))(
             td(index + 1),
             child match {
-              case AgreementNode(witnessReadings) =>
+              case AgreementNode(witnessReadings, witnessGroups) =>
                 val (_, value) = witnessReadings.head
                 val tokens = tokenArray
                   .slice(value._1, value._2)
@@ -282,7 +276,7 @@ def createAlignmentTable(
                   alignment,
                   readings
                 )
-              case UnexpandedNode(witnessReadings) =>
+              case UnexpandedNode(witnessReadings, witnessGroups) =>
                 val alignment = td("Unexpanded")
                 val readings =
                   for i <- sortedSigla
@@ -310,15 +304,13 @@ def createAlignmentTable(
 
 /** Flatten alignment tree
   *
-  * Flattened tree is a vector of NumberedNode instances (case class instead of
-  * tuple to avoid type erasure that interferes with subsequent pattern
-  * matching)
+  * Flattened tree is a vector of NumberedNode instances (case class instead of tuple to avoid type erasure that
+  * interferes with subsequent pattern matching)
   *
   * @param root
   *   ExpandedNode at root of alignment tree
   * @return
-  *   vector of NumberedNode instances, which combine the alignment-tree node
-  *   with its unique id number
+  *   vector of NumberedNode instances, which combine the alignment-tree node with its unique id number
   */
 def flattenNodeSeq(
     root: ExpandedNode
@@ -367,14 +359,14 @@ def createSingleColumnAlignmentTableRows(
       numberedNode.node.getClass.toString.split("\\.").last.dropRight(4)
     )
     val rowContent = numberedNode.node match {
-      case AgreementNode(witnessReadings) =>
+      case AgreementNode(witnessReadings, witnessGroups) =>
         val (_, value) = witnessReadings.head
         val text = tokenArray
           .slice(value._1, value._2)
           .map(_.n)
           .mkString(" ")
         <td><span class="sigla">all:</span> {text}</td>
-      case AgreementIndelNode(witnessReadings) =>
+      case AgreementIndelNode(witnessReadings, witnessGroups) =>
         val sigla = witnessReadings.keys
           .map(_.slice(8, 10))
           .toVector
@@ -418,7 +410,7 @@ def createSingleColumnAlignmentTableRows(
 
 def createSingleColumnAlignmentTable(
     root: ExpandedNode,
-    tokenArray: Vector[Token],
+    tokenArray: Vector[Token]
 ) =
   val htmlHeader: xml.Elem =
     <head>
@@ -481,14 +473,11 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
       case (currentId, VariationIndelNode(witnessReadings, witnessGroups)) =>
         val allWitnessTexts: String =
           witnessReadings
-            .map((k, v) =>
-              k + ": " + tokenArray.slice(v._1, v._2).map(_.n).mkString(" ")
-            )
+            .map((k, v) => k + ": " + tokenArray.slice(v._1, v._2).map(_.n).mkString(" "))
             .map(e => wrapTextToWidth(e, 30, 1))
             .mkString("\\l")
             .replaceAll("\"", "\\\\\"")
-        variationNodes.append(
-          s"""${currentId.toString}
+        variationNodes.append(s"""${currentId.toString}
              | [label=\"${currentId.toString}|$allWitnessTexts\"]
              """.stripMargin.replaceAll("\n", ""))
         edges.append(s"$lastNodeProcessed -> $currentId")
@@ -497,9 +486,7 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
       case (currentId, VariationNode(witnessReadings, witnessGroups)) =>
         val allWitnessTexts: String =
           witnessReadings
-            .map((k, v) =>
-              k + ": " + tokenArray.slice(v._1, v._2).map(_.n).mkString(" ")
-            )
+            .map((k, v) => k + ": " + tokenArray.slice(v._1, v._2).map(_.n).mkString(" "))
             .map(e => wrapTextToWidth(e, 30, 1))
             .mkString("\\l")
             .replaceAll("\"", "\\\\\"")
@@ -509,7 +496,7 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
         edges.append(s"$lastNodeProcessed -> $currentId")
         lastNodeProcessed = currentId
 
-      case (currentId, AgreementNode(witnessReadings)) =>
+      case (currentId, AgreementNode(witnessReadings, witnessGroups)) =>
         val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
         val nValues = tokenArray
           .slice(tokenArrayPointers._1, tokenArrayPointers._2)
@@ -536,7 +523,7 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
         edges.append(s"$lastNodeProcessed -> $currentId")
         lastNodeProcessed = currentId
 
-      case (currentId, AgreementIndelNode(witnessReadings)) =>
+      case (currentId, AgreementIndelNode(witnessReadings, witnessGroups)) =>
         val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
         val nValues = tokenArray
           .slice(tokenArrayPointers._1, tokenArrayPointers._2)

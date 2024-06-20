@@ -18,13 +18,10 @@ sealed trait AlignmentTreeNode // supertype of all nodes
   * readings but do not use a ListMap visualization, and therefore do not inherit this trait
   */
 trait HasWitnessReadings extends AlignmentTreeNode {
+  def witnessGroups: Vector[Vector[String]]
   def witnessReadings: WitnessReadings
   def formatWitnessReadings: String =
     s"${ListMap(witnessReadings.toSeq.sortBy(_._1): _*)}"
-}
-
-trait HasWitnessGroups extends AlignmentTreeNode {
-  def witnessGroups: Vector[Vector[String]]
 }
 
 /** ExpandedNode
@@ -43,16 +40,18 @@ final case class VariationNode(
     witnessGroups: Vector[Vector[String]] // sigla
 ) extends AlignmentTreeNode
     with HasWitnessReadings
-    with HasWitnessGroups
 
 final case class VariationIndelNode(
     witnessReadings: WitnessReadings,
     witnessGroups: Vector[Vector[String]] // sigla
 ) extends AlignmentTreeNode
     with HasWitnessReadings
-    with HasWitnessGroups
 
-final case class AgreementNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode with HasWitnessReadings
+final case class AgreementNode(
+    witnessReadings: WitnessReadings,
+    witnessGroups: Vector[Vector[String]]
+) extends AlignmentTreeNode
+    with HasWitnessReadings
 
 /** Custom constructor to simplify creation of LeafNode
   *
@@ -62,10 +61,10 @@ final case class AgreementNode(witnessReadings: WitnessReadings) extends Alignme
   */
 object AgreementNode {
   def apply(m: (String, (Int, Int))*): AlignmentTreeNode =
-    AgreementNode(m.toMap)
+    AgreementNode(m.toMap, Vector(Vector(m.map(_._1)).flatten)) // FIXME: Fake witnessGroups value
 }
 
-/** Indel node
+/** AgreementIndel node
   *
   * Like a AgreementNode in that all witnesses agree, except that not all corpus witnesses are present
   *
@@ -74,24 +73,32 @@ object AgreementNode {
   *
   * Companion object is a convenience constructor (see documentation of companion object for AgreementNode, above)
   */
-final case class AgreementIndelNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode with HasWitnessReadings
+final case class AgreementIndelNode(
+    witnessReadings: WitnessReadings,
+    witnessGroups: Vector[Vector[String]]
+) extends AlignmentTreeNode
+    with HasWitnessReadings
 object AgreementIndelNode {
   def apply(m: (String, (Int, Int))*): AlignmentTreeNode =
-    AgreementIndelNode(m.toMap)
+    AgreementIndelNode(m.toMap, Vector(Vector(m.map(_._1)).flatten)) // FIXME: Fake witnessGroups value
 }
 
 // Temporary; eventually the alignment graph will have no unexpanded nodes
-final case class UnexpandedNode(witnessReadings: WitnessReadings) extends AlignmentTreeNode with HasWitnessReadings
+final case class UnexpandedNode(
+    witnessReadings: WitnessReadings,
+    witnessGroups: Vector[Vector[String]]
+) extends AlignmentTreeNode
+    with HasWitnessReadings
 // When we expand an UnexpandedNode we replace it with an ExpandedNode
 // UnexpandedNode cannot have children (it has only WitnessReadings)
 // ExpandedNode must have children
 def show(node: AlignmentTreeNode): Unit =
   node match {
-    case AgreementNode(witnessReadings)      => println(witnessReadings)
-    case AgreementIndelNode(witnessReadings) => println(witnessReadings)
-    case VariationNode(children, _)          => println(children)
-    case UnexpandedNode(witnessReadings)     => println(witnessReadings)
-    case ExpandedNode(children)              => println(children)
+    case AgreementNode(witnessReadings, witnessGroups)      => println(witnessReadings)
+    case AgreementIndelNode(witnessReadings, witnessGroups) => println(witnessReadings)
+    case VariationNode(children, _)                         => println(children)
+    case UnexpandedNode(witnessReadings, witnessGroups)     => println(witnessReadings)
+    case ExpandedNode(children)                             => println(children)
   }
 
 /** Input is Vector[Int], representing FullDepthBlock instances Output is Vector[AlignmentNode], where the nodes are all
@@ -121,4 +128,5 @@ def fullDepthBlockToReadingNode(
       ).g + block.length)
     )
     .toMap
-  AgreementNode(readings)
+  val groups = Vector(readings.keys.toVector)
+  AgreementNode(readings, groups) // FIXME: Fake witnessGroups value

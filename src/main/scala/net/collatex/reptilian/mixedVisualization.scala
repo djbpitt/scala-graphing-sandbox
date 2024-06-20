@@ -7,7 +7,7 @@ def createTableCells(
     tokenArray: Vector[Token]
 ) =
   for numberedNode <- nodeSequence yield numberedNode.node match {
-    case AgreementNode(witnessReadings) =>
+    case AgreementNode(witnessReadings, witnessGroups) =>
       val sigla = "all"
       val (_, value) = witnessReadings.head
       val text = tokenArray
@@ -16,7 +16,7 @@ def createTableCells(
         .mkString(" ")
       <td class="reading"><span class="sigla">{s"$sigla: "}</span>{text}</td>
 
-    case AgreementIndelNode(witnessReadings) =>
+    case AgreementIndelNode(witnessReadings, witnessGroups) =>
       val sigla = witnessReadings.keys
         .map(_.slice(8, 10))
         .toVector
@@ -69,15 +69,13 @@ def createTableCells(
 
 /** Create HTML table with SVG flow information
   *
-  * Each cell in left column is split horizontally in two: alignment point and
-  * flow to next alignment point. The flow is empty for the last row.
+  * Each cell in left column is split horizontally in two: alignment point and flow to next alignment point. The flow is
+  * empty for the last row.
   *
-  * Draws on functions used to create separate HTML alignment table and SVG flow
-  * visualization
+  * Draws on functions used to create separate HTML alignment table and SVG flow visualization
   *
   * @param nodeSequence
-  *   NumberedNode objects, with Reading, Indel, or Variation node paired with
-  *   node number
+  *   NumberedNode objects, with Reading, Indel, or Variation node paired with node number
   * @param tokenArray
   *   Array of Token instances with t and n properties
   * @return
