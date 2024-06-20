@@ -169,9 +169,9 @@ private def createTextGridColumnCells(
           <ul><li><span class="sigla">{sigla}:</span> {text}</li></ul>
         case VariationNode(witnessReadings, witnessGroups) =>
           val readings = witnessGroups map { e =>
-            val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
-            val start = witnessReadings(e.head)._1
-            val end = witnessReadings(e.head)._2
+            val sigla = e.keys.map(_.slice(8, 10)).toSeq.sorted.mkString(" ")
+            val start = witnessReadings.head._2._1
+            val end = witnessReadings.head._2._1
             val text = tokenArray
               .slice(start, end)
               .map(_.n)
@@ -181,9 +181,9 @@ private def createTextGridColumnCells(
           <ul>{readings}</ul>
         case VariationIndelNode(witnessReadings, witnessGroups) =>
           val readings = witnessGroups map { e =>
-            val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
-            val start = witnessReadings(e.head)._1
-            val end = witnessReadings(e.head)._2
+            val sigla = e.keys.map(_.slice(8, 10)).toSeq.sorted.mkString(" ")
+            val start = witnessReadings.head._2._1
+            val end = witnessReadings.head._2._1
             val text = tokenArray
               .slice(start, end)
               .map(_.n)
@@ -591,7 +591,7 @@ private def findMissingWitnesses(n: HasWitnessReadings, sigla: Set[String]): Vec
   *   Vector of vector of strings, where inner vectors are groups and strings are sigla
   */
 private def groupReadings(n: HasWitnessReadings) =
-  val groups: Vector[Vector[String]] =
+  val groups: Vector[WitnessReadings] =
     n.witnessGroups
   groups
 
@@ -634,11 +634,11 @@ private def createHorizNodeData(
             Vector(HorizNodeGroup(wr.map((k, v) => HorizNodeGroupMember(k, v.map(_.t).mkString)).toVector.sorted))
           case e: VariationNode =>
             e.witnessGroups.map(f =>
-              HorizNodeGroup(f.map(g => HorizNodeGroupMember(g, wr(g).map(_.t).mkString)).sorted)
+              HorizNodeGroup(wr.map((k, v) => HorizNodeGroupMember(k, v.map(_.t).mkString)).toVector.sorted)
             )
           case e: VariationIndelNode =>
             e.witnessGroups.map(f =>
-              HorizNodeGroup(f.map(g => HorizNodeGroupMember(g, wr(g).map(_.t).mkString)).sorted)
+              HorizNodeGroup(wr.map((k, v) => HorizNodeGroupMember(k, v.map(_.t).mkString)).toVector.sorted)
             )
         }).sorted,
         missing = missing
@@ -697,7 +697,8 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   val witnessCount = sigla.size
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
-  /* Compute optimal witness order */
+  /* Compute optimal witness order; finds distances but not order; not updated for new witnessGroups */
+  /* 
   val cartesianProducts: Vector[Iterable[Set[String]]] = nodeSequence.map(_.node) map {
     case AgreementNode(witnessReadings, witnessGroups)      => selfCartesianProduct(witnessReadings.keys)
     case AgreementIndelNode(witnessReadings, witnessGroups) => selfCartesianProduct(witnessReadings.keys)
@@ -741,7 +742,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   println(lk.tour.map(e => keys(e).mkString).toVector)
 
   // cells.map(e => witnessSimilarities(e)).foreach(println)
-
+  */
   /* End of computing optimal witness order */
   val totalWidth = horizNodes.last.xOffset + horizNodes.last.alignmentWidth + 2
   val totalHeight = ribbonWidth * (witnessCount * 3) - ribbonWidth / 2

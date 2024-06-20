@@ -32,9 +32,9 @@ def createTableCells(
     case VariationNode(witnessReadings, witnessGroups) =>
       val variants =
         witnessGroups map { e =>
-          val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
-          val start = witnessReadings(e.head)._1
-          val end = witnessReadings(e.head)._2
+          val sigla = e.keys.map(_.slice(8, 10)).toSeq.sorted.mkString(" ")
+          val start = witnessReadings.head._2._1
+          val end = witnessReadings.head._2._2
           val text = tokenArray
             .slice(start, end)
             .map(_.n)
@@ -50,9 +50,9 @@ def createTableCells(
     case VariationIndelNode(witnessReadings, witnessGroups) =>
       val variants =
         witnessGroups map { e =>
-          val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
-          val start = witnessReadings(e.head)._1
-          val end = witnessReadings(e.head)._2
+          val sigla = e.keys.map(_.slice(8, 10)).toSeq.sorted.mkString(" ")
+          val start = witnessReadings.head._2._1
+          val end = witnessReadings.head._2._2
           val text = tokenArray
             .slice(start, end)
             .map(_.n)

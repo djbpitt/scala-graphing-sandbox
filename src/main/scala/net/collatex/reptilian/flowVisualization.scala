@@ -105,7 +105,7 @@ private def createAlignmentPoints(
       val result = AlignmentPoint(
         nodeNo = index + 1,
         subGroups =
-          node.witnessGroups.map(e => SubGroup(e.map(f => WitnessReading(f)))),
+          node.witnessGroups.map(e => SubGroup(e.map(f => WitnessReading(f._1)).toVector)),
         missingGroup = Vector.empty
       )
       result
@@ -118,7 +118,7 @@ private def createAlignmentPoints(
       val result = AlignmentPoint(
         nodeNo = index + 1,
         subGroups =
-          node.witnessGroups.map(e => SubGroup(e.map(f => WitnessReading(f)))),
+          node.witnessGroups.map(e => SubGroup(e.map(f => WitnessReading(f._1)).toVector)),
         missingGroup = missingSigla.map(e => WitnessReading(e))
       )
       result

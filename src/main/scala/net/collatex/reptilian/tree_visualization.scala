@@ -380,9 +380,9 @@ def createSingleColumnAlignmentTableRows(
         <td><span class="sigla">{sigla}:</span> {text}</td>
       case VariationNode(witnessReadings, witnessGroups) =>
         val readings = witnessGroups map { e =>
-          val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
-          val start = witnessReadings(e.head)._1
-          val end = witnessReadings(e.head)._2
+          val sigla = e.keys.map(_.slice(8, 10)).toSeq.sorted.mkString(" ")
+          val start = witnessReadings.head._2._1
+          val end = witnessReadings.head._2._1
           val text = tokenArray
             .slice(start, end)
             .map(_.n)
@@ -392,9 +392,9 @@ def createSingleColumnAlignmentTableRows(
         <td><ul>{readings}</ul></td>
       case VariationIndelNode(witnessReadings, witnessGroups) =>
         val readings = witnessGroups map { e =>
-          val sigla = e.map(_.slice(8, 10)).sorted.mkString(" ")
-          val start = witnessReadings(e.head)._1
-          val end = witnessReadings(e.head)._2
+          val sigla = e.keys.map(_.slice(8, 10)).toSeq.sorted.mkString(" ")
+          val start = witnessReadings.head._2._1
+          val end = witnessReadings.head._2._1
           val text = tokenArray
             .slice(start, end)
             .map(_.n)

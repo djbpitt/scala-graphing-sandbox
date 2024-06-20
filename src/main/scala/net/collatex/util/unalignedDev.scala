@@ -250,16 +250,16 @@ private def nwCompactAlignmentTreeNodeSteps(
   def openStepToTreeNode(open: (SingleStepAlignmentTreePath, WitnessReadings)): HasWitnessReadings =
     open match {
       case (SingleStepMatch(tok1: Token, tok2: Token), wr: WitnessReadings) =>
-        AgreementNode(witnessReadings = wr, witnessGroups = Vector(wr.keys.toVector))
+        AgreementNode(witnessReadings = wr, witnessGroups = Vector(wr))
       case (SingleStepNonMatch(tok1: Token, tok2: Token), wr: WitnessReadings) =>
         VariationNode(
           witnessReadings = wr,
-          witnessGroups = wr.map((k, _) => Vector(k)).toVector
+          witnessGroups = Vector(wr)
         )
       case (SingleStepInsert(tok: Token), wr: WitnessReadings) =>
-        AgreementIndelNode(witnessReadings = wr, witnessGroups = Vector(wr.keys.toVector))
+        AgreementIndelNode(witnessReadings = wr, witnessGroups = Vector(wr))
       case (SingleStepDelete(tok: Token), wr: WitnessReadings) =>
-        AgreementIndelNode(witnessReadings = wr, witnessGroups = Vector(wr.keys.toVector))
+        AgreementIndelNode(witnessReadings = wr, witnessGroups = Vector(wr))
     }
 
   @tailrec
@@ -389,8 +389,8 @@ def splitTree(
           e.witnessReadings.head._2._2
         )
       case e: VariationNode =>
-        val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
-        val ts = groupHeads.map(f => ta.slice(e.witnessReadings(f)._1, e.witnessReadings(f)._2))
+        val groupHeads = e.witnessGroups.map(_.head) // one (String, (Int, Int)) per group
+        val ts = groupHeads.map(f => ta.slice(f._2._1, f._2._2))
         sep += 1
         List(Token(sep.toString, sep.toString, -1, -1)) ++
           (ts.head ++ ts.tail
@@ -400,7 +400,7 @@ def splitTree(
             ))
       case e: VariationIndelNode =>
         val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
-        val ts = groupHeads.map(f => ta.slice(e.witnessReadings(f)._1, e.witnessReadings(f)._2))
+        val ts = groupHeads.map(f => ta.slice(f._2._1, f._2._2))
         sep += 1
         List(Token(sep.toString, sep.toString, -1, -1)) ++
           (ts.head ++ ts.tail
@@ -439,7 +439,7 @@ def splitTree(
           Vector.fill(tokenSize)(e)
         case e: VariationNode =>
           val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
-          val ts = groupHeads.map(f => ta.slice(e.witnessReadings(f)._1, e.witnessReadings(f)._2))
+          val ts = groupHeads.map(f => ta.slice(f._2._1, f._2._2))
           sep += 1
           val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
             (ts.head ++ ts.tail
@@ -450,7 +450,7 @@ def splitTree(
           Vector.fill(tokenSize)(e)
         case e: VariationIndelNode =>
           val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
-          val ts = groupHeads.map(f => ta.slice(e.witnessReadings(f)._1, e.witnessReadings(f)._2))
+          val ts = groupHeads.map(f => ta.slice(f._2._1, f._2._2))
           sep += 1
           val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
             (ts.head ++ ts.tail
@@ -480,7 +480,7 @@ def splitTree(
           ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
       case e: VariationNode =>
         val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
-        val ts = groupHeads.map(f => ta.slice(e.witnessReadings(f)._1, e.witnessReadings(f)._2))
+        val ts = groupHeads.map(f => ta.slice(f._2._1, f._2._2))
         sep += 1
         List(Token(sep.toString, sep.toString, -1, -1)) ++
           (ts.head ++ ts.tail
@@ -490,7 +490,7 @@ def splitTree(
             ))
       case e: VariationIndelNode =>
         val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
-        val ts = groupHeads.map(f => ta.slice(e.witnessReadings(f)._1, e.witnessReadings(f)._2))
+        val ts = groupHeads.map(f => ta.slice(f._2._1, f._2._2))
         sep += 1
         List(Token(sep.toString, sep.toString, -1, -1)) ++
           (ts.head ++ ts.tail
@@ -540,7 +540,7 @@ def splitTree(
                   fdb.head.instances.last
                 ).g + fdb.head.length)
               )
-              val wg = Vector(wr.keys.toVector)
+              val wg = Vector(wr)
               val updatedAgreementNode = AgreementNode(witnessReadings = wr, witnessGroups = wg)
               val singletonSiglum = singletonTokens.head.w.toString
               val singletonEndInAgreementNode =
@@ -574,11 +574,11 @@ def splitTree(
               case (b1: AgreementNode, b2: AgreementNode) =>
                 val mergedWitnessReadings = a1.witnessReadings ++ a2.witnessReadings
                 val mergedWitnessGroups = Vector(a1.witnessReadings.keys.toVector, a2.witnessReadings.keys.toVector)
-                val result = VariationNode(witnessReadings = mergedWitnessReadings, witnessGroups = mergedWitnessGroups)
+                val result = VariationNode(witnessReadings = mergedWitnessReadings, witnessGroups = Vector(mergedWitnessReadings))
                 result
               case _ =>
                 AgreementNode(
-                  Map("w" -> (0, 1)),Vector(Vector("w"))
+                  Map("w" -> (0, 1)),Vector(Map("w" -> (0, 1)))
                 ) // FIXME: Fake AgreementNode to fool compiler—temporarily, of course!
             }
 
