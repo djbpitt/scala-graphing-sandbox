@@ -199,7 +199,7 @@ def setupNodeExpansion(
       case 1 =>
         AgreementIndelNode(
           witnessReadings = selection.witnessReadings,
-          witnessGroups = Vector(selection.witnessReadings)
+          witnessGroups = groups
         )
       case e: Int if e == sigla.size =>
         ExpandedNode( // no blocks, so the single child is a VariationNode

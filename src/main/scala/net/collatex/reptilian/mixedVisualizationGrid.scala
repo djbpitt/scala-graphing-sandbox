@@ -627,20 +627,15 @@ private def createHorizNodeData(
         nodeType = nodeType,
         alignmentWidth = alignmentWidth,
         xOffset = xOffset,
-        groups = (nodes.head.node match {
-          case e: AgreementNode =>
-            Vector(HorizNodeGroup(wr.map((k, v) => HorizNodeGroupMember(k, v.map(_.t).mkString)).toVector.sorted))
-          case e: AgreementIndelNode =>
-            Vector(HorizNodeGroup(wr.map((k, v) => HorizNodeGroupMember(k, v.map(_.t).mkString)).toVector.sorted))
-          case e: VariationNode =>
-            e.witnessGroups.map(f =>
-              HorizNodeGroup(wr.map((k, v) => HorizNodeGroupMember(k, v.map(_.t).mkString)).toVector.sorted)
-            )
-          case e: VariationIndelNode =>
-            e.witnessGroups.map(f =>
-              HorizNodeGroup(wr.map((k, v) => HorizNodeGroupMember(k, v.map(_.t).mkString)).toVector.sorted)
-            )
-        }).sorted,
+        /* Create one HorizNodeGroup for each group, where HorizNodeGroupMember is a
+        * map from siglum to reading as string. Sort both groups and within groups. */
+        groups = nodes.head.node.witnessGroups
+          .map(f => HorizNodeGroup(f.map((k, v) => HorizNodeGroupMember(k, wr(k)
+              .map(_.t)
+              .mkString))
+            .toVector
+            .sorted))
+          .sorted,
         missing = missing
       )
       nextNode(nodes.tail, pos + 1, acc :+ newNode)
@@ -698,7 +693,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
   /* Compute optimal witness order; finds distances but not order; not updated for new witnessGroups */
-  /* 
+  /*
   val cartesianProducts: Vector[Iterable[Set[String]]] = nodeSequence.map(_.node) map {
     case AgreementNode(witnessReadings, witnessGroups)      => selfCartesianProduct(witnessReadings.keys)
     case AgreementIndelNode(witnessReadings, witnessGroups) => selfCartesianProduct(witnessReadings.keys)
@@ -742,7 +737,7 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   println(lk.tour.map(e => keys(e).mkString).toVector)
 
   // cells.map(e => witnessSimilarities(e)).foreach(println)
-  */
+   */
   /* End of computing optimal witness order */
   val totalWidth = horizNodes.last.xOffset + horizNodes.last.alignmentWidth + 2
   val totalHeight = ribbonWidth * (witnessCount * 3) - ribbonWidth / 2
