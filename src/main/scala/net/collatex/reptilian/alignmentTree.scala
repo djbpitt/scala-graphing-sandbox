@@ -5,7 +5,15 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scalatags.Text.all.*
 
-// One map entry per witness, from witness id to start and end (exclusive "until") offset in global token array
+// From witness id to start and end (exclusive "until") offset in global token array
+opaque type Siglum = String
+object Siglum:
+  def apply(s: String): Siglum = s
+  extension (s: Siglum) {
+    def value: String = s
+  }
+given CanEqual[Siglum, Siglum] = CanEqual.derived
+
 type WitnessReadings = Map[String, (Int, Int)] // type alias
 
 sealed trait AlignmentTreeNode // supertype of all nodes
