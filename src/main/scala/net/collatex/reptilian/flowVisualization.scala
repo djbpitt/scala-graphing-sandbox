@@ -7,15 +7,15 @@ import scala.jdk.CollectionConverters.*
 import scala.xml.{Elem, NodeSeq}
 
 /* Constants */
-val witnessToColor: Map[String, String] = Map(
-  "darwin1859.txt" -> "peru",
-  "darwin1860.txt" -> "orange",
-  "darwin1861.txt" -> "yellow",
-  "darwin1866.txt" -> "limegreen",
-  "darwin1869.txt" -> "dodgerblue",
-  "darwin1872.txt" -> "violet"
+val witnessToColor: Map[Siglum, String] = Map(
+  Siglum("darwin1859.txt") -> "peru",
+  Siglum("darwin1860.txt") -> "orange",
+  Siglum("darwin1861.txt") -> "yellow",
+  Siglum("darwin1866.txt") -> "limegreen",
+  Siglum("darwin1869.txt") -> "dodgerblue",
+  Siglum("darwin1872.txt") -> "violet"
 )
-val allSigla: Set[String] =
+val allSigla: Set[Siglum] =
   witnessToColor.keySet // TODO: Derive from nodes, but AlignmentTreeNode doesn't have a witnessReadings property
 val totalWitnessCount: Int = allSigla.size
 val witDims: Map[String, Double] = Map("w" -> 6, "h" -> 10)
@@ -29,8 +29,8 @@ val verticalRuleXPos: Double =
 
 /** Create single-color linear gradient
   *
-  * Transition is vertical (default is horizontal) No need to specify graduated
-  * steps; renderer creates smooth transition with just end and mid points
+  * Transition is vertical (default is horizontal) No need to specify graduated steps; renderer creates smooth
+  * transition with just end and mid points
   *
   * @param color
   *   start and end colors are the same
@@ -50,8 +50,7 @@ private def createSingleColorGradient(color: String): Elem =
     <stop offset="100%" stop-color={color} stop-opacity="1"/>
   </linearGradient>
 
-/** Create alignment points from all alignment tree nodes, preparatory to
-  * generating SVG flow diagrom
+/** Create alignment points from all alignment tree nodes, preparatory to generating SVG flow diagrom
   *
   * @param nodeSequence
   *   vector of all alignment tree nodes
@@ -104,8 +103,7 @@ private def createAlignmentPoints(
           .sorted // could be empty
       val result = AlignmentPoint(
         nodeNo = index + 1,
-        subGroups =
-          node.witnessGroups.map(e => SubGroup(e.map(f => WitnessReading(f._1)).toVector)),
+        subGroups = node.witnessGroups.map(e => SubGroup(e.map(f => WitnessReading(f._1)).toVector)),
         missingGroup = Vector.empty
       )
       result
@@ -117,8 +115,7 @@ private def createAlignmentPoints(
           .sorted // could be empty
       val result = AlignmentPoint(
         nodeNo = index + 1,
-        subGroups =
-          node.witnessGroups.map(e => SubGroup(e.map(f => WitnessReading(f._1)).toVector)),
+        subGroups = node.witnessGroups.map(e => SubGroup(e.map(f => WitnessReading(f._1)).toVector)),
         missingGroup = missingSigla.map(e => WitnessReading(e))
       )
       result
@@ -127,12 +124,10 @@ private def createAlignmentPoints(
 /** Create one <g> element for each AlignmentPoint instance
   *
   * @param input
-  *   tuple of AlignmentPoint and Int, representing its offset in the sequence
-  *   of alignment points
+  *   tuple of AlignmentPoint and Int, representing its offset in the sequence of alignment points
   * @param reference
-  *   "absolute" if absolutely positioned in total visualization (used for
-  *   stand-alone flow view); "relative" if y position is always zero (used in
-  *   mixed view)
+  *   "absolute" if absolutely positioned in total visualization (used for stand-alone flow view); "relative" if y
+  *   position is always zero (used in mixed view)
   * @return
   *   <g> that contains SVG for all alignment points
   */
@@ -148,21 +143,17 @@ private def createOuterG(
     createInnerGs(input._1)
   }</g>
 
-/** Create inner <g> elements for each group of witnesses in one alignment point
-  * that share a reading, and for missing witnesses
+/** Create inner <g> elements for each group of witnesses in one alignment point that share a reading, and for missing
+  * witnesses
   *
-  * Inner <g> elements are positioned only horizontally, and they contain one
-  * <rect> and one <text> for each witness
+  * Inner <g> elements are positioned only horizontally, and they contain one <rect> and one <text> for each witness
   *
-  * Bounding rectangles for each subgroup and horizontal connecting lines
-  * between them are created elsewhere
+  * Bounding rectangles for each subgroup and horizontal connecting lines between them are created elsewhere
   *
   * @param input
-  *   alignment point, which contains subgroups and possibly empty vector of
-  *   missing witnesses
+  *   alignment point, which contains subgroups and possibly empty vector of missing witnesses
   * @return
-  *   vector of <g> elements, one for each subgroup (and, optionally, group of
-  *   missing witnesses)
+  *   vector of <g> elements, one for each subgroup (and, optionally, group of missing witnesses)
   */
 private def createInnerGs(input: AlignmentPoint): Vector[Elem] =
   @tailrec
@@ -194,15 +185,12 @@ private def createInnerGs(input: AlignmentPoint): Vector[Elem] =
       <g transform={
         "translate(" + (verticalRuleXPos + (witDims("w") / 2)).toString + ")"
       }>{
-        input.missingGroup.zipWithIndex.map((reading, offset) =>
-          plotRectAndText(reading, offset)
-        )
+        input.missingGroup.zipWithIndex.map((reading, offset) => plotRectAndText(reading, offset))
       }</g>
     groupRects :+ missingRects
   else groupRects
 
-/** Create colored rectangles and text for each witness in a single alignment
-  * group
+/** Create colored rectangles and text for each witness in a single alignment group
   *
   * Rect and labels for group of missing witnesses is created elsewhere
   *
@@ -246,7 +234,7 @@ private def plotRectAndText(
       text-anchor="middle"
       dominant-baseline="central"
       font-size={(witDims("w") * .7).toString}>{
-      reading.siglum.slice(8, 10)
+      reading.siglum.value.slice(8, 10)
     }</text>
   Vector(rect, text)
 
@@ -354,9 +342,8 @@ val defs: Elem = <defs>
 
 /** Entry point to create SVG flow visualization from alignment tree
   *
-  * Create flattened sequence of alignment tree nodes (in
-  * tree_visualization.scala), then create alignment points from alignment-tree
-  * nodes
+  * Create flattened sequence of alignment tree nodes (in tree_visualization.scala), then create alignment points from
+  * alignment-tree nodes
   *
   * Input sequence is tuples of *nodeId, Node)
   *
@@ -402,12 +389,10 @@ def createSvgFlowModel(
 
 /** AlignmentPoint
   *
-  * Corresponds to AlignmentTreeNode of any type Rendered at a shared vertical
-  * position in SVG
+  * Corresponds to AlignmentTreeNode of any type Rendered at a shared vertical position in SVG
   *
   * @param subGroups
-  *   witnesses are grouped according to shared readings, extracted from token
-  *   array
+  *   witnesses are grouped according to shared readings, extracted from token array
   * @param missingGroup
   *   witnesses not present at alignment point; may be empty
   */
@@ -419,15 +404,12 @@ case class AlignmentPoint(
 
 /** SubGroup
   *
-  * Group of WitnessReading instances, one per witness present in the subgroup
-  * of the alignment-tree node
+  * Group of WitnessReading instances, one per witness present in the subgroup of the alignment-tree node
   *
-  * Sort lexcially by (siglum of) first witness reading; no ambiguity because
-  * subgroups have no overlap
+  * Sort lexcially by (siglum of) first witness reading; no ambiguity because subgroups have no overlap
   *
   * @param witnesses
-  *   Witnesses are represented by WitnessReading instances, each represented by
-  *   its sigla
+  *   Witnesses are represented by WitnessReading instances, each represented by its sigla
   */
 case class SubGroup(witnesses: Vector[WitnessReading]) {
   def size: Int = witnesses.size
@@ -446,7 +428,7 @@ object SubGroup {
   * @param siglum
   *   witness identifier
   */
-case class WitnessReading(siglum: String)
+case class WitnessReading(siglum: Siglum)
 object WitnessReading {
   implicit def ordering: Ordering[WitnessReading] =
     (a: WitnessReading, b: WitnessReading) => a.siglum.compare(b.siglum)

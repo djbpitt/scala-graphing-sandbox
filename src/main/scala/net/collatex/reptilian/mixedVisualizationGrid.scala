@@ -1,66 +1,8 @@
 package net.collatex.reptilian
 
-import de.sciss.tsp.LinKernighan
-import smile.data.DataFrame
-
 import scala.annotation.tailrec
 import scala.xml.{Elem, Node}
 import math.Ordered.orderingToOrdered
-
-/** Create inner <g> elements with <text> only (no <rect>)
-  *
-  * @param input
-  *   AlignmentPoint
-  * @return
-  *   <g> element
-  */
-private def createInnerGridGs(input: AlignmentPoint): Vector[Elem] =
-  @tailrec
-  def nextGroup( // recursively process all non-empty subgrouops
-      groupsToProcess: Vector[SubGroup],
-      groupCount: Int,
-      cumWitnessCount: Int,
-      acc: Vector[Elem]
-  ): Vector[Elem] =
-    if groupsToProcess.isEmpty then acc
-    else
-      val currentGroup = groupsToProcess.head
-      val subGroupXPos =
-        ((cumWitnessCount + groupCount) * witDims("w")).toString
-      val newG = <g transform={"translate(" + subGroupXPos + ")"}>{
-        createWitnessTexts(currentGroup)
-      }</g>
-      val newCumWitnessCount = cumWitnessCount + currentGroup.witnesses.size
-      val newGroupCount = groupCount + 1
-      nextGroup(
-        groupsToProcess.tail,
-        newGroupCount,
-        newCumWitnessCount,
-        acc :+ newG
-      )
-
-  val groupTexts = nextGroup(
-    input.subGroups,
-    0,
-    0,
-    Vector.empty
-  ) // start of subgroup processing
-
-  if input.missingGroup.nonEmpty
-  then // process group of missing witnesses if present
-    val missingTexts =
-      <g transform={
-        "translate(" + (verticalRuleXPos + (witDims("w") / 2)).toString + ")"
-      }>
-        {
-        input.missingGroup.zipWithIndex.map((reading, offset) => plotText(reading, offset))
-      }
-      <line x1="0" y1="5" x2={
-        (witDims("w") * input.missingGroup.size).toString
-      } y2="5" stroke="black" stroke-width=".5"/>
-      </g>
-    groupTexts :+ missingTexts
-  else groupTexts
 
 /** Output <text> with witness sigla for a single subgroup of readigs
   *
@@ -100,101 +42,9 @@ private def plotText(
     y={(witDims("h") / 2 - 1).toString}
     text-anchor="middle"
     font-size={(witDims("w") * .7).toString}>{
-      reading.siglum.slice(8, 10)
+      reading.siglum.value.slice(8, 10)
     }</text>
   text
-
-/** Create vector of all svg column cells
-  *
-  * @param nodes
-  *   vector of AlignmentPoint instances
-  * @return
-  *   vector of <svg> elements
-  */
-private def createSvgGridColumnCells(
-    nodes: Vector[AlignmentPoint]
-): Vector[scala.xml.Elem] =
-  val result = nodes.zipWithIndex map { (node, index) =>
-    val nodeNo = (index + 1).toString // Output is one-based
-    val innerGs = createInnerGridGs(node)
-    <div id={"t" + nodeNo} style={
-      "background-image: url('mixed-output-grid-backgrounds.svg#b" + nodeNo + "');"
-    }>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40">
-        <g id={"v" + nodeNo}>{innerGs}</g>
-      </svg>
-    </div>
-  }
-  result
-
-/** Create vector of all text column cells
-  *
-  * agreement and agreementIndel nodes are one-item lists, but nonetheless conceptually lists, and therefore tagged as
-  * <ul> with single <li>
-  *
-  * <div> wrappers are added later
-  *
-  * @param nodes
-  *   vector of NumberedNode instances
-  * @param tokenArray
-  *   vector of Token instances
-  * @return
-  *   vector of <ul> elements
-  */
-private def createTextGridColumnCells(
-    nodes: Vector[NumberedNode],
-    tokenArray: Vector[Token]
-) =
-  val result =
-    nodes.map { e =>
-      val rowContent = e.node match {
-        case AgreementNode(witnessReadings, witnessGroups) =>
-          val (_, value) = witnessReadings.head
-          val text = tokenArray
-            .slice(value._1, value._2)
-            .map(_.n)
-            .mkString(" ")
-          <ul><li><span class="sigla">all:</span> {text}</li></ul>
-        case AgreementIndelNode(witnessReadings, witnessGroups) =>
-          val sigla = witnessReadings.keys
-            .map(_.slice(8, 10))
-            .toVector
-            .sorted
-            .mkString(" ")
-          val (_, value) = witnessReadings.head
-          val text = tokenArray
-            .slice(value._1, value._2)
-            .map(_.n)
-            .mkString(" ")
-          <ul><li><span class="sigla">{sigla}:</span> {text}</li></ul>
-        case VariationNode(witnessReadings, witnessGroups) =>
-          val readings = witnessGroups map { e =>
-            val sigla = e.keys.map(_.slice(8, 10)).toSeq.sorted.mkString(" ")
-            val start = witnessReadings.head._2._1
-            val end = witnessReadings.head._2._1
-            val text = tokenArray
-              .slice(start, end)
-              .map(_.n)
-              .mkString(" ")
-            <li><span class="sigla">{sigla}:</span> {text}</li>
-          }
-          <ul>{readings}</ul>
-        case VariationIndelNode(witnessReadings, witnessGroups) =>
-          val readings = witnessGroups map { e =>
-            val sigla = e.keys.map(_.slice(8, 10)).toSeq.sorted.mkString(" ")
-            val start = witnessReadings.head._2._1
-            val end = witnessReadings.head._2._1
-            val text = tokenArray
-              .slice(start, end)
-              .map(_.n)
-              .mkString(" ")
-            <li><span class="sigla">{sigla}:</span> {text}</li>
-          }
-          <ul>{readings}</ul>
-      }
-      rowContent
-    }
-  result
 
 /** Create vector of alignment-node types, converted from PascalCase to camelCase, used as HTML @class value on row
   * <div>
@@ -257,90 +107,7 @@ private def createGridBackgroundFlows(
 
   allPaths :+ lastPath
 
-/** Entry point to create html (main page) and svg (backgrounds sprites) for grid-based continuous flow visualization
-  *
-  * Depends on static css authored separately
-  *
-  * @param root
-  *   root of alignment tree, which is then immediately flattened
-  * @param tokenArray
-  *   array of Token instances
-  * @return
-  *   tuple of html main document and svg document with background sprites
-  */
-def createFlowModelForGrid(root: ExpandedNode, tokenArray: Vector[Token]) =
-  /*
-   * Setup
-   * */
-  val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
-  val alignmentPoints: Vector[AlignmentPoint] =
-    createAlignmentPoints(nodeSequence, tokenArray)
-  /*
-   * Create grid content (one row per alignment point)
-   * */
-  val gridRowClasses: Vector[String] = getGridRowClasses(nodeSequence)
-  val gridColumnCellsSvg: Vector[Elem] = createSvgGridColumnCells(
-    alignmentPoints
-  ) // <div>
-  val gridColumnNodeNos = (1 to alignmentPoints.size).toVector
-  val gridColumnCellsText: Vector[Elem] =
-    createTextGridColumnCells(nodeSequence, tokenArray) // <td>
-  val gridContent = gridRowClasses.indices map { e =>
-    val c = gridRowClasses(e) // "class" is a reserved word
-    val svg = gridColumnCellsSvg(
-      e
-    ) // already wrapped in <div> because needs background pointer
-    val nodeNo = gridColumnNodeNos(e)
-    val text = gridColumnCellsText(e)
-    <div class={c}>
-      {svg}
-      <div><ul><li>{nodeNo}</li></ul></div>
-      <div>{text}</div>
-    </div>
-  }
-  /*
-   * HTML grid output
-   * */
-  val html =
-    <html xmlns="http://www.w3.org/1999/xhtml">
-      <head>
-        <title>Alignments</title>
-        <link rel="stylesheet" type="text/css" href="mixed-output-grid.css"/>
-      </head>
-      <body>
-        <h1>Alignments</h1>
-        <div>
-          <div>
-            <div>Flow</div>
-            <div>Node</div>
-            <div>Text</div>
-          </div>
-          {gridContent}
-        </div>
-      </body>
-    </html>
-  /*
-   * Background sprites
-   * */
-  val linearGradientDefs = witnessToColor.values.map(createSingleColorGradient)
-  val spritesContent = createGridBackgroundFlows(alignmentPoints)
-  val spritesPage =
-    <svg xmlns="http://www.w3.org/2000/svg"  height="100%" viewBox={
-      s"0 0 100 40"
-    } preserveAspectRatio="none">
-      <defs>
-        <style type="text/css">
-          g {{ display: none; }}
-          g:target {{ display: inline; }}
-        </style>
-        {linearGradientDefs}</defs>
-      {spritesContent}
-    </svg>
-  /*
-   * Return tuple of html main page and svg background sprites
-   */
-  (html, spritesPage)
-
+/*
 private def createNonspriteSvgGridColumnCells(
     nodes: Vector[AlignmentPoint]
 ): Vector[scala.xml.Elem] =
@@ -367,7 +134,9 @@ private def createNonspriteSvgGridColumnCells(
     </div>
   }
   result
+*/
 
+/*
 def createNonspriteGrid(root: ExpandedNode, tokenArray: Vector[Token]): scala.xml.Node =
   /*
    * Setup
@@ -495,6 +264,7 @@ def createNonspriteGrid(root: ExpandedNode, tokenArray: Vector[Token]): scala.xm
    * Return html main page
    */
   html
+*/
 
 /* ====================================================================== */
 /* Horizontal ribbons                                                     */
@@ -549,7 +319,7 @@ private def computeTokenTextLength(in: String): Double =
   * @return
   *   All witness readings on node as map from siglum (String) to vector of tokens
   */
-def retrieveWitnessReadings(n: HasWitnessReadings, gTa: Vector[Token]): Map[String, Vector[Token]] =
+def retrieveWitnessReadings(n: HasWitnessReadings, gTa: Vector[Token]): Map[Siglum, Vector[Token]] =
   val witnessReadings = n.witnessReadings.map((k, v) => k -> gTa.slice(v._1, v._2))
   witnessReadings
 
@@ -579,7 +349,7 @@ private def computeReadingTextLength(in: Vector[Token]): Double =
   * @return
   *   Vector of sigla of missing witnesses as strings
   */
-private def findMissingWitnesses(n: HasWitnessReadings, sigla: Set[String]): Vector[String] =
+private def findMissingWitnesses(n: HasWitnessReadings, sigla: Set[Siglum]): Vector[Siglum] =
   val missingWitnesses = sigla.diff(n.witnessReadings.keySet).toVector.sorted
   missingWitnesses
 
@@ -606,7 +376,7 @@ private def computeAlignmentNodeRenderingWidth(n: HasWitnessReadings, gTa: Vecto
 private def createHorizNodeData(
     nodeSequence: Vector[NumberedNode],
     tokenArray: Vector[Token],
-    sigla: Set[String]
+    sigla: Set[Siglum]
 ): Vector[HorizNodeData] =
   @tailrec
   def nextNode(nodes: Vector[NumberedNode], pos: Int, acc: Vector[HorizNodeData]): Vector[HorizNodeData] =
@@ -628,13 +398,21 @@ private def createHorizNodeData(
         alignmentWidth = alignmentWidth,
         xOffset = xOffset,
         /* Create one HorizNodeGroup for each group, where HorizNodeGroupMember is a
-        * map from siglum to reading as string. Sort both groups and within groups. */
+         * map from siglum to reading as string. Sort both groups and within groups. */
         groups = nodes.head.node.witnessGroups
-          .map(f => HorizNodeGroup(f.map((k, v) => HorizNodeGroupMember(k, wr(k)
-              .map(_.t)
-              .mkString))
-            .toVector
-            .sorted))
+          .map(f =>
+            HorizNodeGroup(
+              f.map((k, v) =>
+                HorizNodeGroupMember(
+                  k,
+                  wr(k)
+                    .map(_.t)
+                    .mkString
+                )
+              ).toVector
+                .sorted
+            )
+          )
           .sorted,
         missing = missing
       )
@@ -685,7 +463,7 @@ private def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   * @return
   *   <html> element in HTML namespace, with embedded SVG
   */
-private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla: Set[String]): scala.xml.Node =
+private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla: Set[Siglum]): scala.xml.Node =
   /** Constants */
   val ribbonWidth = 18
   val missingTop = allSigla.size * ribbonWidth * 2 + ribbonWidth / 2
@@ -742,24 +520,24 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   val totalWidth = horizNodes.last.xOffset + horizNodes.last.alignmentWidth + 2
   val totalHeight = ribbonWidth * (witnessCount * 3) - ribbonWidth / 2
 
-  val witnessToColor: Map[String, String] = Map(
-    "darwin1859.txt" -> "peru",
-    "darwin1860.txt" -> "orange",
-    "darwin1861.txt" -> "yellow",
-    "darwin1866.txt" -> "limegreen",
-    "darwin1869.txt" -> "dodgerblue",
-    "darwin1872.txt" -> "violet"
+  val witnessToColor: Map[Siglum, String] = Map(
+    Siglum("darwin1859.txt") -> "peru",
+    Siglum("darwin1860.txt") -> "orange",
+    Siglum("darwin1861.txt") -> "yellow",
+    Siglum("darwin1866.txt") -> "limegreen",
+    Siglum("darwin1869.txt") -> "dodgerblue",
+    Siglum("darwin1872.txt") -> "violet"
   )
-  val witnessToGradient: Map[String, String] = Map(
-    "darwin1859.txt" -> "url(#peruGradient)",
-    "darwin1860.txt" -> "url(#orangeGradient)",
-    "darwin1861.txt" -> "url(#yellowGradient)",
-    "darwin1866.txt" -> "url(#limegreenGradient)",
-    "darwin1869.txt" -> "url(#dodgerblueGradient)",
-    "darwin1872.txt" -> "url(#violetGradient)"
+  val witnessToGradient: Map[Siglum, String] = Map(
+    Siglum("darwin1859.txt") -> "url(#peruGradient)",
+    Siglum("darwin1860.txt") -> "url(#orangeGradient)",
+    Siglum("darwin1861.txt") -> "url(#yellowGradient)",
+    Siglum("darwin1866.txt") -> "url(#limegreenGradient)",
+    Siglum("darwin1869.txt") -> "url(#dodgerblueGradient)",
+    Siglum("darwin1872.txt") -> "url(#violetGradient)"
   )
 
-  def formatSiglum(siglum: String): String = siglum.slice(8, 10).mkString
+  def formatSiglum(siglum: Siglum): String = siglum.value.slice(8, 10).mkString
 
   /** plotOneAlignmentPoint()
     *
@@ -841,15 +619,15 @@ private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token
   def plotLeadingRibbons(currentNode: HorizNodeData, precedingNode: HorizNodeData): xml.Elem =
     /* Coordinates for witnesses in groups */
     @tailrec
-    def nextGroup(groups: Vector[HorizNodeGroup], top: Double, acc: Map[String, Double]): Map[String, Double] =
+    def nextGroup(groups: Vector[HorizNodeGroup], top: Double, acc: Map[Siglum, Double]): Map[Siglum, Double] =
       if groups.isEmpty then acc
       else
         val newAcc = acc ++ groups.head.members.zipWithIndex.map(e => e._1.siglum -> (top + e._2 * ribbonWidth)).toMap
         nextGroup(groups.tail, top + (groups.head.members.size + 1) * ribbonWidth, newAcc)
-    def missings(missings: Vector[String], top: Double): Map[String, Double] =
+    def missings(missings: Vector[Siglum], top: Double): Map[Siglum, Double] =
       missings.zipWithIndex.map(e => e._1 -> (top + e._2 * ribbonWidth)).toMap
-    def computeRibbonYPos(node: HorizNodeData): Map[String, Double] =
-      nextGroup(node.groups, ribbonWidth / 2, Map.empty[String, Double]) ++
+    def computeRibbonYPos(node: HorizNodeData): Map[Siglum, Double] =
+      nextGroup(node.groups, ribbonWidth / 2, Map.empty[Siglum, Double]) ++
         missings(
           node.missing,
           missingTop + ribbonWidth / 2
@@ -1180,7 +958,7 @@ case class HorizNodeData(
     alignmentWidth: Double,
     xOffset: Double,
     groups: Vector[HorizNodeGroup],
-    missing: Vector[String]
+    missing: Vector[Siglum]
 )
 
 case class HorizNodeGroup(members: Vector[HorizNodeGroupMember])
@@ -1189,7 +967,7 @@ object HorizNodeGroup {
     (a: HorizNodeGroup, b: HorizNodeGroup) => a.members.head.compare(b.members.head)
 }
 
-case class HorizNodeGroupMember(siglum: String, reading: String)
+case class HorizNodeGroupMember(siglum: Siglum, reading: String)
 object HorizNodeGroupMember {
   implicit def ordering: Ordering[HorizNodeGroupMember] =
     (a: HorizNodeGroupMember, b: HorizNodeGroupMember) => a.siglum.compare(b.siglum)

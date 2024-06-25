@@ -18,7 +18,7 @@ def createTableCells(
 
     case AgreementIndelNode(witnessReadings, witnessGroups) =>
       val sigla = witnessReadings.keys
-        .map(_.slice(8, 10))
+        .map(_.value.slice(8, 10))
         .toVector
         .sorted
         .mkString(" ")
@@ -32,7 +32,7 @@ def createTableCells(
     case VariationNode(witnessReadings, witnessGroups) =>
       val variants =
         witnessGroups map { e =>
-          val sigla = e.keys.map(_.slice(8, 10)).toSeq.sorted.mkString(" ")
+          val sigla = e.keys.map(_.value.slice(8, 10)).toSeq.sorted.mkString(" ")
           val start = witnessReadings.head._2._1
           val end = witnessReadings.head._2._2
           val text = tokenArray
@@ -50,7 +50,7 @@ def createTableCells(
     case VariationIndelNode(witnessReadings, witnessGroups) =>
       val variants =
         witnessGroups map { e =>
-          val sigla = e.keys.map(_.slice(8, 10)).toSeq.sorted.mkString(" ")
+          val sigla = e.keys.map(_.value.slice(8, 10)).toSeq.sorted.mkString(" ")
           val start = witnessReadings.head._2._1
           val end = witnessReadings.head._2._2
           val text = tokenArray

@@ -3,7 +3,7 @@ package net.collatex.reptilian
 import scalatags.Text.all.*
 import java.beans.Introspector.decapitalize
 
-import scala.annotation.{tailrec, targetName, unchecked}
+import scala.annotation.{tailrec, targetName}
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
@@ -58,151 +58,7 @@ def wrapTextToWidth(
     wordBuffer = WordBuffer.empty
   )
 
-/** Create GraphViz dot representation of tree
-  *
-  * @param root
-  *   : RootNode
-  * @return
-  *   : String containing dot code for GraphViz
-  */
-def dot(root: ExpandedNode, tokenArray: Vector[Token]): String =
-  val header: String =
-    "digraph MyGraph {\n\tranksep=0.25\n\tnode [shape=record, style=filled]\n\t"
-  val footer: String = "\n}"
-  var id = 0
-  val nodesToProcess: mutable.Queue[(Int, AlignmentTreeNode)] =
-    mutable.Queue((id, root))
-  val edges =
-    ListBuffer[String]() // Not List because we append to maintain order
-  // Strings in dot format for all but the root node
-  val readingNodes = ListBuffer[String]()
-  val indelNodes = ListBuffer[String]()
-  val variationNodes = ListBuffer[String]()
-  val unexpandedNodes = ListBuffer[String]()
-  val expandedNodes = ListBuffer[String]()
-  while nodesToProcess.nonEmpty do
-    val currentNode = nodesToProcess.dequeue()
-    currentNode match {
-      //      case (currentId, VariationNode(witnessReadings)) =>
-      //        for (k, v) <- witnessReadings do {
-      //          id += 1
-      //          edges.append(List(currentId, " -> ", id).mkString(" "))
-      //          variationNodes.append(
-      //            s"""${currentId.toString}
-      //               | [label=\"${currentId.toString}|variation\"]
-      //               """.stripMargin.replaceAll("\n", ""))
-      //        }
-
-      case (currentId, VariationNode(witnessReadings, witnessGroups)) =>
-        val allWitnessTexts: String =
-          witnessReadings
-            .map((k, v) => k + ": " + tokenArray.slice(v._1, v._2).map(_.n).mkString(" "))
-            .map(e => wrapTextToWidth(e, 30, 1))
-            .mkString("\\l")
-            .replaceAll("\"", "\\\\\"")
-        variationNodes.append(s"""${currentId.toString}
-             | [label=\"${currentId.toString}|$allWitnessTexts\"]
-           """.stripMargin.replaceAll("\n", ""))
-
-      case (currentId, VariationIndelNode(witnessReadings, witnessGroups)) =>
-        val allWitnessTexts: String =
-          witnessReadings
-            .map((k, v) => k + ": " + tokenArray.slice(v._1, v._2).map(_.n).mkString(" "))
-            .map(e => wrapTextToWidth(e, 30, 1))
-            .mkString("\\l")
-            .replaceAll("\"", "\\\\\"")
-        variationNodes.append(s"""${currentId.toString}
-                                 | [label=\"${currentId.toString}|$allWitnessTexts\"]
-             """.stripMargin.replaceAll("\n", ""))
-
-      case (currentId, AgreementNode(witnessReadings, witnessGroups)) =>
-        val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
-        val nValues = tokenArray
-          .slice(tokenArrayPointers._1, tokenArrayPointers._2)
-          .map(_.n)
-          .mkString(" ")
-          .replaceAll(
-            "\"",
-            "\\\\\""
-          ) // Escape quotation mark in dot file property value
-        val formattedNValues = wrapTextToWidth(
-          nValues,
-          targetLineLength = 60,
-          targetLineCount = 8
-        ) // Escape quotation mark in dot file property value
-
-        readingNodes.append(
-          s"""${currentId.toString}
-             | [label=\"${currentId.toString}|$formattedNValues}\"
-             | tooltip=\"$nValues \\n\\n(${witnessReadings.toSeq.sorted
-              .map(_._1)
-              .mkString(", ")})\"
-             | fillcolor=\"lightblue\"]""".stripMargin.replaceAll("\n", "")
-        )
-      case (currentId, AgreementIndelNode(witnessReadings, witnessGroups)) =>
-        val tokenArrayPointers = witnessReadings(witnessReadings.keys.head)
-        val nValues = tokenArray
-          .slice(tokenArrayPointers._1, tokenArrayPointers._2)
-          .map(_.n)
-          .mkString(" ")
-          .replaceAll(
-            "\"",
-            "\\\\\""
-          ) // Escape quotation mark in dot file property value
-        val formattedNValues = wrapTextToWidth(
-          nValues,
-          targetLineLength = 60,
-          targetLineCount = 8
-        ) // Escape quotation mark in dot file property value
-
-        indelNodes.append(
-          s"""${currentId.toString}
-             | [label=\"${currentId.toString}|$formattedNValues}\"
-             | tooltip=\"$nValues \\n\\n(${witnessReadings.toSeq.sorted
-              .map(_._1)
-              .mkString(", ")})\"
-             | fillcolor=\"lightgoldenrodyellow\"]""".stripMargin
-            .replaceAll("\n", "")
-        )
-
-      case (currentId, n: UnexpandedNode) =>
-        id += 1
-        unexpandedNodes.append(
-          s"""${currentId.toString}
-             | [label=\"${currentId.toString}|unexpanded\"
-             | tooltip=\"${n.formatWitnessReadings}\"
-             | fillcolor=\"goldenrod\"]""".stripMargin.replaceAll("\n", "")
-        )
-      case (currentId, n: ExpandedNode) =>
-        for i <- n.children do
-          id += 1
-          nodesToProcess.enqueue((id, i))
-          edges.append(List(currentId, " -> ", id).mkString(" "))
-          //          expandedNodes.append(
-          //            s"""${currentId.toString}
-          //               | [label=\"${currentId.toString}|expanded\"
-          //               | tooltip=\"${ListMap(witnessReadings.toSeq.sortBy(_._1):_*)}\"
-          //               | fillcolor=\"plum\"]""".stripMargin.replaceAll("\n", "")
-          //          )
-          expandedNodes.append(
-            s"""${currentId.toString}
-               | [label=\"${currentId.toString}|expanded\"
-               | tooltip=\"Expanded node\"
-               | fillcolor=\"plum\"]""".stripMargin.replaceAll("\n", "")
-          )
-    }
-
-  List(
-    header,
-    edges.mkString("\n\t"),
-    readingNodes.mkString("\n"),
-    indelNodes.mkString("\n"),
-    variationNodes.mkString("\n"),
-    unexpandedNodes.mkString("\n"),
-    expandedNodes.mkString("\n"),
-    footer
-  ).mkString("\n")
-
+/*
 def createAlignmentTable(
     root: ExpandedNode,
     tokenArray: Vector[Token],
@@ -301,6 +157,7 @@ def createAlignmentTable(
     )
   )
 }
+ */
 
 /** Flatten alignment tree
   *
@@ -330,13 +187,7 @@ def flattenNodeSeq(
       else
         val currentNode = inList.head
         currentNode match
-          case (nodeNo, node: AgreementNode) =>
-            nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
-          case (nodeNo, node: AgreementIndelNode) =>
-            nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
-          case (nodeNo, node: VariationNode) =>
-            nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
-          case (nodeNo, node: VariationIndelNode) =>
+          case (nodeNo, node: HasWitnessReadings) =>
             nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
           case (_, e: ExpandedNode) =>
             val newNodesToProcess: List[(Int, AlignmentTreeNode)] =
@@ -368,7 +219,7 @@ def createSingleColumnAlignmentTableRows(
         <td><span class="sigla">all:</span> {text}</td>
       case AgreementIndelNode(witnessReadings, witnessGroups) =>
         val sigla = witnessReadings.keys
-          .map(_.slice(8, 10))
+          .map(_.value.slice(8, 10))
           .toVector
           .sorted
           .mkString(" ")
@@ -380,7 +231,7 @@ def createSingleColumnAlignmentTableRows(
         <td><span class="sigla">{sigla}:</span> {text}</td>
       case VariationNode(witnessReadings, witnessGroups) =>
         val readings = witnessGroups map { e =>
-          val sigla = e.keys.map(_.slice(8, 10)).toSeq.sorted.mkString(" ")
+          val sigla = e.keys.map(_.value.slice(8, 10)).toSeq.sorted.mkString(" ")
           val start = witnessReadings.head._2._1
           val end = witnessReadings.head._2._1
           val text = tokenArray
@@ -392,7 +243,7 @@ def createSingleColumnAlignmentTableRows(
         <td><ul>{readings}</ul></td>
       case VariationIndelNode(witnessReadings, witnessGroups) =>
         val readings = witnessGroups map { e =>
-          val sigla = e.keys.map(_.slice(8, 10)).toSeq.sorted.mkString(" ")
+          val sigla = e.keys.map(_.value.slice(8, 10)).toSeq.sorted.mkString(" ")
           val start = witnessReadings.head._2._1
           val end = witnessReadings.head._2._1
           val text = tokenArray
@@ -473,7 +324,7 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
       case (currentId, VariationIndelNode(witnessReadings, witnessGroups)) =>
         val allWitnessTexts: String =
           witnessReadings
-            .map((k, v) => k + ": " + tokenArray.slice(v._1, v._2).map(_.n).mkString(" "))
+            .map((k, v) => k.value + ": " + tokenArray.slice(v._1, v._2).map(_.n).mkString(" "))
             .map(e => wrapTextToWidth(e, 30, 1))
             .mkString("\\l")
             .replaceAll("\"", "\\\\\"")
@@ -486,7 +337,7 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
       case (currentId, VariationNode(witnessReadings, witnessGroups)) =>
         val allWitnessTexts: String =
           witnessReadings
-            .map((k, v) => k + ": " + tokenArray.slice(v._1, v._2).map(_.n).mkString(" "))
+            .map((k, v) => k.value + ": " + tokenArray.slice(v._1, v._2).map(_.n).mkString(" "))
             .map(e => wrapTextToWidth(e, 30, 1))
             .mkString("\\l")
             .replaceAll("\"", "\\\\\"")
@@ -570,14 +421,14 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
       //               | fillcolor=\"plum\"]""".stripMargin.replaceAll("\n", "")
       //          )
       /* There are no unexpanded nodes; we leave this in so that the compiler won't think we aren't exhaustive */
-      case (currentId, n: UnexpandedNode) =>
+/*      case (currentId, n: UnexpandedNode) =>
         id += 1
         unexpandedNodes.append(
           s"""${currentId.toString}
              | [label=\"${currentId.toString}|unexpanded\"
              | tooltip=\"${n.formatWitnessReadings}\"
              | fillcolor=\"goldenrod\"]""".stripMargin.replaceAll("\n", "")
-        )
+        )*/
     }
 
   List(

@@ -13,9 +13,9 @@ import net.collatex.reptilian.{
   VariationNode,
   WitnessReadings,
   createAlignedBlocks,
-  dot,
   makeTokenizer,
-  split_reading_node
+  split_reading_node,
+  Siglum
 }
 import smile.clustering.hclust
 import smile.data.DataFrame
@@ -241,11 +241,11 @@ private def nwCompactAlignmentTreeNodeSteps(
   def singleStepToWitnessReadings(single: SingleStepAlignmentTreePath): WitnessReadings =
     single match {
       case SingleStepMatch(tok1: Token, tok2: Token) =>
-        Map(tok1.w.toString -> (tok1.g, tok1.g + 1), tok2.w.toString -> (tok2.g, tok2.g + 1))
+        Map(Siglum(tok1.w.toString) -> (tok1.g, tok1.g + 1), Siglum(tok2.w.toString) -> (tok2.g, tok2.g + 1))
       case SingleStepNonMatch(tok1: Token, tok2: Token) =>
-        Map(tok1.w.toString -> (tok1.g, tok1.g + 1), tok2.w.toString -> (tok2.g, tok2.g + 1))
-      case SingleStepInsert(tok: Token) => Map(tok.w.toString -> (tok.g, tok.g + 1))
-      case SingleStepDelete(tok: Token) => Map(tok.w.toString -> (tok.g, tok.g + 1))
+        Map(Siglum(tok1.w.toString) -> (tok1.g, tok1.g + 1), Siglum(tok2.w.toString) -> (tok2.g, tok2.g + 1))
+      case SingleStepInsert(tok: Token) => Map(Siglum(tok.w.toString) -> (tok.g, tok.g + 1))
+      case SingleStepDelete(tok: Token) => Map(Siglum(tok.w.toString) -> (tok.g, tok.g + 1))
     }
   def openStepToTreeNode(open: (SingleStepAlignmentTreePath, WitnessReadings)): HasWitnessReadings =
     open match {
@@ -536,13 +536,13 @@ def splitTree(
           val newAtn =
             if fdb.size == 1 then // FIXME: Need also to verify that block isn’t split
               val wr = alignmentRibbon.head.witnessReadings ++ Map(
-                singletonTokens.head.w.toString -> (stTokenArray(fdb.head.instances.last).g, stTokenArray(
+                Siglum(singletonTokens.head.w.toString) -> (stTokenArray(fdb.head.instances.last).g, stTokenArray(
                   fdb.head.instances.last
                 ).g + fdb.head.length)
               )
               val wg = Vector(wr)
               val updatedAgreementNode = AgreementNode(witnessReadings = wr, witnessGroups = wg)
-              val singletonSiglum = singletonTokens.head.w.toString
+              val singletonSiglum = Siglum(singletonTokens.head.w.toString)
               val singletonEndInAgreementNode =
                 updatedAgreementNode.witnessReadings(singletonSiglum)._2 // global TA position
               val endpointDifference = singletonTokens.last.g - (singletonEndInAgreementNode - 1)
@@ -578,7 +578,7 @@ def splitTree(
                 result
               case _ =>
                 AgreementNode(
-                  Map("w" -> (0, 1)),Vector(Map("w" -> (0, 1)))
+                  Map(Siglum("w") -> (0, 1)),Vector(Map(Siglum("w") -> (0, 1)))
                 ) // FIXME: Fake AgreementNode to fool compiler—temporarily, of course!
             }
 

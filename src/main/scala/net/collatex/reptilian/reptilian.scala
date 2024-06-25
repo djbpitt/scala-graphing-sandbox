@@ -25,16 +25,11 @@ def readData(pathToData: Path): List[(String, String)] =
 @main def main(): Unit =
   /** Select data */
   val pathToDarwin = os.pwd / "src" / "main" / "data" / "darwin"
-  // val pathToDarwin = os.pwd / "src" / "main" / "data" / "darwin_small" // no skip edge; direct transposition
-  // val pathToDarwin = os.pwd / "src" / "main" / "data" / "cats"
-  // val pathToDarwin = os.pwd / "src" / "main" / "data" / "no_skip_cats" // no skip edge; direct transposition
-  // val pathToDarwin = os.pwd / "src" / "main" / "data" / "one_skip_cats" // one skip edge
-  // val pathToDarwin = os.pwd / "src" / "main" / "data" / "two_skip_cats" // two (parallel) skip edges
 
   /** Prepare tokenizer
     *
-    * Sequences of non-word characters (except spaces) are entire tokens Unlike
-    * in CollateX Python, punctuation characters are their own tokens
+    * Sequences of non-word characters (except spaces) are entire tokens Unlike in CollateX Python, punctuation
+    * characters are their own tokens
     */
   val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
   val tokenizer = makeTokenizer(
@@ -46,66 +41,14 @@ def readData(pathToData: Path): List[(String, String)] =
     pathToDarwin
   ) // One string per witness
   val witnessStrings: List[String] = witnessInputInfo.map(_._2)
-  val sigla: List[String] = witnessInputInfo.map(_._1)
+  val sigla: List[Siglum] = witnessInputInfo.map(_._1).map(Siglum(_))
   implicit val tokenArray: Vector[Token] = tokenize(tokenizer)(witnessStrings)
 
   /** Create alignment tree
-    *
-    * Sigla used for alignment table
     */
   val root: ExpandedNode = createAlignment(witnessStrings, sigla)
-
-  /** Create views of tree
-    *
-    * Graphviz dot file HTML alignment table
-    */
-//  val alignmentTreeAsDot = dot(root, tokenArray)
-//  val alignmentGraphOutputPath = os.pwd / "src" / "main" / "outputs" / "alignment.dot"
-//  os.write.over(alignmentGraphOutputPath, alignmentTreeAsDot)
-
-//  val flatAlignmentTreeAsDot = flatDot(root, tokenArray)
-//  val flatAlignmentTreeOutputPath = os.pwd / "src" / "main" / "outputs" / "flatAlignment.dot"
-//  os.write.over(flatAlignmentTreeOutputPath, flatAlignmentTreeAsDot)
-
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html") // used for single-column and mixed output
-
-//  val tableOutput = createSingleColumnAlignmentTable(root, tokenArray)
-//  val singleColumnOutputPath =
-//    os.pwd / "src" / "main" / "outputs" / "single-column-alignment.xhtml"
-//  scala.xml.XML.save(singleColumnOutputPath.toString, tableOutput, "UTF-8", true, doctypeHtml)
-
-//  val flowOutput: xml.Elem =
-//    createSvgFlowModel(flattenNodeSeq(root), tokenArray)
-//  val flowOutputPath =
-//    os.pwd / "src" / "main" / "outputs" / "flow-visualization.svg"
-//  xml.XML.save(flowOutputPath.toString, flowOutput)
-
-//  val mixedOutput = createMixedVisualization(flattenNodeSeq(root), tokenArray)
-//  val mixedOutputPath =
-//    os.pwd / "src" / "main" / "outputs" / "mixed-visualization.xhtml"
-//  scala.xml.XML.save(mixedOutputPath.toString, mixedOutput, "UTF-8", true, doctypeHtml)
-
-//  val output = createAlignmentTable(root, tokenArray, sigla)
-//  val outputPath = os.pwd / "src" / "main" / "outputs" / "traversal-alignment.xhtml"
-//  os.write.over(outputPath, output)
-
-//  val alignmentBrowser = createAlignmentBrowser(root, tokenArray)
-//  val alignmentBrowserOutputPath =
-//    os.pwd / "src" / "main" / "outputs" / "alignment-browser.xhtml"
-//  xml.XML.save(alignmentBrowserOutputPath.toString, alignmentBrowser, "UTF-8", true, doctypeHtml)
-
-//  val (mixedOutputGrid, backgroundSprites) = createFlowModelForGrid(root, tokenArray)
-//  val mixedOutputGridPath =
-//    os.pwd / "src" / "main" / "outputs" / "mixed-output-grid.xhtml"
-//  val mixedOutputGridBackgroundsPath =
-//    os.pwd / "src" / "main" / "outputs" / "mixed-output-grid-backgrounds.svg"
-//  scala.xml.XML.save(mixedOutputGridPath.toString, mixedOutputGrid, "UTF-8", true, doctypeHtml)
-//  scala.xml.XML.save(mixedOutputGridBackgroundsPath.toString, backgroundSprites, "UTF-8", true)
-  
-//  val nonspriteGrid = createNonspriteGrid(root, tokenArray)
-//  val nonspriteGridPath = os.pwd / "src" / "main" / "outputs" / "nonsprite-grid.xhtml"
-//  scala.xml.XML.save(nonspriteGridPath.toString, nonspriteGrid, "UTF-8", true, doctypeHtml)
-
   val horizontalRibbons = createHorizontalRibbons(root, tokenArray, allSigla)
-  val horizontalRibbonsPath = os.pwd / "src" / "main" / "outputs" / "horizontal-ribbons-full.xhtml" // "horizontal-ribbons.xhtml"
+  val horizontalRibbonsPath =
+    os.pwd / "src" / "main" / "outputs" / "horizontal-ribbons-full.xhtml" // "horizontal-ribbons.xhtml"
   scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true, doctypeHtml)

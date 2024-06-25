@@ -17,7 +17,7 @@ import scala.collection.mutable.{ListBuffer, Map}
 
 def split_reading_node[C <: HasWitnessReadings](
     current: C,
-    position_to_split: immutable.Map[String, Int]
+    position_to_split: immutable.Map[Siglum, Int]
 ): (HasWitnessReadings, HasWitnessReadings) = {
   // For witness ranges, last value is exclusive
   // We filter out all the witnesses that have an empty range after the split
@@ -67,7 +67,7 @@ def split_reading_node[C <: HasWitnessReadings](
 
 def alignTokenArray(
     tokenArray: Vector[Token],
-    sigla: List[String],
+    sigla: List[Siglum],
     selection: HasWitnessReadings
 ) = {
   // find the full depth blocks for the alignment
@@ -129,7 +129,7 @@ def alignTokenArray(
 
 def createAlignmentTree(
     tokenArray: Vector[Token],
-    sigla: List[String]
+    sigla: List[Siglum]
 ): ExpandedNode = {
   // The working space should have witnesses and ranges (like a AgreementNode in our original type system)
   // Traverse over tokenArray and get the first and last token position for each witness to get full range.
@@ -139,7 +139,7 @@ def createAlignmentTree(
   //     token offset
   // NB: We are embarrassed by the mutable map (and by other things, such has having to scan token array)
   // Housekeeping; TODO: Think about witness-set metadata
-  val witnessRanges: mutable.Map[String, (Int, Int)] = mutable.Map.empty
+  val witnessRanges: mutable.Map[Siglum, (Int, Int)] = mutable.Map.empty
 
   // go over the tokens and assign the lowest and the highest to the map
   // token doesn't know its position in a specific witness, so use indices
@@ -180,7 +180,7 @@ def createAlignmentTree(
 
 def setupNodeExpansion(
     tokenArray: Vector[Token],
-    sigla: List[String],
+    sigla: List[Siglum],
     selection: HasWitnessReadings
 ) = {
   val blocks = alignTokenArray(tokenArray, sigla, selection)
@@ -237,7 +237,7 @@ def recursiveBuildAlignmentTreeLevel(
     treeReadingNode: HasWitnessReadings,
     remainingAlignment: List[HasWitnessReadings],
     tokenArray: Vector[Token],
-    sigla: List[String]
+    sigla: List[Siglum]
 ): ExpandedNode = {
   // On first run, treeReadingNode contains full token ranges and remainingAlignment contains all sortedReadingNodes
   // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
