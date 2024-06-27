@@ -3,16 +3,16 @@ package net.collatex.reptilian
 /** Block is an lcp interval
  *
  * @param start  start position in suffix array
- * @param end    end position in suffix array
+ * @param end    until position in suffix array
  * @param length number of tokens in prefix
  *
- *               width = end - start (number of instances)
+ *               width = until - start (number of instances)
  *               if one per witness, block is full-depth, but could be repetition within a single witness
  */
 case class Block(start: Int, end: Int, length: Int):
   /** instanceStartOffsets()
    *
-   * @param suffixArray  Slicing the suffix array from block start and end (LCP value)
+   * @param suffixArray  Slicing the suffix array from block start and until (LCP value)
    *                      selects offsets for block instances in token array
    *
    * @return              Vector of token array offsets
@@ -30,7 +30,7 @@ case class Block(start: Int, end: Int, length: Int):
  *                  Sort in order of witnesses during construction
  * @param length    : length of pattern
  *
- *                  Start position plus length makes it possible to compute end positions, if needed
+ *                  Start position plus length makes it possible to compute until positions, if needed
  *                  We use this remove shorter embedded blocks
  *                  This plus token array is enough for all subsequent processing; no further need for suffix array, etc.
  */

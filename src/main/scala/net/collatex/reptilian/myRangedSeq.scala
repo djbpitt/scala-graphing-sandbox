@@ -143,8 +143,8 @@ object myRangedSeq {
      *  Example: a block (10, 20) is contained by an input interval (9, 21)
      *
      *  1. Use tree operation to keep only blocks that begin at or after input interval start
-     *  2. Use tree operation to keep only blocks that do not start after input interval end
-     *  3. Iterate and compare to keep only blocks that end before or at input interval end
+     *  2. Use tree operation to keep only blocks that do not start after input interval until
+     *  3. Iterate and compare to keep only blocks that until before or at input interval until
      *
      *  Step #2 is informationally redundant because it’s subsumed by step #3, but we keep it
      *  under the assumption that the tree operation (2) is faster than the iteration (3).

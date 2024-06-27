@@ -30,10 +30,10 @@ val verticalRuleXPos: Double =
 /** Create single-color linear gradient
   *
   * Transition is vertical (default is horizontal) No need to specify graduated steps; renderer creates smooth
-  * transition with just end and mid points
+  * transition with just until and mid points
   *
   * @param color
-  *   start and end colors are the same
+  *   start and until colors are the same
   * @return
   *   <linearGradient> element
   */

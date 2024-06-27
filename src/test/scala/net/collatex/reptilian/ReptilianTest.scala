@@ -69,13 +69,13 @@
 //    val result = createBlocks(input)
 //    assert(result == List(Block(0, 4, 1)))
 //  }
-//  //First interval, with value 1, runs to end because 1 < 2
+//  //First interval, with value 1, runs to until because 1 < 2
 //  test("lcp array with two adjacent intervals should return … er … two adjacent intervals") {
 //    val input = Vector[Int](-1, 1, 1, 1, 2, 2, 2)
 //    val result = createBlocks(input)
 //    assert(result == List(Block(3, 6, 2), Block(0, 6, 1)))
 //  }
-//  //Second interval, with value 1, runs from start to end because 1 < 2
+//  //Second interval, with value 1, runs from start to until because 1 < 2
 //  test("lcp array with values that go down can also return two adjacent intervals") {
 //    val input = Vector[Int](-1, 2, 2, 2, 1, 1, 1)
 //    val result = createBlocks(input)
@@ -89,7 +89,7 @@
 //    assert(result == List(Block(3, 6, 2), Block(0, 9, 1)))
 //  }
 //
-//  test("lcp array with zeroes at end closes all open blocks and doesn't create zero length blocks") {
+//  test("lcp array with zeroes at until closes all open blocks and doesn't create zero length blocks") {
 //    val input = Vector[Int](-1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 0, 0)
 //    val result = createBlocks(input)
 //    assert(result == List(Block(3, 6, 2), Block(0, 9, 1)))
@@ -110,5 +110,5 @@
 //    assert(result == Vector(0, 0, -1, 1, 1, -1, 2, 2))
 //  }
 //
-//end ReptilianTest
+//until ReptilianTest
 //

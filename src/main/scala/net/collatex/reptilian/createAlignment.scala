@@ -27,7 +27,7 @@ implicit val myConfig: CoreConfig = CoreConfig()
 def counts[T](s: Seq[T]) = s.groupBy(identity).view.mapValues(_.length)
 
 /* Beam search maintains collection of BeamOption objects
-* path : list of nodes; prepend new values, so list is in reverse order at end
+* path : list of nodes; prepend new values, so list is in reverse order at until
 * score : cumulative count of tokens placed by path
 * */
 case class BeamOption(path: List[Int], score: Double)
@@ -262,7 +262,7 @@ def createTraversalGraph(blocks: Iterable[FullDepthBlock]) =
   val witnessCount = localBlocks(0).instances.length
   val startBlock = FullDepthBlock(instances = Vector.fill(witnessCount)(-1), length = 1) // fake first (start) block
   val endBlock = FullDepthBlock(instances = Vector.fill(witnessCount)(endNodeId), length = 1)
-  // end node first to we can use blocks.tail to compute outgoing edges
+  // until node first to we can use blocks.tail to compute outgoing edges
   val blocksForGraph = Vector(endBlock) ++ localBlocks ++ Vector(startBlock)
   val g = computeNodesForGraph(blocksForGraph)
   val blockOrderForWitnesses = computeBlockOrderForWitnesses(blocksForGraph)
@@ -276,7 +276,7 @@ def createTraversalGraph(blocks: Iterable[FullDepthBlock]) =
  * graph : Needed to get out edges
  * current : BeamOption to process
  *
- * If head of path is endNodeId, we're at the end, so return current value (which might ultimately be optimal)
+ * If head of path is endNodeId, we're at the until, so return current value (which might ultimately be optimal)
  * Otherwise check each out-edge, prepend to path, increment score, and return new BeamOption
  * Returns all options; we decide elsewhere which ones to keep on the beam for the next tier
  * */
@@ -311,7 +311,7 @@ def findOptimalAlignment(graph: Graph[Int, WDiEdge]) = // specify return type?
     else
       beam = newOptions.sortBy(_.score * -1).slice(from = 0, until = beamMax)
 
-  beam.minBy(_.score * -1).path.reverse // Exit once all options on the beam end at the end node
+  beam.minBy(_.score * -1).path.reverse // Exit once all options on the beam until at the until node
 
 /** Use Int representation from alignment to create iterable of full-depth blocks
  *

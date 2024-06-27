@@ -113,10 +113,10 @@ def createAlignmentTable(
                   yield
                     if witnessReadings contains i then
                       val start = witnessReadings(i)._1
-                      val end = witnessReadings(i)._2
+                      val until = witnessReadings(i)._2
                       td(
                         tokenArray
-                          .slice(start, end)
+                          .slice(start, until)
                           .map(_.t)
                           .mkString(" ")
                       )
@@ -139,10 +139,10 @@ def createAlignmentTable(
                   yield
                     if witnessReadings contains i then
                       val start = witnessReadings(i)._1
-                      val end = witnessReadings(i)._2
+                      val until = witnessReadings(i)._2
                       td(
                         tokenArray
-                          .slice(start, end)
+                          .slice(start, until)
                           .map(_.t)
                           .mkString(" ")
                       )

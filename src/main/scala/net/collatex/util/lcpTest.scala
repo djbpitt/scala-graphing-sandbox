@@ -59,7 +59,7 @@ import net.collatex.reptilian.{makeTokenizer, tokenize, vectorize, calculateLcpA
 //  val blocks_slice_tokens = blocks
 //    .map(e => tokenArray.slice(suffixArray(e.start), suffixArray(e.start) + e.length))
 //  val block_count = blocks
-//    .map(e => e.end - e.start + 1)
+//    .map(e => e.until - e.start + 1)
 //  println("Start dump blocks within the slice")
 //  blocks_slice_tokens
 //    .map(_.map(e => e.n)

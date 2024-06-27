@@ -16,7 +16,7 @@ import net.collatex.reptilian.{
   createAlignedBlocks,
   makeTokenizer,
   split_reading_node,
-  tokenRange
+  TokenRange
 }
 import smile.clustering.hclust
 import smile.data.DataFrame
@@ -243,16 +243,16 @@ private def nwCompactAlignmentTreeNodeSteps(
     single match {
       case SingleStepMatch(tok1: Token, tok2: Token) =>
         Map(
-          Siglum(tok1.w.toString) -> tokenRange(tok1.g, tok1.g + 1),
-          Siglum(tok2.w.toString) -> tokenRange(tok2.g, tok2.g + 1)
+          Siglum(tok1.w.toString) -> TokenRange(tok1.g, tok1.g + 1),
+          Siglum(tok2.w.toString) -> TokenRange(tok2.g, tok2.g + 1)
         )
       case SingleStepNonMatch(tok1: Token, tok2: Token) =>
         Map(
-          Siglum(tok1.w.toString) -> tokenRange(tok1.g, tok1.g + 1),
-          Siglum(tok2.w.toString) -> tokenRange(tok2.g, tok2.g + 1)
+          Siglum(tok1.w.toString) -> TokenRange(tok1.g, tok1.g + 1),
+          Siglum(tok2.w.toString) -> TokenRange(tok2.g, tok2.g + 1)
         )
-      case SingleStepInsert(tok: Token) => Map(Siglum(tok.w.toString) -> tokenRange(tok.g, tok.g + 1))
-      case SingleStepDelete(tok: Token) => Map(Siglum(tok.w.toString) -> tokenRange(tok.g, tok.g + 1))
+      case SingleStepInsert(tok: Token) => Map(Siglum(tok.w.toString) -> TokenRange(tok.g, tok.g + 1))
+      case SingleStepDelete(tok: Token) => Map(Siglum(tok.w.toString) -> TokenRange(tok.g, tok.g + 1))
     }
   def openStepToTreeNode(open: (SingleStepAlignmentTreePath, WitnessReadings)): HasWitnessReadings =
     open match {
@@ -282,7 +282,7 @@ private def nwCompactAlignmentTreeNodeSteps(
         nextStep(
           stepsToProcess = t,
           compactedSteps = compactedSteps,
-          openStep = (openStep._1, openStep._2.map((k, v) => k -> tokenRange(v._1 - 1, v._2)))
+          openStep = (openStep._1, openStep._2.map((k, v) => k -> TokenRange(v._1 - 1, v._2)))
         )
       case h #:: t =>
         nextStep(
@@ -312,7 +312,7 @@ def singletonSingletonPathStepsToAlignmentTreeNode(
   def matrixPositionToTokenPosition(matrixStart: Int, matrixEnd: Int, witnessData: List[Token]): (Int, Int) =
     println(s"first token: ${witnessData.head}")
     println(s"token count: ${witnessData.size}")
-    println(s"start: $matrixStart; end: $matrixEnd")
+    println(s"start: $matrixStart; until: $matrixEnd")
     (witnessData(matrixStart).g, witnessData(matrixEnd).g)
 
   pathSteps map {
@@ -532,18 +532,18 @@ def splitTree(
 //          println(s"stTokenArray: $stTokenArray")
 //          println(stTokenArray.map(_.t).mkString(" "))
 
-          // in FullDepthBlock((x, y), z) x is start, y is exclusive end, z is length; exclusive end includes separator
+          // in FullDepthBlock((x, y), z) x is start, y is exclusive until, z is length; exclusive until includes separator
           val (_, _, fdb) =
             createAlignedBlocks(stTokenArray, -1, false) // tuple of (all blocks, suffix array, full-depth blocks)
             // witnessCount (second argument) is fake because we don't use it
           // match blocks with correct alignment-tree nodes and build new alignment nodes that incorporate singleton
           // tree tokens already have global offsets; need to add global offsets for singleton when creating new node
           // FIXME: We fake, for now, the situation with a single full-depth block
-          // FIXME: We are tracking non-blocks only at the end, but they could be located anywhere among blocks
+          // FIXME: We are tracking non-blocks only at the until, but they could be located anywhere among blocks
           val newAtn =
             if fdb.size == 1 then // FIXME: Need also to verify that block isn’t split
               val wr = alignmentRibbon.head.witnessReadings ++ Map(
-                Siglum(singletonTokens.head.w.toString) -> tokenRange(stTokenArray(fdb.head.instances.last).g, stTokenArray(
+                Siglum(singletonTokens.head.w.toString) -> TokenRange(stTokenArray(fdb.head.instances.last).g, stTokenArray(
                   fdb.head.instances.last
                 ).g + fdb.head.length)
               )
@@ -556,7 +556,7 @@ def splitTree(
               if endpointDifference == 0 then updatedAgreementNode
               else
                 val trailingTokenNode =
-                  AgreementIndelNode(singletonSiglum -> tokenRange(singletonEndInAgreementNode, singletonTokens.last.g + 1))
+                  AgreementIndelNode(singletonSiglum -> TokenRange(singletonEndInAgreementNode, singletonTokens.last.g + 1))
                 ExpandedNode(ListBuffer(updatedAgreementNode, trailingTokenNode))
             else AgreementNode()
           acc(i + darwin.head.readings.size) = newAtn
@@ -586,8 +586,8 @@ def splitTree(
                 result
               case _ =>
                 AgreementNode(
-                  Map(Siglum("w") -> tokenRange(0, 1)),
-                  Vector(Map(Siglum("w") -> tokenRange(0, 1)))
+                  Map(Siglum("w") -> TokenRange(0, 1)),
+                  Vector(Map(Siglum("w") -> TokenRange(0, 1)))
                 ) // FIXME: Fake AgreementNode to fool compiler—temporarily, of course!
             }
 

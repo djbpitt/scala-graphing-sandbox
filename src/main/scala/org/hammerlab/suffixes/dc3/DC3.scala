@@ -86,7 +86,7 @@ def make(s: Array[Int], K: Int): Array[Int] =
   // of the [12]%3 array could be construed to carry through from the 1%3 side to the 2%3 side.
   //
   // As a result, for the length≣1%3 case, we add a virtual final 1%3 element anchoring a triple (0,0,0), perform all
-  // sorting with it incorporated, and then filter it out in the end while building the final result.
+  // sorting with it incorporated, and then filter it out in the until while building the final result.
   val padding =
   Array.fill(
     if (s.length % 3 > 0) 3 else 2

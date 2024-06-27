@@ -15,10 +15,10 @@ object Siglum:
     (a: Siglum, b: Siglum) => a.value.compare(b.value)
 given CanEqual[Siglum, Siglum] = CanEqual.derived
 
-// From witness id to start and end (exclusive "until") offset in global token array
-case class tokenRange(start: Int, end: Int)
+// From witness id to start and until (exclusive "until") offset in global token array
+case class TokenRange(start: Int, until: Int)
 
-type WitnessReadings = Map[Siglum, tokenRange] // type alias
+type WitnessReadings = Map[Siglum, TokenRange] // type alias
 
 sealed trait AlignmentTreeNode // supertype of all nodes
 
@@ -72,7 +72,7 @@ final case class AgreementNode(
   * leaf nodes cannot be empty
   */
 object AgreementNode {
-  def apply(m: (Siglum, tokenRange)*): AlignmentTreeNode =
+  def apply(m: (Siglum, TokenRange)*): AlignmentTreeNode =
     AgreementNode(m.toMap, Vector(m.toMap)) // FIXME: Fake witnessGroups value
 }
 
@@ -81,7 +81,7 @@ object AgreementNode {
   * Like a AgreementNode in that all witnesses agree, except that not all corpus witnesses are present
   *
   * @param witnessReadings
-  *   map from siglum to tuple of start and end offsets into the global token array (end is exclusive)
+  *   map from siglum to tuple of start and until offsets into the global token array (until is exclusive)
   *
   * Companion object is a convenience constructor (see documentation of companion object for AgreementNode, above)
   */
@@ -91,7 +91,7 @@ final case class AgreementIndelNode(
 ) extends AlignmentTreeNode
     with HasWitnessReadings
 object AgreementIndelNode {
-  def apply(m: (Siglum, tokenRange)*): AlignmentTreeNode =
+  def apply(m: (Siglum, TokenRange)*): AlignmentTreeNode =
     AgreementIndelNode(m.toMap, Vector(m.toMap)) // FIXME: Fake witnessGroups value
 }
 
@@ -136,9 +136,9 @@ def fullDepthBlockToReadingNode(
 //  println(s"block: $block")
   val readings = block.instances
     .map(e =>
-      sigla(tokenArray(e).w) -> tokenRange(
+      sigla(tokenArray(e).w) -> TokenRange(
         start = tokenArray(e).g,
-        end = tokenArray(
+        until = tokenArray(
           e
         ).g + block.length
       )

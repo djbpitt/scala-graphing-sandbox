@@ -134,7 +134,7 @@ def createBlocks(lcpArray: Vector[Int]): List[Block] =
  */
 def removeOverlappingBlocks(fullDepthBlocks: List[FullDepthBlock]): Iterable[FullDepthBlock] =
   fullDepthBlocks
-    .groupBy(e => e.instances(0) + e.length) // end position of instance in witness 0
+    .groupBy(e => e.instances(0) + e.length) // until position of instance in witness 0
     .values
     .map(fdBlocks => fdBlocks.maxBy(_.length))
 

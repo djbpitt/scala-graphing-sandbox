@@ -35,8 +35,8 @@ def split_reading_node[C <: HasWitnessReadings](
         ) // Default value (temporarily) to avoid Option
       // Not yet checking for valid call; more defensive would be:
       //  the splitValue should be >= v._1 (start value)
-      //  the splitValue should be <= v._2 (end value)
-      val ranges1 = k -> tokenRange(v.start, splitValue)
+      //  the splitValue should be <= v._2 (until value)
+      val ranges1 = k -> TokenRange(v.start, splitValue)
       ranges1
     )
     .filter((_, v) => v._1 != v._2)
@@ -46,11 +46,11 @@ def split_reading_node[C <: HasWitnessReadings](
       val splitValue = position_to_split
         .getOrElse(k, throw new RuntimeException(s"$position_to_split"))
       // the splitValue should be >= v._1 (start value)
-      // the splitValue should be <= v._2 (end value)
-      val ranges2 = k -> tokenRange(splitValue, v.end)
+      // the splitValue should be <= v._2 (until value)
+      val ranges2 = k -> TokenRange(splitValue, v.until)
       ranges2
     )
-    .filter((_, v) => v.start != v.end)
+    .filter((_, v) => v.start != v.until)
 
   // TODO: if the whole map is empty we should return a special type, e.g., EmptyReadingNode
   // TODO: Workaround to mimic copy() method on trait (https://groups.google.com/g/scala-internals/c/O1yrB1xetUA)
@@ -135,11 +135,11 @@ def createAlignmentTree(
   // Traverse over tokenArray and get the first and last token position for each witness to get full range.
   // To store it in a reading node we have to store in a (String, (Int, Int)), that is,
   //   (Witness identifier, (Token offset, Token offset)) (use type alias, which is more self-documenting?)
-  //   NB: WitnessReading second value is exclusive end of the range, so the second Int isn’t necessarily a
+  //   NB: WitnessReading second value is exclusive until of the range, so the second Int isn’t necessarily a
   //     token offset
   // NB: We are embarrassed by the mutable map (and by other things, such has having to scan token array)
   // Housekeeping; TODO: Think about witness-set metadata
-  val witnessRanges: mutable.Map[Siglum, tokenRange] = mutable.Map.empty
+  val witnessRanges: mutable.Map[Siglum, TokenRange] = mutable.Map.empty
 
   // go over the tokens and assign the lowest and the highest to the map
   // token doesn't know its position in a specific witness, so use indices
@@ -149,13 +149,13 @@ def createAlignmentTree(
     if token.w != -1
     then // witness separators have witness identifier values of -1
       val tuple =
-        witnessRanges.getOrElse(sigla(token.w), tokenRange(tokenIndex, tokenIndex))
+        witnessRanges.getOrElse(sigla(token.w), TokenRange(tokenIndex, tokenIndex))
       val minimum = tuple.start
       val maximum = tokenIndex
       witnessRanges.put(
         sigla(token.w),
-        tokenRange(minimum, maximum + 1)
-      ) // +1 is for exclusive end
+        TokenRange(minimum, maximum + 1)
+      ) // +1 is for exclusive until
   // mutable map is local to the function, to convert to immutable before return
   val witnessReadings = witnessRanges.toMap
   val witnessGroups = Vector(witnessReadings)
@@ -246,15 +246,15 @@ def recursiveBuildAlignmentTreeLevel(
       // println("Witness intervals of the first block of the alignment")
       // println(firstReadingNode)
 
-      // split treeReadingNode based on the end position for each witness of the first reading node of the alignment.
+      // split treeReadingNode based on the until position for each witness of the first reading node of the alignment.
       // That splits the root reading node into aligned block plus optional leading non-block tokens
       // TODO: map() creates a new map; would a map view be better (we use the value only once)? Would using a
       //   map view instead of a map require changing the signature of split_reading_node()?
       // TODO: split_reading_node() returns a tuple, which we could unpack
-      // Splits on end of aligned block, so:
-      //   First item contains block (empty only at end) preceded by optional leading unaligned stuff
+      // Splits on until of aligned block, so:
+      //   First item contains block (empty only at until) preceded by optional leading unaligned stuff
       //   Second item contains optional stuff after the block, which will be the input into the recursion
-      //   Recursion knows to end when remainingAlignment parameter is an empty list
+      //   Recursion knows to until when remainingAlignment parameter is an empty list
       //  println(firstReadingNode)
       //  println(tokenArray)
   val tempSplit = split_reading_node(
@@ -297,7 +297,7 @@ def recursiveBuildAlignmentTreeLevel(
       sigla
     )
   else
-    // The alignment results are all processed,so we check for trailing non-aligned content and then end the recursion.
+    // The alignment results are all processed,so we check for trailing non-aligned content and then until the recursion.
     // This repeats the treatment as unaligned leading content
     if tempSplit._2.witnessReadings.nonEmpty then result += setupNodeExpansion(tokenArray, sigla, tempSplit._2)
     val rootNode = ExpandedNode(
