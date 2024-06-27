@@ -36,7 +36,7 @@ def split_reading_node[C <: HasWitnessReadings](
       // Not yet checking for valid call; more defensive would be:
       //  the splitValue should be >= v._1 (start value)
       //  the splitValue should be <= v._2 (end value)
-      val ranges1 = k -> (v._1, splitValue)
+      val ranges1 = k -> tokenRange(v.start, splitValue)
       ranges1
     )
     .filter((_, v) => v._1 != v._2)
@@ -47,14 +47,14 @@ def split_reading_node[C <: HasWitnessReadings](
         .getOrElse(k, throw new RuntimeException(s"$position_to_split"))
       // the splitValue should be >= v._1 (start value)
       // the splitValue should be <= v._2 (end value)
-      val ranges2 = k -> (splitValue, v._2)
+      val ranges2 = k -> tokenRange(splitValue, v.end)
       ranges2
     )
-    .filter((_, v) => v._1 != v._2)
+    .filter((_, v) => v.start != v.end)
 
   // TODO: if the whole map is empty we should return a special type, e.g., EmptyReadingNode
   // TODO: Workaround to mimic copy() method on trait (https://groups.google.com/g/scala-internals/c/O1yrB1xetUA)
-  // TODO: Would like return type of be (C, C) instead of (HasWitnessReadings, HasWitnessReadings)
+  // TODO: Would like return type of (C, C) instead of (HasWitnessReadings, HasWitnessReadings)
   // TODO: Might need to revise witnessGroups property, as well, since some ranges might be empty after split
   val result: (HasWitnessReadings, HasWitnessReadings) =
     current match
@@ -139,7 +139,7 @@ def createAlignmentTree(
   //     token offset
   // NB: We are embarrassed by the mutable map (and by other things, such has having to scan token array)
   // Housekeeping; TODO: Think about witness-set metadata
-  val witnessRanges: mutable.Map[Siglum, (Int, Int)] = mutable.Map.empty
+  val witnessRanges: mutable.Map[Siglum, tokenRange] = mutable.Map.empty
 
   // go over the tokens and assign the lowest and the highest to the map
   // token doesn't know its position in a specific witness, so use indices
@@ -149,12 +149,12 @@ def createAlignmentTree(
     if token.w != -1
     then // witness separators have witness identifier values of -1
       val tuple =
-        witnessRanges.getOrElse(sigla(token.w), (tokenIndex, tokenIndex))
-      val minimum = tuple._1
+        witnessRanges.getOrElse(sigla(token.w), tokenRange(tokenIndex, tokenIndex))
+      val minimum = tuple.start
       val maximum = tokenIndex
       witnessRanges.put(
         sigla(token.w),
-        (minimum, maximum + 1)
+        tokenRange(minimum, maximum + 1)
       ) // +1 is for exclusive end
   // mutable map is local to the function, to convert to immutable before return
   val witnessReadings = witnessRanges.toMap

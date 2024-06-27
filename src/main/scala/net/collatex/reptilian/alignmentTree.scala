@@ -5,7 +5,6 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scalatags.Text.all.*
 
-// From witness id to start and end (exclusive "until") offset in global token array
 opaque type Siglum = String
 object Siglum:
   def apply(s: String): Siglum = s
@@ -13,11 +12,13 @@ object Siglum:
     def value: String = s
   }
   implicit def ordering: Ordering[Siglum] =
-    (a: Siglum, b: Siglum) => a.compare(b)
-
+    (a: Siglum, b: Siglum) => a.value.compare(b.value)
 given CanEqual[Siglum, Siglum] = CanEqual.derived
 
-type WitnessReadings = Map[Siglum, (Int, Int)] // type alias
+// From witness id to start and end (exclusive "until") offset in global token array
+case class tokenRange(start: Int, end: Int)
+
+type WitnessReadings = Map[Siglum, tokenRange] // type alias
 
 sealed trait AlignmentTreeNode // supertype of all nodes
 
@@ -71,7 +72,7 @@ final case class AgreementNode(
   * leaf nodes cannot be empty
   */
 object AgreementNode {
-  def apply(m: (Siglum, (Int, Int))*): AlignmentTreeNode =
+  def apply(m: (Siglum, tokenRange)*): AlignmentTreeNode =
     AgreementNode(m.toMap, Vector(m.toMap)) // FIXME: Fake witnessGroups value
 }
 
@@ -90,7 +91,7 @@ final case class AgreementIndelNode(
 ) extends AlignmentTreeNode
     with HasWitnessReadings
 object AgreementIndelNode {
-  def apply(m: (Siglum, (Int, Int))*): AlignmentTreeNode =
+  def apply(m: (Siglum, tokenRange)*): AlignmentTreeNode =
     AgreementIndelNode(m.toMap, Vector(m.toMap)) // FIXME: Fake witnessGroups value
 }
 
@@ -110,7 +111,7 @@ def show(node: AlignmentTreeNode): Unit =
     case AgreementIndelNode(witnessReadings, witnessGroups) => println(witnessReadings)
     case VariationNode(children, _)                         => println(children)
     // case UnexpandedNode(witnessReadings, witnessGroups)     => println(witnessReadings)
-    case ExpandedNode(children)                             => println(children)
+    case ExpandedNode(children) => println(children)
   }
 
 /** Input is Vector[Int], representing FullDepthBlock instances Output is Vector[AlignmentNode], where the nodes are all
@@ -135,9 +136,12 @@ def fullDepthBlockToReadingNode(
 //  println(s"block: $block")
   val readings = block.instances
     .map(e =>
-      sigla(tokenArray(e).w) -> (tokenArray(e).g, tokenArray(
-        e
-      ).g + block.length)
+      sigla(tokenArray(e).w) -> tokenRange(
+        start = tokenArray(e).g,
+        end = tokenArray(
+          e
+        ).g + block.length
+      )
     )
     .toMap
   val groups = Vector(readings)

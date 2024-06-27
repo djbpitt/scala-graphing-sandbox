@@ -8,6 +8,7 @@ import net.collatex.reptilian.{
   ExpandedNode,
   FullDepthBlock,
   HasWitnessReadings,
+  Siglum,
   Token,
   VariationIndelNode,
   VariationNode,
@@ -15,7 +16,7 @@ import net.collatex.reptilian.{
   createAlignedBlocks,
   makeTokenizer,
   split_reading_node,
-  Siglum
+  tokenRange
 }
 import smile.clustering.hclust
 import smile.data.DataFrame
@@ -241,11 +242,17 @@ private def nwCompactAlignmentTreeNodeSteps(
   def singleStepToWitnessReadings(single: SingleStepAlignmentTreePath): WitnessReadings =
     single match {
       case SingleStepMatch(tok1: Token, tok2: Token) =>
-        Map(Siglum(tok1.w.toString) -> (tok1.g, tok1.g + 1), Siglum(tok2.w.toString) -> (tok2.g, tok2.g + 1))
+        Map(
+          Siglum(tok1.w.toString) -> tokenRange(tok1.g, tok1.g + 1),
+          Siglum(tok2.w.toString) -> tokenRange(tok2.g, tok2.g + 1)
+        )
       case SingleStepNonMatch(tok1: Token, tok2: Token) =>
-        Map(Siglum(tok1.w.toString) -> (tok1.g, tok1.g + 1), Siglum(tok2.w.toString) -> (tok2.g, tok2.g + 1))
-      case SingleStepInsert(tok: Token) => Map(Siglum(tok.w.toString) -> (tok.g, tok.g + 1))
-      case SingleStepDelete(tok: Token) => Map(Siglum(tok.w.toString) -> (tok.g, tok.g + 1))
+        Map(
+          Siglum(tok1.w.toString) -> tokenRange(tok1.g, tok1.g + 1),
+          Siglum(tok2.w.toString) -> tokenRange(tok2.g, tok2.g + 1)
+        )
+      case SingleStepInsert(tok: Token) => Map(Siglum(tok.w.toString) -> tokenRange(tok.g, tok.g + 1))
+      case SingleStepDelete(tok: Token) => Map(Siglum(tok.w.toString) -> tokenRange(tok.g, tok.g + 1))
     }
   def openStepToTreeNode(open: (SingleStepAlignmentTreePath, WitnessReadings)): HasWitnessReadings =
     open match {
@@ -275,7 +282,7 @@ private def nwCompactAlignmentTreeNodeSteps(
         nextStep(
           stepsToProcess = t,
           compactedSteps = compactedSteps,
-          openStep = (openStep._1, openStep._2.map((k, v) => k -> (v._1 - 1, v._2)))
+          openStep = (openStep._1, openStep._2.map((k, v) => k -> tokenRange(v._1 - 1, v._2)))
         )
       case h #:: t =>
         nextStep(
@@ -536,7 +543,7 @@ def splitTree(
           val newAtn =
             if fdb.size == 1 then // FIXME: Need also to verify that block isn’t split
               val wr = alignmentRibbon.head.witnessReadings ++ Map(
-                Siglum(singletonTokens.head.w.toString) -> (stTokenArray(fdb.head.instances.last).g, stTokenArray(
+                Siglum(singletonTokens.head.w.toString) -> tokenRange(stTokenArray(fdb.head.instances.last).g, stTokenArray(
                   fdb.head.instances.last
                 ).g + fdb.head.length)
               )
@@ -549,7 +556,7 @@ def splitTree(
               if endpointDifference == 0 then updatedAgreementNode
               else
                 val trailingTokenNode =
-                  AgreementIndelNode(singletonSiglum -> (singletonEndInAgreementNode, singletonTokens.last.g + 1))
+                  AgreementIndelNode(singletonSiglum -> tokenRange(singletonEndInAgreementNode, singletonTokens.last.g + 1))
                 ExpandedNode(ListBuffer(updatedAgreementNode, trailingTokenNode))
             else AgreementNode()
           acc(i + darwin.head.readings.size) = newAtn
@@ -574,11 +581,13 @@ def splitTree(
               case (b1: AgreementNode, b2: AgreementNode) =>
                 val mergedWitnessReadings = a1.witnessReadings ++ a2.witnessReadings
                 val mergedWitnessGroups = Vector(a1.witnessReadings.keys.toVector, a2.witnessReadings.keys.toVector)
-                val result = VariationNode(witnessReadings = mergedWitnessReadings, witnessGroups = Vector(mergedWitnessReadings))
+                val result =
+                  VariationNode(witnessReadings = mergedWitnessReadings, witnessGroups = Vector(mergedWitnessReadings))
                 result
               case _ =>
                 AgreementNode(
-                  Map(Siglum("w") -> (0, 1)),Vector(Map(Siglum("w") -> (0, 1)))
+                  Map(Siglum("w") -> tokenRange(0, 1)),
+                  Vector(Map(Siglum("w") -> tokenRange(0, 1)))
                 ) // FIXME: Fake AgreementNode to fool compiler—temporarily, of course!
             }
 
@@ -644,14 +653,14 @@ def splitTree(
               .asInstanceOf[ExpandedNode]
               .children
               .map(e => e.asInstanceOf[HasWitnessReadings].witnessReadings.values)
-              .map(_.map(_.head).toSet)
+              .map(_.map(_.start).toSet)
               .zipWithIndex
               .filter(f => f._1.intersect(globalBlockBeginningsFlat).nonEmpty)
             val tree2FirstBlockNode = resultOfTreeSplitting.t2
               .asInstanceOf[ExpandedNode]
               .children
               .map(e => e.asInstanceOf[HasWitnessReadings].witnessReadings.values)
-              .map(_.map(_.head).toSet)
+              .map(_.map(_.start).toSet)
               .zipWithIndex
               .filter(f => f._1.intersect(globalBlockBeginningsFlat).nonEmpty)
 

@@ -366,8 +366,7 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
         readingNodes.append(
           s"""${currentId.toString}
              | [label=\"${currentId.toString}|$formattedNValues}\"
-             | tooltip=\"$nValues \\n\\n(${witnessReadings.toSeq.sorted
-              .map(_._1)
+             | tooltip=\"$nValues \\n\\n(${witnessReadings.keys.toSeq.sorted
               .mkString(", ")})\"
              | fillcolor=\"lightblue\"]""".stripMargin.replaceAll("\n", "")
         )
@@ -393,8 +392,7 @@ def flatDot(root: ExpandedNode, tokenArray: Vector[Token]): String =
         indelNodes.append(
           s"""${currentId.toString}
              | [label=\"${currentId.toString}|$formattedNValues}\"
-             | tooltip=\"$nValues \\n\\n(${witnessReadings.toSeq.sorted
-              .map(_._1)
+             | tooltip=\"$nValues \\n\\n(${witnessReadings.keys.toSeq.sorted
               .mkString(", ")})\"
              | fillcolor=\"lightgoldenrodyellow\"]""".stripMargin
             .replaceAll("\n", "")
