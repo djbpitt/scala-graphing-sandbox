@@ -16,7 +16,12 @@ object Siglum:
 given CanEqual[Siglum, Siglum] = CanEqual.derived
 
 // From witness id to start and until (exclusive "until") offset in global token array
-case class TokenRange(start: Int, until: Int)
+case class TokenRange(start: Int, until: Int):
+  def nString(implicit gTa: Vector[Token]): String = // global token array
+    gTa.slice(this.start, this.until).map(_.n).mkString(" ") // concatenate n values
+  def tString(implicit gTa: Vector[Token]): String =
+    gTa.slice(this.start, this.until).map(_.t).mkString(" ") // concatenate t values
+
 
 type WitnessReadings = Map[Siglum, TokenRange] // type alias
 

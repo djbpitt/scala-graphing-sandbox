@@ -134,19 +134,19 @@ private def createNonspriteSvgGridColumnCells(
     </div>
   }
   result
-*/
+ */
 
 /*
 def createNonspriteGrid(root: ExpandedNode, tokenArray: Vector[Token]): scala.xml.Node =
   /*
-   * Setup
-   * */
+ * Setup
+ * */
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val alignmentPoints: Vector[AlignmentPoint] =
     createAlignmentPoints(nodeSequence, tokenArray)
   /*
-   * Create grid content (one row per alignment point)
-   * */
+ * Create grid content (one row per alignment point)
+ * */
   val gridRowClasses: Vector[String] = getGridRowClasses(nodeSequence)
   val gridColumnCellsSvg: Vector[Elem] = createNonspriteSvgGridColumnCells(
     alignmentPoints
@@ -171,8 +171,8 @@ def createNonspriteGrid(root: ExpandedNode, tokenArray: Vector[Token]): scala.xm
       </div>
   }
   /*
-   * HTML grid output
-   * */
+ * HTML grid output
+ * */
   val gradients =
     <svg xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -261,10 +261,10 @@ def createNonspriteGrid(root: ExpandedNode, tokenArray: Vector[Token]): scala.xm
         </body>
       </html>
   /*
-   * Return html main page
-   */
+ * Return html main page
+ */
   html
-*/
+ */
 
 /* ====================================================================== */
 /* Horizontal ribbons                                                     */
@@ -375,9 +375,8 @@ private def computeAlignmentNodeRenderingWidth(n: HasWitnessReadings, gTa: Vecto
 
 private def createHorizNodeData(
     nodeSequence: Vector[NumberedNode],
-    tokenArray: Vector[Token],
     sigla: Set[Siglum]
-): Vector[HorizNodeData] =
+)(implicit tokenArray: Vector[Token]): Vector[HorizNodeData] =
   @tailrec
   def nextNode(nodes: Vector[NumberedNode], pos: Int, acc: Vector[HorizNodeData]): Vector[HorizNodeData] =
     if nodes.isEmpty then acc
@@ -405,9 +404,7 @@ private def createHorizNodeData(
               f.map((k, v) =>
                 HorizNodeGroupMember(
                   k,
-                  wr(k)
-                    .map(_.t)
-                    .mkString
+                  v.tString
                 )
               ).toVector
                 .sorted
@@ -463,13 +460,15 @@ private def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   * @return
   *   <html> element in HTML namespace, with embedded SVG
   */
-private def createHorizontalRibbons(root: ExpandedNode, tokenArray: Vector[Token], sigla: Set[Siglum]): scala.xml.Node =
+private def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(implicit
+    tokenArray: Vector[Token]
+): scala.xml.Node =
   /** Constants */
   val ribbonWidth = 18
   val missingTop = allSigla.size * ribbonWidth * 2 + ribbonWidth / 2
   val witnessCount = sigla.size
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
-  val horizNodes = createHorizNodeData(nodeSequence, tokenArray, sigla)
+  val horizNodes = createHorizNodeData(nodeSequence, sigla)
   /* Compute optimal witness order; finds distances but not order; not updated for new witnessGroups */
   /*
   val cartesianProducts: Vector[Iterable[Set[String]]] = nodeSequence.map(_.node) map {

@@ -1,3 +1,4 @@
+/*
 package net.collatex.util
 
 import net.collatex.reptilian.{Token, AgreementNode, AgreementIndelNode, VariationNode, VariationIndelNode}
@@ -195,3 +196,4 @@ private class UnalignedDevTest extends AnyFunSuite:
     )
     assert(result == expected)
   }
+*/

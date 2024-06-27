@@ -48,7 +48,7 @@ def readData(pathToData: Path): List[(String, String)] =
     */
   val root: ExpandedNode = createAlignment(witnessStrings, sigla)
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html") // used for single-column and mixed output
-  val horizontalRibbons = createHorizontalRibbons(root, tokenArray, allSigla)
+  val horizontalRibbons = createHorizontalRibbons(root, allSigla)
   val horizontalRibbonsPath =
     os.pwd / "src" / "main" / "outputs" / "horizontal-ribbons-full.xhtml" // "horizontal-ribbons.xhtml"
   scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true, doctypeHtml)
