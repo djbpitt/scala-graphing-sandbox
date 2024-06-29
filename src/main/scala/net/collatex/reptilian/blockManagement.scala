@@ -164,9 +164,3 @@ def createAlignedBlocks(tokenArray: Vector[Token], witnessCount: Int, keepOnlyFu
   val annoyingInterimVariable = (blockStartPositions lazyZip blockLengths)
     .map((starts, length) => FullDepthBlock(starts.toVector, length))
   (blocks, suffixArray, removeOverlappingBlocks(annoyingInterimVariable))
-
-
-def blockTextById(blocks: Iterable[FullDepthBlock], token_array: Vector[Token]): Map[Int, String] =
-  blocks
-    .map(e => e.instances(0) -> e.show(token_array))
-    .toMap

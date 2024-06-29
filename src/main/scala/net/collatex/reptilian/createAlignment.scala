@@ -20,7 +20,7 @@ import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, BitSet, ListBuffer}
 
 val endNodeId = Integer.MAX_VALUE // End-node uses maximum possible integer value (i.e., inconveniently large value)
-implicit val myConfig: CoreConfig = CoreConfig()
+given CoreConfig = CoreConfig()
 
 /** https://stackoverflow.com/questions/28254447/is-there-a-scala-java-equivalent-of-python-3s-collections-counter
  */
@@ -330,6 +330,6 @@ def alignmentIntsToBlocks(alignment: Set[Int], blocks: Iterable[FullDepthBlock])
   alignmentBlocks
 
 // Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
-def createAlignment(witnessStrings: List[String], sigla: List[Siglum])(implicit tokenArray: Vector[Token]): ExpandedNode =
+def createAlignment(witnessStrings: List[String], sigla: List[Siglum])(using tokenArray: Vector[Token]): ExpandedNode =
   createAlignmentTree(tokenArray, sigla)
 

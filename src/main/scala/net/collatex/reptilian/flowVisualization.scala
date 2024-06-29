@@ -340,53 +340,6 @@ val defs: Elem = <defs>
   {gradients}
 </defs>
 
-/** Entry point to create SVG flow visualization from alignment tree
-  *
-  * Create flattened sequence of alignment tree nodes (in tree_visualization.scala), then create alignment points from
-  * alignment-tree nodes
-  *
-  * Input sequence is tuples of *nodeId, Node)
-  *
-  * @return
-  */
-def createSvgFlowModel(
-    nodeSequence: Vector[NumberedNode],
-    tokenArray: Vector[Token]
-): Elem =
-  val alignmentPoints = createAlignmentPoints(nodeSequence, tokenArray)
-  val nodeOutput =
-    createSvgAlignmentGroupContent(alignmentPoints, nodeSequence, tokenArray)
-  val flowOutput = createFlows(alignmentPoints, "absolute")
-  val groupingRects = alignmentPoints.zipWithIndex.map(createGroupingRects)
-  val verticalSeparator =
-    <line
-        x1={verticalRuleXPos.toString}
-        y1={(-witDims("h")).toString}
-        x2={verticalRuleXPos.toString}
-        y2={
-      ((alignmentPoints.size - 1) * verticalNodeSpacing + witDims(
-        "h"
-      ) * 2).toString
-    }
-        stroke="gray"
-        stroke-width=".5"/>
-  val vbWidth = (totalWitnessCount + 1) * witDims("w") * 3
-  val vbHeight = alignmentPoints.size * verticalNodeSpacing
-  val svgWidth = "100%"
-  val viewBox =
-    List("0 -10", vbWidth.toString, (vbHeight + 20).toString).mkString(" ")
-  val flowModelSvg: Elem =
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox={viewBox} width={svgWidth}>
-      <g transform="translate(10, 10)">
-        {defs}{flowOutput}{nodeOutput}{groupingRects}{verticalSeparator}
-      </g>
-    </svg>
-  // val pp = new scala.xml.PrettyPrinter(120, 4)
-  // val formattedSvg = pp.format(flowModelSvg)
-  // println(formattedSvg)
-  // save("flowModel.svg", flowModelSvg)
-  flowModelSvg
-
 /** AlignmentPoint
   *
   * Corresponds to AlignmentTreeNode of any type Rendered at a shared vertical position in SVG
@@ -415,7 +368,7 @@ case class SubGroup(witnesses: Vector[WitnessReading]) {
   def size: Int = witnesses.size
 }
 object SubGroup {
-  implicit def ordering: Ordering[SubGroup] =
+  given Ordering[SubGroup] =
     (a: SubGroup, b: SubGroup) => a.witnesses.head.compare(b.witnesses.head)
 }
 
@@ -430,6 +383,6 @@ object SubGroup {
   */
 case class WitnessReading(siglum: Siglum)
 object WitnessReading {
-  implicit def ordering: Ordering[WitnessReading] =
+  given Ordering[WitnessReading] =
     (a: WitnessReading, b: WitnessReading) => a.siglum.compare(b.siglum)
 }

@@ -9,19 +9,7 @@ package net.collatex.reptilian
  *               width = until - start (number of instances)
  *               if one per witness, block is full-depth, but could be repetition within a single witness
  */
-case class Block(start: Int, end: Int, length: Int):
-  /** instanceStartOffsets()
-   *
-   * @param suffixArray  Slicing the suffix array from block start and until (LCP value)
-   *                      selects offsets for block instances in token array
-   *
-   * @return              Vector of token array offsets
-   *
-   * */
-  def instanceStartOffsets(implicit suffixArray: Array[Int]): Vector[Int] =
-    suffixArray
-      .slice(this.start, this.end)
-      .toVector
+case class Block(start: Int, end: Int, length: Int)
 
 /** Full depth block
  *
@@ -35,8 +23,8 @@ case class Block(start: Int, end: Int, length: Int):
  *                  This plus token array is enough for all subsequent processing; no further need for suffix array, etc.
  */
 case class FullDepthBlock(instances: Vector[Int], length: Int):
-  def show(implicit token_array: Vector[Token]): String =
-    token_array
+  def show(using gTa: Vector[Token]): String =
+    gTa
       .slice(this.instances(0), this.instances(0) + this.length)
       .map(_.n)
       .mkString(" ")

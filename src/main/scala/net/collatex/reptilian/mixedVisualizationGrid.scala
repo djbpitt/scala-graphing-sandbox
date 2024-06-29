@@ -376,7 +376,7 @@ private def computeAlignmentNodeRenderingWidth(n: HasWitnessReadings, gTa: Vecto
 private def createHorizNodeData(
     nodeSequence: Vector[NumberedNode],
     sigla: Set[Siglum]
-)(implicit tokenArray: Vector[Token]): Vector[HorizNodeData] =
+)(using tokenArray: Vector[Token]): Vector[HorizNodeData] =
   @tailrec
   def nextNode(nodes: Vector[NumberedNode], pos: Int, acc: Vector[HorizNodeData]): Vector[HorizNodeData] =
     if nodes.isEmpty then acc
@@ -460,7 +460,7 @@ private def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   * @return
   *   <html> element in HTML namespace, with embedded SVG
   */
-private def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(implicit
+private def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(using
     tokenArray: Vector[Token]
 ): scala.xml.Node =
   /** Constants */
@@ -962,12 +962,12 @@ case class HorizNodeData(
 
 case class HorizNodeGroup(members: Vector[HorizNodeGroupMember])
 object HorizNodeGroup {
-  implicit def ordering: Ordering[HorizNodeGroup] =
+  given Ordering[HorizNodeGroup] =
     (a: HorizNodeGroup, b: HorizNodeGroup) => a.members.head.compare(b.members.head)
 }
 
 case class HorizNodeGroupMember(siglum: Siglum, reading: String)
 object HorizNodeGroupMember {
-  implicit def ordering: Ordering[HorizNodeGroupMember] =
+  given Ordering[HorizNodeGroupMember] =
     (a: HorizNodeGroupMember, b: HorizNodeGroupMember) => a.siglum.compare(b.siglum)
 }
