@@ -1,14 +1,22 @@
 package net.collatex.util
 
+import scala.annotation.targetName
+
 
 // Hypergraph
 // @author: Ronald
 // Inspired by bipartite adjacency map from alga-graphs
 
 // Hypergraph has hyperedges labels of type L and vertices of type V
-case class Hypergraph[L, V](am1: Map[L, Set[V]], am2: Map[V, Set[L]])
+case class Hypergraph[L, V](am1: Map[L, Set[V]], am2: Map[V, Set[L]]):
+  @targetName("overlay")
+  def +(other: Hypergraph[L, V]):Hypergraph[L, V] =
+    println("We get called")
+    Hypergraph.empty()
+    
 
 case class Hyperedge[L, V](label: L, hypergraph: Hypergraph[L, V])
+
 // add overlay method
 
 // add connect method
@@ -16,9 +24,9 @@ case class Hyperedge[L, V](label: L, hypergraph: Hypergraph[L, V])
 
 object Hypergraph:
   def empty[L, V](): Hypergraph[L, V] = Hypergraph(Map.empty, Map.empty)
-  
-  def vertex[L, V](vertex: V): Hypergraph[L, V] =
-    Hypergraph(Map.empty, Map.apply(vertex -> Set.empty))
+
+  def vertices[L, V](vertices: V*): Hypergraph[L, V] =
+    Hypergraph(Map.empty, vertices.map(_ -> Set.empty).toMap)
 
   def hyperedge[L, V](label: L, vertices: Set[V] = Set.empty[V]): Hypergraph[L, V] =
     val vToL = vertices.map(_ -> Set(label)).toMap[V, Set[L]]
@@ -27,7 +35,7 @@ object Hypergraph:
 
 
 @main def main(): Unit =
-  val hypergraph = Hypergraph.vertex[String, Int](1)
+  val hypergraph = Hypergraph.vertices[String, Int](1)
 
   val hypergraph2 = Hypergraph.hyperedge[String, Int]("")
 
