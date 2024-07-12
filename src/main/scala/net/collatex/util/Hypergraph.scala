@@ -17,8 +17,10 @@ object Hypergraph:
   def vertex[HE, V](vertex: V): Hypergraph[HE, V] =
     Hypergraph(Map.empty, Map.apply(vertex -> Set.empty))
 
-  // add hyperedge method
-  
-  
+  def hyperedge[HE, V](hyperedge: HE): Hypergraph[HE, V] =
+    Hypergraph(Map.apply(hyperedge -> Set.empty), Map.empty)
+
+
+
 @main def main(): Unit =
   val hypergraph = Hypergraph.vertex[String, Int](1)
