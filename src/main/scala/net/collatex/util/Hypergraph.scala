@@ -12,8 +12,14 @@ case class Hypergraph[L, V](am1: Map[L, Set[V]], am2: Map[V, Set[L]]):
 
   @targetName("overlay")
   def +(other: Hypergraph[L, V]):Hypergraph[L, V] =
-    Hypergraph(Map.empty, this.am2 ++ other.am2)
+    Hypergraph(this.am1 ++ other.am1, this.am2 ++ other.am2)
 
+  def vertices: Set[V] =
+    am2.keySet
+    
+  def hyperedges: Set[L] =
+    am1.keySet
+    
 // add connect method
 
 
@@ -28,9 +34,9 @@ object Hypergraph:
   def vertices[L, V](vertices: V*): Hypergraph[L, V] =
     Hypergraph(Map.empty, vertices.map(_ -> Set.empty).toMap)
 
-  def hyperedge[L, V](label: L, vertices: Set[V] = Set.empty[V]): Hypergraph[L, V] =
+  def hyperedge[L, V](label: L, vertices: V*): Hypergraph[L, V] =
     val vToL = vertices.map(_ -> Set(label)).toMap[V, Set[L]]
-    Hypergraph(Map.apply(label -> vertices), vToL)
+    Hypergraph(Map.apply(label -> vertices.toSet), vToL)
 
 
 
