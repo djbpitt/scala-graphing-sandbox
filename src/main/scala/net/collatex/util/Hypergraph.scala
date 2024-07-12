@@ -9,17 +9,17 @@ import scala.annotation.targetName
 
 // Hypergraph has hyperedges labels of type L and vertices of type V
 case class Hypergraph[L, V](am1: Map[L, Set[V]], am2: Map[V, Set[L]]):
+
   @targetName("overlay")
   def +(other: Hypergraph[L, V]):Hypergraph[L, V] =
-    println("We get called")
-    Hypergraph.empty()
-    
+    Hypergraph(Map.empty, this.am2 ++ other.am2)
+
+// add connect method
+
 
 case class Hyperedge[L, V](label: L, hypergraph: Hypergraph[L, V])
 
-// add overlay method
 
-// add connect method
 
 
 object Hypergraph:
