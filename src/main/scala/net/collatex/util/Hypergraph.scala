@@ -8,7 +8,7 @@ package net.collatex.util
 // Hypergraph has hyperedges of type HE and vertices of type V
 case class Hypergraph[HE, V](am1: Map[HE, Set[V]], am2: Map[V, Set[HE]])
 
-// add concat method
+// add overlay method
 
 // add connect method
 
@@ -24,3 +24,5 @@ object Hypergraph:
 
 @main def main(): Unit =
   val hypergraph = Hypergraph.vertex[String, Int](1)
+
+  val hypergraph2 = Hypergraph.hyperedge[String, Int]("")
