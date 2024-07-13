@@ -15,19 +15,24 @@ import cats.instances.set.*
 case class Hypergraph[L, V](am1: Map[L, Set[V]], am2: Map[V, Set[L]]):
 
   @targetName("overlay")
-  def +(other: Hypergraph[L, V]):Hypergraph[L, V] =
+  def +(other: Hypergraph[L, V]): Hypergraph[L, V] =
     Hypergraph(this.am1 |+| other.am1, this.am2 |+| other.am2)
+
+  // add connect method
+  @targetName("connect")
+  def *(other: Hypergraph[L, V]): Hypergraph[L, V] =
+    // every L of this should connect to every V of other.
+    Hypergraph.empty()
 
   def vertices: Set[V] =
     am2.keySet
     
   def hyperedges: Set[L] =
     am1.keySet
-    
+
   def members(hyperedge: L): Set[V] =
     am1(hyperedge)
     
-// add connect method
 
 
 case class Hyperedge[L, V](label: L, hypergraph: Hypergraph[L, V])
@@ -42,7 +47,7 @@ object Hypergraph:
     Hypergraph(Map.empty, vertices.map(_ -> Set.empty).toMap)
 
   def hyperedge[L, V](label: L, vertices: V*): Hypergraph[L, V] =
-    val vToL = vertices.map(_ -> Set(label)).toMap[V, Set[L]]
+    val vToL = vertices.map(_ -> Set(label)).toMap
     Hypergraph(Map.apply(label -> vertices.toSet), vToL)
 
 

@@ -41,3 +41,11 @@ class HypergraphTest extends AnyFunSuite:
     val expectedMembers = Set(1,2,3,4,5)
     assert(result.members("edge1") == expectedMembers)
 
+  test("connect"):
+    val hg1 = Hypergraph.hyperedge("edge1", 1)
+    val hg2 = Hypergraph.vertices[String, Int](2)
+
+    val result = hg1 * hg2
+
+    val expectedMembers = Set(1, 2)
+    assert(result.members("edge1") == expectedMembers)
