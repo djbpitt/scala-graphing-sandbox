@@ -1,6 +1,10 @@
 package net.collatex.util
 
+import cats.implicits.catsSyntaxSemigroup
+
 import scala.annotation.targetName
+import cats.kernel.Semigroup
+import cats.instances.set.*
 
 
 // Hypergraph
@@ -12,13 +16,16 @@ case class Hypergraph[L, V](am1: Map[L, Set[V]], am2: Map[V, Set[L]]):
 
   @targetName("overlay")
   def +(other: Hypergraph[L, V]):Hypergraph[L, V] =
-    Hypergraph(this.am1 ++ other.am1, this.am2 ++ other.am2)
+    Hypergraph(this.am1 |+| other.am1, this.am2 |+| other.am2)
 
   def vertices: Set[V] =
     am2.keySet
     
   def hyperedges: Set[L] =
     am1.keySet
+    
+  def members(hyperedge: L): Set[V] =
+    am1(hyperedge)
     
 // add connect method
 

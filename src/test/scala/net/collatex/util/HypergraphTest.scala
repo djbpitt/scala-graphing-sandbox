@@ -32,12 +32,12 @@ class HypergraphTest extends AnyFunSuite:
     assert(result.vertices == expectedVertices)
     assert(result.hyperedges == expectedHyperedges)
 
-  //NOTE: not yet finished
-  ignore("overlay with two vertices and different hyperedges"):
-    val hg1 = Hypergraph.vertices(1)
-    val hg2 = Hypergraph.vertices(1)
+  test("overlay with a duplicate hyperedge"):
+    val hg1 = Hypergraph.hyperedge("edge1", 1, 2)
+    val hg2 = Hypergraph.hyperedge("edge1", 3, 4, 5)
 
     val result = hg1 + hg2
 
-    val expected = Hypergraph.vertices(1)
-    assert(result == expected)
+    val expectedMembers = Set(1,2,3,4,5)
+    assert(result.members("edge1") == expectedMembers)
+
