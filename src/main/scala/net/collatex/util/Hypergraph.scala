@@ -22,7 +22,11 @@ case class Hypergraph[L, V](am1: Map[L, Set[V]], am2: Map[V, Set[L]]):
   @targetName("connect")
   def *(other: Hypergraph[L, V]): Hypergraph[L, V] =
     // every L of this should connect to every V of other.
-    Hypergraph.empty()
+    val new_hyperedges_to_vertex_map = this.am1.map((label, vertices) => label -> (vertices union other.am2.keySet))
+    // but what of all the L that are in other but not in this?
+    // they need to be added too
+    // And of course the second mapping needs to be updated too
+    Hypergraph(new_hyperedges_to_vertex_map, this.am2)
 
   def vertices: Set[V] =
     am2.keySet
