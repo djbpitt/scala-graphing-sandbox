@@ -24,12 +24,11 @@ case class Hypergraph[L, V](am1: Map[L, Set[V]], am2: Map[V, Set[L]]):
     // every L of this should connect to every V of other.
     // every L of other should connect to every V of this.
     val new_hyperedges_to_vertex_map = this.am1.map((label, vertices) => label -> (vertices union other.am2.keySet))
-      ++ other.am1.map((label, vertices) => label -> (vertices union this.am2.keySet))
+      |+| other.am1.map((label, vertices) => label -> (vertices union this.am2.keySet))
     // And of course the second mapping (V->L) needs to be updated too
     val new_vertices_to_label_map = this.am2.map((vertex, labels) => vertex -> (labels union other.am1.keySet))
-      ++ other.am2.map((vertex, labels) => vertex -> (labels union this.am1.keySet))
+      |+| other.am2.map((vertex, labels) => vertex -> (labels union this.am1.keySet))
 
-    // NOTE: Check if there is a duplicate edge label in both graphs
     Hypergraph(new_hyperedges_to_vertex_map, new_vertices_to_label_map)
 
   def vertices: Set[V] =
