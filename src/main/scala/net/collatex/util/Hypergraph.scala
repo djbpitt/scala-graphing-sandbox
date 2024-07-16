@@ -23,11 +23,11 @@ case class Hypergraph[L, V](am1: Map[L, Set[V]], am2: Map[V, Set[L]]):
   def *(other: Hypergraph[L, V]): Hypergraph[L, V] =
     // every L of this should connect to every V of other.
     // every L of other should connect to every V of this.
-    val new_hyperedges_to_vertex_map = this.am1.map((label, vertices) => label -> (vertices union other.vertices))
-      |+| other.am1.map((label, vertices) => label -> (vertices union this.vertices))
+    val new_hyperedges_to_vertex_map = this.am1.map((label, vertices) => label -> (vertices | other.vertices))
+      |+| other.am1.map((label, vertices) => label -> (vertices | this.vertices))
     // And of course the second mapping (V->L) needs to be updated too
-    val new_vertices_to_label_map = this.am2.map((vertex, labels) => vertex -> (labels union other.hyperedges))
-      |+| other.am2.map((vertex, labels) => vertex -> (labels union this.hyperedges))
+    val new_vertices_to_label_map = this.am2.map((vertex, labels) => vertex -> (labels | other.hyperedges))
+      |+| other.am2.map((vertex, labels) => vertex -> (labels | this.hyperedges))
 
     Hypergraph(new_hyperedges_to_vertex_map, new_vertices_to_label_map)
 
