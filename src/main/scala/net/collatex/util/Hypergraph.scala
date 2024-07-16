@@ -30,8 +30,6 @@ case class Hypergraph[L, V](am1: Map[L, Set[V]], am2: Map[V, Set[L]]):
       ++ other.am2.map((vertex, labels) => vertex -> (labels union this.am1.keySet))
 
     // NOTE: Check if there is a duplicate edge label in both graphs
-    // Check if there are edges in one, but no vertices in other
-    // Check if there are vertices in one, but no edges in other
     Hypergraph(new_hyperedges_to_vertex_map, new_vertices_to_label_map)
 
   def vertices: Set[V] =

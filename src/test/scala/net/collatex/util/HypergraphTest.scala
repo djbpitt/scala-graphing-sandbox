@@ -66,3 +66,27 @@ class HypergraphTest extends AnyFunSuite:
     assert(result.edges(1) == Set("edge1"))
     assert(result.edges(2) == Set("edge1"))
     assert(result.vertices == expectedVertices)
+
+  // Checks if there are edges in one, but no vertices in other
+  // Checks if there are vertices in one, but no edges in other
+  test("connect3"):
+    val hg1 = Hypergraph.hyperedge[String, Int]("edge1")
+    val hg2 = Hypergraph.vertices[String, Int](1) + Hypergraph.hyperedge("edge2")
+
+    val result = hg1 * hg2
+
+    assert(result.members("edge1") == Set(1))
+    assert(result.members("edge2") == Set.empty)
+    assert(result.edges(1) == Set("edge1"))
+    assert(result.hyperedges == Set("edge1", "edge2"))
+
+  test("connect4"):
+    val hg1 = Hypergraph.vertices[String, Int](1) + Hypergraph.hyperedge("edge2")
+    val hg2 = Hypergraph.hyperedge[String, Int]("edge1")
+
+    val result = hg1 * hg2
+
+    assert(result.members("edge1") == Set(1))
+    assert(result.members("edge2") == Set.empty)
+    assert(result.edges(1) == Set("edge1"))
+    assert(result.hyperedges == Set("edge1", "edge2"))
