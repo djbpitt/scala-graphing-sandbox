@@ -257,16 +257,16 @@ private def nwCompactAlignmentTreeNodeSteps(
   def openStepToTreeNode(open: (SingleStepAlignmentTreePath, WitnessReadings)): HasWitnessReadings =
     open match {
       case (SingleStepMatch(tok1: Token, tok2: Token), wr: WitnessReadings) =>
-        AgreementNode(witnessReadings = wr, witnessGroups = Vector(wr))
+        AgreementNode(witnessReadings = wr, witnessGroups = Set(wr))
       case (SingleStepNonMatch(tok1: Token, tok2: Token), wr: WitnessReadings) =>
         VariationNode(
           witnessReadings = wr,
-          witnessGroups = Vector(wr)
+          witnessGroups = wr.keys.map(k => Map(k -> wr(k))).toSet // Variation node has two groups          
         )
       case (SingleStepInsert(tok: Token), wr: WitnessReadings) =>
-        AgreementIndelNode(witnessReadings = wr, witnessGroups = Vector(wr))
+        AgreementIndelNode(witnessReadings = wr, witnessGroups = Set(wr))
       case (SingleStepDelete(tok: Token), wr: WitnessReadings) =>
-        AgreementIndelNode(witnessReadings = wr, witnessGroups = Vector(wr))
+        AgreementIndelNode(witnessReadings = wr, witnessGroups = Set(wr))
     }
 
   @tailrec
@@ -547,7 +547,7 @@ def splitTree(
                   fdb.head.instances.last
                 ).g + fdb.head.length)
               )
-              val wg = Vector(wr)
+              val wg = Set(wr)
               val updatedAgreementNode = AgreementNode(witnessReadings = wr, witnessGroups = wg)
               val singletonSiglum = Siglum(singletonTokens.head.w.toString)
               val singletonEndInAgreementNode =
@@ -582,12 +582,12 @@ def splitTree(
                 val mergedWitnessReadings = a1.witnessReadings ++ a2.witnessReadings
                 val mergedWitnessGroups = Vector(a1.witnessReadings.keys.toVector, a2.witnessReadings.keys.toVector)
                 val result =
-                  VariationNode(witnessReadings = mergedWitnessReadings, witnessGroups = Vector(mergedWitnessReadings))
+                  VariationNode(witnessReadings = mergedWitnessReadings, witnessGroups = Set(mergedWitnessReadings))
                 result
               case _ =>
                 AgreementNode(
                   Map(Siglum("w") -> TokenRange(0, 1)),
-                  Vector(Map(Siglum("w") -> TokenRange(0, 1)))
+                  Set(Map(Siglum("w") -> TokenRange(0, 1)))
                 ) // FIXME: Fake AgreementNode to fool compiler—temporarily, of course!
             }
 

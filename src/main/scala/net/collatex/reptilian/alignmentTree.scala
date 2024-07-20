@@ -5,6 +5,8 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scalatags.Text.all.*
 
+import scala.annotation.tailrec
+
 opaque type Siglum = String
 object Siglum:
   def apply(s: String): Siglum = s
@@ -35,7 +37,7 @@ sealed trait AlignmentTreeNode // supertype of all nodes
   * readings but do not use a ListMap visualization, and therefore do not inherit this trait
   */
 sealed trait HasWitnessReadings extends AlignmentTreeNode {
-  def witnessGroups: Vector[WitnessReadings]
+  def witnessGroups: Set[WitnessReadings]
   def witnessReadings: WitnessReadings
   def formatWitnessReadings: String =
     s"${ListMap(witnessReadings.toSeq.sortBy(_._1): _*)}"
@@ -54,19 +56,19 @@ final case class ExpandedNode(
 
 final case class VariationNode(
     witnessReadings: WitnessReadings,
-    witnessGroups: Vector[WitnessReadings] // sigla
+    witnessGroups: Set[WitnessReadings] // sigla
 ) extends AlignmentTreeNode
     with HasWitnessReadings
 
 final case class VariationIndelNode(
     witnessReadings: WitnessReadings,
-    witnessGroups: Vector[WitnessReadings] // sigla
+    witnessGroups: Set[WitnessReadings] // sigla
 ) extends AlignmentTreeNode
     with HasWitnessReadings
 
 final case class AgreementNode(
     witnessReadings: WitnessReadings,
-    witnessGroups: Vector[WitnessReadings]
+    witnessGroups: Set[WitnessReadings]
 ) extends AlignmentTreeNode
     with HasWitnessReadings
 
@@ -78,7 +80,7 @@ final case class AgreementNode(
   */
 object AgreementNode {
   def apply(m: (Siglum, TokenRange)*): AlignmentTreeNode =
-    AgreementNode(m.toMap, Vector(m.toMap)) // FIXME: Fake witnessGroups value
+    AgreementNode(m.toMap, Set(m.toMap)) // FIXME: Fake witnessGroups value
 }
 
 /** AgreementIndel node
@@ -92,12 +94,12 @@ object AgreementNode {
   */
 final case class AgreementIndelNode(
     witnessReadings: WitnessReadings,
-    witnessGroups: Vector[WitnessReadings]
+    witnessGroups: Set[WitnessReadings]
 ) extends AlignmentTreeNode
     with HasWitnessReadings
 object AgreementIndelNode {
   def apply(m: (Siglum, TokenRange)*): AlignmentTreeNode =
-    AgreementIndelNode(m.toMap, Vector(m.toMap)) // FIXME: Fake witnessGroups value
+    AgreementIndelNode(m.toMap, Set(m.toMap)) // FIXME: Fake witnessGroups value
 }
 
 /*// Temporary; eventually the alignment graph will have no unexpanded nodes
@@ -149,5 +151,5 @@ def fullDepthBlockToReadingNode(
       )
     )
     .toMap
-  val groups = Vector(readings)
+  val groups = Set(readings)
   AgreementNode(readings, groups) // FIXME: Fake witnessGroups value

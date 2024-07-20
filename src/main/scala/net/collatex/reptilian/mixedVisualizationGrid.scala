@@ -113,7 +113,7 @@ private def findMissingWitnesses(n: HasWitnessReadings, sigla: Set[Siglum]): Vec
   *   Vector of vector of strings, where inner vectors are groups and strings are sigla
   */
 private def groupReadings(n: HasWitnessReadings) =
-  val groups: Vector[WitnessReadings] =
+  val groups: Set[WitnessReadings] =
     n.witnessGroups
   groups
 
@@ -162,7 +162,7 @@ private def createHorizNodeData(
                 .sorted
             )
           )
-          .sorted,
+          .toVector.sorted,
         missing = missing
       )
       nextNode(nodes.tail, pos + 1, acc :+ newNode)

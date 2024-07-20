@@ -158,7 +158,7 @@ def createAlignmentTree(
       ) // +1 is for exclusive until
   // mutable map is local to the function, to convert to immutable before return
   val witnessReadings = witnessRanges.toMap
-  val witnessGroups = Vector(witnessReadings)
+  val witnessGroups = Set(witnessReadings)
 
   val globalReadingNode = AgreementNode(witnessReadings, witnessGroups)
   //  println("Witness intervals on the root node of the alignment tree")
@@ -194,7 +194,7 @@ def setupNodeExpansion(
           .mkString(" ")
       ) // groups readings by shared text (n property)
       .values // we don't care about the shared text after we've used it for grouping
-      .toVector
+      .toSet
     selection.witnessReadings.size match {
       case 1 =>
         AgreementIndelNode(
@@ -281,7 +281,7 @@ def recursiveBuildAlignmentTreeLevel(
     else
       AgreementIndelNode(
         witnessReadings = firstReadingNode.witnessReadings,
-        witnessGroups = Vector(firstReadingNode.witnessReadings)
+        witnessGroups = Set(firstReadingNode.witnessReadings)
       )
   )
 

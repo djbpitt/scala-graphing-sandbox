@@ -34,20 +34,17 @@ class AlignmentTest extends AnyFunSuite:
       SingleStepNonMatch(Token("dad", "dad", 1, 7), Token("mom", "mom", 0, 2)),
       SingleStepMatch(Token("hi", "hi", 1, 6), Token("hi", "hi", 0, 1))
     )
-    // ===
-    // RESUME HERE: update types in unalignedDev to match new code
-    // ===
     val compactedStepsExpected = Vector(
       AgreementNode(
         Map(Siglum("1") -> TokenRange(6, 7), Siglum("0") -> TokenRange(1, 2)),
-        Vector(Map(Siglum("1") -> TokenRange(6, 7), Siglum("0") -> TokenRange(1, 2)))
+        Set(Map(Siglum("1") -> TokenRange(6, 7), Siglum("0") -> TokenRange(1, 2)))
       ),
       VariationNode(
         Map(Siglum("1") -> TokenRange(7, 9), Siglum("0") -> TokenRange(2, 4)),
-        Vector(Map(Siglum("1") -> TokenRange(7, 9), Siglum("0") -> TokenRange(2, 4)))),
+        Set(Map(Siglum("1") -> TokenRange(7, 9)), Map(Siglum("0") -> TokenRange(2, 4)))),
       AgreementNode(
         Map(Siglum("1") -> TokenRange(9, 10), Siglum("0") -> TokenRange(4, 5)),
-        Vector(Map(Siglum("1") -> TokenRange(9, 10), Siglum("0") -> TokenRange(4, 5)))
+        Set(Map(Siglum("1") -> TokenRange(9, 10), Siglum("0") -> TokenRange(4, 5)))
       )
     )
     val input1tokens = List(
