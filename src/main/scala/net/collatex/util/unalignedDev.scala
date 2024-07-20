@@ -211,10 +211,10 @@ private def nwCreateMatrix(a: List[String], b: List[String]): Array[Array[Double
   d // return entire matrix
 
 private def nwCreateAlignmentTreeNodesSingleStep(
-    matrix: Array[Array[Double]],
     w1: List[Token], // rows
     w2: List[Token] // cols
 ): LazyList[SingleStepAlignmentTreePath] =
+  val matrix = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
   def nextStep(row: Int, col: Int): LazyList[SingleStepAlignmentTreePath] =
     val scoreLeft = MatrixStep.Left(matrix(row - 1)(col), row - 1, col)
     val scoreDiag = MatrixStep.Diag(matrix(row - 1)(col - 1), row - 1, col - 1)
@@ -520,10 +520,9 @@ def splitTree(
           // TODO: We have not yet explored Indels in SingletonSingleton patterns
           val w1: List[Token] = darwin.head.readings(item1)
           val w2: List[Token] = darwin.head.readings(item2)
-          val m = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
 //        val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
 //        println(dfm.toString(dfm.size))
-          acc(i + darwin.head.readings.size) = matrixToAlignmentTree(m, w1, w2)
+          acc(i + darwin.head.readings.size) = matrixToAlignmentTree(w1, w2)
           acc
         case (SingletonTree(item1: Int, item2: Int, height: Double), i: Int) =>
           val singletonTokens = darwinReadings(item1)

@@ -16,7 +16,6 @@ class AlignmentTest extends AnyFunSuite:
       SingleStepNonMatch(Token("dad", "dad", 1, 5), Token("mom", "mom", 0, 2)),
       SingleStepMatch(Token("hi", "hi", 1, 4), Token("hi", "hi", 0, 1))
     )
-    val matrix = Array(Array(0.0, 1.0, 2.0), Array(1.0, 0.0, 1.0), Array(2.0, 1.0, 1.0))
     val input1tokens = List(
       Token(t = "hi", n = "hi", w = 0, g = 1),
       Token(t = "mom", n = "mom", w = 0, g = 2)
@@ -25,7 +24,7 @@ class AlignmentTest extends AnyFunSuite:
       Token(t = "hi", n = "hi", w = 1, g = 4),
       Token(t = "dad", n = "dad", w = 1, g = 5)
     )
-    val result = nwCreateAlignmentTreeNodesSingleStep(matrix, input1tokens, input2tokens)
+    val result = nwCreateAlignmentTreeNodesSingleStep(input1tokens, input2tokens)
     assert(expected == result)
   test("Return edit operations as grouped single steps"):
     val singleStepsExpected = LazyList(
@@ -59,8 +58,7 @@ class AlignmentTest extends AnyFunSuite:
       Token(t = "anything", n = "anything", w = 1, g = 8),
       Token(t = "new?", n = "new?", w = 1, g = 9)
     )
-    val matrix = nwCreateMatrix(input1tokens.map(_.n), input2tokens.map(_.n))
-    val resultSingleSteps = nwCreateAlignmentTreeNodesSingleStep(matrix, input1tokens, input2tokens)
+    val resultSingleSteps = nwCreateAlignmentTreeNodesSingleStep(input1tokens, input2tokens)
     val resultSingleStepsCompacted = nwCompactAlignmentTreeNodeSteps(resultSingleSteps)
     assert(resultSingleSteps == singleStepsExpected)
     assert(resultSingleStepsCompacted == compactedStepsExpected)
