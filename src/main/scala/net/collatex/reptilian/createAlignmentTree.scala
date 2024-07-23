@@ -1,8 +1,5 @@
 package net.collatex.reptilian
 
-import scalax.collection.edge.WDiEdge
-import scalax.collection.mutable.Graph
-
 import scala.annotation.tailrec
 import scala.collection.{immutable, mutable}
 import scala.collection.mutable.{ListBuffer, Map}

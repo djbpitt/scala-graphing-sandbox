@@ -39,8 +39,6 @@ sealed trait AlignmentTreeNode // supertype of all nodes
 sealed trait HasWitnessReadings extends AlignmentTreeNode {
   def witnessGroups: Set[WitnessReadings]
   def witnessReadings: WitnessReadings
-  def formatWitnessReadings: String =
-    s"${ListMap(witnessReadings.toSeq.sortBy(_._1): _*)}"
 }
 
 /** ExpandedNode

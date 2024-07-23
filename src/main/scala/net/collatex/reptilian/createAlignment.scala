@@ -14,10 +14,9 @@ import scalax.collection.edge.Implicits.edge2WDiEdgeAssoc
 import scalax.collection.mutable.Graph
 import scalax.collection.config.CoreConfig
 import scalax.collection.edge.WDiEdge
-import sun.security.util.BitArray
 
 import scala.collection.mutable
-import scala.collection.mutable.{ArrayBuffer, BitSet, ListBuffer}
+import scala.collection.mutable.ArrayBuffer
 
 val endNodeId = Integer.MAX_VALUE // End-node uses maximum possible integer value (i.e., inconveniently large value)
 given CoreConfig = CoreConfig()
