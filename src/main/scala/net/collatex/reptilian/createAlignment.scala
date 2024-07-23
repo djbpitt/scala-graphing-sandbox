@@ -1,5 +1,11 @@
 package net.collatex.reptilian
 
+/** Functions for working with blocks
+ * 
+ * Functions deal with blocks and block order
+ * No interaction with alignment tree or nodes (alignment points)
+ * 
+ */
 
 /** Create directed graph
  *

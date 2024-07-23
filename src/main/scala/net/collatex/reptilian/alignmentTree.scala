@@ -110,15 +110,6 @@ final case class UnexpandedNode(
 // UnexpandedNode cannot have children (it has only WitnessReadings)
 // ExpandedNode must have children*/
 
-def show(node: AlignmentTreeNode): Unit =
-  node match {
-    case AgreementNode(witnessReadings, witnessGroups)      => println(witnessReadings)
-    case AgreementIndelNode(witnessReadings, witnessGroups) => println(witnessReadings)
-    case VariationNode(children, _)                         => println(children)
-    // case UnexpandedNode(witnessReadings, witnessGroups)     => println(witnessReadings)
-    case ExpandedNode(children) => println(children)
-  }
-
 /** Input is Vector[Int], representing FullDepthBlock instances Output is Vector[AlignmentNode], where the nodes are all
   * of type AgreementNode
   *
