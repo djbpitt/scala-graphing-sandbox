@@ -12,6 +12,14 @@ import scala.collection.mutable.{ListBuffer, Map}
 // yet to be align and that it then calls the suffix array, traversal graph code it self
 // Basically an inverse of the current control flow.
 
+def splitTokenRange(tr: TokenRange, positionToSplit: Int): (TokenRange, TokenRange) =
+  // Not yet checking for valid call; more defensive would be:
+  //  the splitValue should be >= v._1 (start value)
+  //  the splitValue should be <= v._2 (until value)
+  val range1 = TokenRange(tr.start, positionToSplit)
+  val range2 = TokenRange(positionToSplit, tr.until)
+  (range1, range2)
+  
 def split_reading_node[C <: HasWitnessReadings](
     current: C,
     position_to_split: immutable.Map[Siglum, Int]
@@ -19,8 +27,6 @@ def split_reading_node[C <: HasWitnessReadings](
   // For witness ranges, last value is exclusive
   // We filter out all the witnesses that have an empty range after the split
   //  // TODO: Simplify duplicate code
-  //  println(s"current: $current" )
-  //  println(s"position_to_split: $position_to_split")
   val changedMap = current.witnessReadings
     .map((k, v) =>
       val splitValue = position_to_split
@@ -29,10 +35,7 @@ def split_reading_node[C <: HasWitnessReadings](
           throw new RuntimeException(
             s"k = $k, current.witnessReadings = ${current.witnessReadings}, position_to_split = $position_to_split"
           )
-        ) // Default value (temporarily) to avoid Option
-      // Not yet checking for valid call; more defensive would be:
-      //  the splitValue should be >= v._1 (start value)
-      //  the splitValue should be <= v._2 (until value)
+        ) 
       val ranges1 = k -> TokenRange(v.start, splitValue)
       ranges1
     )

@@ -24,6 +24,16 @@ case class TokenRange(start: Int, until: Int):
   def tString(using gTa: Vector[Token]): String =
     gTa.slice(this.start, this.until).map(_.t).mkString(" ") // concatenate t values
 
+// 2024-07-23: RESUME HERE
+// Should we allow empty ranges? Old code may have; new code (below) doesn't, and
+//   throws runtime error
+//
+//object TokenRange:
+//  def apply(start: Int, until: Int): TokenRange =
+//    if start < until then
+//      TokenRange(start, until)
+//    else
+//      throw RuntimeException("start value of TokenRange must be less than until value")
 
 type WitnessReadings = Map[Siglum, TokenRange] // type alias
 
