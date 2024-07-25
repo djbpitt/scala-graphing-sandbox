@@ -39,7 +39,7 @@ def split_reading_node[C <: HasWitnessReadings](
       val ranges1 = k -> TokenRange(v.start, splitValue)
       ranges1
     )
-    .filter((_, v) => v._1 != v._2)
+    .filter((_, v) => v.start != v.until)
 
   val changedMap2 = current.witnessReadings
     .map((k, v) =>
@@ -83,7 +83,7 @@ def alignTokenArray(
     val orderedWitnessReadings =
       for siglum <- selection.witnessReadings.keys.toSeq.sorted
       yield selection.witnessReadings(siglum)
-    for r <- orderedWitnessReadings yield tokenArray.slice(r._1, r._2)
+    for r <- orderedWitnessReadings yield tokenArray.slice(r.start, r.until)
   }
   val localTokenArray = localTokenArraybyWitness.head ++
     localTokenArraybyWitness.tail.zipWithIndex
@@ -122,7 +122,7 @@ def alignTokenArray(
     val siglumForSorting = readingNodes.head.witnessReadings.keys.head
     val sortedReadingNodes = readingNodes // Sort reading nodes in token order
       .toVector
-      .sortBy(_.witnessReadings(siglumForSorting)._1)
+      .sortBy(_.witnessReadings(siglumForSorting).start)
       .toList
     sortedReadingNodes
 }
@@ -189,7 +189,7 @@ def setupNodeExpansion(
     val groups = selection.witnessReadings
       .groupBy((siglum, offsets) =>
         tokenArray
-          .slice(offsets._1, offsets._2)
+          .slice(offsets.start, offsets.until)
           .map(_.n)
           .mkString(" ")
       ) // groups readings by shared text (n property)
@@ -259,14 +259,14 @@ def recursiveBuildAlignmentTreeLevel(
       //  println(tokenArray)
   val tempSplit = split_reading_node(
     treeReadingNode,
-    firstReadingNode.witnessReadings.map((k, v) => k -> v._2)
+    firstReadingNode.witnessReadings.map((k, v) => k -> v.until)
   )
   // split the first returned reading node again, now by the start position for each witness of the first
   // sorted reading node.
   //  println(s"tempSplit :  $tempSplit")
   val tempSplit2 = split_reading_node(
     tempSplit._1,
-    firstReadingNode.witnessReadings.map((k, v) => k -> v._1)
+    firstReadingNode.witnessReadings.map((k, v) => k -> v.start)
   )
 
   // The undecided part (unaligned stuff before block) could be empty or could hold data, in which case it may

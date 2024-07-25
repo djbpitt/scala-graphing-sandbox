@@ -6,6 +6,7 @@ import scala.collection.mutable.ListBuffer
 import scalatags.Text.all.*
 
 import scala.annotation.tailrec
+import scala.math.Ordering
 
 opaque type Siglum = String
 object Siglum:
@@ -18,22 +19,21 @@ object Siglum:
 given CanEqual[Siglum, Siglum] = CanEqual.derived
 
 // From witness id to start and until (exclusive "until") offset in global token array
-case class TokenRange(start: Int, until: Int):
+enum TokenRange(val start: Int, val until: Int): // val needed to make public
+  case LegalTokenRange(override val start: Int, override val until: Int) extends TokenRange(start, until)
+  case EmptyTokenRange(override val start: Int, override val until: Int) extends TokenRange(start, until)
+  case IllegalTokenRange(override val start: Int, override val until: Int)  extends TokenRange(start, until)
   def nString(using gTa: Vector[Token]): String = // global token array
     gTa.slice(this.start, this.until).map(_.n).mkString(" ") // concatenate n values
   def tString(using gTa: Vector[Token]): String =
     gTa.slice(this.start, this.until).map(_.t).mkString(" ") // concatenate t values
 
-// 2024-07-23: RESUME HERE
-// Should we allow empty ranges? Old code may have; new code (below) doesn't, and
-//   throws runtime error
-//
-//object TokenRange:
-//  def apply(start: Int, until: Int): TokenRange =
-//    if start < until then
-//      TokenRange(start, until)
-//    else
-//      throw RuntimeException("start value of TokenRange must be less than until value")
+object TokenRange:
+  def apply(start: Int, until: Int): TokenRange =
+    Ordering.Int.compare(start, until) match
+      case -1 => LegalTokenRange(start, until)
+      case 0 => EmptyTokenRange(start, until)
+      case 1 => IllegalTokenRange(start, until)
 
 type WitnessReadings = Map[Siglum, TokenRange] // type alias
 

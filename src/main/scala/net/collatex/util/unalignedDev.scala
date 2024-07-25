@@ -282,7 +282,7 @@ private def nwCompactAlignmentTreeNodeSteps(
         nextStep(
           stepsToProcess = t,
           compactedSteps = compactedSteps,
-          openStep = (openStep._1, openStep._2.map((k, v) => k -> TokenRange(v._1 - 1, v._2)))
+          openStep = (openStep._1, openStep._2.map((k, v) => k -> TokenRange(v.start - 1, v.until)))
         )
       case h #:: t =>
         nextStep(
@@ -352,9 +352,9 @@ def splitTree(
     if wr.size == 1 then wr.head
     else ExpandedNode(wr.to(ListBuffer))
   val newTree = tree flatMap {
-    case e if blockRange._1 >= e.witnessReadings.head._2._1 && blockRange._2 <= e.witnessReadings.head._2._2 =>
-      val delta1: Int = blockRange._1 - e.witnessReadings.head._2._1
-      val newMap1 = e.witnessReadings.map((k, v) => k -> (v._1 + delta1))
+    case e if blockRange._1 >= e.witnessReadings.head._2.start && blockRange._2 <= e.witnessReadings.head._2.until =>
+      val delta1: Int = blockRange._1 - e.witnessReadings.head._2.start
+      val newMap1 = e.witnessReadings.map((k, v) => k -> (v.start + delta1))
       val result1 = split_reading_node(e, newMap1)
       val newMap2 = newMap1 map ((k, v) => k -> (v + (blockRange._2 - blockRange._1)))
       val result2 = split_reading_node(result1._2, newMap2)
@@ -389,15 +389,15 @@ def splitTree(
       case e: AgreementNode =>
         sep += 1
         List(Token(sep.toString, sep.toString, -1, -1)) ++
-          ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
+          ta.slice(e.witnessReadings.head._2.start, e.witnessReadings.head._2.until)
       case e: AgreementIndelNode =>
         List(Token(sep.toString, sep.toString, -1, -1)) ++ ta.slice(
-          e.witnessReadings.head._2._1,
-          e.witnessReadings.head._2._2
+          e.witnessReadings.head._2.start,
+          e.witnessReadings.head._2.until
         )
       case e: VariationNode =>
         val groupHeads = e.witnessGroups.map(_.head) // one (String, (Int, Int)) per group
-        val ts = groupHeads.map(f => ta.slice(f._2._1, f._2._2))
+        val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
         sep += 1
         List(Token(sep.toString, sep.toString, -1, -1)) ++
           (ts.head ++ ts.tail
@@ -407,7 +407,7 @@ def splitTree(
             ))
       case e: VariationIndelNode =>
         val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
-        val ts = groupHeads.map(f => ta.slice(f._2._1, f._2._2))
+        val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
         sep += 1
         List(Token(sep.toString, sep.toString, -1, -1)) ++
           (ts.head ++ ts.tail
@@ -437,16 +437,16 @@ def splitTree(
         case e: AgreementNode =>
           sep += 1
           val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
-            ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)).size
+            ta.slice(e.witnessReadings.head._2.start, e.witnessReadings.head._2.until)).size
           Vector.fill(tokenSize)(e)
         case e: AgreementIndelNode =>
           sep += 1
           val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
-            ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)).size
+            ta.slice(e.witnessReadings.head._2.start, e.witnessReadings.head._2.until)).size
           Vector.fill(tokenSize)(e)
         case e: VariationNode =>
           val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
-          val ts = groupHeads.map(f => ta.slice(f._2._1, f._2._2))
+          val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
           sep += 1
           val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
             (ts.head ++ ts.tail
@@ -457,7 +457,7 @@ def splitTree(
           Vector.fill(tokenSize)(e)
         case e: VariationIndelNode =>
           val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
-          val ts = groupHeads.map(f => ta.slice(f._2._1, f._2._2))
+          val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
           sep += 1
           val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
             (ts.head ++ ts.tail
@@ -480,14 +480,14 @@ def splitTree(
       case e: AgreementNode =>
         sep += 1
         List(Token(sep.toString, sep.toString, -1, -1)) ++
-          ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
+          ta.slice(e.witnessReadings.head._2.start, e.witnessReadings.head._2.until)
       case e: AgreementIndelNode =>
         sep += 1
         List(Token(sep.toString, sep.toString, -1, -1)) ++
-          ta.slice(e.witnessReadings.head._2._1, e.witnessReadings.head._2._2)
+          ta.slice(e.witnessReadings.head._2.start, e.witnessReadings.head._2.until)
       case e: VariationNode =>
         val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
-        val ts = groupHeads.map(f => ta.slice(f._2._1, f._2._2))
+        val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
         sep += 1
         List(Token(sep.toString, sep.toString, -1, -1)) ++
           (ts.head ++ ts.tail
@@ -497,7 +497,7 @@ def splitTree(
             ))
       case e: VariationIndelNode =>
         val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
-        val ts = groupHeads.map(f => ta.slice(f._2._1, f._2._2))
+        val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
         sep += 1
         List(Token(sep.toString, sep.toString, -1, -1)) ++
           (ts.head ++ ts.tail
@@ -550,7 +550,7 @@ def splitTree(
               val updatedAgreementNode = AgreementNode(witnessReadings = wr, witnessGroups = wg)
               val singletonSiglum = Siglum(singletonTokens.head.w.toString)
               val singletonEndInAgreementNode =
-                updatedAgreementNode.witnessReadings(singletonSiglum)._2 // global TA position
+                updatedAgreementNode.witnessReadings(singletonSiglum).until // global TA position
               val endpointDifference = singletonTokens.last.g - (singletonEndInAgreementNode - 1)
               if endpointDifference == 0 then updatedAgreementNode
               else
