@@ -15,9 +15,6 @@ import SplitTokenRangeResult.*
 // Basically an inverse of the current control flow.
 
 def splitTokenRange(tr: LegalTokenRange, positionToSplit: Int): SplitTokenRangeResult =
-  // Not yet checking for valid call; more defensive would be:
-  //  the splitValue should be >= v._1 (start value)
-  //  the splitValue should be <= v._2 (until value)
   (tr, positionToSplit) match
     case _ if positionToSplit < tr.start  || positionToSplit > tr.until => IllegalSplitValue
     case _ if positionToSplit == tr.start => SecondOnlyPopulated(tr)
