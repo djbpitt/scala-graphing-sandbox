@@ -14,6 +14,8 @@ import SplitTokenRangeResult.*
 // yet to be align and that it then calls the suffix array, traversal graph code it self
 // Basically an inverse of the current control flow.
 
+// TODO: Extend standard library range type and use contains
+// NB: Pattern matching with guards isn’t a good fit here
 def splitTokenRange(tr: LegalTokenRange, positionToSplit: Int): SplitTokenRangeResult =
   (tr, positionToSplit) match
     case _ if positionToSplit < tr.start  || positionToSplit > tr.until => IllegalSplitValue
