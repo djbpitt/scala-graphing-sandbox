@@ -3,6 +3,8 @@ package net.collatex.reptilian
 import scala.annotation.tailrec
 import scala.collection.{immutable, mutable}
 import scala.collection.mutable.{ListBuffer, Map}
+import TokenRange.*
+import SplitTokenRangeResult.*
 
 // This method transform an alignment on the global level of the fullest depth blocks
 // into an alignment tree by splitting
@@ -12,13 +14,19 @@ import scala.collection.mutable.{ListBuffer, Map}
 // yet to be align and that it then calls the suffix array, traversal graph code it self
 // Basically an inverse of the current control flow.
 
-def splitTokenRange(tr: TokenRange, positionToSplit: Int): (TokenRange, TokenRange) =
+def splitTokenRange(tr: LegalTokenRange, positionToSplit: Int): SplitTokenRangeResult =
   // Not yet checking for valid call; more defensive would be:
   //  the splitValue should be >= v._1 (start value)
   //  the splitValue should be <= v._2 (until value)
-  val range1 = TokenRange(tr.start, positionToSplit)
-  val range2 = TokenRange(positionToSplit, tr.until)
-  (range1, range2)
+  (tr, positionToSplit) match
+    case _ if positionToSplit < tr.start  || positionToSplit > tr.until => IllegalSplitValue
+    case _ if positionToSplit == tr.start => SecondOnlyPopulated(tr)
+    case _ if positionToSplit == tr.until => FirstOnlyPopulated(tr)
+    case _ =>
+      val range1: LegalTokenRange = LegalTokenRange(tr.start, positionToSplit)
+      val range2: LegalTokenRange = LegalTokenRange(positionToSplit, tr.until)
+      BothPopulated(range1, range2)
+
   
 def split_reading_node[C <: HasWitnessReadings](
     current: C,

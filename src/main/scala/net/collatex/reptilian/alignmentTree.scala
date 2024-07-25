@@ -22,7 +22,7 @@ given CanEqual[Siglum, Siglum] = CanEqual.derived
 enum TokenRange(val start: Int, val until: Int): // val needed to make public
   case LegalTokenRange(override val start: Int, override val until: Int) extends TokenRange(start, until)
   case EmptyTokenRange(override val start: Int, override val until: Int) extends TokenRange(start, until)
-  case IllegalTokenRange(override val start: Int, override val until: Int)  extends TokenRange(start, until)
+  case IllegalTokenRange(override val start: Int, override val until: Int) extends TokenRange(start, until)
   def nString(using gTa: Vector[Token]): String = // global token array
     gTa.slice(this.start, this.until).map(_.n).mkString(" ") // concatenate n values
   def tString(using gTa: Vector[Token]): String =
@@ -32,8 +32,15 @@ object TokenRange:
   def apply(start: Int, until: Int): TokenRange =
     Ordering.Int.compare(start, until) match
       case -1 => LegalTokenRange(start, until)
-      case 0 => EmptyTokenRange(start, until)
-      case 1 => IllegalTokenRange(start, until)
+      case 0  => EmptyTokenRange(start, until)
+      case 1  => IllegalTokenRange(start, until)
+import TokenRange.*
+
+enum SplitTokenRangeResult:
+  case BothPopulated(range1: LegalTokenRange, range2: LegalTokenRange) extends SplitTokenRangeResult
+  case FirstOnlyPopulated(range1: LegalTokenRange) extends SplitTokenRangeResult
+  case SecondOnlyPopulated(range2: LegalTokenRange) extends SplitTokenRangeResult
+  case IllegalSplitValue extends SplitTokenRangeResult
 
 type WitnessReadings = Map[Siglum, TokenRange] // type alias
 
