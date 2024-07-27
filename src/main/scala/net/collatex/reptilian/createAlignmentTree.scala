@@ -15,57 +15,53 @@ import SplitTokenRangeResult.*
 // Basically an inverse of the current control flow.
 
 def splitTokenRange(tr: LegalTokenRange, positionToSplit: Int): SplitTokenRangeResult =
-    if positionToSplit < tr.start || positionToSplit > tr.until then IllegalSplitValue
-    else if positionToSplit == tr.start then SecondOnlyPopulated(EmptyTokenRange(tr.start, tr.start), tr)
-    else if positionToSplit == tr.until then FirstOnlyPopulated(tr, EmptyTokenRange(tr.until, tr.until))
-    else
-      val range1: LegalTokenRange = LegalTokenRange(tr.start, positionToSplit)
-      val range2: LegalTokenRange = LegalTokenRange(positionToSplit, tr.until)
-      BothPopulated(range1, range2)
+  if positionToSplit < tr.start || positionToSplit > tr.until then IllegalSplitValue
+  else if positionToSplit == tr.start then SecondOnlyPopulated(EmptyTokenRange(tr.start, tr.start), tr)
+  else if positionToSplit == tr.until then FirstOnlyPopulated(tr, EmptyTokenRange(tr.until, tr.until))
+  else
+    val range1: LegalTokenRange = LegalTokenRange(tr.start, positionToSplit)
+    val range2: LegalTokenRange = LegalTokenRange(positionToSplit, tr.until)
+    BothPopulated(range1, range2)
 
-  
-def split_reading_node[C <: HasWitnessReadings](
+/** splitWitnessGroup()
+  *
+  * Split single witness group from AlignmentPoint into two (one of which may be empty)
+  *
+  * Called by splitAlignmentPoint(); relies on splitTokenRange() to process individual witness data
+  *
+  * NB: wg is witness readings for a single group, but positionsToSplit is positions for all witnesses in all groups
+  *
+  * @param wg:
+  *   WitnessReadings
+  * @param positionsToSplit:
+  *   Map[Siglum, Int]
+  * @return
+  *   (WitnessReadings, WitnessReadings)
+  */
+def splitWitnessGroup(wg: WitnessReadings, positionsToSplit: immutable.Map[Siglum, Int]): (WitnessReadings, WitnessReadings) =
+  val splits =
+    wg.map {
+      case (e: Siglum, f: LegalTokenRange) => e -> splitTokenRange(f, positionsToSplit(e))
+    }
+  val lefts = splits.foldLeft(immutable.Map.empty[Siglum, TokenRange])((acc, kv) =>
+    kv match {
+      case (e: Siglum, f: BothPopulated) => acc + (e -> f.range1)
+      case (e: Siglum, f: FirstOnlyPopulated) => acc + (e -> f.range1)
+      case _ => acc
+    })
+  val rights = splits.foldLeft(immutable.Map.empty[Siglum, TokenRange])((acc, kv) =>
+    kv match {
+      case (e: Siglum, f: BothPopulated) => acc + (e -> f.range2)
+      case (e: Siglum, f: SecondOnlyPopulated) => acc + (e -> f.range2)
+      case _ => acc
+    })
+  (lefts, rights)
+
+def splitAlignmentPoint[C <: HasWitnessReadings](
     current: C,
     position_to_split: immutable.Map[Siglum, Int]
 ): (HasWitnessReadings, HasWitnessReadings) = {
-  // For witness ranges, last value is exclusive
-  // We filter out all the witnesses that have an empty range after the split
-  //  // TODO: Simplify duplicate code
-  val changedMap = current.witnessReadings
-    .map((k, v) =>
-      val splitValue = position_to_split
-        .getOrElse(
-          k,
-          throw new RuntimeException(
-            s"k = $k, current.witnessReadings = ${current.witnessReadings}, position_to_split = $position_to_split"
-          )
-        ) 
-      val ranges1 = k -> TokenRange(v.start, splitValue)
-      ranges1
-    )
-    .filter((_, v) => v.start != v.until)
-
-  val changedMap2 = current.witnessReadings
-    .map((k, v) =>
-      val splitValue = position_to_split
-        .getOrElse(k, throw new RuntimeException(s"$position_to_split"))
-      // the splitValue should be >= v._1 (start value)
-      // the splitValue should be <= v._2 (until value)
-      val ranges2 = k -> TokenRange(splitValue, v.until)
-      ranges2
-    )
-    .filter((_, v) => v.start != v.until)
-
-  // TODO: if the whole map is empty we should return a special type, e.g., EmptyReadingNode
-  // TODO: Workaround to mimic copy() method on trait (https://groups.google.com/g/scala-internals/c/O1yrB1xetUA)
-  // TODO: Would like return type of (C, C) instead of (HasWitnessReadings, HasWitnessReadings)
-  // TODO: Might need to revise witnessGroups property, as well, since some ranges might be empty after split
-  val result: (HasWitnessReadings, HasWitnessReadings) =
-    current match
-      case e: AgreementNode      => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
-      case e: AgreementIndelNode => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
-      case e: VariationNode      => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
-      case e: VariationIndelNode => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
+  val result = ???
   result
 }
 
@@ -253,22 +249,22 @@ def recursiveBuildAlignmentTreeLevel(
       // split treeReadingNode based on the until position for each witness of the first reading node of the alignment.
       // That splits the root reading node into aligned block plus optional leading non-block tokens
       // TODO: map() creates a new map; would a map view be better (we use the value only once)? Would using a
-      //   map view instead of a map require changing the signature of split_reading_node()?
-      // TODO: split_reading_node() returns a tuple, which we could unpack
+      //   map view instead of a map require changing the signature of splitAlignmentPoint()?
+      // TODO: splitAlignmentPoint() returns a tuple, which we could unpack
       // Splits on until of aligned block, so:
       //   First item contains block (empty only at until) preceded by optional leading unaligned stuff
       //   Second item contains optional stuff after the block, which will be the input into the recursion
       //   Recursion knows to until when remainingAlignment parameter is an empty list
       //  println(firstReadingNode)
       //  println(tokenArray)
-  val tempSplit = split_reading_node(
+  val tempSplit = splitAlignmentPoint(
     treeReadingNode,
     firstReadingNode.witnessReadings.map((k, v) => k -> v.until)
   )
   // split the first returned reading node again, now by the start position for each witness of the first
   // sorted reading node.
   //  println(s"tempSplit :  $tempSplit")
-  val tempSplit2 = split_reading_node(
+  val tempSplit2 = splitAlignmentPoint(
     tempSplit._1,
     firstReadingNode.witnessReadings.map((k, v) => k -> v.start)
   )

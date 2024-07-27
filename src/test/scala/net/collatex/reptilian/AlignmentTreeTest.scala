@@ -5,7 +5,8 @@ import net.collatex.reptilian.SplitTokenRangeResult.*
 import org.scalatest.funsuite.AnyFunSuite
 
 class AlignmentTreeTest extends AnyFunSuite:
-  // Tests for TokenRange enum
+  /** Tests for TokenRange enum (legal, empty, or illegal)
+    */
   test("Create LegalTokenRange"):
     val expected = LegalTokenRange(1, 2)
     val result = TokenRange(1, 2)
@@ -18,7 +19,9 @@ class AlignmentTreeTest extends AnyFunSuite:
     val expected = IllegalTokenRange(2, 1)
     val result = TokenRange(2, 1)
     assert(result == expected)
-  // Test for splitTokenRange
+
+  /** Tests for splitTokenRange
+    */
   test("Split token range into legal / legal"):
     val expected = BothPopulated(
       LegalTokenRange(1, 3),
@@ -37,4 +40,27 @@ class AlignmentTreeTest extends AnyFunSuite:
   test("Split token range with illegal split value"):
     val expected = IllegalSplitValue
     val result = splitTokenRange(LegalTokenRange(1, 4), 5)
+    assert(result == expected)
+
+  /** Tests for splitWitnessGroup()
+    */
+  test("Split witness group with two splittable witnesses and extra split position"):
+    val left = Map(Siglum("a") -> TokenRange(1, 3), Siglum("b") -> TokenRange(5, 7))
+    val right = Map(Siglum("a") -> TokenRange(3, 4), Siglum("b") -> TokenRange(7, 8))
+    val expected = (left, right)
+    val wg = Map(Siglum("a") -> TokenRange(1, 4), Siglum("b") -> TokenRange(5, 8)) // witness group to split
+    val splitPositions =
+      Map(Siglum("a") -> 3, Siglum("b") -> 7, Siglum("c") -> 100) // Split positions for all witnesses (with extra)
+    val result = splitWitnessGroup(wg, splitPositions)
+    assert(result == expected)
+
+  /** Tests for splitAlignmentPoint
+    */
+  ignore("Split alignment point with two splittable witnesses"):
+    val left = AgreementNode(Siglum("a") -> TokenRange(1, 3), Siglum("b") -> TokenRange(5, 7))
+    val right = AgreementNode(Siglum("a") -> TokenRange(3, 4), Siglum("b") -> TokenRange(7, 8))
+    val expected = (left, right)
+    val ap = AgreementNode(Siglum("a") -> TokenRange(1, 4), Siglum("b") -> TokenRange(5, 8)) // AlignmentPoint to split
+    val splitPositions = Map(Siglum("a") -> 3, Siglum("b") -> 7) // Split positions for all witnesses
+    val result = splitAlignmentPoint(ap, splitPositions)
     assert(result == expected)

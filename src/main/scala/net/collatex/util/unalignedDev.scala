@@ -15,7 +15,7 @@ import net.collatex.reptilian.{
   WitnessReadings,
   createAlignedBlocks,
   makeTokenizer,
-  split_reading_node,
+  splitAlignmentPoint,
   TokenRange
 }
 import smile.clustering.hclust
@@ -355,9 +355,9 @@ def splitTree(
     case e if blockRange._1 >= e.witnessReadings.head._2.start && blockRange._2 <= e.witnessReadings.head._2.until =>
       val delta1: Int = blockRange._1 - e.witnessReadings.head._2.start
       val newMap1 = e.witnessReadings.map((k, v) => k -> (v.start + delta1))
-      val result1 = split_reading_node(e, newMap1)
+      val result1 = splitAlignmentPoint(e, newMap1)
       val newMap2 = newMap1 map ((k, v) => k -> (v + (blockRange._2 - blockRange._1)))
-      val result2 = split_reading_node(result1._2, newMap2)
+      val result2 = splitAlignmentPoint(result1._2, newMap2)
       val combinedResult = Vector(result1._1, result2._1, result2._2).filterNot(_.witnessReadings.isEmpty)
       combinedResult
     case e => Vector(e)

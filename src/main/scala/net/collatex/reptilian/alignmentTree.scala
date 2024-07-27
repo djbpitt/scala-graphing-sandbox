@@ -94,7 +94,7 @@ final case class AgreementNode(
   * leaf nodes cannot be empty
   */
 object AgreementNode {
-  def apply(m: (Siglum, TokenRange)*): AlignmentTreeNode =
+  def apply(m: (Siglum, TokenRange)*): AgreementNode =
     AgreementNode(m.toMap, Set(m.toMap)) // FIXME: Fake witnessGroups value
 }
 
