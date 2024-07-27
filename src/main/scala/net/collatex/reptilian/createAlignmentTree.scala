@@ -32,7 +32,7 @@ def splitTokenRange(tr: LegalTokenRange, positionToSplit: Int): SplitTokenRangeR
   * NB: wg is witness readings for a single group, but positionsToSplit is positions for all witnesses in all groups
   *
   * @param wg:
-  *   WitnessReadings
+  *   WitnessReadings (for just one witness group)
   * @param positionsToSplit:
   *   Map[Siglum, Int]
   * @return
