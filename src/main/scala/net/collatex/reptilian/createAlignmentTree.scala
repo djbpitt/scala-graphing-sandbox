@@ -11,13 +11,13 @@ import SplitTokenRangeResult.*
 
 // Instead of providing an iterable of reading nodes representing the result of a global alignment
 // it would be better if this method get supplied a reading with a single range for each witness that has
-// yet to be align and that it then calls the suffix array, traversal graph code it self
+// yet to be aligned and that it then calls the suffix array, traversal graph code it self
 // Basically an inverse of the current control flow.
 
 def splitTokenRange(tr: LegalTokenRange, positionToSplit: Int): SplitTokenRangeResult =
     if positionToSplit < tr.start || positionToSplit > tr.until then IllegalSplitValue
-    else if positionToSplit == tr.start then SecondOnlyPopulated(tr)
-    else if positionToSplit == tr.until then FirstOnlyPopulated(tr)
+    else if positionToSplit == tr.start then SecondOnlyPopulated(EmptyTokenRange(tr.start, tr.start), tr)
+    else if positionToSplit == tr.until then FirstOnlyPopulated(tr, EmptyTokenRange(tr.until, tr.until))
     else
       val range1: LegalTokenRange = LegalTokenRange(tr.start, positionToSplit)
       val range2: LegalTokenRange = LegalTokenRange(positionToSplit, tr.until)

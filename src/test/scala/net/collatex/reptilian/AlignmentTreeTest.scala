@@ -27,11 +27,11 @@ class AlignmentTreeTest extends AnyFunSuite:
     val result = splitTokenRange(LegalTokenRange(1, 4), 3)
     assert(result == expected)
   test("Split token range with first part empty"):
-    val expected = SecondOnlyPopulated(LegalTokenRange(1, 4))
+    val expected = SecondOnlyPopulated(EmptyTokenRange(1, 1), LegalTokenRange(1, 4))
     val result = splitTokenRange(LegalTokenRange(1, 4), 1)
     assert(result == expected)
   test("Split token range with second part empty"):
-    val expected = FirstOnlyPopulated(LegalTokenRange(1, 4))
+    val expected = FirstOnlyPopulated(LegalTokenRange(1, 4), EmptyTokenRange(4, 4))
     val result = splitTokenRange(LegalTokenRange(1, 4), 4)
     assert(result == expected)
   test("Split token range with illegal split value"):

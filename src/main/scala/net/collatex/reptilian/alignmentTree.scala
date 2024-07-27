@@ -38,8 +38,8 @@ import TokenRange.*
 
 enum SplitTokenRangeResult:
   case BothPopulated(range1: LegalTokenRange, range2: LegalTokenRange) extends SplitTokenRangeResult
-  case FirstOnlyPopulated(range1: LegalTokenRange) extends SplitTokenRangeResult
-  case SecondOnlyPopulated(range2: LegalTokenRange) extends SplitTokenRangeResult
+  case FirstOnlyPopulated(range1: LegalTokenRange, range2: EmptyTokenRange) extends SplitTokenRangeResult
+  case SecondOnlyPopulated(range1: EmptyTokenRange, range2: LegalTokenRange) extends SplitTokenRangeResult
   case IllegalSplitValue extends SplitTokenRangeResult
 
 type WitnessReadings = Map[Siglum, TokenRange] // type alias
