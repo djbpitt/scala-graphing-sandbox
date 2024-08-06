@@ -19,14 +19,16 @@ object Siglum:
 given CanEqual[Siglum, Siglum] = CanEqual.derived
 
 // From witness id to start and until (exclusive "until") offset in global token array
-enum TokenRange(val start: Int, val until: Int): // val needed to make public
-  case LegalTokenRange(override val start: Int, override val until: Int) extends TokenRange(start, until)
-  case EmptyTokenRange(override val start: Int, override val until: Int) extends TokenRange(start, until)
-  case IllegalTokenRange(override val start: Int, override val until: Int) extends TokenRange(start, until)
+enum TokenRange:
+  case LegalTokenRange(start: Int, until: Int)
+  case EmptyTokenRange(start: Int, until: Int)
+  case IllegalTokenRange(start: Int, until: Int)
+  def start: Int
+  def until: Int
   def nString(using gTa: Vector[Token]): String = // global token array
     gTa.slice(this.start, this.until).map(_.n).mkString(" ") // concatenate n values
   def tString(using gTa: Vector[Token]): String =
-    gTa.slice(this.start, this.until).map(_.t).mkString(" ") // concatenate t values
+    gTa.slice(this.start, this.until).map(_.t).mkString // concatenate t values
 
 object TokenRange:
   def apply(start: Int, until: Int): TokenRange =
