@@ -82,3 +82,16 @@ class AlignmentTreeTest extends AnyFunSuite:
     val splitPositions = Map(Siglum("a") -> 3, Siglum("b") -> 7) // Split positions for all witnesses
     val result = splitAlignmentPoint(ap, splitPositions)
     assert(result == expected)
+  
+  test("Test for TokenRange.tString"):
+    implicit val gTa: Vector[Token] = Vector(
+      Token("Hi ", "hi", 0, 0),
+      Token(", ", ",", 0, 1),
+      Token("Mom ", "mom", 0, 2),
+      Token("!", "!", 0, 3)
+    )
+    val tr = TokenRange(0, 4)
+    val expected = "Hi , Mom !"
+    val result = tr.tString
+    assert(result == expected)
+
