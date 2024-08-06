@@ -28,7 +28,7 @@ enum TokenRange:
   def nString(using gTa: Vector[Token]): String = // global token array
     gTa.slice(this.start, this.until).map(_.n).mkString(" ") // concatenate n values
   def tString(using gTa: Vector[Token]): String =
-    gTa.slice(this.start, this.until).map(_.t).mkString(" ") // concatenate t values
+    gTa.slice(this.start, this.until).map(_.t).mkString // concatenate t values
 
 object TokenRange:
   def apply(start: Int, until: Int): TokenRange =
