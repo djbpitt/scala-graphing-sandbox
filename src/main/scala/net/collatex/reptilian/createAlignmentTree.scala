@@ -121,7 +121,7 @@ def alignTokenArray(
   // ??: Modify createAlignedBlocks() not to return unused values
   // ??: Count witnesses (via separators) instead of passing in count
   // TODO: Simplify where we need single token array and where we need witness-set metadata
-  val witnessCount = selection.witnessReadings.size
+  val witnessCount = selection.witnessGroups.map(_.size).sum
 
   // Create a local token array by filtering the global one according to the selection
   // Selection comes in unsorted, so sort by siglum first
@@ -129,6 +129,8 @@ def alignTokenArray(
     val orderedWitnessReadings =
       for siglum <- selection.witnessReadings.keys.toSeq.sorted
       yield selection.witnessReadings(siglum)
+      // Replacement that uses witnessGroups instead of witnessReadings
+      // val tmp = selection.witnessGroups.flatMap(e => e.values).toSeq.sortBy(_.start)
     for r <- orderedWitnessReadings yield tokenArray.slice(r.start, r.until)
   }
   val localTokenArray = localTokenArraybyWitness.head ++
@@ -223,6 +225,18 @@ def createAlignmentTree(
 
   rootNode
 }
+
+// 2024-08-08: RESUME HERE
+// Earlier code to create witnessGroups property for VariationNode:
+// val groups = selection.witnessReadings
+//  .groupBy((siglum, offsets) =>
+//    tokenArray
+//      .slice(offsets.start, offsets.until)
+//      .map(_.n)
+//      .mkString(" ")
+//  ) // groups readings by shared text (n property)
+//  .values // we don't care about the shared text after we've used it for grouping
+//  .toSet
 
 def setupNodeExpansion(
     tokenArray: Vector[Token],
