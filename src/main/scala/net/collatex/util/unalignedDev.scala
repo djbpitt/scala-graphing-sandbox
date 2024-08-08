@@ -1,7 +1,7 @@
 package net.collatex.util
 
 import scala.collection.mutable
-import net.collatex.reptilian.{AgreementIndelNode, AlignmentPoint, AlignmentTreeNode, ExpandedNode, FullDepthBlock, HasWitnessReadings, Siglum, Token, TokenRange, VariationIndelNode, VariationNode, WitnessReadings, createAlignedBlocks, makeTokenizer, splitAlignmentPoint}
+import net.collatex.reptilian.{AlignmentPoint, AlignmentTreeNode, ExpandedNode, FullDepthBlock, HasWitnessReadings, Siglum, Token, TokenRange, VariationIndelNode, VariationNode, WitnessReadings, createAlignedBlocks, makeTokenizer, splitAlignmentPoint}
 import smile.clustering.hclust
 import smile.data.DataFrame
 import smile.feature.transform.WinsorScaler
@@ -372,9 +372,6 @@ def splitTree(
     val tTokens = nodeListToProcess map {
       case e: AlignmentPoint =>
         sep += 1
-        List(Token(sep.toString, sep.toString, -1, -1)) ++
-          ta.slice(e.witnessReadings.head._2.start, e.witnessReadings.head._2.until)
-      case e: AgreementIndelNode =>
         List(Token(sep.toString, sep.toString, -1, -1)) ++ ta.slice(
           e.witnessReadings.head._2.start,
           e.witnessReadings.head._2.until
@@ -423,11 +420,6 @@ def splitTree(
           val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
             ta.slice(e.witnessReadings.head._2.start, e.witnessReadings.head._2.until)).size
           Vector.fill(tokenSize)(e)
-        case e: AgreementIndelNode =>
-          sep += 1
-          val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
-            ta.slice(e.witnessReadings.head._2.start, e.witnessReadings.head._2.until)).size
-          Vector.fill(tokenSize)(e)
         case e: VariationNode =>
           val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
           val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
@@ -462,10 +454,6 @@ def splitTree(
     var sep = -1
     def getTTokens(nodes: List[HasWitnessReadings]) = nodes map {
       case e: AlignmentPoint =>
-        sep += 1
-        List(Token(sep.toString, sep.toString, -1, -1)) ++
-          ta.slice(e.witnessReadings.head._2.start, e.witnessReadings.head._2.until)
-      case e: AgreementIndelNode =>
         sep += 1
         List(Token(sep.toString, sep.toString, -1, -1)) ++
           ta.slice(e.witnessReadings.head._2.start, e.witnessReadings.head._2.until)
@@ -539,7 +527,7 @@ def splitTree(
               if endpointDifference == 0 then updatedAgreementNode
               else
                 val trailingTokenNode =
-                  AgreementIndelNode(singletonSiglum -> TokenRange(singletonEndInAgreementNode, singletonTokens.last.g + 1))
+                  AlignmentPoint(singletonSiglum -> TokenRange(singletonEndInAgreementNode, singletonTokens.last.g + 1))
                 ExpandedNode(ListBuffer(updatedAgreementNode, trailingTokenNode))
             else AlignmentPoint()
           acc(i + darwin.head.readings.size) = newAtn

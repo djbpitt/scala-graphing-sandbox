@@ -109,7 +109,6 @@ def split_reading_node[C <: HasWitnessReadings](
   val result: (HasWitnessReadings, HasWitnessReadings) =
     current match
       case e: AlignmentPoint => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
-      case e: AgreementIndelNode => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
       case e: VariationNode => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
       case e: VariationIndelNode => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
   result
@@ -247,7 +246,7 @@ def setupNodeExpansion(
       .toSet
     selection.witnessReadings.size match {
       case 1 =>
-        AgreementIndelNode(
+        AlignmentPoint(
           witnessReadings = selection.witnessReadings,
           witnessGroups = groups
         )
@@ -329,7 +328,7 @@ def recursiveBuildAlignmentTreeLevel(
   result += (
     if firstReadingNode.witnessReadings.size == sigla.size then firstReadingNode
     else
-      AgreementIndelNode(
+      AlignmentPoint(
         witnessReadings = firstReadingNode.witnessReadings,
         witnessGroups = Set(firstReadingNode.witnessReadings)
       )

@@ -96,25 +96,6 @@ final case class VariationIndelNode(
 ) extends AlignmentTreeNode
     with HasWitnessReadings
 
-/** AgreementIndel node
-  *
-  * Like a AgreementNode in that all witnesses agree, except that not all corpus witnesses are present
-  *
-  * @param witnessReadings
-  *   map from siglum to tuple of start and until offsets into the global token array (until is exclusive)
-  *
-  * Companion object is a convenience constructor (see documentation of companion object for AgreementNode, above)
-  */
-final case class AgreementIndelNode(
-    witnessReadings: WitnessReadings,
-    witnessGroups: Set[WitnessReadings]
-) extends AlignmentTreeNode
-    with HasWitnessReadings
-object AgreementIndelNode {
-  def apply(m: (Siglum, TokenRange)*): AlignmentTreeNode =
-    AgreementIndelNode(m.toMap, Set(m.toMap)) // FIXME: Fake witnessGroups value
-}
-
 def blocksToNodes(
     blocks: Iterable[FullDepthBlock],
     tokenArray: Vector[Token],
