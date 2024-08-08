@@ -62,10 +62,10 @@ def splitWitnessGroup(
   )
   (lefts, rights)
 
-def splitAlignmentPoint[C <: HasWitnessReadings](
-    current: C,
+def splitAlignmentPoint(
+    current: AlignmentPoint,
     position_to_split: immutable.Map[Siglum, Int]
-): (HasWitnessReadings, HasWitnessReadings) = {
+): (AlignmentPoint, AlignmentPoint) = {
   val result = (current, current) // NB: fake return so that code will compile
   result
 }
@@ -114,7 +114,7 @@ def split_reading_node(
 def alignTokenArray(
     tokenArray: Vector[Token],
     sigla: List[Siglum],
-    selection: HasWitnessReadings
+    selection: AlignmentPoint
 ) = {
   // find the full depth blocks for the alignment
   // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes

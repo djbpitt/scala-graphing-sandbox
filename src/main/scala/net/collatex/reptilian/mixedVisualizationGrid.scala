@@ -71,7 +71,7 @@ private def computeTokenTextLength(in: String): Double =
   * @return
   *   All witness readings on node as map from siglum (String) to vector of tokens
   */
-def retrieveWitnessReadings(n: HasWitnessReadings, gTa: Vector[Token]): Map[Siglum, Vector[Token]] =
+def retrieveWitnessReadings(n: AlignmentPoint, gTa: Vector[Token]): Map[Siglum, Vector[Token]] =
   val witnessReadings = n.witnessReadings.map((k, v) => k -> gTa.slice(v.start, v.until))
   witnessReadings
 
@@ -101,10 +101,11 @@ private def computeReadingTextLength(in: Vector[Token]): Double =
   * @return
   *   Vector of sigla of missing witnesses as strings
   */
-private def findMissingWitnesses(n: HasWitnessReadings, sigla: Set[Siglum]): Vector[Siglum] =
+private def findMissingWitnesses(n: AlignmentPoint, sigla: Set[Siglum]): Vector[Siglum] =
   val missingWitnesses = sigla.diff(n.witnessReadings.keySet).toVector.sorted
   missingWitnesses
 
+// TODO: Remove this method; not used
 /** groupReadings()
   *
   * @param n
@@ -112,12 +113,12 @@ private def findMissingWitnesses(n: HasWitnessReadings, sigla: Set[Siglum]): Vec
   * @return
   *   Vector of vector of strings, where inner vectors are groups and strings are sigla
   */
-private def groupReadings(n: HasWitnessReadings) =
+private def groupReadings(n: AlignmentPoint) =
   val groups: Set[WitnessReadings] =
     n.witnessGroups
   groups
 
-private def computeAlignmentNodeRenderingWidth(n: HasWitnessReadings, gTa: Vector[Token]): Double =
+private def computeAlignmentNodeRenderingWidth(n: AlignmentPoint, gTa: Vector[Token]): Double =
   // FIXME: Temporarily add 28 to allow for two-character siglum plus colon plus space
   val maxAlignmentPointWidth = 1000000000000d // 160.0
   List(

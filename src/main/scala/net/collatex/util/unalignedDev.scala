@@ -6,7 +6,6 @@ import net.collatex.reptilian.{
   AlignmentTreeNode,
   ExpandedNode,
   FullDepthBlock,
-  HasWitnessReadings,
   Siglum,
   Token,
   TokenRange,
@@ -235,7 +234,7 @@ private def nwCreateAlignmentTreeNodesSingleStep(
 
 private def nwCompactAlignmentTreeNodeSteps(
     allSingleSteps: LazyList[SingleStepAlignmentTreePath]
-): Vector[HasWitnessReadings] =
+): Vector[AlignmentPoint] =
   def singleStepToWitnessReadings(single: SingleStepAlignmentTreePath): WitnessReadings =
     single match {
       case SingleStepMatch(tok1: Token, tok2: Token) =>
@@ -251,7 +250,8 @@ private def nwCompactAlignmentTreeNodeSteps(
       case SingleStepInsert(tok: Token) => Map(Siglum(tok.w.toString) -> TokenRange(tok.g, tok.g + 1))
       case SingleStepDelete(tok: Token) => Map(Siglum(tok.w.toString) -> TokenRange(tok.g, tok.g + 1))
     }
-  def openStepToTreeNode(open: (SingleStepAlignmentTreePath, WitnessReadings)): HasWitnessReadings =
+
+  def openStepToTreeNode(open: (SingleStepAlignmentTreePath, WitnessReadings)): AlignmentPoint =
     open match {
       case (SingleStepMatch(tok1: Token, tok2: Token), wr: WitnessReadings) =>
         AlignmentPoint(witnessReadings = wr, witnessGroups = Set(wr))
@@ -269,9 +269,9 @@ private def nwCompactAlignmentTreeNodeSteps(
   @tailrec
   def nextStep(
       stepsToProcess: LazyList[SingleStepAlignmentTreePath],
-      compactedSteps: Vector[HasWitnessReadings],
+      compactedSteps: Vector[AlignmentPoint],
       openStep: (SingleStepAlignmentTreePath, WitnessReadings)
-  ): Vector[HasWitnessReadings] =
+  ): Vector[AlignmentPoint] =
     stepsToProcess match {
       case LazyList() =>
         (compactedSteps :+ openStepToTreeNode(openStep)).reverse // return from upper left to lower right
@@ -291,7 +291,7 @@ private def nwCompactAlignmentTreeNodeSteps(
 
   nextStep(
     stepsToProcess = allSingleSteps.tail,
-    compactedSteps = Vector.empty[HasWitnessReadings],
+    compactedSteps = Vector.empty[AlignmentPoint],
     openStep = (allSingleSteps.head, singleStepToWitnessReadings(allSingleSteps.head))
   )
 
@@ -324,7 +324,7 @@ def singletonSingletonPathStepsToAlignmentTreeNode(
     case Delete(start: MatrixPosition, end: MatrixPosition)   => ???
   }
 
-def pathStepsToAlignmentTreeNode(in: Vector[HasWitnessReadings]): AlignmentTreeNode =
+def pathStepsToAlignmentTreeNode(in: Vector[AlignmentPoint]): AlignmentTreeNode =
   in.size match {
     case 1 => in.head
     case _ => ExpandedNode(ListBuffer.from(in))
@@ -341,11 +341,11 @@ val matrixToAlignmentTree =
   * as needed)
   */
 def splitTree(
-    tree: List[HasWitnessReadings],
-    tokenToNodeMapping: Vector[HasWitnessReadings],
+    tree: List[AlignmentPoint],
+    tokenToNodeMapping: Vector[AlignmentPoint],
     blockRange: (Int, Int)
 ): AlignmentTreeNode =
-  def createWrapperIfNeeded(wr: List[HasWitnessReadings]): AlignmentTreeNode =
+  def createWrapperIfNeeded(wr: List[AlignmentPoint]): AlignmentTreeNode =
     if wr.size == 1 then wr.head
     else ExpandedNode(wr.to(ListBuffer))
   val newTree = tree flatMap {
@@ -377,10 +377,10 @@ def splitTree(
   def createSingletonTreeTokenArray(t: AlignmentTreeNode, s: List[Token], ta: List[Token]) =
     // tree contains only ranges (not tokens), so we get token positions from global token array
     var sep = -1
-    val nodeListToProcess: List[HasWitnessReadings] =
+    val nodeListToProcess: List[AlignmentPoint] =
       t match {
-        case e: ExpandedNode => e.children.map(_.asInstanceOf[HasWitnessReadings]).toList
-        case e               => List(e.asInstanceOf[HasWitnessReadings])
+        case e: ExpandedNode => e.children.map(_.asInstanceOf[AlignmentPoint]).toList
+        case e               => List(e.asInstanceOf[AlignmentPoint])
       }
     val tTokens = nodeListToProcess map (e =>
       val groupHeads = e.witnessGroups.map(_.head) // one (String, (Int, Int)) per group
@@ -401,15 +401,15 @@ def splitTree(
       ) ++ List(Token(sep.toString, sep.toString, -1, -1)) ++ s).toVector.tail
     (localTa, nodeListToProcess)
 
-  def getNodeListToProcess(t: AlignmentTreeNode): List[HasWitnessReadings] =
+  def getNodeListToProcess(t: AlignmentTreeNode): List[AlignmentPoint] =
     t match {
-      case e: ExpandedNode => e.children.map(_.asInstanceOf[HasWitnessReadings]).toList
-      case e               => List(e.asInstanceOf[HasWitnessReadings])
+      case e: ExpandedNode => e.children.map(_.asInstanceOf[AlignmentPoint]).toList
+      case e               => List(e.asInstanceOf[AlignmentPoint])
     }
 
-  def getTTokenNodeMappings(t1: AlignmentTreeNode, t2: AlignmentTreeNode, ta: List[Token]): List[HasWitnessReadings] =
+  def getTTokenNodeMappings(t1: AlignmentTreeNode, t2: AlignmentTreeNode, ta: List[Token]): List[AlignmentPoint] =
     var sep = -1
-    def processOneTree(nodes: List[HasWitnessReadings]) =
+    def processOneTree(nodes: List[AlignmentPoint]) =
       nodes map (e =>
         val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
         val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
@@ -423,7 +423,7 @@ def splitTree(
         Vector.fill(tokenSize)(e)
       )
     val tokenNodeMappings = processOneTree(getNodeListToProcess(t1)).flatten.tail ++ Vector(
-      AlignmentPoint().asInstanceOf[HasWitnessReadings] // Ugh!
+      AlignmentPoint() // Ugh!
     ) ++
       processOneTree(getNodeListToProcess(t2)).flatten.tail
     tokenNodeMappings
@@ -431,7 +431,7 @@ def splitTree(
   def createTreeTreeTokenArray(t1: AlignmentTreeNode, t2: AlignmentTreeNode, ta: List[Token]): List[Token] =
     // trees contain only ranges (not tokens), so we get token positions from global token array
     var sep = -1
-    def getTTokens(nodes: List[HasWitnessReadings]) = nodes map (e =>
+    def getTTokens(nodes: List[AlignmentPoint]) = nodes map (e =>
       val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
       val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
       sep += 1
@@ -462,7 +462,7 @@ def splitTree(
           acc
         case (SingletonTree(item1: Int, item2: Int, height: Double), i: Int) =>
           val singletonTokens = darwinReadings(item1)
-          val (stTokenArray: Vector[Token], alignmentRibbon: List[HasWitnessReadings]) =
+          val (stTokenArray: Vector[Token], alignmentRibbon: List[AlignmentPoint]) =
             createSingletonTreeTokenArray(acc(item2), singletonTokens, tokenArray)
 //          println(s"stTokenArray: $stTokenArray")
 //          println(stTokenArray.map(_.t).mkString(" "))
@@ -514,7 +514,7 @@ def splitTree(
            *
            *  Find first alignment points in both trees; everything before is variation (similar to full-depth alignment)
            * */
-          def mergeTreeNodes(a1: HasWitnessReadings, a2: HasWitnessReadings): HasWitnessReadings =
+          def mergeTreeNodes(a1: AlignmentPoint, a2: AlignmentPoint): AlignmentPoint =
             (a1, a2) match {
               case (b1: AlignmentPoint, b2: AlignmentPoint) =>
                 val mergedWitnessReadings = a1.witnessReadings ++ a2.witnessReadings
@@ -590,14 +590,14 @@ def splitTree(
             val tree1FirstBlockNode = resultOfTreeSplitting.t1
               .asInstanceOf[ExpandedNode]
               .children
-              .map(e => e.asInstanceOf[HasWitnessReadings].witnessReadings.values)
+              .map(e => e.asInstanceOf[AlignmentPoint].witnessReadings.values)
               .map(_.map(_.start).toSet)
               .zipWithIndex
               .filter(f => f._1.intersect(globalBlockBeginningsFlat).nonEmpty)
             val tree2FirstBlockNode = resultOfTreeSplitting.t2
               .asInstanceOf[ExpandedNode]
               .children
-              .map(e => e.asInstanceOf[HasWitnessReadings].witnessReadings.values)
+              .map(e => e.asInstanceOf[AlignmentPoint].witnessReadings.values)
               .map(_.map(_.start).toSet)
               .zipWithIndex
               .filter(f => f._1.intersect(globalBlockBeginningsFlat).nonEmpty)
@@ -611,12 +611,12 @@ def splitTree(
             val blockNodeOffsets =
               tree1FirstBlockNode.map(_._2).toSet // FIXME: Positions in both trees happen to be the same
             pairs foreach { // NB: Blocks may not be full-depth witin their trees or between trees
-              case ((e: HasWitnessReadings, f: HasWitnessReadings), g: Int) if blockNodeOffsets.contains(g) =>
+              case ((e: AlignmentPoint, f: AlignmentPoint), g: Int) if blockNodeOffsets.contains(g) =>
                 println("Block")
               case x => println("Nonblock")
             }
 
-            val mergedNode0: HasWitnessReadings = mergeTreeNodes(
+            val mergedNode0: AlignmentPoint = mergeTreeNodes(
               getNodeListToProcess(resultOfTreeSplitting.t1).head,
               getNodeListToProcess(resultOfTreeSplitting.t2).head
             )

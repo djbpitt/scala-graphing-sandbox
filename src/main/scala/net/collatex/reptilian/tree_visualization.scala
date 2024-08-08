@@ -86,7 +86,7 @@ def flattenNodeSeq(
       else
         val currentNode = inList.head
         currentNode match
-          case (nodeNo, node: HasWitnessReadings) =>
+          case (nodeNo, node: AlignmentPoint) =>
             nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
           case (_, e: ExpandedNode) =>
             val newNodesToProcess: List[(Int, AlignmentTreeNode)] =
@@ -118,4 +118,4 @@ object WordBuffer {
   def apply(word: String): WordBuffer = WordBuffer(Vector(word))
 }
 
-case class NumberedNode(node: HasWitnessReadings, nodeNo: Int)
+case class NumberedNode(node: AlignmentPoint, nodeNo: Int)

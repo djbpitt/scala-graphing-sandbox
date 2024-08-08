@@ -1,11 +1,8 @@
 package net.collatex.reptilian
 
-import scala.collection.immutable.ListMap
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scalatags.Text.all.*
 
-import scala.annotation.tailrec
 import scala.math.Ordering
 
 opaque type Siglum = String
@@ -46,22 +43,10 @@ enum SplitTokenRangeResult:
 
 type WitnessReadings = Map[Siglum, TokenRange] // type alias
 
-sealed trait AlignmentTreeNode // supertype of all nodes
-
-/** Some alignment tree nodes that must have witness readings inherit this trait
-  *
-  * The trait 1) requires witness readings and 2) creates a human-readable rendering
-  *
-  * Expanded and unexpanded nodes render format witness readings as a ListMap in dot Reading nodes also have witness
-  * readings but do not use a ListMap visualization, and therefore do not inherit this trait
-  */
-sealed trait HasWitnessReadings extends AlignmentTreeNode {
-  def witnessGroups: Set[WitnessReadings]
-  def witnessReadings: WitnessReadings
-}
+sealed trait AlignmentTreeNode // supertype ExpandedNode (with children) and AlignmentPoint (with groups)
 
 case class AlignmentPoint(witnessReadings: WitnessReadings, witnessGroups: Set[WitnessReadings])
-    extends HasWitnessReadings
+    extends AlignmentTreeNode
 
 /** Custom constructor to simplify creation of LeafNode
  *
