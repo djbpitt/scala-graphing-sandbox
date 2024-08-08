@@ -60,6 +60,19 @@ sealed trait HasWitnessReadings extends AlignmentTreeNode {
   def witnessReadings: WitnessReadings
 }
 
+case class AlignmentPoint(witnessReadings: WitnessReadings, witnessGroups: Set[WitnessReadings])
+    extends HasWitnessReadings
+
+/** Custom constructor to simplify creation of LeafNode
+ *
+ * Input is a varargs of (Int, (Int, Int)) Constructor converts it to a Map, which is wraps in LeafNode Can create new
+ * LeafNode as: LeafNode(1 -> (2, 3), 4 -> (5, 6))
+ */
+object AlignmentPoint {
+  def apply(m: (Siglum, TokenRange)*): AlignmentPoint =
+    AlignmentPoint(m.toMap, Set(m.toMap)) // FIXME: Fake witnessGroups value works only for Agreement(Indel)
+}
+
 /** ExpandedNode
   *
   * Include root node, which is no longer a separate subtype
@@ -83,23 +96,6 @@ final case class VariationIndelNode(
 ) extends AlignmentTreeNode
     with HasWitnessReadings
 
-final case class AgreementNode(
-    witnessReadings: WitnessReadings,
-    witnessGroups: Set[WitnessReadings]
-) extends AlignmentTreeNode
-    with HasWitnessReadings
-
-/** Custom constructor to simplify creation of LeafNode
-  *
-  * Input is a varargs of (Int, (Int, Int)) Constructor converts it to a Map, which is wraps in LeafNode Can create new
-  * LeafNode as: LeafNode(1 -> (2, 3), 4 -> (5, 6)) Catch and report empty parameter, which is always a mistake because
-  * leaf nodes cannot be empty
-  */
-object AgreementNode {
-  def apply(m: (Siglum, TokenRange)*): AgreementNode =
-    AgreementNode(m.toMap, Set(m.toMap)) // FIXME: Fake witnessGroups value
-}
-
 /** AgreementIndel node
   *
   * Like a AgreementNode in that all witnesses agree, except that not all corpus witnesses are present
@@ -119,27 +115,11 @@ object AgreementIndelNode {
     AgreementIndelNode(m.toMap, Set(m.toMap)) // FIXME: Fake witnessGroups value
 }
 
-/*// Temporary; eventually the alignment graph will have no unexpanded nodes
-final case class UnexpandedNode(
-    witnessReadings: WitnessReadings,
-    witnessGroups: Vector[WitnessReadings]
-) extends AlignmentTreeNode
-    with HasWitnessReadings
-// When we expand an UnexpandedNode we replace it with an ExpandedNode
-// UnexpandedNode cannot have children (it has only WitnessReadings)
-// ExpandedNode must have children*/
-
-/** Input is Vector[Int], representing FullDepthBlock instances Output is Vector[AlignmentNode], where the nodes are all
-  * of type AgreementNode
-  *
-  * Will need to deal with non-full-depth locations in the alignment
-  */
-
 def blocksToNodes(
     blocks: Iterable[FullDepthBlock],
     tokenArray: Vector[Token],
     sigla: List[Siglum]
-): Iterable[AgreementNode] =
+): Iterable[AlignmentPoint] =
   blocks
     .map(e => fullDepthBlockToReadingNode(e, tokenArray, sigla))
 // Convert local alignment offsets to global token-array offsets for the reading node
@@ -147,7 +127,7 @@ def fullDepthBlockToReadingNode(
     block: FullDepthBlock,
     tokenArray: Vector[Token],
     sigla: List[Siglum]
-): AgreementNode =
+): AlignmentPoint =
 //  println(s"block: $block")
   val readings = block.instances
     .map(e =>
@@ -160,4 +140,4 @@ def fullDepthBlockToReadingNode(
     )
     .toMap
   val groups = Set(readings)
-  AgreementNode(readings, groups) // FIXME: Fake witnessGroups value
+  AlignmentPoint(readings, groups) // FIXME: Fake witnessGroups value

@@ -1,23 +1,7 @@
 package net.collatex.util
 
 import scala.collection.mutable
-import net.collatex.reptilian.{
-  AgreementIndelNode,
-  AgreementNode,
-  AlignmentTreeNode,
-  ExpandedNode,
-  FullDepthBlock,
-  HasWitnessReadings,
-  Siglum,
-  Token,
-  VariationIndelNode,
-  VariationNode,
-  WitnessReadings,
-  createAlignedBlocks,
-  makeTokenizer,
-  splitAlignmentPoint,
-  TokenRange
-}
+import net.collatex.reptilian.{AgreementIndelNode, AlignmentPoint, AlignmentTreeNode, ExpandedNode, FullDepthBlock, HasWitnessReadings, Siglum, Token, TokenRange, VariationIndelNode, VariationNode, WitnessReadings, createAlignedBlocks, makeTokenizer, splitAlignmentPoint}
 import smile.clustering.hclust
 import smile.data.DataFrame
 import smile.feature.transform.WinsorScaler
@@ -257,16 +241,16 @@ private def nwCompactAlignmentTreeNodeSteps(
   def openStepToTreeNode(open: (SingleStepAlignmentTreePath, WitnessReadings)): HasWitnessReadings =
     open match {
       case (SingleStepMatch(tok1: Token, tok2: Token), wr: WitnessReadings) =>
-        AgreementNode(witnessReadings = wr, witnessGroups = Set(wr))
+        AlignmentPoint(witnessReadings = wr, witnessGroups = Set(wr))
       case (SingleStepNonMatch(tok1: Token, tok2: Token), wr: WitnessReadings) =>
-        VariationNode(
+        AlignmentPoint(
           witnessReadings = wr,
           witnessGroups = wr.keys.map(k => Map(k -> wr(k))).toSet // Variation node has two groups          
         )
       case (SingleStepInsert(tok: Token), wr: WitnessReadings) =>
-        AgreementIndelNode(witnessReadings = wr, witnessGroups = Set(wr))
+        AlignmentPoint(witnessReadings = wr, witnessGroups = Set(wr))
       case (SingleStepDelete(tok: Token), wr: WitnessReadings) =>
-        AgreementIndelNode(witnessReadings = wr, witnessGroups = Set(wr))
+        AlignmentPoint(witnessReadings = wr, witnessGroups = Set(wr))
     }
 
   @tailrec
@@ -386,7 +370,7 @@ def splitTree(
         case e               => List(e.asInstanceOf[HasWitnessReadings])
       }
     val tTokens = nodeListToProcess map {
-      case e: AgreementNode =>
+      case e: AlignmentPoint =>
         sep += 1
         List(Token(sep.toString, sep.toString, -1, -1)) ++
           ta.slice(e.witnessReadings.head._2.start, e.witnessReadings.head._2.until)
@@ -434,7 +418,7 @@ def splitTree(
     var sep = -1
     def processOneTree(nodes: List[HasWitnessReadings]) =
       nodes map {
-        case e: AgreementNode =>
+        case e: AlignmentPoint =>
           sep += 1
           val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
             ta.slice(e.witnessReadings.head._2.start, e.witnessReadings.head._2.until)).size
@@ -468,7 +452,7 @@ def splitTree(
           Vector.fill(tokenSize)(e)
       }
     val tokenNodeMappings = processOneTree(getNodeListToProcess(t1)).flatten.tail ++ Vector(
-      AgreementNode().asInstanceOf[HasWitnessReadings] // Ugh!
+      AlignmentPoint().asInstanceOf[HasWitnessReadings] // Ugh!
     ) ++
       processOneTree(getNodeListToProcess(t2)).flatten.tail
     tokenNodeMappings
@@ -477,7 +461,7 @@ def splitTree(
     // trees contain only ranges (not tokens), so we get token positions from global token array
     var sep = -1
     def getTTokens(nodes: List[HasWitnessReadings]) = nodes map {
-      case e: AgreementNode =>
+      case e: AlignmentPoint =>
         sep += 1
         List(Token(sep.toString, sep.toString, -1, -1)) ++
           ta.slice(e.witnessReadings.head._2.start, e.witnessReadings.head._2.until)
@@ -547,7 +531,7 @@ def splitTree(
                 ).g + fdb.head.length)
               )
               val wg = Set(wr)
-              val updatedAgreementNode = AgreementNode(witnessReadings = wr, witnessGroups = wg)
+              val updatedAgreementNode = AlignmentPoint(witnessReadings = wr, witnessGroups = wg)
               val singletonSiglum = Siglum(singletonTokens.head.w.toString)
               val singletonEndInAgreementNode =
                 updatedAgreementNode.witnessReadings(singletonSiglum).until // global TA position
@@ -557,7 +541,7 @@ def splitTree(
                 val trailingTokenNode =
                   AgreementIndelNode(singletonSiglum -> TokenRange(singletonEndInAgreementNode, singletonTokens.last.g + 1))
                 ExpandedNode(ListBuffer(updatedAgreementNode, trailingTokenNode))
-            else AgreementNode()
+            else AlignmentPoint()
           acc(i + darwin.head.readings.size) = newAtn
           acc
         case (TreeTree(item1: Int, item2: Int, height: Double), i: Int) =>
@@ -577,14 +561,14 @@ def splitTree(
            * */
           def mergeTreeNodes(a1: HasWitnessReadings, a2: HasWitnessReadings): HasWitnessReadings =
             (a1, a2) match {
-              case (b1: AgreementNode, b2: AgreementNode) =>
+              case (b1: AlignmentPoint, b2: AlignmentPoint) =>
                 val mergedWitnessReadings = a1.witnessReadings ++ a2.witnessReadings
                 val mergedWitnessGroups = Vector(a1.witnessReadings.keys.toVector, a2.witnessReadings.keys.toVector)
                 val result =
                   VariationNode(witnessReadings = mergedWitnessReadings, witnessGroups = Set(mergedWitnessReadings))
                 result
               case _ =>
-                AgreementNode(
+                AlignmentPoint(
                   Map(Siglum("w") -> TokenRange(0, 1)),
                   Set(Map(Siglum("w") -> TokenRange(0, 1)))
                 ) // FIXME: Fake AgreementNode to fool compiler—temporarily, of course!

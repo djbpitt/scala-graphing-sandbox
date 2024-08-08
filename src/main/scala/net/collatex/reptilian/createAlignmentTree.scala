@@ -108,7 +108,7 @@ def split_reading_node[C <: HasWitnessReadings](
   // TODO: Might need to revise witnessGroups property, as well, since some ranges might be empty after split
   val result: (HasWitnessReadings, HasWitnessReadings) =
     current match
-      case e: AgreementNode => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
+      case e: AlignmentPoint => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
       case e: AgreementIndelNode => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
       case e: VariationNode => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
       case e: VariationIndelNode => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
@@ -210,12 +210,12 @@ def createAlignmentTree(
   val witnessReadings = witnessRanges.toMap
   val witnessGroups = Set(witnessReadings)
 
-  val globalReadingNode = AgreementNode(witnessReadings, witnessGroups)
+  val globalReadingNode = AlignmentPoint(witnessReadings, witnessGroups)
   //  println("Witness intervals on the root node of the alignment tree")
   //  println(globalReadingNode)
 
   // Start recursion
-  val sortedReadingNodes: immutable.List[AgreementNode] =
+  val sortedReadingNodes: immutable.List[AlignmentPoint] =
     alignTokenArray(tokenArray, sigla, selection = globalReadingNode)
   val rootNode = recursiveBuildAlignmentTreeLevel(
     ListBuffer(),
