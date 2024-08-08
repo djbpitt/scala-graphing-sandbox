@@ -109,7 +109,6 @@ def split_reading_node[C <: HasWitnessReadings](
   val result: (HasWitnessReadings, HasWitnessReadings) =
     current match
       case e: AlignmentPoint => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
-      case e: VariationNode => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
       case e: VariationIndelNode => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
   result
 }
@@ -253,7 +252,7 @@ def setupNodeExpansion(
       case e: Int if e == sigla.size =>
         ExpandedNode( // no blocks, so the single child is a VariationNode
           children = ListBuffer(
-            VariationNode(
+            AlignmentPoint(
               witnessReadings = selection.witnessReadings,
               witnessGroups = groups
             )

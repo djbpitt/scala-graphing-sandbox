@@ -1,7 +1,7 @@
 package net.collatex.util
 
 import scala.collection.mutable
-import net.collatex.reptilian.{AlignmentPoint, AlignmentTreeNode, ExpandedNode, FullDepthBlock, HasWitnessReadings, Siglum, Token, TokenRange, VariationIndelNode, VariationNode, WitnessReadings, createAlignedBlocks, makeTokenizer, splitAlignmentPoint}
+import net.collatex.reptilian.{AlignmentPoint, AlignmentTreeNode, ExpandedNode, FullDepthBlock, HasWitnessReadings, Siglum, Token, TokenRange, VariationIndelNode, WitnessReadings, createAlignedBlocks, makeTokenizer, splitAlignmentPoint}
 import smile.clustering.hclust
 import smile.data.DataFrame
 import smile.feature.transform.WinsorScaler
@@ -371,12 +371,6 @@ def splitTree(
       }
     val tTokens = nodeListToProcess map {
       case e: AlignmentPoint =>
-        sep += 1
-        List(Token(sep.toString, sep.toString, -1, -1)) ++ ta.slice(
-          e.witnessReadings.head._2.start,
-          e.witnessReadings.head._2.until
-        )
-      case e: VariationNode =>
         val groupHeads = e.witnessGroups.map(_.head) // one (String, (Int, Int)) per group
         val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
         sep += 1
@@ -416,11 +410,6 @@ def splitTree(
     def processOneTree(nodes: List[HasWitnessReadings]) =
       nodes map {
         case e: AlignmentPoint =>
-          sep += 1
-          val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
-            ta.slice(e.witnessReadings.head._2.start, e.witnessReadings.head._2.until)).size
-          Vector.fill(tokenSize)(e)
-        case e: VariationNode =>
           val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
           val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
           sep += 1
@@ -454,10 +443,6 @@ def splitTree(
     var sep = -1
     def getTTokens(nodes: List[HasWitnessReadings]) = nodes map {
       case e: AlignmentPoint =>
-        sep += 1
-        List(Token(sep.toString, sep.toString, -1, -1)) ++
-          ta.slice(e.witnessReadings.head._2.start, e.witnessReadings.head._2.until)
-      case e: VariationNode =>
         val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
         val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
         sep += 1
@@ -553,7 +538,7 @@ def splitTree(
                 val mergedWitnessReadings = a1.witnessReadings ++ a2.witnessReadings
                 val mergedWitnessGroups = Vector(a1.witnessReadings.keys.toVector, a2.witnessReadings.keys.toVector)
                 val result =
-                  VariationNode(witnessReadings = mergedWitnessReadings, witnessGroups = Set(mergedWitnessReadings))
+                  AlignmentPoint(witnessReadings = mergedWitnessReadings, witnessGroups = Set(mergedWitnessReadings))
                 result
               case _ =>
                 AlignmentPoint(

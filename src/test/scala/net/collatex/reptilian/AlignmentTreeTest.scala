@@ -75,10 +75,10 @@ class AlignmentTreeTest extends AnyFunSuite:
   /** Tests for splitAlignmentPoint
     */
   ignore("Split alignment point with two splittable witnesses"):
-    val left = AgreementNode(Siglum("a") -> TokenRange(1, 3), Siglum("b") -> TokenRange(5, 7))
-    val right = AgreementNode(Siglum("a") -> TokenRange(3, 4), Siglum("b") -> TokenRange(7, 8))
+    val left = AlignmentPoint(Siglum("a") -> TokenRange(1, 3), Siglum("b") -> TokenRange(5, 7))
+    val right = AlignmentPoint(Siglum("a") -> TokenRange(3, 4), Siglum("b") -> TokenRange(7, 8))
     val expected = (left, right)
-    val ap = AgreementNode(Siglum("a") -> TokenRange(1, 4), Siglum("b") -> TokenRange(5, 8)) // AlignmentPoint to split
+    val ap = AlignmentPoint(Siglum("a") -> TokenRange(1, 4), Siglum("b") -> TokenRange(5, 8)) // AlignmentPoint to split
     val splitPositions = Map(Siglum("a") -> 3, Siglum("b") -> 7) // Split positions for all witnesses
     val result = splitAlignmentPoint(ap, splitPositions)
     assert(result == expected)
