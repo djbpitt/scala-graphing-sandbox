@@ -84,12 +84,6 @@ final case class ExpandedNode(
     children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty
 ) extends AlignmentTreeNode
 
-final case class VariationIndelNode(
-    witnessReadings: WitnessReadings,
-    witnessGroups: Set[WitnessReadings] // sigla
-) extends AlignmentTreeNode
-    with HasWitnessReadings
-
 def blocksToNodes(
     blocks: Iterable[FullDepthBlock],
     tokenArray: Vector[Token],

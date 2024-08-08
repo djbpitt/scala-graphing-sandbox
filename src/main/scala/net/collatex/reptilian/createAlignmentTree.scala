@@ -70,10 +70,10 @@ def splitAlignmentPoint[C <: HasWitnessReadings](
   result
 }
 
-def split_reading_node[C <: HasWitnessReadings](
-                                                 current: C,
+def split_reading_node(
+                                                 current: AlignmentPoint,
                                                  position_to_split: immutable.Map[Siglum, Int]
-                                               ): (HasWitnessReadings, HasWitnessReadings) = {
+                                               ): (AlignmentPoint, AlignmentPoint) = {
   // For witness ranges, last value is exclusive
   // We filter out all the witnesses that have an empty range after the split
   //  // TODO: Simplify duplicate code
@@ -106,10 +106,8 @@ def split_reading_node[C <: HasWitnessReadings](
   // TODO: Workaround to mimic copy() method on trait (https://groups.google.com/g/scala-internals/c/O1yrB1xetUA)
   // TODO: Would like return type of (C, C) instead of (HasWitnessReadings, HasWitnessReadings)
   // TODO: Might need to revise witnessGroups property, as well, since some ranges might be empty after split
-  val result: (HasWitnessReadings, HasWitnessReadings) =
-    current match
-      case e: AlignmentPoint => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
-      case e: VariationIndelNode => (e.copy(witnessReadings = changedMap), e.copy(witnessReadings = changedMap2))
+  val result: (AlignmentPoint, AlignmentPoint) =
+    (current.copy(witnessReadings = changedMap), current.copy(witnessReadings = changedMap2))
   result
 }
 
@@ -229,7 +227,7 @@ def createAlignmentTree(
 def setupNodeExpansion(
     tokenArray: Vector[Token],
     sigla: List[Siglum],
-    selection: HasWitnessReadings
+    selection: AlignmentPoint
 ) = {
   val blocks = alignTokenArray(tokenArray, sigla, selection)
   if blocks.isEmpty
@@ -261,7 +259,7 @@ def setupNodeExpansion(
       case e =>
         ExpandedNode( // no blocks, so the single child is a VariationNode
           children = ListBuffer(
-            VariationIndelNode(
+            AlignmentPoint(
               witnessReadings = selection.witnessReadings,
               witnessGroups = groups
             )
@@ -282,8 +280,8 @@ def setupNodeExpansion(
 @tailrec
 def recursiveBuildAlignmentTreeLevel(
     result: ListBuffer[AlignmentTreeNode],
-    treeReadingNode: HasWitnessReadings,
-    remainingAlignment: List[HasWitnessReadings],
+    treeReadingNode: AlignmentPoint,
+    remainingAlignment: List[AlignmentPoint],
     tokenArray: Vector[Token],
     sigla: List[Siglum]
 ): ExpandedNode = {

@@ -1,7 +1,20 @@
 package net.collatex.util
 
 import scala.collection.mutable
-import net.collatex.reptilian.{AlignmentPoint, AlignmentTreeNode, ExpandedNode, FullDepthBlock, HasWitnessReadings, Siglum, Token, TokenRange, VariationIndelNode, WitnessReadings, createAlignedBlocks, makeTokenizer, splitAlignmentPoint}
+import net.collatex.reptilian.{
+  AlignmentPoint,
+  AlignmentTreeNode,
+  ExpandedNode,
+  FullDepthBlock,
+  HasWitnessReadings,
+  Siglum,
+  Token,
+  TokenRange,
+  WitnessReadings,
+  createAlignedBlocks,
+  makeTokenizer,
+  splitAlignmentPoint
+}
 import smile.clustering.hclust
 import smile.data.DataFrame
 import smile.feature.transform.WinsorScaler
@@ -245,7 +258,7 @@ private def nwCompactAlignmentTreeNodeSteps(
       case (SingleStepNonMatch(tok1: Token, tok2: Token), wr: WitnessReadings) =>
         AlignmentPoint(
           witnessReadings = wr,
-          witnessGroups = wr.keys.map(k => Map(k -> wr(k))).toSet // Variation node has two groups          
+          witnessGroups = wr.keys.map(k => Map(k -> wr(k))).toSet // Variation node has two groups
         )
       case (SingleStepInsert(tok: Token), wr: WitnessReadings) =>
         AlignmentPoint(witnessReadings = wr, witnessGroups = Set(wr))
@@ -369,28 +382,17 @@ def splitTree(
         case e: ExpandedNode => e.children.map(_.asInstanceOf[HasWitnessReadings]).toList
         case e               => List(e.asInstanceOf[HasWitnessReadings])
       }
-    val tTokens = nodeListToProcess map {
-      case e: AlignmentPoint =>
-        val groupHeads = e.witnessGroups.map(_.head) // one (String, (Int, Int)) per group
-        val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
-        sep += 1
-        List(Token(sep.toString, sep.toString, -1, -1)) ++
-          (ts.head ++ ts.tail
-            .flatMap(e =>
-              sep += 1
-              List(Token(sep.toString, sep.toString, -1, -1)) ++ e
-            ))
-      case e: VariationIndelNode =>
-        val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
-        val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
-        sep += 1
-        List(Token(sep.toString, sep.toString, -1, -1)) ++
-          (ts.head ++ ts.tail
-            .flatMap(e =>
-              sep += 1
-              List(Token(sep.toString, sep.toString, -1, -1)) ++ e
-            ))
-    }
+    val tTokens = nodeListToProcess map (e =>
+      val groupHeads = e.witnessGroups.map(_.head) // one (String, (Int, Int)) per group
+      val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
+      sep += 1
+      List(Token(sep.toString, sep.toString, -1, -1)) ++
+        (ts.head ++ ts.tail
+          .flatMap(e =>
+            sep += 1
+            List(Token(sep.toString, sep.toString, -1, -1)) ++ e
+          ))
+    )
     sep += 1 // increment separator before singleton tokens
     val localTa = (tTokens.head ++ tTokens // local token array
       .tail.flatMap(e =>
@@ -408,30 +410,18 @@ def splitTree(
   def getTTokenNodeMappings(t1: AlignmentTreeNode, t2: AlignmentTreeNode, ta: List[Token]): List[HasWitnessReadings] =
     var sep = -1
     def processOneTree(nodes: List[HasWitnessReadings]) =
-      nodes map {
-        case e: AlignmentPoint =>
-          val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
-          val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
-          sep += 1
-          val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
-            (ts.head ++ ts.tail
-              .flatMap(e =>
-                sep += 1
-                List(Token(sep.toString, sep.toString, -1, -1)) ++ e
-              ))).size
-          Vector.fill(tokenSize)(e)
-        case e: VariationIndelNode =>
-          val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
-          val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
-          sep += 1
-          val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
-            (ts.head ++ ts.tail
-              .flatMap(e =>
-                sep += 1
-                List(Token(sep.toString, sep.toString, -1, -1)) ++ e
-              ))).size
-          Vector.fill(tokenSize)(e)
-      }
+      nodes map (e =>
+        val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
+        val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
+        sep += 1
+        val tokenSize = (List(Token(sep.toString, sep.toString, -1, -1)) ++
+          (ts.head ++ ts.tail
+            .flatMap(e =>
+              sep += 1
+              List(Token(sep.toString, sep.toString, -1, -1)) ++ e
+            ))).size
+        Vector.fill(tokenSize)(e)
+      )
     val tokenNodeMappings = processOneTree(getNodeListToProcess(t1)).flatten.tail ++ Vector(
       AlignmentPoint().asInstanceOf[HasWitnessReadings] // Ugh!
     ) ++
@@ -441,28 +431,17 @@ def splitTree(
   def createTreeTreeTokenArray(t1: AlignmentTreeNode, t2: AlignmentTreeNode, ta: List[Token]): List[Token] =
     // trees contain only ranges (not tokens), so we get token positions from global token array
     var sep = -1
-    def getTTokens(nodes: List[HasWitnessReadings]) = nodes map {
-      case e: AlignmentPoint =>
-        val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
-        val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
-        sep += 1
-        List(Token(sep.toString, sep.toString, -1, -1)) ++
-          (ts.head ++ ts.tail
-            .flatMap(e =>
-              sep += 1
-              List(Token(sep.toString, sep.toString, -1, -1)) ++ e
-            ))
-      case e: VariationIndelNode =>
-        val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
-        val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
-        sep += 1
-        List(Token(sep.toString, sep.toString, -1, -1)) ++
-          (ts.head ++ ts.tail
-            .flatMap(e =>
-              sep += 1
-              List(Token(sep.toString, sep.toString, -1, -1)) ++ e
-            ))
-    }
+    def getTTokens(nodes: List[HasWitnessReadings]) = nodes map (e =>
+      val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
+      val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
+      sep += 1
+      List(Token(sep.toString, sep.toString, -1, -1)) ++
+        (ts.head ++ ts.tail
+          .flatMap(e =>
+            sep += 1
+            List(Token(sep.toString, sep.toString, -1, -1)) ++ e
+          ))
+    )
 
     val localTa =
       sep += 1
@@ -499,9 +478,12 @@ def splitTree(
           val newAtn =
             if fdb.size == 1 then // FIXME: Need also to verify that block isn’t split
               val wr = alignmentRibbon.head.witnessReadings ++ Map(
-                Siglum(singletonTokens.head.w.toString) -> TokenRange(stTokenArray(fdb.head.instances.last).g, stTokenArray(
-                  fdb.head.instances.last
-                ).g + fdb.head.length)
+                Siglum(singletonTokens.head.w.toString) -> TokenRange(
+                  stTokenArray(fdb.head.instances.last).g,
+                  stTokenArray(
+                    fdb.head.instances.last
+                  ).g + fdb.head.length
+                )
               )
               val wg = Set(wr)
               val updatedAgreementNode = AlignmentPoint(witnessReadings = wr, witnessGroups = wg)
