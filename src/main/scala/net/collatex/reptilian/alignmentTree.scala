@@ -61,8 +61,7 @@ object AlignmentPoint {
       gTa
         .slice(offsets.start, offsets.until)
         .map(_.n)
-        .mkString(" ")
-    ) // groups readings by shared text (n property)
+    ) // groups readings by shared text (n property); can we improve the performance here?
     .values // we don't care about the shared text after we've used it for grouping
     .toSet
     AlignmentPoint(wr, wg)
