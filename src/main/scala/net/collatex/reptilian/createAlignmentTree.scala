@@ -226,17 +226,8 @@ def createAlignmentTree(
   rootNode
 }
 
-// 2024-08-08: RESUME HERE
-// Earlier code to create witnessGroups property for VariationNode:
-// val groups = selection.witnessReadings
-//  .groupBy((siglum, offsets) =>
-//    tokenArray
-//      .slice(offsets.start, offsets.until)
-//      .map(_.n)
-//      .mkString(" ")
-//  ) // groups readings by shared text (n property)
-//  .values // we don't care about the shared text after we've used it for grouping
-//  .toSet
+// 2024-08-13 RESUME HERE
+// We compute groups below, but AlignmentPoint instances already know their groups
 
 def setupNodeExpansion(
     tokenArray: Vector[Token],
