@@ -54,8 +54,18 @@ case class AlignmentPoint(witnessReadings: WitnessReadings, witnessGroups: Set[W
  * LeafNode as: LeafNode(1 -> (2, 3), 4 -> (5, 6))
  */
 object AlignmentPoint {
-  def apply(m: (Siglum, TokenRange)*): AlignmentPoint =
-    AlignmentPoint(m.toMap, Set(m.toMap)) // FIXME: Fake witnessGroups value works only for Agreement(Indel)
+  def apply(m: (Siglum, TokenRange)*)(using gTa: Vector[Token]): AlignmentPoint =
+    val wr = m.toMap
+    val wg = wr
+    .groupBy((siglum, offsets) =>
+      gTa
+        .slice(offsets.start, offsets.until)
+        .map(_.n)
+        .mkString(" ")
+    ) // groups readings by shared text (n property)
+    .values // we don't care about the shared text after we've used it for grouping
+    .toSet
+    AlignmentPoint(wr, wg)
 }
 
 /** ExpandedNode

@@ -75,6 +75,12 @@ class AlignmentTreeTest extends AnyFunSuite:
   /** Tests for splitAlignmentPoint
     */
   ignore("Split alignment point with two splittable witnesses"):
+    implicit val gTa: Vector[Token] = Vector( // fake; contains different data
+      Token("Hi ", "hi", 0, 0),
+      Token(", ", ",", 0, 1),
+      Token("Mom ", "mom", 0, 2),
+      Token("!", "!", 0, 3)
+    )
     val left = AlignmentPoint(Siglum("a") -> TokenRange(1, 3), Siglum("b") -> TokenRange(5, 7))
     val right = AlignmentPoint(Siglum("a") -> TokenRange(3, 4), Siglum("b") -> TokenRange(7, 8))
     val expected = (left, right)

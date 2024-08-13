@@ -364,8 +364,8 @@ def splitTree(
 @main def unalignedDev(): Unit =
   val darwin: List[UnalignedFragment] = readJsonData // we know there's only one
   val darwinReadings = darwin.head.readings
-  val tokenArray =
-    darwinReadings.head ++ darwinReadings.tail.zipWithIndex
+  given tokenArray: Vector[Token] =
+    darwinReadings.head.toVector ++ darwinReadings.tail.zipWithIndex
       .flatMap((e, index) => List(Token(index.toString, index.toString, index, -1)) ++ e)
       .toVector
   println(tokenArray)
@@ -374,7 +374,7 @@ def splitTree(
     .toMap // map object (key -> value pairs)
   println(nodeToClustersMap)
 
-  def createSingletonTreeTokenArray(t: AlignmentTreeNode, s: List[Token], ta: List[Token]) =
+  def createSingletonTreeTokenArray(t: AlignmentTreeNode, s: List[Token], ta: Vector[Token]) =
     // tree contains only ranges (not tokens), so we get token positions from global token array
     var sep = -1
     val nodeListToProcess: List[AlignmentPoint] =
@@ -407,7 +407,7 @@ def splitTree(
       case e               => List(e.asInstanceOf[AlignmentPoint])
     }
 
-  def getTTokenNodeMappings(t1: AlignmentTreeNode, t2: AlignmentTreeNode, ta: List[Token]): List[AlignmentPoint] =
+  def getTTokenNodeMappings(t1: AlignmentTreeNode, t2: AlignmentTreeNode, ta: Vector[Token]): List[AlignmentPoint] =
     var sep = -1
     def processOneTree(nodes: List[AlignmentPoint]) =
       nodes map (e =>
@@ -428,14 +428,14 @@ def splitTree(
       processOneTree(getNodeListToProcess(t2)).flatten.tail
     tokenNodeMappings
 
-  def createTreeTreeTokenArray(t1: AlignmentTreeNode, t2: AlignmentTreeNode, ta: List[Token]): List[Token] =
+  def createTreeTreeTokenArray(t1: AlignmentTreeNode, t2: AlignmentTreeNode, ta: Vector[Token]): Vector[Token] =
     // trees contain only ranges (not tokens), so we get token positions from global token array
     var sep = -1
     def getTTokens(nodes: List[AlignmentPoint]) = nodes map (e =>
       val groupHeads = e.witnessGroups.map(_.head) // one siglum per group
       val ts = groupHeads.map(f => ta.slice(f._2.start, f._2.until))
       sep += 1
-      List(Token(sep.toString, sep.toString, -1, -1)) ++
+      Vector(Token(sep.toString, sep.toString, -1, -1)) ++
         (ts.head ++ ts.tail
           .flatMap(e =>
             sep += 1
@@ -447,7 +447,7 @@ def splitTree(
       sep += 1
       getTTokens(getNodeListToProcess(t1)).flatten.tail ++ List(Token(sep.toString, sep.toString, -1, -1)) ++
         getTTokens(getNodeListToProcess(t2)).flatten.tail
-    localTa
+    localTa.toVector
 
   val results = nodeToClustersMap.values.head // list of ClusterInfo instances
     .zipWithIndex.foldLeft(mutable.Map[Int, AlignmentTreeNode]()) { (acc, next) =>
@@ -529,7 +529,7 @@ def splitTree(
                 ) // FIXME: Fake AgreementNode to fool compiler—temporarily, of course!
             }
 
-          val ttTokenArray = createTreeTreeTokenArray(acc(item1), acc(item2), tokenArray).toVector
+          val ttTokenArray = createTreeTreeTokenArray(acc(item1), acc(item2), tokenArray)
           val ttTokenToAlignmentTreeNodeMapping = getTTokenNodeMappings(acc(item1), acc(item2), tokenArray).toVector
           val (_, _, blocks) =
             createAlignedBlocks(ttTokenArray, -1, false) // tuple of (all blocks, suffix array, full-depth blocks)
