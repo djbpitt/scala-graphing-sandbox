@@ -3,7 +3,7 @@ package net.collatex.reptilian
 import net.collatex.reptilian.TokenRange.*
 import org.scalatest.funsuite.AnyFunSuite
 
-class CreateAlignmentTest extends AnyFunSuite:
+class CreateAlignmentTreeTest extends AnyFunSuite:
   test("Create alignment point with one group"):
     given gTa: Vector[Token] = Vector( // three witnesses, one group
       Token("Hi ", "hi", 0, 0),
@@ -66,7 +66,7 @@ class CreateAlignmentTest extends AnyFunSuite:
     val result = AlignmentPoint(witnessReadings*) // extract varargs from vector
     assert(result == expected)
 
-//class CreateAlignmentTest extends AnyFunSuite:
+//class CreateAlignmentTreeTest extends AnyFunSuite:
 //  private val fdb = FullDepthBlock(Vector(0, 4, 8), 2)
 //  private val result = fullDepthBlockToReadingNode(fdb)
 //
