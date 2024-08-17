@@ -1,6 +1,6 @@
 package net.collatex.util
 
-import scala.collection.mutable
+import scala.collection.{mutable, immutable}
 import net.collatex.reptilian.{
   AlignmentPoint,
   AlignmentUnit,
@@ -10,9 +10,7 @@ import net.collatex.reptilian.{
   Token,
   TokenRange,
   WitnessReadings,
-  createAlignedBlocks,
-  makeTokenizer,
-  splitAlignmentPoint
+  createAlignedBlocks
 }
 import smile.clustering.hclust
 import smile.data.DataFrame
@@ -24,6 +22,15 @@ import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 import scala.math.min
 import scala.util.matching.Regex
+
+def splitAlignmentPoint(
+                         current: AlignmentPoint,
+                         position_to_split: immutable.Map[Siglum, Int]
+                       ): (AlignmentPoint, AlignmentPoint) = {
+  val result = (current, current) // NB: fake return so that code will compile
+  result
+}
+
 
 /* Needleman-Wunsch alignment code from
  * https://github.com/Philippus/osita (MPL-2.0)

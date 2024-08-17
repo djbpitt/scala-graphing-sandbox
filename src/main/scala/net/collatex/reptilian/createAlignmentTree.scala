@@ -62,15 +62,7 @@ def splitWitnessGroup(
   )
   (lefts, rights)
 
-def splitAlignmentPoint(
-    current: AlignmentPoint,
-    position_to_split: immutable.Map[Siglum, Int]
-): (AlignmentPoint, AlignmentPoint) = {
-  val result = (current, current) // NB: fake return so that code will compile
-  result
-}
-
-def split_reading_node(
+def splitUnalignedZone(
     current: UnalignedZone,
     position_to_split: immutable.Map[Siglum, Int]
 ): (UnalignedZone, UnalignedZone) = {
@@ -281,14 +273,14 @@ def recursiveBuildAlignmentTreeLevel(
       //   Recursion knows to until when remainingAlignment parameter is an empty list
       //  println(firstReadingNode)
       //  println(tokenArray)
-  val tempSplit = split_reading_node(
+  val tempSplit = splitUnalignedZone(
     treeReadingNode,
     firstReadingNode.witnessReadings.map((k, v) => k -> v.until)
   )
   // split the first returned reading node again, now by the start position for each witness of the first
   // sorted reading node.
   //  println(s"tempSplit :  $tempSplit")
-  val tempSplit2 = split_reading_node(
+  val tempSplit2 = splitUnalignedZone(
     tempSplit._1,
     firstReadingNode.witnessReadings.map((k, v) => k -> v.start)
   )
