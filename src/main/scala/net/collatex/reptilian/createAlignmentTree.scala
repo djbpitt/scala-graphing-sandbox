@@ -176,10 +176,7 @@ def alignTokenArray(
     sortedReadingNodes
 }
 
-def createAlignmentTree(
-    tokenArray: Vector[Token],
-    sigla: List[Siglum]
-)(using gTa: Vector[Token]): ExpandedNode = {
+def createAlignmentTree(sigla: List[Siglum])(using gTa: Vector[Token]): ExpandedNode = {
   // The working space should have witnesses and ranges (like a AgreementNode in our original type system)
   // Traverse over tokenArray and get the first and last token position for each witness to get full range.
   // To store it in a reading node we have to store in a (String, (Int, Int)), that is,
@@ -193,8 +190,8 @@ def createAlignmentTree(
   // go over the tokens and assign the lowest and the highest to the map
   // token doesn't know its position in a specific witness, so use indices
   // TODO: Could be simplified if the routine knew the token length of the witnesses
-  for (tokenIndex <- tokenArray.indices)
-    val token = tokenArray(tokenIndex)
+  for (tokenIndex <- gTa.indices)
+    val token = gTa(tokenIndex)
     if token.w != -1
     then // witness separators have witness identifier values of -1
       val tuple =
@@ -214,12 +211,12 @@ def createAlignmentTree(
   //  println(globalReadingNode)
   // Start recursion
   val sortedReadingNodes: immutable.List[AlignmentPoint] =
-    alignTokenArray(tokenArray, sigla, selection = globalReadingNode)
+    alignTokenArray(gTa, sigla, selection = globalReadingNode)
   val rootNode = recursiveBuildAlignmentTreeLevel(
     ListBuffer(),
     globalReadingNode,
     sortedReadingNodes,
-    tokenArray,
+    gTa,
     sigla
   )
 

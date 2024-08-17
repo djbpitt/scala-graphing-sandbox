@@ -336,5 +336,5 @@ def alignmentIntsToBlocks(alignment: Set[Int], blocks: Iterable[FullDepthBlock])
 
 // Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
 def createAlignment(sigla: List[Siglum])(using tokenArray: Vector[Token]): ExpandedNode =
-  createAlignmentTree(tokenArray, sigla)
+  createAlignmentTree(sigla)
 
