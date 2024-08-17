@@ -71,9 +71,9 @@ def splitAlignmentPoint(
 }
 
 def split_reading_node(
-                                                 current: AlignmentPoint,
-                                                 position_to_split: immutable.Map[Siglum, Int]
-                                               ): (AlignmentPoint, AlignmentPoint) = {
+    current: AlignmentPoint,
+    position_to_split: immutable.Map[Siglum, Int]
+): (AlignmentPoint, AlignmentPoint) = {
   // For witness ranges, last value is exclusive
   // We filter out all the witnesses that have an empty range after the split
   //  // TODO: Simplify duplicate code
@@ -110,12 +110,11 @@ def split_reading_node(
     (current.copy(witnessReadings = changedMap), current.copy(witnessReadings = changedMap2))
   result
 }
-
 def alignTokenArray(
     tokenArray: Vector[Token],
     sigla: List[Siglum],
     selection: AlignmentPoint
-) = {
+)(using gTa: Vector[Token]) = {
   // find the full depth blocks for the alignment
   // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
   // ??: Modify createAlignedBlocks() not to return unused values
@@ -129,10 +128,12 @@ def alignTokenArray(
     val orderedWitnessReadings =
       for siglum <- selection.witnessReadings.keys.toSeq.sorted
       yield selection.witnessReadings(siglum)
-      // Replacement that uses witnessGroups instead of witnessReadings
-      // val tmp = selection.witnessGroups.flatMap(e => e.values).toSeq.sortBy(_.start)
     for r <- orderedWitnessReadings yield tokenArray.slice(r.start, r.until)
   }
+  // Replacement that uses witnessGroups instead of witnessReadings
+  val tmp = selection.witnessGroups
+    .flatMap(e => e.values).toSeq.sortBy(_.start)
+    .map(e => Range(e.start, e.until).map(f => gTa(f)).toVector)
   val localTokenArray = localTokenArraybyWitness.head ++
     localTokenArraybyWitness.tail.zipWithIndex
       .flatMap((e, index) =>
@@ -178,7 +179,7 @@ def alignTokenArray(
 def createAlignmentTree(
     tokenArray: Vector[Token],
     sigla: List[Siglum]
-): ExpandedNode = {
+)(using gTa: Vector[Token]): ExpandedNode = {
   // The working space should have witnesses and ranges (like a AgreementNode in our original type system)
   // Traverse over tokenArray and get the first and last token position for each witness to get full range.
   // To store it in a reading node we have to store in a (String, (Int, Int)), that is,
@@ -211,7 +212,6 @@ def createAlignmentTree(
   val globalReadingNode = AlignmentPoint(witnessReadings, witnessGroups)
   //  println("Witness intervals on the root node of the alignment tree")
   //  println(globalReadingNode)
-
   // Start recursion
   val sortedReadingNodes: immutable.List[AlignmentPoint] =
     alignTokenArray(tokenArray, sigla, selection = globalReadingNode)
@@ -233,7 +233,7 @@ def setupNodeExpansion(
     tokenArray: Vector[Token],
     sigla: List[Siglum],
     selection: AlignmentPoint
-) = {
+)(using gTa: Vector[Token]) = {
   val blocks = alignTokenArray(tokenArray, sigla, selection)
   if blocks.isEmpty
   then
@@ -251,15 +251,6 @@ def setupNodeExpansion(
         AlignmentPoint(
           witnessReadings = selection.witnessReadings,
           witnessGroups = groups
-        )
-      case e: Int if e == sigla.size =>
-        ExpandedNode( // no blocks, so the single child is a VariationNode
-          children = ListBuffer(
-            AlignmentPoint(
-              witnessReadings = selection.witnessReadings,
-              witnessGroups = groups
-            )
-          )
         )
       case e =>
         ExpandedNode( // no blocks, so the single child is a VariationNode
@@ -289,7 +280,7 @@ def recursiveBuildAlignmentTreeLevel(
     remainingAlignment: List[AlignmentPoint],
     tokenArray: Vector[Token],
     sigla: List[Siglum]
-): ExpandedNode = {
+)(using gTa: Vector[Token]): ExpandedNode = {
   // On first run, treeReadingNode contains full token ranges and remainingAlignment contains all sortedReadingNodes
   // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
   val firstReadingNode =
