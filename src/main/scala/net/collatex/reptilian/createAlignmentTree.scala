@@ -188,13 +188,15 @@ def createAlignmentTree(sigla: List[Siglum])(using gTa: Vector[Token]): Expanded
   // mutable map is local to the function, to convert to immutable before return
   val witnessReadings = witnessRanges.toMap
 
-  val globalReadingNode = UnalignedZone(witnessReadings)
+  // 2024-08-17 RESUME HERE: scrutinize names and types (esp. globalUnalignedZone
+  // and sortedReadingNodes; gTa should not need to be passed explicitly
+  val globalUnalignedZone = UnalignedZone(witnessReadings)
   // Start recursion
   val sortedReadingNodes: immutable.List[AlignmentPoint] =
-    alignTokenArray(gTa, sigla, selection = globalReadingNode)
+    alignTokenArray(gTa, sigla, selection = globalUnalignedZone)
   val rootNode = recursiveBuildAlignmentTreeLevel(
     ListBuffer(),
-    globalReadingNode,
+    globalUnalignedZone,
     sortedReadingNodes,
     gTa,
     sigla
@@ -239,7 +241,7 @@ def setupNodeExpansion(
   else // blocks, so children are a sequence of one or more nodes of possibly different types
     val expansion = recursiveBuildAlignmentTreeLevel(
       result = ListBuffer(),
-      treeReadingNode = selection,
+      unalignedZone = selection,
       remainingAlignment = blocks,
       tokenArray = tokenArray,
       sigla = sigla
@@ -249,20 +251,20 @@ def setupNodeExpansion(
 
 @tailrec
 def recursiveBuildAlignmentTreeLevel(
-                                      result: ListBuffer[AlignmentUnit],
-                                      treeReadingNode: UnalignedZone,
-                                      remainingAlignment: List[AlignmentPoint],
-                                      tokenArray: Vector[Token],
-                                      sigla: List[Siglum]
+    result: ListBuffer[AlignmentUnit],
+    unalignedZone: UnalignedZone,
+    remainingAlignment: List[AlignmentPoint],
+    tokenArray: Vector[Token],
+    sigla: List[Siglum]
 )(using gTa: Vector[Token]): ExpandedNode = {
-  // On first run, treeReadingNode contains full token ranges and remainingAlignment contains all sortedReadingNodes
+  // On first run, unalignedZone contains full token ranges and remainingAlignment contains all sortedReadingNodes
   // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
   val firstReadingNode =
     remainingAlignment.head // used below to find both real alignment and optional leading "undecided part"
       // println("Witness intervals of the first block of the alignment")
       // println(firstReadingNode)
 
-      // split treeReadingNode based on the until position for each witness of the first reading node of the alignment.
+      // split unalignedZone based on the until position for each witness of the first reading node of the alignment.
       // That splits the root reading node into aligned block plus optional leading non-block tokens
       // TODO: map() creates a new map; would a map view be better (we use the value only once)? Would using a
       //   map view instead of a map require changing the signature of splitAlignmentPoint()?
@@ -274,7 +276,7 @@ def recursiveBuildAlignmentTreeLevel(
       //  println(firstReadingNode)
       //  println(tokenArray)
   val tempSplit = splitUnalignedZone(
-    treeReadingNode,
+    unalignedZone,
     firstReadingNode.witnessReadings.map((k, v) => k -> v.until)
   )
   // split the first returned reading node again, now by the start position for each witness of the first
