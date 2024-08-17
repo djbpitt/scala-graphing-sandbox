@@ -46,7 +46,7 @@ def readData(pathToData: Path): List[(String, String)] =
 
   /** Create alignment tree
     */
-  val root: ExpandedNode = createAlignment(witnessStrings, sigla)
+  val root: ExpandedNode = createAlignment(sigla)
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html") // used for single-column and mixed output
   val horizontalRibbons = createHorizontalRibbons(root, allSigla)
   val horizontalRibbonsPath =
