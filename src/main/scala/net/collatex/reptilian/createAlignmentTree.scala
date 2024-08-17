@@ -71,9 +71,9 @@ def splitAlignmentPoint(
 }
 
 def split_reading_node(
-    current: AlignmentPoint,
+    current: UnalignedZone,
     position_to_split: immutable.Map[Siglum, Int]
-): (AlignmentPoint, AlignmentPoint) = {
+): (UnalignedZone, UnalignedZone) = {
   // For witness ranges, last value is exclusive
   // We filter out all the witnesses that have an empty range after the split
   //  // TODO: Simplify duplicate code
@@ -106,21 +106,21 @@ def split_reading_node(
   // TODO: Workaround to mimic copy() method on trait (https://groups.google.com/g/scala-internals/c/O1yrB1xetUA)
   // TODO: Would like return type of (C, C) instead of (HasWitnessReadings, HasWitnessReadings)
   // TODO: Might need to revise witnessGroups property, as well, since some ranges might be empty after split
-  val result: (AlignmentPoint, AlignmentPoint) =
+  val result: (UnalignedZone, UnalignedZone) =
     (current.copy(witnessReadings = changedMap), current.copy(witnessReadings = changedMap2))
   result
 }
 def alignTokenArray(
     tokenArray: Vector[Token],
     sigla: List[Siglum],
-    selection: AlignmentPoint
+    selection: UnalignedZone
 )(using gTa: Vector[Token]) = {
   // find the full depth blocks for the alignment
   // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
   // ??: Modify createAlignedBlocks() not to return unused values
   // ??: Count witnesses (via separators) instead of passing in count
   // TODO: Simplify where we need single token array and where we need witness-set metadata
-  val witnessCount = selection.witnessGroups.map(_.size).sum
+  val witnessCount = selection.witnessReadings.size
 
   // Create a local token array by filtering the global one according to the selection
   // Selection comes in unsorted, so sort by siglum first
@@ -131,9 +131,6 @@ def alignTokenArray(
     for r <- orderedWitnessReadings yield tokenArray.slice(r.start, r.until)
   }
   // Replacement that uses witnessGroups instead of witnessReadings
-  val tmp = selection.witnessGroups
-    .flatMap(e => e.values).toSeq.sortBy(_.start)
-    .map(e => Range(e.start, e.until).map(f => gTa(f)).toVector)
   val localTokenArray = localTokenArraybyWitness.head ++
     localTokenArraybyWitness.tail.zipWithIndex
       .flatMap((e, index) =>
@@ -177,12 +174,6 @@ def alignTokenArray(
 }
 
 def createAlignmentTree(sigla: List[Siglum])(using gTa: Vector[Token]): ExpandedNode = {
-  // The working space should have witnesses and ranges (like a AgreementNode in our original type system)
-  // Traverse over tokenArray and get the first and last token position for each witness to get full range.
-  // To store it in a reading node we have to store in a (String, (Int, Int)), that is,
-  //   (Witness identifier, (Token offset, Token offset)) (use type alias, which is more self-documenting?)
-  //   NB: WitnessReading second value is exclusive until of the range, so the second Int isn’t necessarily a
-  //     token offset
   // NB: We are embarrassed by the mutable map (and by other things, such has having to scan token array)
   // Housekeeping; TODO: Think about witness-set metadata
   val witnessRanges: mutable.Map[Siglum, TokenRange] = mutable.Map.empty
@@ -204,11 +195,8 @@ def createAlignmentTree(sigla: List[Siglum])(using gTa: Vector[Token]): Expanded
       ) // +1 is for exclusive until
   // mutable map is local to the function, to convert to immutable before return
   val witnessReadings = witnessRanges.toMap
-  val witnessGroups = Set(witnessReadings)
 
-  val globalReadingNode = AlignmentPoint(witnessReadings, witnessGroups)
-  //  println("Witness intervals on the root node of the alignment tree")
-  //  println(globalReadingNode)
+  val globalReadingNode = UnalignedZone(witnessReadings)
   // Start recursion
   val sortedReadingNodes: immutable.List[AlignmentPoint] =
     alignTokenArray(gTa, sigla, selection = globalReadingNode)
@@ -223,13 +211,10 @@ def createAlignmentTree(sigla: List[Siglum])(using gTa: Vector[Token]): Expanded
   rootNode
 }
 
-// 2024-08-13 RESUME HERE
-// We compute groups below, but AlignmentPoint instances already know their groups
-
 def setupNodeExpansion(
-    tokenArray: Vector[Token],
+    tokenArray: Vector[Token], // local token array; global one is a given
     sigla: List[Siglum],
-    selection: AlignmentPoint
+    selection: UnalignedZone
 )(using gTa: Vector[Token]) = {
   val blocks = alignTokenArray(tokenArray, sigla, selection)
   if blocks.isEmpty
@@ -273,7 +258,7 @@ def setupNodeExpansion(
 @tailrec
 def recursiveBuildAlignmentTreeLevel(
                                       result: ListBuffer[AlignmentUnit],
-                                      treeReadingNode: AlignmentPoint,
+                                      treeReadingNode: UnalignedZone,
                                       remainingAlignment: List[AlignmentPoint],
                                       tokenArray: Vector[Token],
                                       sigla: List[Siglum]
