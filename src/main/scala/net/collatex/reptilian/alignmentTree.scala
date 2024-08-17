@@ -43,10 +43,10 @@ enum SplitTokenRangeResult:
 
 type WitnessReadings = Map[Siglum, TokenRange] // type alias
 
-sealed trait AlignmentTreeNode // supertype ExpandedNode (with children) and AlignmentPoint (with groups)
+sealed trait AlignmentUnit // supertype ExpandedNode (with children) and AlignmentPoint (with groups)
 
 final case class AlignmentPoint(witnessReadings: WitnessReadings, witnessGroups: Set[WitnessReadings])
-    extends AlignmentTreeNode
+    extends AlignmentUnit
 
 /** Custom constructor to simplify creation of AlignmentPoint
  *
@@ -72,7 +72,7 @@ object AlignmentPoint {
  * Same input as AlignmentPoint (varargs of (Siglum, TokenRange)), but create only
  * WitnessReadings and no WitnessGroups
  * */
-final case class UnalignedZone(witnessReadings: WitnessReadings) extends AlignmentTreeNode
+final case class UnalignedZone(witnessReadings: WitnessReadings) extends AlignmentUnit
 
 object UnalignedZone {
   def apply(m: (Siglum, TokenRange)*)(using gTa: Vector[Token]): UnalignedZone =
@@ -88,8 +88,8 @@ object UnalignedZone {
   *   ListBuffer of alignment-tree nodes
   */
 final case class ExpandedNode(
-    children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty
-) extends AlignmentTreeNode
+    children: ListBuffer[AlignmentUnit] = ListBuffer.empty
+) extends AlignmentUnit
 
 def blocksToNodes(
     blocks: Iterable[FullDepthBlock],

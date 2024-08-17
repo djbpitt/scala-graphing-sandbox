@@ -14,7 +14,7 @@ val witnessToColor: Map[Siglum, String] = Map(
   Siglum("darwin1872.txt") -> "violet"
 )
 val allSigla: Set[Siglum] =
-  witnessToColor.keySet // TODO: Derive from nodes, but AlignmentTreeNode doesn't have a witnessReadings property
+  witnessToColor.keySet // TODO: Derive from nodes, but AlignmentUnit doesn't have a witnessReadings property
 /* End of constants*/
 
 

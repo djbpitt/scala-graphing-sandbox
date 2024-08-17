@@ -3,7 +3,7 @@ package net.collatex.util
 import scala.collection.mutable
 import net.collatex.reptilian.{
   AlignmentPoint,
-  AlignmentTreeNode,
+  AlignmentUnit,
   ExpandedNode,
   FullDepthBlock,
   Siglum,
@@ -109,10 +109,10 @@ enum SingleStepAlignmentTreePath:
 export SingleStepAlignmentTreePath._
 
 case class TreeTreeData(
-    t1: AlignmentTreeNode,
-    t2: AlignmentTreeNode,
-    ttTokenToAlignmentTreeNodeMapping: Vector[AlignmentTreeNode],
-    lTa: Vector[Token]
+                         t1: AlignmentUnit,
+                         t2: AlignmentUnit,
+                         ttTokenToAlignmentTreeNodeMapping: Vector[AlignmentUnit],
+                         lTa: Vector[Token]
 )
 
 /*
@@ -324,7 +324,7 @@ def singletonSingletonPathStepsToAlignmentTreeNode(
     case Delete(start: MatrixPosition, end: MatrixPosition)   => ???
   }
 
-def pathStepsToAlignmentTreeNode(in: Vector[AlignmentPoint]): AlignmentTreeNode =
+def pathStepsToAlignmentTreeNode(in: Vector[AlignmentPoint]): AlignmentUnit =
   in.size match {
     case 1 => in.head
     case _ => ExpandedNode(ListBuffer.from(in))
@@ -344,8 +344,8 @@ def splitTree(
     tree: List[AlignmentPoint],
     tokenToNodeMapping: Vector[AlignmentPoint],
     blockRange: (Int, Int)
-): AlignmentTreeNode =
-  def createWrapperIfNeeded(wr: List[AlignmentPoint]): AlignmentTreeNode =
+): AlignmentUnit =
+  def createWrapperIfNeeded(wr: List[AlignmentPoint]): AlignmentUnit =
     if wr.size == 1 then wr.head
     else ExpandedNode(wr.to(ListBuffer))
   val newTree = tree flatMap {
@@ -374,7 +374,7 @@ def splitTree(
     .toMap // map object (key -> value pairs)
   println(nodeToClustersMap)
 
-  def createSingletonTreeTokenArray(t: AlignmentTreeNode, s: List[Token], ta: Vector[Token]) =
+  def createSingletonTreeTokenArray(t: AlignmentUnit, s: List[Token], ta: Vector[Token]) =
     // tree contains only ranges (not tokens), so we get token positions from global token array
     var sep = -1
     val nodeListToProcess: List[AlignmentPoint] =
@@ -401,13 +401,13 @@ def splitTree(
       ) ++ List(Token(sep.toString, sep.toString, -1, -1)) ++ s).toVector.tail
     (localTa, nodeListToProcess)
 
-  def getNodeListToProcess(t: AlignmentTreeNode): List[AlignmentPoint] =
+  def getNodeListToProcess(t: AlignmentUnit): List[AlignmentPoint] =
     t match {
       case e: ExpandedNode => e.children.map(_.asInstanceOf[AlignmentPoint]).toList
       case e               => List(e.asInstanceOf[AlignmentPoint])
     }
 
-  def getTTokenNodeMappings(t1: AlignmentTreeNode, t2: AlignmentTreeNode, ta: Vector[Token]): List[AlignmentPoint] =
+  def getTTokenNodeMappings(t1: AlignmentUnit, t2: AlignmentUnit, ta: Vector[Token]): List[AlignmentPoint] =
     var sep = -1
     def processOneTree(nodes: List[AlignmentPoint]) =
       nodes map (e =>
@@ -428,7 +428,7 @@ def splitTree(
       processOneTree(getNodeListToProcess(t2)).flatten.tail
     tokenNodeMappings
 
-  def createTreeTreeTokenArray(t1: AlignmentTreeNode, t2: AlignmentTreeNode, ta: Vector[Token]): Vector[Token] =
+  def createTreeTreeTokenArray(t1: AlignmentUnit, t2: AlignmentUnit, ta: Vector[Token]): Vector[Token] =
     // trees contain only ranges (not tokens), so we get token positions from global token array
     var sep = -1
     def getTTokens(nodes: List[AlignmentPoint]) = nodes map (e =>
@@ -450,7 +450,7 @@ def splitTree(
     localTa.toVector
 
   val results = nodeToClustersMap.values.head // list of ClusterInfo instances
-    .zipWithIndex.foldLeft(mutable.Map[Int, AlignmentTreeNode]()) { (acc, next) =>
+    .zipWithIndex.foldLeft(mutable.Map[Int, AlignmentUnit]()) { (acc, next) =>
       next match
         case (SingletonSingleton(item1: Int, item2: Int, height: Double), i: Int) =>
           // TODO: We have not yet explored Indels in SingletonSingleton patterns

@@ -73,14 +73,14 @@ def flattenNodeSeq(
 ): Vector[NumberedNode] =
   /* Depth-first traversal to produce flat sequence of leaf nodes: reading, indel, variation*/
   var id = 0
-  val nodesToProcess: List[(Int, AlignmentTreeNode)] = List(
+  val nodesToProcess: List[(Int, AlignmentUnit)] = List(
     (id, root)
   ) // Prepend list of children of current node
   val flattenedNodeSeq =
     @tailrec
     def nextNode(
-        inList: List[(Int, AlignmentTreeNode)],
-        outVector: Vector[NumberedNode]
+                  inList: List[(Int, AlignmentUnit)],
+                  outVector: Vector[NumberedNode]
     ): Vector[NumberedNode] =
       if inList.isEmpty then outVector
       else
@@ -89,7 +89,7 @@ def flattenNodeSeq(
           case (nodeNo, node: AlignmentPoint) =>
             nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
           case (_, e: ExpandedNode) =>
-            val newNodesToProcess: List[(Int, AlignmentTreeNode)] =
+            val newNodesToProcess: List[(Int, AlignmentUnit)] =
               e.children.map { i =>
                 id += 1
                 (id, i)

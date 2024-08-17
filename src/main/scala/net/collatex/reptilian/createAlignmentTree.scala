@@ -275,11 +275,11 @@ def setupNodeExpansion(
 
 @tailrec
 def recursiveBuildAlignmentTreeLevel(
-    result: ListBuffer[AlignmentTreeNode],
-    treeReadingNode: AlignmentPoint,
-    remainingAlignment: List[AlignmentPoint],
-    tokenArray: Vector[Token],
-    sigla: List[Siglum]
+                                      result: ListBuffer[AlignmentUnit],
+                                      treeReadingNode: AlignmentPoint,
+                                      remainingAlignment: List[AlignmentPoint],
+                                      tokenArray: Vector[Token],
+                                      sigla: List[Siglum]
 )(using gTa: Vector[Token]): ExpandedNode = {
   // On first run, treeReadingNode contains full token ranges and remainingAlignment contains all sortedReadingNodes
   // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
