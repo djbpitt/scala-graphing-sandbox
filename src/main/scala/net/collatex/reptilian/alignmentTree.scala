@@ -45,13 +45,13 @@ type WitnessReadings = Map[Siglum, TokenRange] // type alias
 
 sealed trait AlignmentTreeNode // supertype ExpandedNode (with children) and AlignmentPoint (with groups)
 
-case class AlignmentPoint(witnessReadings: WitnessReadings, witnessGroups: Set[WitnessReadings])
+final case class AlignmentPoint(witnessReadings: WitnessReadings, witnessGroups: Set[WitnessReadings])
     extends AlignmentTreeNode
 
-/** Custom constructor to simplify creation of LeafNode
+/** Custom constructor to simplify creation of AlignmentPoint
  *
- * Input is a varargs of (Int, (Int, Int)) Constructor converts it to a Map, which is wraps in LeafNode Can create new
- * LeafNode as: LeafNode(1 -> (2, 3), 4 -> (5, 6))
+ * Input is a varargs of (Siglum, TokenRange). Will eventually create only WitnessGroups
+ * and no WitnessReadings
  */
 object AlignmentPoint {
   def apply(m: (Siglum, TokenRange)*)(using gTa: Vector[Token]): AlignmentPoint =
@@ -65,6 +65,19 @@ object AlignmentPoint {
     .values // we don't care about the shared text after we've used it for grouping
     .toSet
     AlignmentPoint(wr, wg)
+}
+
+/** Zone not yet processed
+ *
+ * Same input as AlignmentPoint (varargs of (Siglum, TokenRange)), but create only
+ * WitnessReadings and no WitnessGroups
+ * */
+final case class UnalignedZone(witnessReadings: WitnessReadings) extends AlignmentTreeNode
+
+object UnalignedZone {
+  def apply(m: (Siglum, TokenRange)*)(using gTa: Vector[Token]): UnalignedZone =
+    val wr = m.toMap
+    UnalignedZone(wr)
 }
 
 /** ExpandedNode
