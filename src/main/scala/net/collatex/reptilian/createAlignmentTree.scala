@@ -188,15 +188,15 @@ def createAlignmentTree(sigla: List[Siglum])(using gTa: Vector[Token]): Expanded
   val witnessReadings = witnessRanges.toMap
 
   // 2024-08-17 RESUME HERE: scrutinize names and types (esp. globalUnalignedZone
-  // and sortedReadingNodes; gTa should not need to be passed explicitly
+  // and fulldepthAlignmentPoints; gTa should not need to be passed explicitly
   val globalUnalignedZone = UnalignedZone(witnessReadings)
   // Start recursion
-  val sortedReadingNodes: immutable.List[AlignmentPoint] =
+  val fulldepthAlignmentPoints: List[AlignmentPoint] = // not yet handling intervening unaligned zones
     alignTokenArray(sigla, selection = globalUnalignedZone)
   val rootNode = recursiveBuildAlignmentTreeLevel(
     ListBuffer(),
     globalUnalignedZone,
-    sortedReadingNodes,
+    fulldepthAlignmentPoints,
     gTa,
     sigla
   )
