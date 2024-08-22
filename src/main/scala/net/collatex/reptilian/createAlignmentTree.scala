@@ -211,7 +211,6 @@ def setupNodeExpansion(
         gTa
           .slice(offsets.start, offsets.until)
           .map(_.n)
-          .mkString(" ")
       ) // groups readings by shared text (n property)
       .values // we don't care about the shared text after we've used it for grouping
       .toSet
