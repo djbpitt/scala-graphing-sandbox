@@ -63,6 +63,11 @@ object AlignmentPoint {
     .values // we don't care about the shared text after we've used it for grouping
     .toSet
     AlignmentPoint(wr, wg)
+  // RESUME 2024-08-22: Substitute this method everywhere that we construct an AlignmentPoint,
+  // with the goal of eventually removing witnessReadings entirely from the case class
+  def apply(witnessGroups: Set[WitnessReadings]): AlignmentPoint =
+    AlignmentPoint(Map(), witnessGroups)
+
 }
 
 /** Zone not yet processed
