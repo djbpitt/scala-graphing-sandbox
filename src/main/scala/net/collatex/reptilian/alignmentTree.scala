@@ -95,9 +95,9 @@ def blocksToNodes(
     sigla: List[Siglum]
 ): Iterable[AlignmentPoint] =
   blocks
-    .map(e => fullDepthBlockToReadingNode(e, tokenArray, sigla))
+    .map(e => fullDepthBlockToAlignmentPoint(e, tokenArray, sigla))
 // Convert local alignment offsets to global token-array offsets for the reading node
-def fullDepthBlockToReadingNode(
+def fullDepthBlockToAlignmentPoint(
     block: FullDepthBlock,
     tokenArray: Vector[Token],
     sigla: List[Siglum]
@@ -114,4 +114,4 @@ def fullDepthBlockToReadingNode(
     )
     .toMap
   val groups = Set(readings)
-  AlignmentPoint(readings, groups) // FIXME: Fake witnessGroups value
+  AlignmentPoint(readings, groups)

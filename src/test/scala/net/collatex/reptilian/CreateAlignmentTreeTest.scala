@@ -68,10 +68,10 @@ class CreateAlignmentTreeTest extends AnyFunSuite:
 
 //class CreateAlignmentTreeTest extends AnyFunSuite:
 //  private val fdb = FullDepthBlock(Vector(0, 4, 8), 2)
-//  private val result = fullDepthBlockToReadingNode(fdb)
+//  private val result = fullDepthBlockToAlignmentPoint(fdb)
 //
 //  test("Map from FullDepthBlock to AgreementNode") {
-//    val result = fullDepthBlockToReadingNode(fdb)
+//    val result = fullDepthBlockToAlignmentPoint(fdb)
 //    val expected = AgreementNode("w0" -> (0,2), "w1" -> (4,6), "w2" -> (8,10))
 //    assert(result == expected)
 //  }
