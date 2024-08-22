@@ -193,7 +193,7 @@ def createAlignmentTree(sigla: List[Siglum])(using gTa: Vector[Token]): Expanded
   // Start recursion
   val fulldepthAlignmentPoints: List[AlignmentPoint] = // not yet handling intervening unaligned zones
     alignTokenArray(sigla, selection = globalUnalignedZone)
-  val rootNode = recursiveBuildAlignmentTreeLevel(
+  val rootNode = recursiveBuildAlignment(
     ListBuffer(),
     globalUnalignedZone,
     fulldepthAlignmentPoints,
@@ -236,7 +236,7 @@ def setupNodeExpansion(
         )
     }
   else // blocks, so children are a sequence of one or more nodes of possibly different types
-    val expansion = recursiveBuildAlignmentTreeLevel(
+    val expansion = recursiveBuildAlignment(
       result = ListBuffer(),
       unalignedZone = selection,
       remainingAlignment = blocks,
@@ -246,7 +246,7 @@ def setupNodeExpansion(
 }
 
 @tailrec
-def recursiveBuildAlignmentTreeLevel(
+def recursiveBuildAlignment(
     result: ListBuffer[AlignmentUnit],
     unalignedZone: UnalignedZone,
     remainingAlignment: List[AlignmentPoint],
@@ -302,7 +302,7 @@ def recursiveBuildAlignmentTreeLevel(
   val remainder = tempSplit._2
 
   if remainingAlignment.tail.nonEmpty then
-    recursiveBuildAlignmentTreeLevel(
+    recursiveBuildAlignment(
       result,
       remainder,
       remainingAlignment.tail,
