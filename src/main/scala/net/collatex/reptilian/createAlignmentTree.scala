@@ -148,12 +148,12 @@ def alignTokenArray(
         alignmentBlocksSet,
         longestFullDepthNonRepeatingBlocks
       )
-    val readingNodes = blocksToNodes(alignmentBlocks, localTokenArray, sigla)
+    val alignmentPoints = blocksToNodes(alignmentBlocks, localTokenArray, sigla)
     // We need to restore the sorting that we destroyed when we created the set
     // Called repeatedly, so there is always a w0, although not always the same one
     //   (tokens know their global witness membership, so we can recover original witness membership when needed)
-    val siglumForSorting = readingNodes.head.witnessReadings.keys.head
-    val sortedReadingNodes = readingNodes // Sort reading nodes in token order
+    val siglumForSorting = alignmentPoints.head.witnessReadings.keys.head
+    val sortedReadingNodes = alignmentPoints // Sort reading nodes in token order
       .toVector
       .sortBy(_.witnessReadings(siglumForSorting).start)
       .toList
