@@ -197,7 +197,6 @@ def createAlignmentTree(sigla: List[Siglum])(using gTa: Vector[Token]): Expanded
     ListBuffer(),
     globalUnalignedZone,
     fulldepthAlignmentPoints,
-    gTa,
     sigla
   )
 
@@ -205,7 +204,6 @@ def createAlignmentTree(sigla: List[Siglum])(using gTa: Vector[Token]): Expanded
 }
 
 def setupNodeExpansion(
-    tokenArray: Vector[Token], // local token array; global one is a given
     sigla: List[Siglum],
     selection: UnalignedZone
 )(using gTa: Vector[Token]) = {
@@ -214,7 +212,7 @@ def setupNodeExpansion(
   then
     val groups = selection.witnessReadings
       .groupBy((siglum, offsets) =>
-        tokenArray
+        gTa
           .slice(offsets.start, offsets.until)
           .map(_.n)
           .mkString(" ")
@@ -242,7 +240,6 @@ def setupNodeExpansion(
       result = ListBuffer(),
       unalignedZone = selection,
       remainingAlignment = blocks,
-      tokenArray = tokenArray,
       sigla = sigla
     )
     expansion
@@ -253,7 +250,6 @@ def recursiveBuildAlignmentTreeLevel(
     result: ListBuffer[AlignmentUnit],
     unalignedZone: UnalignedZone,
     remainingAlignment: List[AlignmentPoint],
-    tokenArray: Vector[Token],
     sigla: List[Siglum]
 )(using gTa: Vector[Token]): ExpandedNode = {
   // On first run, unalignedZone contains full token ranges and remainingAlignment contains all sortedReadingNodes
@@ -292,7 +288,7 @@ def recursiveBuildAlignmentTreeLevel(
   val undecidedPart = tempSplit2._1
   // NOTE: This segment could be optional, empty.
   // println(undecidedPart.witnessReadings)
-  if undecidedPart.witnessReadings.nonEmpty then result += setupNodeExpansion(tokenArray, sigla, undecidedPart)
+  if undecidedPart.witnessReadings.nonEmpty then result += setupNodeExpansion(sigla, undecidedPart)
   result += (
     if firstReadingNode.witnessReadings.size == sigla.size then firstReadingNode
     else
@@ -310,13 +306,12 @@ def recursiveBuildAlignmentTreeLevel(
       result,
       remainder,
       remainingAlignment.tail,
-      tokenArray,
       sigla
     )
   else
     // The alignment results are all processed,so we check for trailing non-aligned content and then until the recursion.
     // This repeats the treatment as unaligned leading content
-    if tempSplit._2.witnessReadings.nonEmpty then result += setupNodeExpansion(tokenArray, sigla, tempSplit._2)
+    if tempSplit._2.witnessReadings.nonEmpty then result += setupNodeExpansion(sigla, tempSplit._2)
     val rootNode = ExpandedNode(
       children = result
     )
