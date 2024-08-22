@@ -11,7 +11,7 @@ import SplitTokenRangeResult.*
 
 // Instead of providing an iterable of reading nodes representing the result of a global alignment
 // it would be better if this method get supplied a reading with a single range for each witness that has
-// yet to be aligned and that it then calls the suffix array, traversal graph code it self
+// yet to be aligned and that it then calls the suffix array, traversal graph code itself
 // Basically an inverse of the current control flow.
 
 def splitTokenRange(tr: LegalTokenRange, positionToSplit: Int): SplitTokenRangeResult =
@@ -113,7 +113,7 @@ def alignTokenArray(
   // TODO: Simplify where we need single token array and where we need witness-set metadata
   val witnessCount = selection.witnessReadings.size
 
-  // Create a local token array by filtering the global one according to the selection
+  // Create a local token array by filtering the global one
   // Selection comes in unsorted, so sort by siglum first
   val localTokenArraybyWitness = {
     val orderedWitnessReadings =
@@ -140,10 +140,6 @@ def alignTokenArray(
     val alignment: List[Int] = findOptimalAlignment(
       graph
     ) // Int identifiers of full-depth blocks
-    //    println(s"localTokenArray: $localTokenArray")
-    //    println(s"graph: $graph")
-    //    println(s"longestFullDepthNonRepeatingBlocks: ${longestFullDepthNonRepeatingBlocks}")
-    //    println(s"alignment before sorting: $alignment")
     val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(
       alignment: List[Int]
     ) // We lose the sorting here
@@ -276,7 +272,6 @@ def recursiveBuildAlignment(
   )
   // split the first returned reading node again, now by the start position for each witness of the first
   // sorted reading node.
-  //  println(s"tempSplit :  $tempSplit")
   val tempSplit2 = splitUnalignedZone(
     tempSplit._1,
     firstReadingNode.witnessReadings.map((k, v) => k -> v.start)

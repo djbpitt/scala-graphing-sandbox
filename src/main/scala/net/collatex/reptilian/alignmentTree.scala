@@ -22,8 +22,6 @@ enum TokenRange:
   case IllegalTokenRange(start: Int, until: Int)
   def start: Int
   def until: Int
-  def nString(using gTa: Vector[Token]): String = // global token array
-    gTa.slice(this.start, this.until).map(_.n).mkString(" ") // concatenate n values
   def tString(using gTa: Vector[Token]): String =
     gTa.slice(this.start, this.until).map(_.t).mkString // concatenate t values
 
@@ -57,7 +55,7 @@ object AlignmentPoint {
   def apply(m: (Siglum, TokenRange)*)(using gTa: Vector[Token]): AlignmentPoint =
     val wr = m.toMap
     val wg = wr
-    .groupBy((siglum, offsets) =>
+    .groupBy((_, offsets) =>
       gTa
         .slice(offsets.start, offsets.until)
         .map(_.n)
@@ -75,7 +73,7 @@ object AlignmentPoint {
 final case class UnalignedZone(witnessReadings: WitnessReadings) extends AlignmentUnit
 
 object UnalignedZone {
-  def apply(m: (Siglum, TokenRange)*)(using gTa: Vector[Token]): UnalignedZone =
+  def apply(m: (Siglum, TokenRange)*): UnalignedZone =
     val wr = m.toMap
     UnalignedZone(wr)
 }

@@ -2,6 +2,7 @@ package net.collatex.reptilian
 
 import net.collatex.reptilian.TokenRange.*
 import net.collatex.reptilian.SplitTokenRangeResult.*
+import net.collatex.util.splitAlignmentPoint
 import org.scalatest.funsuite.AnyFunSuite
 
 class AlignmentTreeTest extends AnyFunSuite:

@@ -40,7 +40,7 @@ def normalize(witnessData: String): String =
  *
  * Token separators are unique and sequential
  *
- * @param tokenLists list of list of strings with one inner list per witness
+ * @param tokenLists list of lists of strings with one inner list per witness
  * @return Vector[String] with unique separators inserted between witnesses
  */
 def createTokenArray(tokenLists: List[List[String]]): Vector[String] =

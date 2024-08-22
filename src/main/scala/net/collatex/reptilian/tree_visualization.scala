@@ -1,11 +1,8 @@
 package net.collatex.reptilian
 
 import scalatags.Text.all.*
-import java.beans.Introspector.decapitalize
 
 import scala.annotation.{tailrec, targetName}
-import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 
 /** Wrap text to specified length by inserting newlines
   *
@@ -88,13 +85,15 @@ def flattenNodeSeq(
         currentNode match
           case (nodeNo, node: AlignmentPoint) =>
             nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
-          case (_, e: ExpandedNode) =>
+          case (_, node: ExpandedNode) =>
             val newNodesToProcess: List[(Int, AlignmentUnit)] =
-              e.children.map { i =>
+              node.children.map { i =>
                 id += 1
                 (id, i)
               }.toList
             nextNode(newNodesToProcess ::: inList.tail, outVector)
+          case (_, UnalignedZone(_)) => // FIXME: shouldn't happen, but handle instead of ignore
+            nextNode(inList.tail, outVector)
     nextNode(nodesToProcess, Vector.empty)
   flattenedNodeSeq
 
