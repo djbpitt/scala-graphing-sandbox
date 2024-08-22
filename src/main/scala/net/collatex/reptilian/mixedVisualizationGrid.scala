@@ -76,7 +76,6 @@ def retrieveWitnessReadings(n: AlignmentPoint, gTa: Vector[Token]): Map[Siglum, 
   witnessReadings
 
 val memoizedComputeTokenTextLength = memoizeFnc(computeTokenTextLength)
-val spaceCharWidth: Double = computeTokenTextLength(" ") // Width of space character
 
 /** computeReadingTextLength()
   *
@@ -105,19 +104,6 @@ def findMissingWitnesses(n: AlignmentPoint, sigla: Set[Siglum]): Vector[Siglum] 
   val missingWitnesses = sigla.diff(n.witnessReadings.keySet).toVector.sorted
   missingWitnesses
 
-// TODO: Remove this method; not used
-/** groupReadings()
-  *
-  * @param n
-  *   Node with witness groups (Variation or VariationIndel)
-  * @return
-  *   Vector of vector of strings, where inner vectors are groups and strings are sigla
-  */
-def groupReadings(n: AlignmentPoint) =
-  val groups: Set[WitnessReadings] =
-    n.witnessGroups
-  groups
-
 def computeAlignmentNodeRenderingWidth(n: AlignmentPoint, gTa: Vector[Token]): Double =
   // FIXME: Temporarily add 28 to allow for two-character siglum plus colon plus space
   val maxAlignmentPointWidth = 1000000000000d // 160.0
@@ -135,8 +121,6 @@ def createHorizNodeData(
     if nodes.isEmpty then acc
     else
       val nodeType = nodes.head.node.getClass.getSimpleName
-      // TODO: Combine computation of wr and alignmentWidth, which share operations
-      val wr = retrieveWitnessReadings(nodes.head.node, tokenArray)
       val alignmentWidth = computeAlignmentNodeRenderingWidth(nodes.head.node, tokenArray)
       val xOffset = acc.lastOption match {
         case Some(e) => e.xOffset + e.alignmentWidth + flowLength
@@ -269,7 +253,6 @@ def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(using
   // cells.map(e => witnessSimilarities(e)).foreach(println)
    */
   /* End of computing optimal witness order */
-  val totalWidth = horizNodes.last.xOffset + horizNodes.last.alignmentWidth + 2
   val totalHeight = ribbonWidth * (witnessCount * 3) - ribbonWidth / 2
 
   val witnessToColor: Map[Siglum, String] = Map(
@@ -385,7 +368,6 @@ def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(using
           missingTop + ribbonWidth / 2
         )
 
-    val leftEdge = (currentNode.xOffset - flowLength).toString
     val leftYPosMap = computeRibbonYPos(precedingNode)
     val rightYPosMap = computeRibbonYPos(currentNode)
     val ribbons = sigla.toSeq.sorted.map(e =>
@@ -476,8 +458,6 @@ def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(using
     wrapGroups(node.groups)
 
   val contents = plotAllAlignmentPointsAndRibbons(horizNodes)
-  val groupWrappers = horizNodes.map(plotGroupNodeWrappers)
-  val viewBox = s"-1 -1 $totalWidth $totalHeight"
   val gradients =
     <defs>
       <linearGradient id="yellowGradient" x1="0%" x2="100%" y1="0%" y2="0%">
