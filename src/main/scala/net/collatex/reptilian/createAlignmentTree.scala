@@ -103,7 +103,6 @@ def splitUnalignedZone(
   result
 }
 def alignTokenArray(
-    tokenArray: Vector[Token],
     sigla: List[Siglum],
     selection: UnalignedZone
 )(using gTa: Vector[Token]) = {
@@ -120,7 +119,7 @@ def alignTokenArray(
     val orderedWitnessReadings =
       for siglum <- selection.witnessReadings.keys.toSeq.sorted
       yield selection.witnessReadings(siglum)
-    for r <- orderedWitnessReadings yield tokenArray.slice(r.start, r.until)
+    for r <- orderedWitnessReadings yield gTa.slice(r.start, r.until)
   }
   // Replacement that uses witnessGroups instead of witnessReadings
   val localTokenArray = localTokenArraybyWitness.head ++
@@ -193,7 +192,7 @@ def createAlignmentTree(sigla: List[Siglum])(using gTa: Vector[Token]): Expanded
   val globalUnalignedZone = UnalignedZone(witnessReadings)
   // Start recursion
   val sortedReadingNodes: immutable.List[AlignmentPoint] =
-    alignTokenArray(gTa, sigla, selection = globalUnalignedZone)
+    alignTokenArray(sigla, selection = globalUnalignedZone)
   val rootNode = recursiveBuildAlignmentTreeLevel(
     ListBuffer(),
     globalUnalignedZone,
@@ -210,7 +209,7 @@ def setupNodeExpansion(
     sigla: List[Siglum],
     selection: UnalignedZone
 )(using gTa: Vector[Token]) = {
-  val blocks = alignTokenArray(tokenArray, sigla, selection)
+  val blocks = alignTokenArray(sigla, selection)
   if blocks.isEmpty
   then
     val groups = selection.witnessReadings
