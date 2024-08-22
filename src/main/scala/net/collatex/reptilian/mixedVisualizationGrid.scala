@@ -26,8 +26,8 @@ val allSigla: Set[Siglum] =
 val flowLength = 80d
 
 /* Constants for computeTokenTextLength() */
-private val tnr16Metrics = xml.XML.loadFile("src/main/python/tnr_16_metrics.xml")
-private val tnrCharLengths = ((tnr16Metrics \ "character")
+val tnr16Metrics = xml.XML.loadFile("src/main/python/tnr_16_metrics.xml")
+val tnrCharLengths = ((tnr16Metrics \ "character")
   .map(e => ((e \ "@str").text.head, (e \ "@width").toString.toDouble))
   ++ Seq(("\u000a".head, 0.0))).toMap
 
@@ -40,7 +40,7 @@ private val tnrCharLengths = ((tnr16Metrics \ "character")
   * @return
   *   Memoized version of f
   */
-private def memoizeFnc[K, V](f: K => V): K => V = {
+def memoizeFnc[K, V](f: K => V): K => V = {
   val cache = collection.mutable.Map.empty[K, V]
   k =>
     cache.getOrElse(
@@ -60,7 +60,7 @@ private def memoizeFnc[K, V](f: K => V): K => V = {
   * @return
   *   Double
   */
-private def computeTokenTextLength(in: String): Double =
+def computeTokenTextLength(in: String): Double =
   val result = in.map(e => tnrCharLengths(e)).sum
   result
 
@@ -75,8 +75,8 @@ def retrieveWitnessReadings(n: AlignmentPoint, gTa: Vector[Token]): Map[Siglum, 
   val witnessReadings = n.witnessReadings.map((k, v) => k -> gTa.slice(v.start, v.until))
   witnessReadings
 
-private val memoizedComputeTokenTextLength = memoizeFnc(computeTokenTextLength)
-private val spaceCharWidth: Double = computeTokenTextLength(" ") // Width of space character
+val memoizedComputeTokenTextLength = memoizeFnc(computeTokenTextLength)
+val spaceCharWidth: Double = computeTokenTextLength(" ") // Width of space character
 
 /** computeReadingTextLength()
   *
@@ -89,7 +89,7 @@ private val spaceCharWidth: Double = computeTokenTextLength(" ") // Width of spa
   * @return
   *   Size of reading (sum of lengths of t values of tokens plus intertoken spaces)
   */
-private def computeReadingTextLength(in: Vector[Token]): Double =
+def computeReadingTextLength(in: Vector[Token]): Double =
   in.foldLeft(0d)((e, f) => e + memoizedComputeTokenTextLength(f.t))
 
 /** findMissingWitnesses()
@@ -101,7 +101,7 @@ private def computeReadingTextLength(in: Vector[Token]): Double =
   * @return
   *   Vector of sigla of missing witnesses as strings
   */
-private def findMissingWitnesses(n: AlignmentPoint, sigla: Set[Siglum]): Vector[Siglum] =
+def findMissingWitnesses(n: AlignmentPoint, sigla: Set[Siglum]): Vector[Siglum] =
   val missingWitnesses = sigla.diff(n.witnessReadings.keySet).toVector.sorted
   missingWitnesses
 
@@ -113,12 +113,12 @@ private def findMissingWitnesses(n: AlignmentPoint, sigla: Set[Siglum]): Vector[
   * @return
   *   Vector of vector of strings, where inner vectors are groups and strings are sigla
   */
-private def groupReadings(n: AlignmentPoint) =
+def groupReadings(n: AlignmentPoint) =
   val groups: Set[WitnessReadings] =
     n.witnessGroups
   groups
 
-private def computeAlignmentNodeRenderingWidth(n: AlignmentPoint, gTa: Vector[Token]): Double =
+def computeAlignmentNodeRenderingWidth(n: AlignmentPoint, gTa: Vector[Token]): Double =
   // FIXME: Temporarily add 28 to allow for two-character siglum plus colon plus space
   val maxAlignmentPointWidth = 1000000000000d // 160.0
   List(
@@ -126,7 +126,7 @@ private def computeAlignmentNodeRenderingWidth(n: AlignmentPoint, gTa: Vector[To
     maxAlignmentPointWidth
   ).min
 
-private def createHorizNodeData(
+def createHorizNodeData(
     nodeSequence: Vector[NumberedNode],
     sigla: Set[Siglum]
 )(using tokenArray: Vector[Token]): Vector[HorizNodeData] =
@@ -180,7 +180,7 @@ private def createHorizNodeData(
   * @return
   *   Set of sets, representing Cartesian product of input with itself without self-pairings
   */
-private def selfCartesianProduct[A](input: Iterable[A]) =
+def selfCartesianProduct[A](input: Iterable[A]) =
   val result = input
     .flatMap(e =>
       input
@@ -189,7 +189,7 @@ private def selfCartesianProduct[A](input: Iterable[A]) =
     .filter(_.size > 1)
   result
 
-private def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
+def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   def nextPair(pair: Set[String], acc: Map[Set[String], Int]): Map[Set[String], Int] =
     val newAcc = acc ++ Map(pair -> (acc.getOrElse(pair, 0) + 1))
     newAcc
@@ -213,7 +213,7 @@ private def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   * @return
   *   <html> element in HTML namespace, with embedded SVG
   */
-private def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(using
+def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(using
     tokenArray: Vector[Token]
 ): scala.xml.Node =
   /** Constants */
@@ -324,7 +324,7 @@ private def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(usin
                   <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">{
                   s"${formatSiglum(e._1.siglum)}: "
                 }</span>
-                    {e._1.reading}</div>              
+                    {e._1.reading}</div>
                 </foreignObject>
               )
             }</g>
@@ -334,10 +334,10 @@ private def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(usin
     /* Missing witnesses */
     val missing = node.missing.zipWithIndex.map(e =>
       val fillColor = witnessToColor(e._1)
-      <rect x="0" 
+      <rect x="0"
             y={(e._2 * ribbonWidth + missingTop).toString}
             width={node.alignmentWidth.toString}
-            height={ribbonWidth.toString} 
+            height={ribbonWidth.toString}
             fill={fillColor}/>
       <foreignObject x="1"
                      y={(e._2 * ribbonWidth + missingTop - 2).toString}
@@ -447,7 +447,7 @@ private def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(usin
           </div>
           else
             <div class="innerWrapper">
-              <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" 
+              <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"
                    width={(node.alignmentWidth + 2).toString}
                    height={(totalHeight + 2).toString}>{
               acc :+
