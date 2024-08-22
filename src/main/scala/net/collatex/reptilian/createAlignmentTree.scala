@@ -43,7 +43,7 @@ def splitWitnessGroup(
     positionsToSplit: immutable.Map[Siglum, Int]
 ): (WitnessReadings, WitnessReadings) =
   val splits =
-    wg.map { case (e: Siglum, f: LegalTokenRange) =>
+    wg.collect { case (e: Siglum, f: LegalTokenRange) =>
       e -> splitTokenRange(f, positionsToSplit(e))
     }
   val lefts = splits.foldLeft(immutable.Map.empty[Siglum, TokenRange])((acc, kv) =>
@@ -211,7 +211,7 @@ def setupNodeExpansion(
   if blocks.isEmpty
   then
     val groups = selection.witnessReadings
-      .groupBy((siglum, offsets) =>
+      .groupBy((_, offsets) =>
         gTa
           .slice(offsets.start, offsets.until)
           .map(_.n)
@@ -225,7 +225,7 @@ def setupNodeExpansion(
           witnessReadings = selection.witnessReadings,
           witnessGroups = groups
         )
-      case e =>
+      case _ =>
         ExpandedNode( // no blocks, so the single child is a VariationNode
           children = ListBuffer(
             AlignmentPoint(
