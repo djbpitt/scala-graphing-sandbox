@@ -313,22 +313,21 @@ def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(using
       nextGroup(groups, 0, Vector.empty[Elem])
     val groups = processGroups(node.groups)
     /* Missing witnesses */
-    val missing = node.missing.zipWithIndex.map(e =>
+    val missing = for e <- node.missing.zipWithIndex yield
       val fillColor = witnessToColor(e._1)
-      <rect x="0"
-            y={(e._2 * ribbonWidth + missingTop).toString}
-            width={node.alignmentWidth.toString}
-            height={ribbonWidth.toString}
-            fill={fillColor}/>
-      <foreignObject x="1"
-                     y={(e._2 * ribbonWidth + missingTop - 2).toString}
-                     width={node.alignmentWidth.toString}
-                     height={ribbonWidth.toString}>
-        <div xmlns="http://www.w3.org/1999/xhtml">
-          <span class="sigla">{s"(${formatSiglum(e._1)})"}</span>
-        </div>
-      </foreignObject>
-    )
+      val vOffset = e._2
+      val top = missingTop
+      Seq(
+        plotRect(vOffset, node, fillColor, top),
+        <foreignObject x="1"
+                       y={(vOffset * ribbonWidth + top - 2).toString}
+                       width={node.alignmentWidth.toString}
+                       height={ribbonWidth.toString}>
+          <div xmlns="http://www.w3.org/1999/xhtml">
+            <span class="sigla">{s"(${formatSiglum(e._1)})"}</span>
+          </div>
+        </foreignObject>
+      )
     <div class="ap">
       <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"
            width={node.alignmentWidth.toString}
