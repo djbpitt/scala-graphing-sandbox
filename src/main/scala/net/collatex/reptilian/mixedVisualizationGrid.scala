@@ -72,7 +72,7 @@ def computeTokenTextLength(in: String): Double =
   *   All witness readings on node as map from siglum (String) to vector of tokens
   */
 def retrieveWitnessReadings(n: AlignmentPoint, gTa: Vector[Token]): Map[Siglum, Vector[Token]] =
-  val witnessReadings = n.witnessReadings.map((k, v) => k -> gTa.slice(v.start, v.until))
+  val witnessReadings = n.combineWitnessGroups.map((k, v) => k -> gTa.slice(v.start, v.until))
   witnessReadings
 
 val memoizedComputeTokenTextLength = memoizeFnc(computeTokenTextLength)
@@ -101,7 +101,7 @@ def computeReadingTextLength(in: Vector[Token]): Double =
   *   Vector of sigla of missing witnesses as strings
   */
 def findMissingWitnesses(n: AlignmentPoint, sigla: Set[Siglum]): Vector[Siglum] =
-  val missingWitnesses = sigla.diff(n.witnessReadings.keySet).toVector.sorted
+  val missingWitnesses = sigla.diff(n.combineWitnessGroups.keySet).toVector.sorted
   missingWitnesses
 
 def computeAlignmentNodeRenderingWidth(n: AlignmentPoint, gTa: Vector[Token]): Double =

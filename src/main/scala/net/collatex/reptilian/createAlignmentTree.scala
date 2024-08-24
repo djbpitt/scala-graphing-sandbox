@@ -152,10 +152,10 @@ def alignTokenArray(
     // We need to restore the sorting that we destroyed when we created the set
     // Called repeatedly, so there is always a w0, although not always the same one
     //   (tokens know their global witness membership, so we can recover original witness membership when needed)
-    val siglumForSorting = alignmentPoints.head.witnessReadings.keys.head
+    val siglumForSorting = alignmentPoints.head.combineWitnessGroups.keys.head
     val sortedReadingNodes = alignmentPoints // Sort reading nodes in token order
       .toVector
-      .sortBy(_.witnessReadings(siglumForSorting).start)
+      .sortBy(_.combineWitnessGroups(siglumForSorting).start)
       .toList
     sortedReadingNodes
 }
@@ -217,14 +217,14 @@ def setupNodeExpansion(
     selection.witnessReadings.size match {
       case 1 =>
         AlignmentPoint(
-          witnessReadings = selection.witnessReadings,
+          witnessReadings = immutable.Map.empty,
           witnessGroups = groups
         )
       case _ =>
         ExpandedNode( // no blocks, so the single child is a VariationNode
           children = ListBuffer(
             AlignmentPoint(
-              witnessReadings = selection.witnessReadings,
+              witnessReadings = immutable.Map.empty,
               witnessGroups = groups
             )
           )
@@ -267,13 +267,13 @@ def recursiveBuildAlignment(
       //  println(tokenArray)
   val tempSplit = splitUnalignedZone(
     unalignedZone,
-    firstReadingNode.witnessReadings.map((k, v) => k -> v.until)
+    firstReadingNode.combineWitnessGroups.map((k, v) => k -> v.until)
   )
   // split the first returned reading node again, now by the start position for each witness of the first
   // sorted reading node.
   val tempSplit2 = splitUnalignedZone(
     tempSplit._1,
-    firstReadingNode.witnessReadings.map((k, v) => k -> v.start)
+    firstReadingNode.combineWitnessGroups.map((k, v) => k -> v.start)
   )
 
   // The undecided part (unaligned stuff before block) could be empty or could hold data, in which case it may
@@ -281,17 +281,9 @@ def recursiveBuildAlignment(
   // TODO: Currently we just report the undecided part, but we need to process it.
   val undecidedPart = tempSplit2._1
   // NOTE: This segment could be optional, empty.
-  // println(undecidedPart.witnessReadings)
   if undecidedPart.witnessReadings.nonEmpty then result += setupNodeExpansion(sigla, undecidedPart)
-  result += (
-    if firstReadingNode.witnessReadings.size == sigla.size then firstReadingNode
-    else
-      AlignmentPoint(
-        witnessReadings = firstReadingNode.witnessReadings,
-        witnessGroups = Set(firstReadingNode.witnessReadings)
-      )
-  )
-
+  result += firstReadingNode
+  
   // this part has to be split further recursively
   val remainder = tempSplit._2
 

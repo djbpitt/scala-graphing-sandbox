@@ -44,7 +44,10 @@ type WitnessReadings = Map[Siglum, TokenRange] // type alias
 sealed trait AlignmentUnit // supertype ExpandedNode (with children) and AlignmentPoint (with groups)
 
 final case class AlignmentPoint(witnessReadings: WitnessReadings, witnessGroups: Set[WitnessReadings])
-    extends AlignmentUnit
+    extends AlignmentUnit:
+    def combineWitnessGroups: WitnessReadings = // create single WitnessGroups for instance
+      val result = this.witnessGroups.flatten.toMap
+      result
 
 /** Custom constructor to simplify creation of AlignmentPoint
  *
@@ -67,7 +70,6 @@ object AlignmentPoint {
   // with the goal of eventually removing witnessReadings entirely from the case class
   def apply(witnessGroups: Set[WitnessReadings]): AlignmentPoint =
     AlignmentPoint(Map(), witnessGroups)
-
 }
 
 /** Zone not yet processed
@@ -119,4 +121,4 @@ def fullDepthBlockToAlignmentPoint(
     )
     .toMap
   val groups = Set(readings)
-  AlignmentPoint(readings, groups)
+  AlignmentPoint(groups)
