@@ -1,6 +1,6 @@
 package net.collatex.reptilian
 
-import scala.annotation.tailrec
+import scala.annotation.{tailrec, unused}
 import scala.xml.{Elem, Node}
 import math.Ordered.orderingToOrdered
 
@@ -164,6 +164,7 @@ def createHorizNodeData(
   * @return
   *   Set of sets, representing Cartesian product of input with itself without self-pairings
   */
+@unused
 def selfCartesianProduct[A](input: Iterable[A]) =
   val result = input
     .flatMap(e =>
@@ -173,6 +174,7 @@ def selfCartesianProduct[A](input: Iterable[A]) =
     .filter(_.size > 1)
   result
 
+@unused
 def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   def nextPair(pair: Set[String], acc: Map[Set[String], Int]): Map[Set[String], Int] =
     val newAcc = acc ++ Map(pair -> (acc.getOrElse(pair, 0) + 1))
