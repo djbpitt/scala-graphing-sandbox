@@ -1,7 +1,7 @@
 package net.collatex.reptilian
 
 import scala.annotation.{tailrec, unused}
-import scala.xml.{Elem, Node}
+import scala.xml.{Elem, Node, NodeSeq}
 import math.Ordered.orderingToOrdered
 
 /* Constants */
@@ -268,6 +268,24 @@ def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(using
 
   def formatSiglum(siglum: Siglum): String = siglum.value.slice(8, 10).mkString
 
+  def plotRect(vOffset: Double, node: HorizNodeData, fillColor: String, top: Double) =
+    <rect x="0"
+       y={(vOffset * ribbonWidth + top).toString}
+       width={node.alignmentWidth.toString}
+       height={ribbonWidth.toString}
+       fill={fillColor}
+    />
+  def plotReading(vOffset: Int, node: HorizNodeData, top: Double, hngm: (HorizNodeGroupMember, Int)) =
+    <foreignObject x="1"
+                   y={(vOffset * ribbonWidth + top - 2).toString}
+                   width={node.alignmentWidth.toString}
+                   height={ribbonWidth.toString}>
+      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">{
+      s"${formatSiglum(hngm._1.siglum)}: "
+    }</span>
+        {hngm._1.reading}</div>
+    </foreignObject>
+
   /** plotOneAlignmentPoint()
     *
     * Plot backgrounds and text for single alignment point
@@ -286,24 +304,10 @@ def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(using
           val groupHeight = (groups.head.members.size + 1) * ribbonWidth // Include space below group
           val newG =
             <g>{
-              groups.head.members.zipWithIndex.map(e =>
+              for e <- groups.head.members.zipWithIndex yield
                 val fillColor = witnessToColor(e._1.siglum)
-                <rect x="0"
-                  y={(e._2 * ribbonWidth + top).toString}
-                  width={node.alignmentWidth.toString}
-                  height={ribbonWidth.toString}
-                  fill={fillColor}
-                  />
-                <foreignObject x="1"
-                               y={(e._2 * ribbonWidth + top - 2).toString}
-                               width={node.alignmentWidth.toString}
-                               height={ribbonWidth.toString}>
-                  <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">{
-                  s"${formatSiglum(e._1.siglum)}: "
-                }</span>
-                    {e._1.reading}</div>
-                </foreignObject>
-              )
+                val vOffset = e._2
+                Seq(plotRect(vOffset, node, fillColor, top), plotReading(vOffset, node, top, e))
             }</g>
           nextGroup(groups.tail, top + groupHeight, acc :+ newG)
       nextGroup(groups, 0, Vector.empty[Elem])
