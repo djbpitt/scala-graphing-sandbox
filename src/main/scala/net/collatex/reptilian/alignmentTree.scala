@@ -43,7 +43,7 @@ type WitnessReadings = Map[Siglum, TokenRange] // type alias
 
 sealed trait AlignmentUnit // supertype ExpandedNode (with children) and AlignmentPoint (with groups)
 
-final case class AlignmentPoint(witnessReadings: WitnessReadings, witnessGroups: Set[WitnessReadings])
+final case class AlignmentPoint(witnessGroups: Set[WitnessReadings])
     extends AlignmentUnit:
     def combineWitnessGroups: WitnessReadings = // create single WitnessGroups for instance
       val result = this.witnessGroups.flatten.toMap
@@ -65,9 +65,7 @@ object AlignmentPoint {
     ) // groups readings by shared text (n property); can we improve the performance here?
     .values // we don't care about the shared text after we've used it for grouping
     .toSet
-    AlignmentPoint(Map.empty, wg)
-  def apply(witnessGroups: Set[WitnessReadings]): AlignmentPoint =
-    AlignmentPoint(Map(), witnessGroups)
+    AlignmentPoint(wg)
 }
 
 /** Zone not yet processed

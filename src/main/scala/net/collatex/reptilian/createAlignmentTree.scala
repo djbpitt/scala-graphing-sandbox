@@ -216,17 +216,11 @@ def setupNodeExpansion(
       .toSet
     selection.witnessReadings.size match {
       case 1 =>
-        AlignmentPoint(
-          witnessReadings = immutable.Map.empty,
-          witnessGroups = groups
-        )
+        AlignmentPoint(groups)
       case _ =>
         ExpandedNode( // no blocks, so the single child is a VariationNode
           children = ListBuffer(
-            AlignmentPoint(
-              witnessReadings = immutable.Map.empty,
-              witnessGroups = groups
-            )
+            AlignmentPoint(groups)
           )
         )
     }
@@ -283,7 +277,7 @@ def recursiveBuildAlignment(
   // NOTE: This segment could be optional, empty.
   if undecidedPart.witnessReadings.nonEmpty then result += setupNodeExpansion(sigla, undecidedPart)
   result += firstReadingNode
-  
+
   // this part has to be split further recursively
   val remainder = tempSplit._2
 
