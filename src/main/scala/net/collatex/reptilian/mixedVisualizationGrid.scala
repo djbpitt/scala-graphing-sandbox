@@ -257,14 +257,6 @@ def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(using
   /* End of computing optimal witness order */
   val totalHeight = ribbonWidth * (witnessCount * 3) - ribbonWidth / 2
 
-  val witnessToColor: Map[Siglum, String] = Map(
-    Siglum("darwin1859.txt") -> "peru",
-    Siglum("darwin1860.txt") -> "orange",
-    Siglum("darwin1861.txt") -> "yellow",
-    Siglum("darwin1866.txt") -> "limegreen",
-    Siglum("darwin1869.txt") -> "dodgerblue",
-    Siglum("darwin1872.txt") -> "violet"
-  )
   val witnessToGradient: Map[Siglum, String] = Map(
     Siglum("darwin1859.txt") -> "url(#peruGradient)",
     Siglum("darwin1860.txt") -> "url(#orangeGradient)",
