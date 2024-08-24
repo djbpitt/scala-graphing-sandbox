@@ -15,14 +15,13 @@ val witnessToColor: Map[Siglum, String] = Map(
 )
 val allSigla: Set[Siglum] =
   witnessToColor.keySet // TODO: Derive from nodes, but AlignmentUnit doesn't have a witnessReadings property
-/* End of constants*/
+    /* End of constants*/
 
+    /* ====================================================================== */
+    /* Horizontal ribbons                                                     */
+    /* ====================================================================== */
 
-/* ====================================================================== */
-/* Horizontal ribbons                                                     */
-/* ====================================================================== */
-
-/* Constants for plotting */
+    /* Constants for plotting */
 val flowLength = 80d
 
 /* Constants for computeTokenTextLength() */
@@ -147,7 +146,8 @@ def createHorizNodeData(
                 .sorted
             )
           )
-          .toVector.sorted,
+          .toVector
+          .sorted,
         missing = missing
       )
       nextNode(nodes.tail, pos + 1, acc :+ newNode)
@@ -452,75 +452,16 @@ def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(using
     wrapGroups(node.groups)
 
   val contents = plotAllAlignmentPointsAndRibbons(horizNodes)
+  /* Create gradient stops for each color, using colorname + "Gradient" as @id of <linearGradient> wrapper */
   val gradients =
-    <defs>
-      <linearGradient id="yellowGradient" x1="0%" x2="100%" y1="0%" y2="0%">
-        <stop offset="0%" stop-color="yellow" stop-opacity="1"/>
-        <stop offset="6%" stop-color="yellow" stop-opacity="1"/>
-        <stop offset="20%" stop-color="yellow" stop-opacity=".6"/>
-        <stop offset="35%" stop-color="yellow" stop-opacity=".4"/>
-        <stop offset="50%" stop-color="yellow" stop-opacity=".3"/>
-        <stop offset="65%" stop-color="yellow" stop-opacity=".4"/>
-        <stop offset="80%" stop-color="yellow" stop-opacity=".6"/>
-        <stop offset="94%" stop-color="yellow" stop-opacity="1"/>
-        <stop offset="100%" stop-color="yellow" stop-opacity="1"/>
-      </linearGradient>
-      <linearGradient id="dodgerblueGradient" x1="0%" x2="100%" y1="0%" y2="0%">
-        <stop offset="0%" stop-color="dodgerblue" stop-opacity="1"/>
-        <stop offset="6%" stop-color="dodgerblue" stop-opacity="1"/>
-        <stop offset="20%" stop-color="dodgerblue" stop-opacity=".6"/>
-        <stop offset="35%" stop-color="dodgerblue" stop-opacity=".4"/>
-        <stop offset="50%" stop-color="dodgerblue" stop-opacity=".3"/>
-        <stop offset="65%" stop-color="dodgerblue" stop-opacity=".4"/>
-        <stop offset="80%" stop-color="dodgerblue" stop-opacity=".6"/>
-        <stop offset="94%" stop-color="dodgerblue" stop-opacity="1"/>
-        <stop offset="100%" stop-color="dodgerblue" stop-opacity="1"/>
-      </linearGradient>
-      <linearGradient id="violetGradient" x1="0%" x2="100%" y1="0%" y2="0%">
-        <stop offset="0%" stop-color="violet" stop-opacity="1"/>
-        <stop offset="6%" stop-color="violet" stop-opacity="1"/>
-        <stop offset="20%" stop-color="violet" stop-opacity=".6"/>
-        <stop offset="35%" stop-color="violet" stop-opacity=".4"/>
-        <stop offset="50%" stop-color="violet" stop-opacity=".3"/>
-        <stop offset="65%" stop-color="violet" stop-opacity=".4"/>
-        <stop offset="80%" stop-color="violet" stop-opacity=".6"/>
-        <stop offset="94%" stop-color="violet" stop-opacity="1"/>
-        <stop offset="100%" stop-color="violet" stop-opacity="1"/>
-      </linearGradient>
-      <linearGradient id="orangeGradient" x1="0%" x2="100%" y1="0%" y2="0%">
-        <stop offset="0%" stop-color="orange" stop-opacity="1"/>
-        <stop offset="6%" stop-color="orange" stop-opacity="1"/>
-        <stop offset="20%" stop-color="orange" stop-opacity=".6"/>
-        <stop offset="35%" stop-color="orange" stop-opacity=".4"/>
-        <stop offset="50%" stop-color="orange" stop-opacity=".3"/>
-        <stop offset="65%" stop-color="orange" stop-opacity=".4"/>
-        <stop offset="80%" stop-color="orange" stop-opacity=".6"/>
-        <stop offset="94%" stop-color="orange" stop-opacity="1"/>
-        <stop offset="100%" stop-color="orange" stop-opacity="1"/>
-      </linearGradient>
-      <linearGradient id="peruGradient" x1="0%" x2="100%" y1="0%" y2="0%">
-        <stop offset="0%" stop-color="peru" stop-opacity="1"/>
-        <stop offset="6%" stop-color="peru" stop-opacity="1"/>
-        <stop offset="20%" stop-color="peru" stop-opacity=".6"/>
-        <stop offset="35%" stop-color="peru" stop-opacity=".4"/>
-        <stop offset="50%" stop-color="peru" stop-opacity=".3"/>
-        <stop offset="65%" stop-color="peru" stop-opacity=".4"/>
-        <stop offset="80%" stop-color="peru" stop-opacity=".6"/>
-        <stop offset="94%" stop-color="peru" stop-opacity="1"/>
-        <stop offset="100%" stop-color="peru" stop-opacity="1"/>
-      </linearGradient>
-      <linearGradient id="limegreenGradient" x1="0%" x2="100%" y1="0%" y2="0%">
-        <stop offset="0%" stop-color="limegreen" stop-opacity="1"/>
-        <stop offset="6%" stop-color="limegreen" stop-opacity="1"/>
-        <stop offset="20%" stop-color="limegreen" stop-opacity=".6"/>
-        <stop offset="35%" stop-color="limegreen" stop-opacity=".4"/>
-        <stop offset="50%" stop-color="limegreen" stop-opacity=".3"/>
-        <stop offset="65%" stop-color="limegreen" stop-opacity=".4"/>
-        <stop offset="80%" stop-color="limegreen" stop-opacity=".6"/>
-        <stop offset="94%" stop-color="limegreen" stop-opacity="1"/>
-        <stop offset="100%" stop-color="limegreen" stop-opacity="1"/>
-      </linearGradient>
-    </defs>
+    <defs>{
+      val colors: Vector[String] = Vector("yellow", "dodgerblue", "violet", "orange", "peru", "limegreen")
+      val stops: Vector[(Int, Double)] =
+        Vector((0, 1), (6, 1), (20, .6), (35, .4), (50, .3), (65, .4), (80, .6), (94, 1), (100, 1))
+      for c <- colors yield <linearGradient id={s"${c}Gradient"} x1="0%" x2="100%" y1="0%" y2="0%">{
+        for s <- stops yield <stop offset={s"${s._1}%"} stop-color={s"$c"} stop-opacity={s"${s._2}"}/>
+      }</linearGradient>
+    }</defs>
   val css = s"""header {
                |  display: flex;
                |  flex-direction: row;
