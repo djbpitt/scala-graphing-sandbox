@@ -27,11 +27,11 @@ private def bag(readings: List[List[Token]]): List[Map[String, Int]] =
   val result = nValues.map(oneBag)
   result
 
-def readJsonData: List[UnalignedFragment] =
+def readJsonData: List[List[Token]] =
   val datafilePath =
     os.pwd / "src" / "main" / "data" / "unaligned_data_node_296_tokenized.json"
   val fileContents = os.read(datafilePath)
-  val darwin = read[List[UnalignedFragment]](fileContents)
+  val darwin = read[List[List[Token]]](fileContents)
   darwin
 
 enum ClusterInfo:
@@ -57,14 +57,14 @@ object ClusterInfo:
       case (false, false) => TreeTree(item1, item2, height)
       case _              => throw Exception("(false, true) should not occur")
 
-def vectorizeReadings(node: UnalignedFragment): Array[Array[Double]] =
+def vectorizeReadings(node: List[List[Token]]): Array[Array[Double]] =
   /* WinsorScaler requires DataFrame[Double], but clustering requires Array[Array[Double]], so we:
    *   1) vectorize
    *   2) convert to DataFrame
    *   3) scale (still a DataFrame)
    *   4) convert to Array[Array[Double]] and return
    * */
-  val listBagsOfReadings = bag(node.readings)
+  val listBagsOfReadings = bag(node)
   val terms = listBagsOfReadings
     .map(_.keySet)
     .reduce(_ union _)
@@ -87,16 +87,12 @@ def clusterReadings(data: Array[Array[Double]]): List[ClusterInfo] =
     .toList
 
 @main def secondAlignmentPhase(): Unit =
-  val darwin: List[UnalignedFragment] = readJsonData // we know there's only one
-  val darwinReadings = darwin.head.readings
+  val darwinReadings: List[List[Token]] = readJsonData // we know there's only one
   given tokenArray: Vector[Token] =
     darwinReadings.head.toVector ++ darwinReadings.tail.zipWithIndex
       .flatMap((e, index) => List(Token(index.toString, index.toString, index, -1)) ++ e)
       .toVector
-  println(tokenArray)
-  val nodeToClustersMap: Map[Int, List[ClusterInfo]] = darwin
-    .map(node => node.nodeno -> (vectorizeReadings andThen clusterReadings)(node)) // list of tuples
-    .toMap // map object (key -> value pairs)
-  println(nodeToClustersMap)
-
-case class UnalignedFragment(nodeno: Int, readings: List[List[Token]]) derives ReadWriter
+  println(s"tokenArray: $tokenArray")
+  val nodeToClusters: List[ClusterInfo] =
+    (vectorizeReadings andThen clusterReadings)(darwinReadings) // list of tuples
+  println(s"nodeToClusters: $nodeToClusters")
