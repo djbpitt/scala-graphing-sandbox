@@ -96,3 +96,5 @@ def clusterReadings(data: Array[Array[Double]]): List[ClusterInfo] =
   val nodeToClusters: List[ClusterInfo] =
     (vectorizeReadings andThen clusterReadings)(darwinReadings) // list of tuples
   println(s"nodeToClusters: $nodeToClusters")
+
+// 2024-08-29 RESUME HERE: Do smart things with list of clustering information
