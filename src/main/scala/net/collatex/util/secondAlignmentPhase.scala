@@ -1,11 +1,13 @@
 package net.collatex.util
 
-import net.collatex.reptilian.Token
+import net.collatex.reptilian.{AlignmentPoint, Siglum, Token, TokenRange, WitnessReadings}
 import upickle.default.*
 import smile.clustering.hclust
 import smile.data.DataFrame
 import smile.feature.transform.WinsorScaler
 import smile.nlp.vectorize
+
+import scala.annotation.tailrec
 
 /** Create bag of readings for each witness
   *
@@ -41,7 +43,7 @@ enum ClusterInfo:
   case SingletonSingleton(item1: Int, item2: Int, height: Double)
   case SingletonHG(item1: Int, item2: Int, height: Double)
   case HGHG(item1: Int, item2: Int, height: Double)
-import ClusterInfo.*
+import ClusterInfo._
 
 object ClusterInfo:
   // "of" is conventional name for constructor; HG = hypergraph
@@ -118,6 +120,93 @@ def nwCreateMatrix(a: List[String], b: List[String]): Array[Array[Double]] =
   val distance = d(a.size)(b.size)
   d // return entire matrix
 
+enum SingleEditStep:
+  case SingleStepMatch(tok1: Token, tok2: Token)
+  case SingleStepNonMatch(tok1: Token, tok2: Token)
+  case SingleStepInsert(tok: Token)
+  case SingleStepDelete(tok: Token)
+export SingleEditStep._
+
+enum CompoundEditStep:
+  case CompoundStepMatch(tr1: TokenRange, tr2: TokenRange)
+  case CompoundStepNonMatch(tr1: TokenRange, tr2: TokenRange)
+  case CompoundStepInsert(tr: TokenRange)
+  case CompoundStepDelete(tr: TokenRange)
+export CompoundEditStep._
+
+enum MatrixStep extends Ordered[MatrixStep]:
+  def distance: Double
+  def row: Int
+  def col: Int
+  import math.Ordered.orderingToOrdered
+  def compare(that: MatrixStep): Int = (
+    this.distance,
+    this.ordinal
+  ) compare (that.distance, that.ordinal)
+  case Diag(distance: Double, row: Int, col: Int)
+  case Left(distance: Double, row: Int, col: Int)
+  case Up(distance: Double, row: Int, col: Int)
+
+def matrixToEditSteps(
+    w1: List[Token], // rows
+    w2: List[Token] // cols
+): LazyList[SingleEditStep] =
+  val matrix = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
+  // not tailrec, but doesn’t matter because LazyList
+  def nextStep(row: Int, col: Int): LazyList[SingleEditStep] =
+    val scoreLeft = MatrixStep.Left(matrix(row - 1)(col), row - 1, col)
+    val scoreDiag = MatrixStep.Diag(matrix(row - 1)(col - 1), row - 1, col - 1)
+    val scoreUp = MatrixStep.Up(matrix(row)(col - 1), row, col - 1)
+    val bestScore: MatrixStep = Vector(scoreDiag, scoreLeft, scoreUp).min
+    val nextMove: SingleEditStep = bestScore match {
+      case x: MatrixStep.Left =>
+        SingleStepInsert(w1(x.row))
+      case x: MatrixStep.Up =>
+        SingleStepDelete(w2(x.col))
+      case x: MatrixStep.Diag if x.distance == matrix(row)(col) =>
+        SingleStepMatch(w2(x.col), w1(x.row))
+      case x: MatrixStep.Diag =>
+        SingleStepNonMatch(w2(x.col), w1(x.row))
+    }
+    if bestScore.row == 0 && bestScore.col == 0
+    then LazyList(nextMove) // no more, so return result
+    else nextMove #:: nextStep(bestScore.row, bestScore.col)
+
+  nextStep(row = matrix.length - 1, col = matrix.head.length - 1) // Start recursion in lower right corner
+
+// 2024-08-31 RESUME HERE: Remove distinction between single and compound steps
+def compactEditSteps(
+    allSingleSteps: LazyList[SingleEditStep]
+): Vector[CompoundEditStep] =
+  def singleStepToCompoundStep(single: SingleEditStep): CompoundEditStep =
+    single match {
+      case SingleStepMatch(tok1: Token, tok2: Token) =>
+        CompoundStepMatch(
+          TokenRange(tok1.g, tok1.g + 1),
+          TokenRange(tok2.g, tok2.g + 1)
+        )
+      case SingleStepNonMatch(tok1: Token, tok2: Token) =>
+        CompoundStepNonMatch(
+          TokenRange(tok1.g, tok1.g + 1),
+          TokenRange(tok2.g, tok2.g + 1)
+        )
+      case SingleStepInsert(tok: Token) =>
+        CompoundStepInsert(TokenRange(tok.g, tok.g + 1))
+      case SingleStepDelete(tok: Token) =>
+        CompoundStepDelete(TokenRange(tok.g, tok.g + 1))
+    }
+  @tailrec
+  def nextStep(allSingleSteps: LazyList[SingleEditStep], completedCompoundSteps: Vector[CompoundEditStep], openCompoundStep: CompoundEditStep): Vector[CompoundEditStep] =
+    allSingleSteps match {
+      case LazyList() => completedCompoundSteps :+ openCompoundStep
+      case h #:: t if singleStepToCompoundStep(h).getClass == openCompoundStep.getClass => // TODO: Record matching properties on types for easier comparison, or make everything a compound step
+        nextStep(t, completedCompoundSteps, openCompoundStep) // FIXME: Increment range of open step
+      case h #:: t => nextStep(t, completedCompoundSteps :+ openCompoundStep, singleStepToCompoundStep(h))
+    }
+  nextStep(allSingleSteps.tail, Vector[CompoundEditStep](), singleStepToCompoundStep(allSingleSteps.head))
+
+
+
 @main def secondAlignmentPhase(): Unit =
   val darwinReadings: List[List[Token]] = readJsonData // we know there's only one
   given tokenArray: Vector[Token] =
@@ -126,18 +215,16 @@ def nwCreateMatrix(a: List[String], b: List[String]): Array[Array[Double]] =
       .toVector
   val nodeToClusters: List[ClusterInfo] =
     (vectorizeReadings andThen clusterReadings)(darwinReadings) // list of tuples
-  nodeToClusters map {
+  nodeToClusters foreach {
     case SingletonSingleton(item1, item2, height) =>
       // TODO: We have not yet explored Indels in SingletonSingleton patterns
       val w1: List[Token] = darwinReadings(item1)
       val w2: List[Token] = darwinReadings(item2)
       val m = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
-        val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
-        println(dfm.toString(dfm.size))
-      // acc(i + darwin.head.readings.size) = matrixToAlignmentTree(w1, w2)
+      val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
+      println(dfm.toString(dfm.size))
+    // acc(i + darwin.head.readings.size) = matrixToAlignmentTree(w1, w2)
 
     case SingletonHG(item1, item2, height) => println(height)
-    case HGHG(item1, item2, height) => println(height)
+    case HGHG(item1, item2, height)        => println(height)
   }
-
-// 2024-08-29 RESUME HERE: Do smart things with list of clustering information
