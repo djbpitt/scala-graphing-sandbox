@@ -1,7 +1,7 @@
 package net.collatex.reptilian
 
-import scala.annotation.tailrec
-import scala.xml.{Elem, Node}
+import scala.annotation.{tailrec, unused}
+import scala.xml.{Elem, Node, NodeSeq}
 import math.Ordered.orderingToOrdered
 
 /* Constants */
@@ -14,20 +14,19 @@ val witnessToColor: Map[Siglum, String] = Map(
   Siglum("darwin1872.txt") -> "violet"
 )
 val allSigla: Set[Siglum] =
-  witnessToColor.keySet // TODO: Derive from nodes, but AlignmentTreeNode doesn't have a witnessReadings property
-/* End of constants*/
+  witnessToColor.keySet // TODO: Derive from nodes, but AlignmentUnit doesn't have a witnessReadings property
+    /* End of constants*/
 
+    /* ====================================================================== */
+    /* Horizontal ribbons                                                     */
+    /* ====================================================================== */
 
-/* ====================================================================== */
-/* Horizontal ribbons                                                     */
-/* ====================================================================== */
-
-/* Constants for plotting */
+    /* Constants for plotting */
 val flowLength = 80d
 
 /* Constants for computeTokenTextLength() */
-private val tnr16Metrics = xml.XML.loadFile("src/main/python/tnr_16_metrics.xml")
-private val tnrCharLengths = ((tnr16Metrics \ "character")
+val tnr16Metrics = xml.XML.loadFile("src/main/python/tnr_16_metrics.xml")
+val tnrCharLengths = ((tnr16Metrics \ "character")
   .map(e => ((e \ "@str").text.head, (e \ "@width").toString.toDouble))
   ++ Seq(("\u000a".head, 0.0))).toMap
 
@@ -40,7 +39,7 @@ private val tnrCharLengths = ((tnr16Metrics \ "character")
   * @return
   *   Memoized version of f
   */
-private def memoizeFnc[K, V](f: K => V): K => V = {
+def memoizeFnc[K, V](f: K => V): K => V = {
   val cache = collection.mutable.Map.empty[K, V]
   k =>
     cache.getOrElse(
@@ -60,7 +59,7 @@ private def memoizeFnc[K, V](f: K => V): K => V = {
   * @return
   *   Double
   */
-private def computeTokenTextLength(in: String): Double =
+def computeTokenTextLength(in: String): Double =
   val result = in.map(e => tnrCharLengths(e)).sum
   result
 
@@ -71,12 +70,11 @@ private def computeTokenTextLength(in: String): Double =
   * @return
   *   All witness readings on node as map from siglum (String) to vector of tokens
   */
-def retrieveWitnessReadings(n: HasWitnessReadings, gTa: Vector[Token]): Map[Siglum, Vector[Token]] =
-  val witnessReadings = n.witnessReadings.map((k, v) => k -> gTa.slice(v.start, v.until))
+def retrieveWitnessReadings(n: AlignmentPoint, gTa: Vector[Token]): Map[Siglum, Vector[Token]] =
+  val witnessReadings = n.combineWitnessGroups.map((k, v) => k -> gTa.slice(v.start, v.until))
   witnessReadings
 
-private val memoizedComputeTokenTextLength = memoizeFnc(computeTokenTextLength)
-private val spaceCharWidth: Double = computeTokenTextLength(" ") // Width of space character
+val memoizedComputeTokenTextLength = memoizeFnc(computeTokenTextLength)
 
 /** computeReadingTextLength()
   *
@@ -89,7 +87,7 @@ private val spaceCharWidth: Double = computeTokenTextLength(" ") // Width of spa
   * @return
   *   Size of reading (sum of lengths of t values of tokens plus intertoken spaces)
   */
-private def computeReadingTextLength(in: Vector[Token]): Double =
+def computeReadingTextLength(in: Vector[Token]): Double =
   in.foldLeft(0d)((e, f) => e + memoizedComputeTokenTextLength(f.t))
 
 /** findMissingWitnesses()
@@ -101,23 +99,11 @@ private def computeReadingTextLength(in: Vector[Token]): Double =
   * @return
   *   Vector of sigla of missing witnesses as strings
   */
-private def findMissingWitnesses(n: HasWitnessReadings, sigla: Set[Siglum]): Vector[Siglum] =
-  val missingWitnesses = sigla.diff(n.witnessReadings.keySet).toVector.sorted
+def findMissingWitnesses(n: AlignmentPoint, sigla: Set[Siglum]): Vector[Siglum] =
+  val missingWitnesses = sigla.diff(n.combineWitnessGroups.keySet).toVector.sorted
   missingWitnesses
 
-/** groupReadings()
-  *
-  * @param n
-  *   Node with witness groups (Variation or VariationIndel)
-  * @return
-  *   Vector of vector of strings, where inner vectors are groups and strings are sigla
-  */
-private def groupReadings(n: HasWitnessReadings) =
-  val groups: Set[WitnessReadings] =
-    n.witnessGroups
-  groups
-
-private def computeAlignmentNodeRenderingWidth(n: HasWitnessReadings, gTa: Vector[Token]): Double =
+def computeAlignmentNodeRenderingWidth(n: AlignmentPoint, gTa: Vector[Token]): Double =
   // FIXME: Temporarily add 28 to allow for two-character siglum plus colon plus space
   val maxAlignmentPointWidth = 1000000000000d // 160.0
   List(
@@ -125,7 +111,7 @@ private def computeAlignmentNodeRenderingWidth(n: HasWitnessReadings, gTa: Vecto
     maxAlignmentPointWidth
   ).min
 
-private def createHorizNodeData(
+def createHorizNodeData(
     nodeSequence: Vector[NumberedNode],
     sigla: Set[Siglum]
 )(using tokenArray: Vector[Token]): Vector[HorizNodeData] =
@@ -134,8 +120,6 @@ private def createHorizNodeData(
     if nodes.isEmpty then acc
     else
       val nodeType = nodes.head.node.getClass.getSimpleName
-      // TODO: Combine computation of wr and alignmentWidth, which share operations
-      val wr = retrieveWitnessReadings(nodes.head.node, tokenArray)
       val alignmentWidth = computeAlignmentNodeRenderingWidth(nodes.head.node, tokenArray)
       val xOffset = acc.lastOption match {
         case Some(e) => e.xOffset + e.alignmentWidth + flowLength
@@ -162,7 +146,8 @@ private def createHorizNodeData(
                 .sorted
             )
           )
-          .toVector.sorted,
+          .toVector
+          .sorted,
         missing = missing
       )
       nextNode(nodes.tail, pos + 1, acc :+ newNode)
@@ -179,7 +164,8 @@ private def createHorizNodeData(
   * @return
   *   Set of sets, representing Cartesian product of input with itself without self-pairings
   */
-private def selfCartesianProduct[A](input: Iterable[A]) =
+@unused
+def selfCartesianProduct[A](input: Iterable[A]) =
   val result = input
     .flatMap(e =>
       input
@@ -188,7 +174,8 @@ private def selfCartesianProduct[A](input: Iterable[A]) =
     .filter(_.size > 1)
   result
 
-private def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
+@unused
+def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   def nextPair(pair: Set[String], acc: Map[Set[String], Int]): Map[Set[String], Int] =
     val newAcc = acc ++ Map(pair -> (acc.getOrElse(pair, 0) + 1))
     newAcc
@@ -212,7 +199,7 @@ private def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   * @return
   *   <html> element in HTML namespace, with embedded SVG
   */
-private def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(using
+def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(using
     tokenArray: Vector[Token]
 ): scala.xml.Node =
   /** Constants */
@@ -268,17 +255,8 @@ private def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(usin
   // cells.map(e => witnessSimilarities(e)).foreach(println)
    */
   /* End of computing optimal witness order */
-  val totalWidth = horizNodes.last.xOffset + horizNodes.last.alignmentWidth + 2
   val totalHeight = ribbonWidth * (witnessCount * 3) - ribbonWidth / 2
 
-  val witnessToColor: Map[Siglum, String] = Map(
-    Siglum("darwin1859.txt") -> "peru",
-    Siglum("darwin1860.txt") -> "orange",
-    Siglum("darwin1861.txt") -> "yellow",
-    Siglum("darwin1866.txt") -> "limegreen",
-    Siglum("darwin1869.txt") -> "dodgerblue",
-    Siglum("darwin1872.txt") -> "violet"
-  )
   val witnessToGradient: Map[Siglum, String] = Map(
     Siglum("darwin1859.txt") -> "url(#peruGradient)",
     Siglum("darwin1860.txt") -> "url(#orangeGradient)",
@@ -289,6 +267,24 @@ private def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(usin
   )
 
   def formatSiglum(siglum: Siglum): String = siglum.value.slice(8, 10).mkString
+
+  def plotRect(vOffset: Double, node: HorizNodeData, fillColor: String, top: Double) =
+    <rect x="0"
+       y={(vOffset * ribbonWidth + top).toString}
+       width={node.alignmentWidth.toString}
+       height={ribbonWidth.toString}
+       fill={fillColor}
+    />
+  def plotReading(vOffset: Int, node: HorizNodeData, top: Double, hngm: (HorizNodeGroupMember, Int)) =
+    <foreignObject x="1"
+                   y={(vOffset * ribbonWidth + top - 2).toString}
+                   width={node.alignmentWidth.toString}
+                   height={ribbonWidth.toString}>
+      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">{
+      s"${formatSiglum(hngm._1.siglum)}: "
+    }</span>
+        {hngm._1.reading}</div>
+    </foreignObject>
 
   /** plotOneAlignmentPoint()
     *
@@ -308,45 +304,30 @@ private def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(usin
           val groupHeight = (groups.head.members.size + 1) * ribbonWidth // Include space below group
           val newG =
             <g>{
-              groups.head.members.zipWithIndex.map(e =>
+              for e <- groups.head.members.zipWithIndex yield
                 val fillColor = witnessToColor(e._1.siglum)
-                <rect x="0"
-                  y={(e._2 * ribbonWidth + top).toString}
-                  width={node.alignmentWidth.toString}
-                  height={ribbonWidth.toString}
-                  fill={fillColor}
-                  />
-                <foreignObject x="1"
-                               y={(e._2 * ribbonWidth + top - 2).toString}
-                               width={node.alignmentWidth.toString}
-                               height={ribbonWidth.toString}>
-                  <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">{
-                  s"${formatSiglum(e._1.siglum)}: "
-                }</span>
-                    {e._1.reading}</div>              
-                </foreignObject>
-              )
+                val vOffset = e._2
+                Seq(plotRect(vOffset, node, fillColor, top), plotReading(vOffset, node, top, e))
             }</g>
           nextGroup(groups.tail, top + groupHeight, acc :+ newG)
       nextGroup(groups, 0, Vector.empty[Elem])
     val groups = processGroups(node.groups)
     /* Missing witnesses */
-    val missing = node.missing.zipWithIndex.map(e =>
+    val missing = for e <- node.missing.zipWithIndex yield
       val fillColor = witnessToColor(e._1)
-      <rect x="0" 
-            y={(e._2 * ribbonWidth + missingTop).toString}
-            width={node.alignmentWidth.toString}
-            height={ribbonWidth.toString} 
-            fill={fillColor}/>
-      <foreignObject x="1"
-                     y={(e._2 * ribbonWidth + missingTop - 2).toString}
-                     width={node.alignmentWidth.toString}
-                     height={ribbonWidth.toString}>
-        <div xmlns="http://www.w3.org/1999/xhtml">
-          <span class="sigla">{s"(${formatSiglum(e._1)})"}</span>
-        </div>
-      </foreignObject>
-    )
+      val vOffset = e._2
+      val top = missingTop
+      Seq(
+        plotRect(vOffset, node, fillColor, top),
+        <foreignObject x="1"
+                       y={(vOffset * ribbonWidth + top - 2).toString}
+                       width={node.alignmentWidth.toString}
+                       height={ribbonWidth.toString}>
+          <div xmlns="http://www.w3.org/1999/xhtml">
+            <span class="sigla">{s"(${formatSiglum(e._1)})"}</span>
+          </div>
+        </foreignObject>
+      )
     <div class="ap">
       <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"
            width={node.alignmentWidth.toString}
@@ -384,7 +365,6 @@ private def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(usin
           missingTop + ribbonWidth / 2
         )
 
-    val leftEdge = (currentNode.xOffset - flowLength).toString
     val leftYPosMap = computeRibbonYPos(precedingNode)
     val rightYPosMap = computeRibbonYPos(currentNode)
     val ribbons = sigla.toSeq.sorted.map(e =>
@@ -446,7 +426,7 @@ private def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(usin
           </div>
           else
             <div class="innerWrapper">
-              <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" 
+              <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"
                    width={(node.alignmentWidth + 2).toString}
                    height={(totalHeight + 2).toString}>{
               acc :+
@@ -475,77 +455,16 @@ private def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(usin
     wrapGroups(node.groups)
 
   val contents = plotAllAlignmentPointsAndRibbons(horizNodes)
-  val groupWrappers = horizNodes.map(plotGroupNodeWrappers)
-  val viewBox = s"-1 -1 $totalWidth $totalHeight"
+  /* Create gradient stops for each color, using colorname + "Gradient" as @id of <linearGradient> wrapper */
   val gradients =
-    <defs>
-      <linearGradient id="yellowGradient" x1="0%" x2="100%" y1="0%" y2="0%">
-        <stop offset="0%" stop-color="yellow" stop-opacity="1"/>
-        <stop offset="6%" stop-color="yellow" stop-opacity="1"/>
-        <stop offset="20%" stop-color="yellow" stop-opacity=".6"/>
-        <stop offset="35%" stop-color="yellow" stop-opacity=".4"/>
-        <stop offset="50%" stop-color="yellow" stop-opacity=".3"/>
-        <stop offset="65%" stop-color="yellow" stop-opacity=".4"/>
-        <stop offset="80%" stop-color="yellow" stop-opacity=".6"/>
-        <stop offset="94%" stop-color="yellow" stop-opacity="1"/>
-        <stop offset="100%" stop-color="yellow" stop-opacity="1"/>
-      </linearGradient>
-      <linearGradient id="dodgerblueGradient" x1="0%" x2="100%" y1="0%" y2="0%">
-        <stop offset="0%" stop-color="dodgerblue" stop-opacity="1"/>
-        <stop offset="6%" stop-color="dodgerblue" stop-opacity="1"/>
-        <stop offset="20%" stop-color="dodgerblue" stop-opacity=".6"/>
-        <stop offset="35%" stop-color="dodgerblue" stop-opacity=".4"/>
-        <stop offset="50%" stop-color="dodgerblue" stop-opacity=".3"/>
-        <stop offset="65%" stop-color="dodgerblue" stop-opacity=".4"/>
-        <stop offset="80%" stop-color="dodgerblue" stop-opacity=".6"/>
-        <stop offset="94%" stop-color="dodgerblue" stop-opacity="1"/>
-        <stop offset="100%" stop-color="dodgerblue" stop-opacity="1"/>
-      </linearGradient>
-      <linearGradient id="violetGradient" x1="0%" x2="100%" y1="0%" y2="0%">
-        <stop offset="0%" stop-color="violet" stop-opacity="1"/>
-        <stop offset="6%" stop-color="violet" stop-opacity="1"/>
-        <stop offset="20%" stop-color="violet" stop-opacity=".6"/>
-        <stop offset="35%" stop-color="violet" stop-opacity=".4"/>
-        <stop offset="50%" stop-color="violet" stop-opacity=".3"/>
-        <stop offset="65%" stop-color="violet" stop-opacity=".4"/>
-        <stop offset="80%" stop-color="violet" stop-opacity=".6"/>
-        <stop offset="94%" stop-color="violet" stop-opacity="1"/>
-        <stop offset="100%" stop-color="violet" stop-opacity="1"/>
-      </linearGradient>
-      <linearGradient id="orangeGradient" x1="0%" x2="100%" y1="0%" y2="0%">
-        <stop offset="0%" stop-color="orange" stop-opacity="1"/>
-        <stop offset="6%" stop-color="orange" stop-opacity="1"/>
-        <stop offset="20%" stop-color="orange" stop-opacity=".6"/>
-        <stop offset="35%" stop-color="orange" stop-opacity=".4"/>
-        <stop offset="50%" stop-color="orange" stop-opacity=".3"/>
-        <stop offset="65%" stop-color="orange" stop-opacity=".4"/>
-        <stop offset="80%" stop-color="orange" stop-opacity=".6"/>
-        <stop offset="94%" stop-color="orange" stop-opacity="1"/>
-        <stop offset="100%" stop-color="orange" stop-opacity="1"/>
-      </linearGradient>
-      <linearGradient id="peruGradient" x1="0%" x2="100%" y1="0%" y2="0%">
-        <stop offset="0%" stop-color="peru" stop-opacity="1"/>
-        <stop offset="6%" stop-color="peru" stop-opacity="1"/>
-        <stop offset="20%" stop-color="peru" stop-opacity=".6"/>
-        <stop offset="35%" stop-color="peru" stop-opacity=".4"/>
-        <stop offset="50%" stop-color="peru" stop-opacity=".3"/>
-        <stop offset="65%" stop-color="peru" stop-opacity=".4"/>
-        <stop offset="80%" stop-color="peru" stop-opacity=".6"/>
-        <stop offset="94%" stop-color="peru" stop-opacity="1"/>
-        <stop offset="100%" stop-color="peru" stop-opacity="1"/>
-      </linearGradient>
-      <linearGradient id="limegreenGradient" x1="0%" x2="100%" y1="0%" y2="0%">
-        <stop offset="0%" stop-color="limegreen" stop-opacity="1"/>
-        <stop offset="6%" stop-color="limegreen" stop-opacity="1"/>
-        <stop offset="20%" stop-color="limegreen" stop-opacity=".6"/>
-        <stop offset="35%" stop-color="limegreen" stop-opacity=".4"/>
-        <stop offset="50%" stop-color="limegreen" stop-opacity=".3"/>
-        <stop offset="65%" stop-color="limegreen" stop-opacity=".4"/>
-        <stop offset="80%" stop-color="limegreen" stop-opacity=".6"/>
-        <stop offset="94%" stop-color="limegreen" stop-opacity="1"/>
-        <stop offset="100%" stop-color="limegreen" stop-opacity="1"/>
-      </linearGradient>
-    </defs>
+    <defs>{
+      val colors: Vector[String] = Vector("yellow", "dodgerblue", "violet", "orange", "peru", "limegreen")
+      val stops: Vector[(Int, Double)] =
+        Vector((0, 1), (6, 1), (20, .6), (35, .4), (50, .3), (65, .4), (80, .6), (94, 1), (100, 1))
+      for c <- colors yield <linearGradient id={s"${c}Gradient"} x1="0%" x2="100%" y1="0%" y2="0%">{
+        for s <- stops yield <stop offset={s"${s._1}%"} stop-color={s"$c"} stop-opacity={s"${s._2}"}/>
+      }</linearGradient>
+    }</defs>
   val css = s"""header {
                |  display: flex;
                |  flex-direction: row;

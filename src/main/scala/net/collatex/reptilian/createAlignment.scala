@@ -331,10 +331,9 @@ def alignmentBlocksAsSet(alignment: List[Int]): Set[Int] =
 def alignmentIntsToBlocks(alignment: Set[Int], blocks: Iterable[FullDepthBlock]): Iterable[FullDepthBlock] =
   val alignmentBlocks: Iterable[FullDepthBlock] = blocks
     .filter(e => alignment.contains(e.instances.head))
-//  println(s"alignmentBlocks : $alignmentBlocks")
   alignmentBlocks
 
 // Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
-def createAlignment(witnessStrings: List[String], sigla: List[Siglum])(using tokenArray: Vector[Token]): ExpandedNode =
-  createAlignmentTree(tokenArray, sigla)
+def createAlignment(sigla: List[Siglum])(using tokenArray: Vector[Token]): ExpandedNode =
+  createAlignmentTree(sigla)
 

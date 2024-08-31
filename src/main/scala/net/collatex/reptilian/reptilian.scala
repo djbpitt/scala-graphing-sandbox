@@ -42,11 +42,11 @@ def readData(pathToData: Path): List[(String, String)] =
   ) // One string per witness
   val witnessStrings: List[String] = witnessInputInfo.map(_._2)
   val sigla: List[Siglum] = witnessInputInfo.map(_._1).map(Siglum(_))
-  given Vector[Token] = tokenize(tokenizer)(witnessStrings) // global token array
+  given gTa:Vector[Token] = tokenize(tokenizer)(witnessStrings) // global token array
 
   /** Create alignment tree
     */
-  val root: ExpandedNode = createAlignment(witnessStrings, sigla)
+  val root: ExpandedNode = createAlignment(sigla)
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html") // used for single-column and mixed output
   val horizontalRibbons = createHorizontalRibbons(root, allSigla)
   val horizontalRibbonsPath =

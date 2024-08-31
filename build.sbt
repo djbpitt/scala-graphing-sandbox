@@ -12,10 +12,10 @@ scalacOptions := Seq("-unchecked", "-deprecation")
 
 libraryDependencies += ("org.scala-graph" %% "graph-core" % "1.13.6").cross(CrossVersion.for3Use2_13)
 libraryDependencies += ("org.scala-graph" %% "graph-dot" % "1.13.3").cross(CrossVersion.for3Use2_13)
-libraryDependencies += "com.lihaoyi" %% "os-lib" % "0.9.1" // path manipulation and io
-libraryDependencies += "com.lihaoyi" %% "upickle" % "3.0.0" // micropickle converts string into domain object
+libraryDependencies += "com.lihaoyi" %% "os-lib" % "0.10.1" // path manipulation and io
+libraryDependencies += "com.lihaoyi" %% "upickle" % "3.3.0" // micropickle converts string into domain object
 // libraryDependencies += ("com.github.haifengl" %% "smile-scala" % "3.0.0").cross(CrossVersion.for3Use2_13)
-libraryDependencies += ("com.github.haifengl" %% "smile-scala" % "3.0.0")
+libraryDependencies += ("com.github.haifengl" %% "smile-scala" % "3.1.1")
   .cross(CrossVersion.for3Use2_13)
   .exclude("org.scala-lang.modules", "scala-xml_2.13")
 libraryDependencies += ("org.scalatest" %% "scalatest" % "3.2.15" % "test")

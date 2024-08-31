@@ -2,6 +2,7 @@ package net.collatex.reptilian
 
 import net.collatex.reptilian.TokenRange.*
 import net.collatex.reptilian.SplitTokenRangeResult.*
+import net.collatex.util.splitAlignmentPoint
 import org.scalatest.funsuite.AnyFunSuite
 
 class AlignmentTreeTest extends AnyFunSuite:
@@ -75,10 +76,29 @@ class AlignmentTreeTest extends AnyFunSuite:
   /** Tests for splitAlignmentPoint
     */
   ignore("Split alignment point with two splittable witnesses"):
-    val left = AgreementNode(Siglum("a") -> TokenRange(1, 3), Siglum("b") -> TokenRange(5, 7))
-    val right = AgreementNode(Siglum("a") -> TokenRange(3, 4), Siglum("b") -> TokenRange(7, 8))
+    implicit val gTa: Vector[Token] = Vector( // fake; contains different data
+      Token("Hi ", "hi", 0, 0),
+      Token(", ", ",", 0, 1),
+      Token("Mom ", "mom", 0, 2),
+      Token("!", "!", 0, 3)
+    )
+    val left = AlignmentPoint(Siglum("a") -> TokenRange(1, 3), Siglum("b") -> TokenRange(5, 7))
+    val right = AlignmentPoint(Siglum("a") -> TokenRange(3, 4), Siglum("b") -> TokenRange(7, 8))
     val expected = (left, right)
-    val ap = AgreementNode(Siglum("a") -> TokenRange(1, 4), Siglum("b") -> TokenRange(5, 8)) // AlignmentPoint to split
+    val ap = AlignmentPoint(Siglum("a") -> TokenRange(1, 4), Siglum("b") -> TokenRange(5, 8)) // AlignmentPoint to split
     val splitPositions = Map(Siglum("a") -> 3, Siglum("b") -> 7) // Split positions for all witnesses
     val result = splitAlignmentPoint(ap, splitPositions)
     assert(result == expected)
+  
+  test("Test for TokenRange.tString"):
+    implicit val gTa: Vector[Token] = Vector(
+      Token("Hi ", "hi", 0, 0),
+      Token(", ", ",", 0, 1),
+      Token("Mom ", "mom", 0, 2),
+      Token("!", "!", 0, 3)
+    )
+    val tr = TokenRange(0, 4)
+    val expected = "Hi , Mom !"
+    val result = tr.tString
+    assert(result == expected)
+

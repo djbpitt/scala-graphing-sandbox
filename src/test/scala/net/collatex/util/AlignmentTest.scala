@@ -1,7 +1,7 @@
 package net.collatex.util
 
 import org.scalatest.funsuite.AnyFunSuite
-import net.collatex.reptilian.{HasWitnessReadings, Token, TokenRange, AgreementNode, VariationNode, Siglum}
+import net.collatex.reptilian.{AlignmentPoint, Siglum, Token, TokenRange}
 
 class AlignmentTest extends AnyFunSuite:
   test("Create SingletonSingleton matrix"):
@@ -34,14 +34,14 @@ class AlignmentTest extends AnyFunSuite:
       SingleStepMatch(Token("hi", "hi", 1, 6), Token("hi", "hi", 0, 1))
     )
     val compactedStepsExpected = Vector(
-      AgreementNode(
+      AlignmentPoint(
         Map(Siglum("1") -> TokenRange(6, 7), Siglum("0") -> TokenRange(1, 2)),
         Set(Map(Siglum("1") -> TokenRange(6, 7), Siglum("0") -> TokenRange(1, 2)))
       ),
-      VariationNode(
+      AlignmentPoint(
         Map(Siglum("1") -> TokenRange(7, 9), Siglum("0") -> TokenRange(2, 4)),
         Set(Map(Siglum("1") -> TokenRange(7, 9)), Map(Siglum("0") -> TokenRange(2, 4)))),
-      AgreementNode(
+      AlignmentPoint(
         Map(Siglum("1") -> TokenRange(9, 10), Siglum("0") -> TokenRange(4, 5)),
         Set(Map(Siglum("1") -> TokenRange(9, 10), Siglum("0") -> TokenRange(4, 5)))
       )

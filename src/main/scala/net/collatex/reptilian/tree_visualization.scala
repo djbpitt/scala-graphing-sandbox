@@ -1,11 +1,8 @@
 package net.collatex.reptilian
 
 import scalatags.Text.all.*
-import java.beans.Introspector.decapitalize
 
 import scala.annotation.{tailrec, targetName}
-import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 
 /** Wrap text to specified length by inserting newlines
   *
@@ -73,28 +70,30 @@ def flattenNodeSeq(
 ): Vector[NumberedNode] =
   /* Depth-first traversal to produce flat sequence of leaf nodes: reading, indel, variation*/
   var id = 0
-  val nodesToProcess: List[(Int, AlignmentTreeNode)] = List(
+  val nodesToProcess: List[(Int, AlignmentUnit)] = List(
     (id, root)
   ) // Prepend list of children of current node
   val flattenedNodeSeq =
     @tailrec
     def nextNode(
-        inList: List[(Int, AlignmentTreeNode)],
-        outVector: Vector[NumberedNode]
+                  inList: List[(Int, AlignmentUnit)],
+                  outVector: Vector[NumberedNode]
     ): Vector[NumberedNode] =
       if inList.isEmpty then outVector
       else
         val currentNode = inList.head
         currentNode match
-          case (nodeNo, node: HasWitnessReadings) =>
+          case (nodeNo, node: AlignmentPoint) =>
             nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
-          case (_, e: ExpandedNode) =>
-            val newNodesToProcess: List[(Int, AlignmentTreeNode)] =
-              e.children.map { i =>
+          case (_, node: ExpandedNode) =>
+            val newNodesToProcess: List[(Int, AlignmentUnit)] =
+              node.children.map { i =>
                 id += 1
                 (id, i)
               }.toList
             nextNode(newNodesToProcess ::: inList.tail, outVector)
+          case (_, UnalignedZone(_)) => // FIXME: shouldn't happen, but handle instead of ignore
+            nextNode(inList.tail, outVector)
     nextNode(nodesToProcess, Vector.empty)
   flattenedNodeSeq
 
@@ -118,4 +117,4 @@ object WordBuffer {
   def apply(word: String): WordBuffer = WordBuffer(Vector(word))
 }
 
-case class NumberedNode(node: HasWitnessReadings, nodeNo: Int)
+case class NumberedNode(node: AlignmentPoint, nodeNo: Int)

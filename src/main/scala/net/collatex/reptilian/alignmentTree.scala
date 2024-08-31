@@ -1,11 +1,8 @@
 package net.collatex.reptilian
 
-import scala.collection.immutable.ListMap
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scalatags.Text.all.*
 
-import scala.annotation.tailrec
 import scala.math.Ordering
 
 opaque type Siglum = String
@@ -25,8 +22,6 @@ enum TokenRange:
   case IllegalTokenRange(start: Int, until: Int)
   def start: Int
   def until: Int
-  def nString(using gTa: Vector[Token]): String = // global token array
-    gTa.slice(this.start, this.until).map(_.n).mkString(" ") // concatenate n values
   def tString(using gTa: Vector[Token]): String =
     gTa.slice(this.start, this.until).map(_.t).mkString // concatenate t values
 
@@ -46,18 +41,44 @@ enum SplitTokenRangeResult:
 
 type WitnessReadings = Map[Siglum, TokenRange] // type alias
 
-sealed trait AlignmentTreeNode // supertype of all nodes
+sealed trait AlignmentUnit // supertype ExpandedNode (with children) and AlignmentPoint (with groups)
 
-/** Some alignment tree nodes that must have witness readings inherit this trait
-  *
-  * The trait 1) requires witness readings and 2) creates a human-readable rendering
-  *
-  * Expanded and unexpanded nodes render format witness readings as a ListMap in dot Reading nodes also have witness
-  * readings but do not use a ListMap visualization, and therefore do not inherit this trait
-  */
-sealed trait HasWitnessReadings extends AlignmentTreeNode {
-  def witnessGroups: Set[WitnessReadings]
-  def witnessReadings: WitnessReadings
+final case class AlignmentPoint(witnessGroups: Set[WitnessReadings])
+    extends AlignmentUnit:
+    def combineWitnessGroups: WitnessReadings = // create single WitnessGroups for instance
+      val result = this.witnessGroups.flatten.toMap
+      result
+
+/** Custom constructor to simplify creation of AlignmentPoint
+ *
+ * Input is a varargs of (Siglum, TokenRange). Will eventually create only WitnessGroups
+ * and no WitnessReadings
+ */
+object AlignmentPoint {
+  def apply(m: (Siglum, TokenRange)*)(using gTa: Vector[Token]): AlignmentPoint =
+    val wr = m.toMap
+    val wg = wr
+    .groupBy((_, offsets) =>
+      gTa
+        .slice(offsets.start, offsets.until)
+        .map(_.n)
+    ) // groups readings by shared text (n property); can we improve the performance here?
+    .values // we don't care about the shared text after we've used it for grouping
+    .toSet
+    AlignmentPoint(wg)
+}
+
+/** Zone not yet processed
+ *
+ * Same input as AlignmentPoint (varargs of (Siglum, TokenRange)), but create only
+ * WitnessReadings and no WitnessGroups
+ * */
+final case class UnalignedZone(witnessReadings: WitnessReadings) extends AlignmentUnit
+
+object UnalignedZone {
+  def apply(m: (Siglum, TokenRange)*): UnalignedZone =
+    val wr = m.toMap
+    UnalignedZone(wr)
 }
 
 /** ExpandedNode
@@ -68,86 +89,22 @@ sealed trait HasWitnessReadings extends AlignmentTreeNode {
   *   ListBuffer of alignment-tree nodes
   */
 final case class ExpandedNode(
-    children: ListBuffer[AlignmentTreeNode] = ListBuffer.empty
-) extends AlignmentTreeNode
-
-final case class VariationNode(
-    witnessReadings: WitnessReadings,
-    witnessGroups: Set[WitnessReadings] // sigla
-) extends AlignmentTreeNode
-    with HasWitnessReadings
-
-final case class VariationIndelNode(
-    witnessReadings: WitnessReadings,
-    witnessGroups: Set[WitnessReadings] // sigla
-) extends AlignmentTreeNode
-    with HasWitnessReadings
-
-final case class AgreementNode(
-    witnessReadings: WitnessReadings,
-    witnessGroups: Set[WitnessReadings]
-) extends AlignmentTreeNode
-    with HasWitnessReadings
-
-/** Custom constructor to simplify creation of LeafNode
-  *
-  * Input is a varargs of (Int, (Int, Int)) Constructor converts it to a Map, which is wraps in LeafNode Can create new
-  * LeafNode as: LeafNode(1 -> (2, 3), 4 -> (5, 6)) Catch and report empty parameter, which is always a mistake because
-  * leaf nodes cannot be empty
-  */
-object AgreementNode {
-  def apply(m: (Siglum, TokenRange)*): AgreementNode =
-    AgreementNode(m.toMap, Set(m.toMap)) // FIXME: Fake witnessGroups value
-}
-
-/** AgreementIndel node
-  *
-  * Like a AgreementNode in that all witnesses agree, except that not all corpus witnesses are present
-  *
-  * @param witnessReadings
-  *   map from siglum to tuple of start and until offsets into the global token array (until is exclusive)
-  *
-  * Companion object is a convenience constructor (see documentation of companion object for AgreementNode, above)
-  */
-final case class AgreementIndelNode(
-    witnessReadings: WitnessReadings,
-    witnessGroups: Set[WitnessReadings]
-) extends AlignmentTreeNode
-    with HasWitnessReadings
-object AgreementIndelNode {
-  def apply(m: (Siglum, TokenRange)*): AlignmentTreeNode =
-    AgreementIndelNode(m.toMap, Set(m.toMap)) // FIXME: Fake witnessGroups value
-}
-
-/*// Temporary; eventually the alignment graph will have no unexpanded nodes
-final case class UnexpandedNode(
-    witnessReadings: WitnessReadings,
-    witnessGroups: Vector[WitnessReadings]
-) extends AlignmentTreeNode
-    with HasWitnessReadings
-// When we expand an UnexpandedNode we replace it with an ExpandedNode
-// UnexpandedNode cannot have children (it has only WitnessReadings)
-// ExpandedNode must have children*/
-
-/** Input is Vector[Int], representing FullDepthBlock instances Output is Vector[AlignmentNode], where the nodes are all
-  * of type AgreementNode
-  *
-  * Will need to deal with non-full-depth locations in the alignment
-  */
+    children: ListBuffer[AlignmentUnit] = ListBuffer.empty
+) extends AlignmentUnit
 
 def blocksToNodes(
     blocks: Iterable[FullDepthBlock],
     tokenArray: Vector[Token],
     sigla: List[Siglum]
-): Iterable[AgreementNode] =
+): Iterable[AlignmentPoint] =
   blocks
-    .map(e => fullDepthBlockToReadingNode(e, tokenArray, sigla))
+    .map(e => fullDepthBlockToAlignmentPoint(e, tokenArray, sigla))
 // Convert local alignment offsets to global token-array offsets for the reading node
-def fullDepthBlockToReadingNode(
+def fullDepthBlockToAlignmentPoint(
     block: FullDepthBlock,
     tokenArray: Vector[Token],
     sigla: List[Siglum]
-): AgreementNode =
+): AlignmentPoint =
 //  println(s"block: $block")
   val readings = block.instances
     .map(e =>
@@ -160,4 +117,4 @@ def fullDepthBlockToReadingNode(
     )
     .toMap
   val groups = Set(readings)
-  AgreementNode(readings, groups) // FIXME: Fake witnessGroups value
+  AlignmentPoint(groups)
