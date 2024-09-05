@@ -1,5 +1,6 @@
 package net.collatex.util
 
+import net.collatex.reptilian.TokenRange.LegalTokenRange
 import net.collatex.reptilian.{AlignmentPoint, Siglum, Token, TokenRange, WitnessReadings}
 import upickle.default.*
 import smile.clustering.hclust
@@ -120,13 +121,6 @@ def nwCreateMatrix(a: List[String], b: List[String]): Array[Array[Double]] =
   val distance = d(a.size)(b.size)
   d // return entire matrix
 
-enum SingleEditStep:
-  case SingleStepMatch(tok1: Token, tok2: Token)
-  case SingleStepNonMatch(tok1: Token, tok2: Token)
-  case SingleStepInsert(tok: Token)
-  case SingleStepDelete(tok: Token)
-export SingleEditStep._
-
 enum CompoundEditStep:
   case CompoundStepMatch(tr1: TokenRange, tr2: TokenRange)
   case CompoundStepNonMatch(tr1: TokenRange, tr2: TokenRange)
@@ -147,26 +141,32 @@ enum MatrixStep extends Ordered[MatrixStep]:
   case Left(distance: Double, row: Int, col: Int)
   case Up(distance: Double, row: Int, col: Int)
 
-def matrixToEditSteps(
+def tokensToEditSteps(
     w1: List[Token], // rows
     w2: List[Token] // cols
-): LazyList[SingleEditStep] =
+): LazyList[CompoundEditStep] =
   val matrix = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
   // not tailrec, but doesn’t matter because LazyList
-  def nextStep(row: Int, col: Int): LazyList[SingleEditStep] =
+  def nextStep(row: Int, col: Int): LazyList[CompoundEditStep] =
     val scoreLeft = MatrixStep.Left(matrix(row - 1)(col), row - 1, col)
     val scoreDiag = MatrixStep.Diag(matrix(row - 1)(col - 1), row - 1, col - 1)
     val scoreUp = MatrixStep.Up(matrix(row)(col - 1), row, col - 1)
     val bestScore: MatrixStep = Vector(scoreDiag, scoreLeft, scoreUp).min
-    val nextMove: SingleEditStep = bestScore match {
+    val nextMove: CompoundEditStep = bestScore match {
       case x: MatrixStep.Left =>
-        SingleStepInsert(w1(x.row))
+        CompoundStepInsert(TokenRange(w1(x.row).g, w1(x.row).g + 1))
       case x: MatrixStep.Up =>
-        SingleStepDelete(w2(x.col))
+        CompoundStepDelete(TokenRange(w2(x.col).g, w2(x.col).g + 1))
       case x: MatrixStep.Diag if x.distance == matrix(row)(col) =>
-        SingleStepMatch(w2(x.col), w1(x.row))
+        CompoundStepMatch(
+          TokenRange(w2(x.col).g, w2(x.col).g + 1),
+          TokenRange(w1(x.row).g, w1(x.row).g + 1)
+        )
       case x: MatrixStep.Diag =>
-        SingleStepNonMatch(w2(x.col), w1(x.row))
+        CompoundStepNonMatch(
+          TokenRange(w2(x.col).g, w2(x.col).g + 1),
+          TokenRange(w1(x.row).g, w1(x.row).g + 1)
+        )
     }
     if bestScore.row == 0 && bestScore.col == 0
     then LazyList(nextMove) // no more, so return result
@@ -176,36 +176,34 @@ def matrixToEditSteps(
 
 // 2024-08-31 RESUME HERE: Remove distinction between single and compound steps
 def compactEditSteps(
-    allSingleSteps: LazyList[SingleEditStep]
+    allSingleSteps: LazyList[CompoundEditStep]
 ): Vector[CompoundEditStep] =
-  def singleStepToCompoundStep(single: SingleEditStep): CompoundEditStep =
-    single match {
-      case SingleStepMatch(tok1: Token, tok2: Token) =>
-        CompoundStepMatch(
-          TokenRange(tok1.g, tok1.g + 1),
-          TokenRange(tok2.g, tok2.g + 1)
-        )
-      case SingleStepNonMatch(tok1: Token, tok2: Token) =>
-        CompoundStepNonMatch(
-          TokenRange(tok1.g, tok1.g + 1),
-          TokenRange(tok2.g, tok2.g + 1)
-        )
-      case SingleStepInsert(tok: Token) =>
-        CompoundStepInsert(TokenRange(tok.g, tok.g + 1))
-      case SingleStepDelete(tok: Token) =>
-        CompoundStepDelete(TokenRange(tok.g, tok.g + 1))
-    }
   @tailrec
-  def nextStep(allSingleSteps: LazyList[SingleEditStep], completedCompoundSteps: Vector[CompoundEditStep], openCompoundStep: CompoundEditStep): Vector[CompoundEditStep] =
+  def nextStep(
+      allSingleSteps: LazyList[CompoundEditStep],
+      completedCompoundSteps: Vector[CompoundEditStep],
+      openCompoundStep: CompoundEditStep
+  ): Vector[CompoundEditStep] =
     allSingleSteps match {
       case LazyList() => completedCompoundSteps :+ openCompoundStep
-      case h #:: t if singleStepToCompoundStep(h).getClass == openCompoundStep.getClass => // TODO: Record matching properties on types for easier comparison, or make everything a compound step
-        nextStep(t, completedCompoundSteps, openCompoundStep) // FIXME: Increment range of open step
-      case h #:: t => nextStep(t, completedCompoundSteps :+ openCompoundStep, singleStepToCompoundStep(h))
+      case h #:: t if h.getClass == openCompoundStep.getClass =>
+        val newOpenCompoundStep = openCompoundStep match
+          case x: CompoundStepMatch =>
+            CompoundStepMatch(
+              x.tr1.inc(),
+              x.tr2.inc()
+            )
+          case x: CompoundStepNonMatch =>
+            CompoundStepNonMatch(
+              x.tr1.inc(),
+              x.tr2.inc()
+            )
+          case x: CompoundStepInsert => CompoundStepInsert(x.tr.inc())
+          case x: CompoundStepDelete => CompoundStepDelete(x.tr.inc())
+        nextStep(t, completedCompoundSteps, newOpenCompoundStep)
+      case h #:: t => nextStep(t, completedCompoundSteps :+ openCompoundStep, h)
     }
-  nextStep(allSingleSteps.tail, Vector[CompoundEditStep](), singleStepToCompoundStep(allSingleSteps.head))
-
-
+  nextStep(allSingleSteps.tail, Vector[CompoundEditStep](), allSingleSteps.head)
 
 @main def secondAlignmentPhase(): Unit =
   val darwinReadings: List[List[Token]] = readJsonData // we know there's only one
@@ -220,11 +218,24 @@ def compactEditSteps(
       // TODO: We have not yet explored Indels in SingletonSingleton patterns
       val w1: List[Token] = darwinReadings(item1)
       val w2: List[Token] = darwinReadings(item2)
-      val m = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
-      val dfm = DataFrame.of(m) // just to look; we don't need the DataFrame
-      println(dfm.toString(dfm.size))
-    // acc(i + darwin.head.readings.size) = matrixToAlignmentTree(w1, w2)
-
+      // acc(i + darwin.head.readings.size) = matrixToAlignmentTree(w1, w2)
+      val result = compactEditSteps(tokensToEditSteps(w1, w2))
+      println(result)
+      result.foreach {
+        case x: CompoundStepMatch =>
+          println(s"tr1: ${x.tr1.tString}")
+          println(s"tr2: ${x.tr2.tString}")
+        case x: CompoundStepNonMatch =>
+          println(s"tr1: ${x.tr1.tString}")
+          println(s"tr2: ${x.tr2.tString}")
+        case x: CompoundStepInsert => println(s"tr: ${x.tr.tString}")
+        case x: CompoundStepDelete => println(s"tr: ${x.tr.tString}" )
+      }
     case SingletonHG(item1, item2, height) => println(height)
     case HGHG(item1, item2, height)        => println(height)
   }
+
+// 2024-09-05 RESUME HERE
+// Token ranges are wrong, e.g., some cross witness boundaries (eek!)
+// TokenRange.tString does not insert spaces between tokens, which is correct
+//   for main output but inconvenient for proofreading during development
