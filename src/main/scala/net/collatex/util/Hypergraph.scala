@@ -11,7 +11,7 @@ import cats.instances.set.*
 // @author: Ronald
 // Inspired by bipartite adjacency map from alga-graphs
 
-// Hypergraph has hyperedges labels of type L and vertices of type V
+// Hypergraph has hyperedges with labels of type L and vertices of type V
 case class Hypergraph[L, V](am1: Map[L, Set[V]], am2: Map[V, Set[L]]):
 
   @targetName("overlay")
@@ -43,12 +43,10 @@ case class Hypergraph[L, V](am1: Map[L, Set[V]], am2: Map[V, Set[L]]):
   def edges(vertex: V): Set[L] =
     am2(vertex)
 
-
+  def size: Int =
+    hyperedges.size
 
 case class Hyperedge[L, V](label: L, hypergraph: Hypergraph[L, V])
-
-
-
 
 object Hypergraph:
   def empty[L, V](): Hypergraph[L, V] = Hypergraph(Map.empty, Map.empty)
@@ -60,11 +58,8 @@ object Hypergraph:
     val vToL = vertices.map(_ -> Set(label)).toMap
     Hypergraph(Map.apply(label -> vertices.toSet), vToL)
 
-
-
 @main def main(): Unit =
   val hypergraph = Hypergraph.vertices[String, Int](1)
-
   val hypergraph2 = Hypergraph.hyperedge[String, Int]("")
-
   val outerHypergraph = Hypergraph.hyperedge[String, Hyperedge[String, Int]]("alignment point")
+

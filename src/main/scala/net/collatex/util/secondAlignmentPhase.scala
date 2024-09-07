@@ -119,8 +119,8 @@ def nwCreateMatrix(a: List[String], b: List[String]): Array[Array[Double]] =
       d(i)(j) = math.min(d(i)(j), d(i - 2)(j - 2) + transpositionCost) // transposition
   }
   val distance = d(a.size)(b.size)
-  val dfm = DataFrame.of(d) // just to look; we don't need the DataFrame
-  println(dfm.toString(dfm.size))
+  // val dfm = DataFrame.of(d) // just to look; we don't need the DataFrame
+  // println(dfm.toString(dfm.size))
   d // return entire matrix
 
 enum CompoundEditStep:
@@ -214,23 +214,21 @@ def compactEditSteps(
       .toVector
   val nodeToClusters: List[ClusterInfo] =
     (vectorizeReadings andThen clusterReadings)(darwinReadings) // list of tuples
-  println(nodeToClusters)
   nodeToClusters foreach {
     case SingletonSingleton(item1, item2, height) =>
       // TODO: We have not yet explored Indels in SingletonSingleton patterns
       val w1: List[Token] = darwinReadings(item1)
       val w2: List[Token] = darwinReadings(item2)
       val result = compactEditSteps(tokensToEditSteps(w1, w2))
-      println(result)
       result foreach {
         case x: CompoundStepMatch =>
-          println(s"tr1: ${x.tr1.tString}")
-          println(s"tr2: ${x.tr2.tString}")
+          x.tr1
+          x.tr2
         case x: CompoundStepNonMatch =>
-          println(s"tr1: ${x.tr1.tString}")
-          println(s"tr2: ${x.tr2.tString}")
-        case x: CompoundStepInsert => println(s"tr: ${x.tr.tString}")
-        case x: CompoundStepDelete => println(s"tr: ${x.tr.tString}" )
+          x.tr1
+          x.tr2
+        case x: CompoundStepInsert => x.tr
+        case x: CompoundStepDelete => x.tr
       }
     case SingletonHG(item1, item2, height) => println(height)
     case HGHG(item1, item2, height)        => println(height)
