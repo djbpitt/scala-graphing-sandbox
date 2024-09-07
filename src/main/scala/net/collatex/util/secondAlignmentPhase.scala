@@ -232,7 +232,7 @@ def compactEditSteps(
           Hypergraph.hyperedge(offset.toString, x.tr)
       }
       val hypergraph = hyperedges.foldLeft(Hypergraph.empty[String, TokenRange]())((x, y) => y + x)
-      hypergraphToText(hypergraph) // print text representation of domain-specific hypergraph
+      println(hypergraphToText(hypergraph)) // print text representation of domain-specific hypergraph
     case SingletonHG(item1, item2, height) => println(s"SingletonHG: $height")
     case HGHG(item1, item2, height)        => println(s"HGHG: $height")
   }
