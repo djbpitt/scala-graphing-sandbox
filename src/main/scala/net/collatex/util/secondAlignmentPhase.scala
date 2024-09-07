@@ -219,19 +219,22 @@ def compactEditSteps(
       // TODO: We have not yet explored Indels in SingletonSingleton patterns
       val w1: List[Token] = darwinReadings(item1)
       val w2: List[Token] = darwinReadings(item2)
-      val result = compactEditSteps(tokensToEditSteps(w1, w2))
-      result foreach {
-        case x: CompoundStepMatch =>
-          x.tr1
-          x.tr2
-        case x: CompoundStepNonMatch =>
-          x.tr1
-          x.tr2
-        case x: CompoundStepInsert => x.tr
-        case x: CompoundStepDelete => x.tr
+      val compactedEditSteps = compactEditSteps(tokensToEditSteps(w1, w2))
+      val hyperedges: Vector[Hypergraph[String, TokenRange]] = compactedEditSteps.zipWithIndex map {
+        case (x: CompoundStepMatch, offset: Int) =>
+          Hypergraph.hyperedge(offset.toString, x.tr1, x.tr2)
+        case (x: CompoundStepNonMatch, offset: Int) =>
+          Hypergraph.hyperedge(offset.toString + "a", x.tr1) +
+            Hypergraph.hyperedge(offset.toString + "b", x.tr2)
+        case (x: CompoundStepInsert, offset: Int) =>
+          Hypergraph.hyperedge(offset.toString, x.tr)
+        case (x: CompoundStepDelete, offset: Int) =>
+          Hypergraph.hyperedge(offset.toString, x.tr)
       }
-    case SingletonHG(item1, item2, height) => println(height)
-    case HGHG(item1, item2, height)        => println(height)
+      val hypergraph = hyperedges.foldLeft(Hypergraph.empty[String, TokenRange]())((x, y) => y + x)
+      hypergraphToText(hypergraph) // print text representation of domain-specific hypergraph
+    case SingletonHG(item1, item2, height) => println(s"SingletonHG: $height")
+    case HGHG(item1, item2, height)        => println(s"HGHG: $height")
   }
 
 // 2024-09-05 RESUME HERE
