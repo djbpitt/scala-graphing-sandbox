@@ -24,7 +24,7 @@ enum TokenRange:
   def until: Int
   def tString(using gTa: Vector[Token]): String =
     gTa.slice(this.start, this.until).map(_.t).mkString // concatenate t values
-  def inc(): TokenRange = TokenRange(this.start, this.until + 1)
+  def decreaseStart(): TokenRange = TokenRange(this.start - 1, this.until)
 
 object TokenRange:
   def apply(start: Int, until: Int): TokenRange =

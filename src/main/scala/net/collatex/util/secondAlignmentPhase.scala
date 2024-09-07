@@ -119,6 +119,8 @@ def nwCreateMatrix(a: List[String], b: List[String]): Array[Array[Double]] =
       d(i)(j) = math.min(d(i)(j), d(i - 2)(j - 2) + transpositionCost) // transposition
   }
   val distance = d(a.size)(b.size)
+  val dfm = DataFrame.of(d) // just to look; we don't need the DataFrame
+  println(dfm.toString(dfm.size))
   d // return entire matrix
 
 enum CompoundEditStep:
@@ -174,7 +176,6 @@ def tokensToEditSteps(
 
   nextStep(row = matrix.length - 1, col = matrix.head.length - 1) // Start recursion in lower right corner
 
-// 2024-08-31 RESUME HERE: Remove distinction between single and compound steps
 def compactEditSteps(
     allSingleSteps: LazyList[CompoundEditStep]
 ): Vector[CompoundEditStep] =
@@ -190,16 +191,16 @@ def compactEditSteps(
         val newOpenCompoundStep = openCompoundStep match
           case x: CompoundStepMatch =>
             CompoundStepMatch(
-              x.tr1.inc(),
-              x.tr2.inc()
+              x.tr1.decreaseStart(),
+              x.tr2.decreaseStart()
             )
           case x: CompoundStepNonMatch =>
             CompoundStepNonMatch(
-              x.tr1.inc(),
-              x.tr2.inc()
+              x.tr1.decreaseStart(),
+              x.tr2.decreaseStart()
             )
-          case x: CompoundStepInsert => CompoundStepInsert(x.tr.inc())
-          case x: CompoundStepDelete => CompoundStepDelete(x.tr.inc())
+          case x: CompoundStepInsert => CompoundStepInsert(x.tr.decreaseStart())
+          case x: CompoundStepDelete => CompoundStepDelete(x.tr.decreaseStart())
         nextStep(t, completedCompoundSteps, newOpenCompoundStep)
       case h #:: t => nextStep(t, completedCompoundSteps :+ openCompoundStep, h)
     }
@@ -213,15 +214,15 @@ def compactEditSteps(
       .toVector
   val nodeToClusters: List[ClusterInfo] =
     (vectorizeReadings andThen clusterReadings)(darwinReadings) // list of tuples
+  println(nodeToClusters)
   nodeToClusters foreach {
     case SingletonSingleton(item1, item2, height) =>
       // TODO: We have not yet explored Indels in SingletonSingleton patterns
       val w1: List[Token] = darwinReadings(item1)
       val w2: List[Token] = darwinReadings(item2)
-      // acc(i + darwin.head.readings.size) = matrixToAlignmentTree(w1, w2)
       val result = compactEditSteps(tokensToEditSteps(w1, w2))
       println(result)
-      result.foreach {
+      result foreach {
         case x: CompoundStepMatch =>
           println(s"tr1: ${x.tr1.tString}")
           println(s"tr2: ${x.tr2.tString}")
