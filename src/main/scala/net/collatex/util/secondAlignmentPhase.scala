@@ -233,8 +233,12 @@ def compactEditSteps(
       }
       val hypergraph = hyperedges.foldLeft(Hypergraph.empty[String, TokenRange]())((x, y) => y + x)
       hypergraph
-    // println(hypergraphToText(hypergraph)) // print text representation of domain-specific hypergraph
     case SingletonHG(item1, item2, height) => height
     case HGHG(item1, item2, height) => height
   }
   hypergraphToText(hg)
+  val dot = hypergraphToDot(hg)
+  val dotPath =
+    os.pwd / "src" / "main" / "outputs" / "hypergraph.dot"
+  os.write.over(dotPath, dot)
+  println(dot)

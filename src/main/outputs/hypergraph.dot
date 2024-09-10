@@ -1,0 +1,13 @@
+graph MyGraph {
+rankdir = LR
+AP_2 -- "AP_2_0"
+AP_2 -- "AP_2_1a"
+AP_2 -- "AP_2_1b"
+AP_2 -- "AP_2_2"
+"AP_2_1b" [label="Group 1b"]
+"AP_2_1a" [label="Group 1a"]
+"AP_2_0" [label="Group 0"]
+"AP_2_2" [label="Group 2"]
+AP_0 -- "AP_0_0"
+"AP_0_0" [label="Group 0"]
+}

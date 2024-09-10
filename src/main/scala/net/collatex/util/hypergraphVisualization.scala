@@ -25,10 +25,20 @@ def hypergraphToText(h: List[Hypergraph[String, TokenRange] | Double]): Unit =
  *
  * @param h: Hypergraph
  */
-def hypergraphToDot(h: Hypergraph[String, TokenRange]): String =
-  "graph MyGraph {"
-  // 2024-09-07 RESUME HERE
-  "}"
+def hypergraphToDot(h: List[Hypergraph[String, TokenRange] | Double]): String =
+  val first = "graph MyGraph {\nrankdir = LR"
+  val last = "}"
+  val middle = h.zipWithIndex map {
+    case (x:Hypergraph[String, TokenRange], y:Int) =>
+      val label = s"AP_$y"
+      val edges = x.hyperedges.map(e => s"$label -- \"${label}_$e\"")
+      val groups = x.hyperedges.map(e => s"\"${label}_$e\" [label=\"Group $e\"]")
+      val edgeList = edges.toSeq.sorted.mkString("\n")
+      val groupList = groups.mkString("\n")
+      List(edgeList, groupList).mkString("\n")
+    case (x:Double, y:Int) => "no"
+  }
+  List(first, middle.filterNot(_ == "no").reverse.mkString("\n"), last).mkString("\n")
 
 
 
