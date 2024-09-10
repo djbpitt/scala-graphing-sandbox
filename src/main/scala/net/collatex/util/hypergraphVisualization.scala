@@ -10,9 +10,14 @@ import net.collatex.reptilian.TokenRange
  *
  * @param h: Hypergraph
  */
-def hypergraphToText(h: Hypergraph[String, TokenRange]): String =
-  val lines = h.hyperedges.toSeq.sorted map (e => s"$e : ${h.members(e)}")
-  lines.mkString("\n")
+def hypergraphToText(h: List[Hypergraph[String, TokenRange] | Double]): Unit =
+  val output = h map {
+    case x:Hypergraph[String, TokenRange] =>
+      val lines = x.hyperedges.toSeq.sorted map (e => s"$e : ${x.members(e)}")
+      lines.mkString("\n")
+    case x:Double => x.toString
+  }
+  output.foreach(println)
 
 /** Create Graphviz dot representation of domain-specific graph
  *

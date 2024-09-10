@@ -44,7 +44,7 @@ enum ClusterInfo:
   case SingletonSingleton(item1: Int, item2: Int, height: Double)
   case SingletonHG(item1: Int, item2: Int, height: Double)
   case HGHG(item1: Int, item2: Int, height: Double)
-import ClusterInfo._
+export ClusterInfo._
 
 object ClusterInfo:
   // "of" is conventional name for constructor; HG = hypergraph
@@ -214,7 +214,7 @@ def compactEditSteps(
       .toVector
   val nodeToClusters: List[ClusterInfo] =
     (vectorizeReadings andThen clusterReadings)(darwinReadings) // list of tuples
-  nodeToClusters foreach {
+  val hg: List[Hypergraph[String, TokenRange] | Double] = nodeToClusters map {
     case SingletonSingleton(item1, item2, height) =>
       // TODO: We have not yet explored Indels in SingletonSingleton patterns
       val w1: List[Token] = darwinReadings(item1)
@@ -232,12 +232,9 @@ def compactEditSteps(
           Hypergraph.hyperedge(offset.toString, x.tr)
       }
       val hypergraph = hyperedges.foldLeft(Hypergraph.empty[String, TokenRange]())((x, y) => y + x)
-      println(hypergraphToText(hypergraph)) // print text representation of domain-specific hypergraph
-    case SingletonHG(item1, item2, height) => println(s"SingletonHG: $height")
-    case HGHG(item1, item2, height)        => println(s"HGHG: $height")
+      hypergraph
+    // println(hypergraphToText(hypergraph)) // print text representation of domain-specific hypergraph
+    case SingletonHG(item1, item2, height) => height
+    case HGHG(item1, item2, height) => height
   }
-
-// 2024-09-05 RESUME HERE
-// Token ranges are wrong, e.g., some cross witness boundaries (eek!)
-// TokenRange.tString does not insert spaces between tokens, which is correct
-//   for main output but inconvenient for proofreading during development
+  hypergraphToText(hg)
