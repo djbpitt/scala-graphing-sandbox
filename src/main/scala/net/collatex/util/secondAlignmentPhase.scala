@@ -206,39 +206,48 @@ def compactEditSteps(
     }
   nextStep(allSingleSteps.tail, Vector[CompoundEditStep](), allSingleSteps.head)
 
+// darwinReadings is only singletons
+// darwinHGs is only hypergraphs
 @main def secondAlignmentPhase(): Unit =
   val darwinReadings: List[List[Token]] = readJsonData // we know there's only one
   given tokenArray: Vector[Token] =
     darwinReadings.head.toVector ++ darwinReadings.tail.zipWithIndex
       .flatMap((e, index) => List(Token(index.toString, index.toString, index, -1)) ++ e)
       .toVector
-  val nodeToClusters: List[ClusterInfo] =
+  val nodeToClusters =
     (vectorizeReadings andThen clusterReadings)(darwinReadings) // list of tuples
-  val hg: List[Hypergraph[String, TokenRange] | Double] = nodeToClusters map {
-    case SingletonSingleton(item1, item2, height) =>
-      // TODO: We have not yet explored Indels in SingletonSingleton patterns
-      val w1: List[Token] = darwinReadings(item1)
-      val w2: List[Token] = darwinReadings(item2)
-      val compactedEditSteps = compactEditSteps(tokensToEditSteps(w1, w2))
-      val hyperedges: Vector[Hypergraph[String, TokenRange]] = compactedEditSteps.zipWithIndex map {
-        case (x: CompoundStepMatch, offset: Int) =>
-          Hypergraph.hyperedge(offset.toString, x.tr1, x.tr2)
-        case (x: CompoundStepNonMatch, offset: Int) =>
-          Hypergraph.hyperedge(offset.toString + "a", x.tr1) +
-            Hypergraph.hyperedge(offset.toString + "b", x.tr2)
-        case (x: CompoundStepInsert, offset: Int) =>
-          Hypergraph.hyperedge(offset.toString, x.tr)
-        case (x: CompoundStepDelete, offset: Int) =>
-          Hypergraph.hyperedge(offset.toString, x.tr)
-      }
-      val hypergraph = hyperedges.foldLeft(Hypergraph.empty[String, TokenRange]())((x, y) => y + x)
-      hypergraph
-    case SingletonHG(item1, item2, height) => height
-    case HGHG(item1, item2, height) => height
-  }
-  hypergraphToText(hg)
-  val dot = hypergraphToDot(hg)
-  val dotPath =
-    os.pwd / "src" / "main" / "outputs" / "hypergraph.dot"
-  os.write.over(dotPath, dot)
-  println(dot)
+  val hg: Map[Int, Hypergraph[String, TokenRange]] = nodeToClusters.zipWithIndex
+    .foldLeft(Map.empty[Int, Hypergraph[String, TokenRange]])((y, x) => {
+      x match
+        case (SingletonSingleton(item1, item2, height), i: Int) =>
+          val w1: List[Token] = darwinReadings(item1)
+          val w2: List[Token] = darwinReadings(item2)
+          val compactedEditSteps = compactEditSteps(tokensToEditSteps(w1, w2))
+          val hyperedges: Vector[Hypergraph[String, TokenRange]] = compactedEditSteps.zipWithIndex map {
+            case (x: CompoundStepMatch, offset: Int) =>
+              Hypergraph.hyperedge(offset.toString, x.tr1, x.tr2)
+            case (x: CompoundStepNonMatch, offset: Int) =>
+              Hypergraph.hyperedge(offset.toString + "a", x.tr1) +
+                Hypergraph.hyperedge(offset.toString + "b", x.tr2)
+            case (x: CompoundStepInsert, offset: Int) =>
+              Hypergraph.hyperedge(offset.toString, x.tr)
+            case (x: CompoundStepDelete, offset: Int) =>
+              Hypergraph.hyperedge(offset.toString, x.tr)
+          }
+          val hypergraph = hyperedges.foldLeft(Hypergraph.empty[String, TokenRange]())((x, y) => y + x)
+          y + ((i + darwinReadings.size) -> hypergraph)
+        case (SingletonHG(item1, item2, height), i: Int) =>
+          println(s"Singleton: $item1, HG: $item2")
+          println(s"HG: ${y(item2)}")
+          y + ((i + darwinReadings.size) -> Hypergraph.empty[String, TokenRange]())
+        case (HGHG(item1, item2, height), i: Int) =>
+          println(s"HG1: ${y(item1)}")
+          println(s"HG2: ${y(item2)}")
+          y + ((i + darwinReadings.size) -> Hypergraph.empty[String, TokenRange]())
+    })
+  println(hg)
+  // hypergraphToText(hg)
+//  val dot = hypergraphToDot(hg)
+//  val dotPath =
+//    os.pwd / "src" / "main" / "outputs" / "hypergraph.dot"
+//  os.write.over(dotPath, dot)
