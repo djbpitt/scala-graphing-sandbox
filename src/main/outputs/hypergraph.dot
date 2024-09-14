@@ -1,13 +1,19 @@
 graph MyGraph {
 rankdir = LR
-AP_2 -- "AP_2_0"
-AP_2 -- "AP_2_1a"
-AP_2 -- "AP_2_1b"
-AP_2 -- "AP_2_2"
-"AP_2_1b" [label="Group 1b"]
-"AP_2_1a" [label="Group 1a"]
-"AP_2_0" [label="Group 0"]
-"AP_2_2" [label="Group 2"]
-AP_0 -- "AP_0_0"
-"AP_0_0" [label="Group 0"]
+AP_8 -- "AP_8_0"
+AP_8 -- "AP_8_1a"
+AP_8 -- "AP_8_1b"
+AP_8 -- "AP_8_2"
+"AP_8_1b" [label="Group 1b"]
+"AP_8_1a" [label="Group 1a"]
+"AP_8_0" [label="Group 0"]
+"AP_8_2" [label="Group 2"]
+
+
+
+
+AP_6 -- "AP_6_0"
+"AP_6_0" [label="Group 0"]
+
+
 }

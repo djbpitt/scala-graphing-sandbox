@@ -245,9 +245,8 @@ def compactEditSteps(
           println(s"HG2: ${y(item2)}")
           y + ((i + darwinReadings.size) -> Hypergraph.empty[String, TokenRange]())
     })
-  println(hg)
   // hypergraphToText(hg)
-//  val dot = hypergraphToDot(hg)
-//  val dotPath =
-//    os.pwd / "src" / "main" / "outputs" / "hypergraph.dot"
-//  os.write.over(dotPath, dot)
+  val dot = hypergraphToDot(hg)
+  val dotPath =
+    os.pwd / "src" / "main" / "outputs" / "hypergraph.dot"
+  os.write.over(dotPath, dot)
