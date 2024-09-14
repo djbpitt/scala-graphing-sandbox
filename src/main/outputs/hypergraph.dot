@@ -4,6 +4,7 @@ AP_8 -- "AP_8_0"
 AP_8 -- "AP_8_1a"
 AP_8 -- "AP_8_1b"
 AP_8 -- "AP_8_2"
+"AP_8_1b"--"; " "AP_8_1a"--": " "AP_8_0"--"difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species " "AP_8_2"--"there is not a shadow of evidence in favour of this view : to assert that we could not breed our cart and race - horses , long and short - horned cattle , and poultry of various breeds , and esculent vegetables , for an unlimited number of generations , would be opposed to all experience . character of domestic varieties "
 "AP_8_1b" [label="Group 1b"]
 "AP_8_1a" [label="Group 1a"]
 "AP_8_0" [label="Group 0"]
@@ -12,8 +13,12 @@ AP_8 -- "AP_8_2"
 
 
 
+
+
 AP_6 -- "AP_6_0"
+"AP_6_0"--"natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved "
 "AP_6_0" [label="Group 0"]
+
 
 
 }
