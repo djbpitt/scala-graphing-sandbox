@@ -24,17 +24,37 @@ def hypergraphToText(h: Map[Int, Hypergraph[String, TokenRange]]): Unit =
 def hypergraphToDot(h: Map[Int, Hypergraph[String, TokenRange]])(using tokenArray: Vector[Token]): String =
   val first = "graph MyGraph {\nrankdir = LR"
   val last = "}"
-  val middle = h map ((i: Int, x: Hypergraph[String, TokenRange]) =>
-    val label = s"AP_$i"
-    val edges = x.hyperedges.map(e => s"$label -- \"${label}_$e\"")
-    val groups = x.hyperedges.toSeq // tuple of groupId, group label, and group reading
-      .map(e => (
-        e,
-        s"\"${label}_$e\" [label=\"Group $e\"]",
-        s"\"${tokenArray.slice(x.members(e).head.start, x.members(e).head.until).map(_.t).mkString}\""))
-    val readingList = groups.map(e => List(e._2.split(" ").head.mkString, "--", e._3).mkString).mkString(" ")
-    val edgeList = edges.toSeq.sorted.mkString("\n")
-    val groupList = groups.map(_._2).mkString("\n")
-    List(edgeList, readingList, groupList).mkString("\n")
-  )
-  List(first, middle.toSeq.reverse.mkString("\n"), last).mkString("\n")
+  val middle = (h map ((i: Int, x: Hypergraph[String, TokenRange]) =>
+    val ap_id = s"AP_$i" // AP_8
+    val group_ids = x.hyperedges
+      .map(e => s"${ap_id}_$e") // AP_8_1b
+    val group_labels = x.hyperedges
+      .map(e => s"Group $e") // "Group 1b"
+    val group_reading_ids = group_ids
+      .map(e => e + "_reading")
+    val group_readings = x.hyperedges.toSeq
+      .map(e =>
+        val tr = x.members(e).head // representative TokenRange
+        s"\"${tokenArray.slice(tr.start, tr.until).map(_.t).mkString}\""
+      )
+    val ap_to_group_edges = group_ids
+      .map(e => s"$ap_id -- \"$e\"")
+      .toVector
+      .sorted // AP_8 -- "AP_b_1b"
+    val group_to_reading_edges = group_ids
+      .zip(group_reading_ids)
+      .map((gid, rid) => s"\"$gid\" -- \"$rid\"")
+      .toVector
+      .sorted
+    val group_nodes = group_ids.zip(group_labels)
+      .map((gid, gl) => s"\"$gid\" [label=\"$gl\"]")
+    val reading_nodes = group_reading_ids.zip(group_readings)
+      .map((grid, gr) => s"\"$grid\" [shape=box label=$gr]")
+    List(
+      ap_to_group_edges.mkString("\n"),
+      group_to_reading_edges.mkString("\n"),
+      group_nodes.mkString("\n"),
+      reading_nodes.mkString("\n")
+    ).mkString("\n")
+  )).toSeq.reverse
+  List(first, middle.mkString("\n"), last).mkString("\n")
