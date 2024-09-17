@@ -36,7 +36,9 @@ def hypergraphToDot(h: Map[Int, Hypergraph[String, TokenRange]])(using tokenArra
       .sorted // "Group 1b"
     val group_reading_ids = group_ids
       .map(e => e + "_reading")
+      .sorted
     val group_readings = x.hyperedges.toSeq
+      .sorted
       .map(e =>
         val tr = x.members(e).head // representative TokenRange
         s"\"${tokenArray.slice(tr.start, tr.until).map(_.t).mkString}\""
