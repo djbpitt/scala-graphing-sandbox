@@ -237,15 +237,12 @@ def compactEditSteps(
           val hypergraph = hyperedges.foldLeft(Hypergraph.empty[String, TokenRange]())((x, y) => y + x)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (SingletonHG(item1, item2, height), i: Int) =>
-          val singletonTokens = tokenArray.filter(_.w == item1)
+          val singletonTokens = tokenArray.filter(e => e.w == item1 && e.g != -1)
           val HGTokenRange = y(item2).hyperedges map (e => y(item2).members(e).head)
           val HGTokens = HGTokenRange
             .toVector
             .flatMap(e => tokenArray.slice(e.start, e.until))
-//          println(s"Singleton witness $item1")
-//          println(singletonTokens)
-//          println(s"HG witness $item2")
-//          println(HGTokens)
+          val localTokenArray = singletonTokens ++ Vector(Token("0", "0", 0, -1)) ++ HGTokens
           y + ((i + darwinReadings.size) -> Hypergraph.empty[String, TokenRange]())
         case (HGHG(item1, item2, height), i: Int) =>
           y + ((i + darwinReadings.size) -> Hypergraph.empty[String, TokenRange]())
