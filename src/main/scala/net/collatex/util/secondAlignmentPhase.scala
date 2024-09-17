@@ -222,6 +222,29 @@ def processSingletonSingleton(compactedEditSteps: Vector[CompoundEditStep]) = {
   hypergraph
 }
 
+def processSingletonHG(
+    singletonTokens: Vector[Token],
+    HGTokens: Vector[Vector[Token]]
+): Hypergraph[String, TokenRange] =
+  val localTokenArray: Vector[Token] =
+    // temporary workaround for empty HG (not yet processing)
+    if HGTokens.nonEmpty then
+      singletonTokens ++
+        HGTokens.zipWithIndex
+          .flatMap((tokens, index) => Token(index.toString, index.toString, index, -1) +: tokens)
+    else Vector()
+  println(localTokenArray)
+  val hypergraph = Hypergraph.empty[String, TokenRange]()
+  hypergraph
+
+def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
+    tokenArray: Vector[Token]
+): Vector[Vector[Token]] =
+  val HGTokenRange = y.hyperedges map (e => y.members(e).head)
+  val HGTokens = HGTokenRange.toVector
+    .map(e => tokenArray.slice(e.start, e.until))
+  HGTokens
+
 // darwinReadings is only singletons
 // darwinHGs is only hypergraphs
 @main def secondAlignmentPhase(): Unit =
@@ -237,19 +260,21 @@ def processSingletonSingleton(compactedEditSteps: Vector[CompoundEditStep]) = {
     .foldLeft(Map.empty[Int, Hypergraph[String, TokenRange]])((y, x) => {
       x match
         case (SingletonSingleton(item1, item2, height), i: Int) =>
+          // prepare arguments
           val w1: List[Token] = darwinReadings(item1)
           val w2: List[Token] = darwinReadings(item2)
           val compactedEditSteps = compactEditSteps(tokensToEditSteps(w1, w2))
+          // process
           val hypergraph: Hypergraph[String, TokenRange] = processSingletonSingleton(compactedEditSteps)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (SingletonHG(item1, item2, height), i: Int) =>
+          // prepare arguments
           val singletonTokens = darwinReadings(item1).toVector
-          val HGTokenRange = y(item2).hyperedges map (e => y(item2).members(e).head)
-          val HGTokens = HGTokenRange
-            .toVector
-            .flatMap(e => tokenArray.slice(e.start, e.until))
-          val localTokenArray = singletonTokens ++ Vector(Token("0", "0", 0, -1)) ++ HGTokens
-          val hypergraph: Hypergraph[String, TokenRange] = Hypergraph.empty[String, TokenRange]()
+          val HGTokens = // temporarily exclude empty HG from processing
+            if y(item2).hyperedges.nonEmpty then identifyHGTokenRanges(y(item2))
+            else Vector()
+          // process
+          val hypergraph = processSingletonHG(singletonTokens, HGTokens)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (HGHG(item1, item2, height), i: Int) =>
           y + ((i + darwinReadings.size) -> Hypergraph.empty[String, TokenRange]())
