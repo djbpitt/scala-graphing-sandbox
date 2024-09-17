@@ -27,3 +27,38 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     )
     println(result)
     assert(result == expected)
+  test("test different singletons"):
+    val tokenArray =
+      Vector(
+        Token("Hi", "Hi", 0, 0),
+        Token(", ", ", ", 0, 1),
+        Token("Mom", "Mom", 0, 2),
+        Token("!", "!", 0, 3),
+        Token("0", "0", 0, -1),
+        Token("Hi", "Hi", 1, 5),
+        Token(", ", ", ", 1, 6),
+        Token("Dad", "Dad", 1, 7),
+        Token("!", "!", 1, 8)
+      )
+    val w1 = tokenArray.filter(e => e.w == 0 && e.g != -1).toList
+    val w2 = tokenArray.filter(e => e.w == 1 && e.g != -1).toList
+    val compactedEditSteps = compactEditSteps(tokensToEditSteps(w1, w2))
+    val result = processSingletonSingleton(compactedEditSteps)
+    val expected = Hypergraph(
+      Map(
+        "1b" -> Set(TokenRange(2, 3)),
+        "1a" -> Set(TokenRange(7, 8)),
+        "0" -> Set(TokenRange(8, 9), TokenRange(3, 4)),
+        "2" -> Set(TokenRange(5, 7), TokenRange(0, 2))
+      ),
+      Map(
+        TokenRange(5, 7) -> Set("2"),
+        TokenRange(3, 4) -> Set("0"),
+        TokenRange(7, 8) -> Set("1a"),
+        TokenRange(2, 3) -> Set("1b"),
+        TokenRange(8, 9) -> Set("0"),
+        TokenRange(0, 2) -> Set("2")
+      )
+    )
+    println(result)
+    assert(result == expected)
