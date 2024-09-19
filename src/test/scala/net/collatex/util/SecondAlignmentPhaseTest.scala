@@ -62,3 +62,39 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     )
     println(result)
     assert(result == expected)
+  test("test identifyHGTokenRanges()"):
+    given gTA: Vector[Token] = Vector(
+      Token("Hi", "Hi", 0, 0),
+      Token(", ", ", ", 0, 1),
+      Token("Mom", "Mom", 0, 2),
+      Token("!", "!", 0, 3),
+      Token("0", "0", 0, -1),
+      Token("Hi", "Hi", 1, 5),
+      Token(", ", ", ", 1, 6),
+      Token("Dad", "Dad", 1, 7),
+      Token("!", "!", 1, 8)
+    )
+    val hg = Hypergraph(
+      Map(
+        "1b" -> Set(TokenRange(2, 3)),
+        "1a" -> Set(TokenRange(7, 8)),
+        "0" -> Set(TokenRange(8, 9), TokenRange(3, 4)),
+        "2" -> Set(TokenRange(5, 7), TokenRange(0, 2))
+      ),
+      Map(
+        TokenRange(5, 7) -> Set("2"),
+        TokenRange(3, 4) -> Set("0"),
+        TokenRange(7, 8) -> Set("1a"),
+        TokenRange(2, 3) -> Set("1b"),
+        TokenRange(8, 9) -> Set("0"),
+        TokenRange(0, 2) -> Set("2")
+      )
+    )
+    val expected = Vector(
+      Vector(Token("Mom", "Mom", 0, 2)),
+      Vector(Token("Dad", "Dad", 1, 7)),
+      Vector(Token("!", "!", 1, 8)),
+      Vector(Token("Hi", "Hi", 1, 5), Token(", ", ", ", 1, 6))
+    )
+    val result = identifyHGTokenRanges(hg)
+    assert(result == expected)
