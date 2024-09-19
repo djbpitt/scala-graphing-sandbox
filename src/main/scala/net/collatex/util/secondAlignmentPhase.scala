@@ -86,9 +86,12 @@ def vectorizeReadings(node: List[List[Token]]): Array[Array[Double]] =
 def clusterReadings(data: Array[Array[Double]]): List[ClusterInfo] =
   val clustering = hclust(data, "ward")
   // data.length = number of vectors = number of witnesses, needed to construct ClusterInfo object
-  (clustering.tree zip clustering.height)
+  val result = (clustering.tree zip clustering.height)
     .map(e => ClusterInfo.of(e(0)(0), e(0)(1), e(1), data.length))
     .toList
+  println("Clustering")
+  result.foreach(println)
+  result
 
 def substitutionCost[A](a: A, b: A): Double =
   if (a == b) 0.0d else 1.0d
@@ -230,23 +233,28 @@ def createLocalTA(singletonTokens: Vector[Token], HGTokens: Vector[Vector[Token]
         .flatMap((tokens, index) => Token(index.toString, index.toString, index, -1) +: tokens)
   else Vector()
 }
+
 def processSingletonHG(
     singletonTokens: Vector[Token],
     hg: Hypergraph[String, TokenRange]
 )(using gTA: Vector[Token]): Hypergraph[String, TokenRange] =
   val HGTokens = identifyHGTokenRanges(hg) // needed for local TA
-  val localTA: Vector[Token] =
+  val lTA: Vector[Token] =
     createLocalTA(singletonTokens, HGTokens)
-  val (_, _, fdb) = createAlignedBlocks(localTA, -1, false) // full-depth blocks
+  val (_, _, fdb) = createAlignedBlocks(lTA, -1, false) // full-depth blocks
+  println("\nSingletonHG")
+  println(s"lTA: $lTA")
+  val lSts = lTA.groupBy(_.w).map((i, tokens) => tokens.map(_.t).mkString)
+  lSts.foreach(println)
   println(s"fdb: $fdb")
-  println(localTA(22).g) // gTA offset of first HG token to find correct hyperedge into which to merge singleton
-  println(s"singletonTokens: $singletonTokens")
-  println(s"hg: $hg")
   // FIXME: Works only with identical witnesses, single groups in hyperedge, etc.
   val newEdge = // merge singleton token range into original hg; must unpack because constructor expects varargs
     Hypergraph.hyperedge("0", (hg.members("0") + TokenRange(singletonTokens.head.g, singletonTokens.last.g)).toSeq: _*)
-  println(s"newEdge: $newEdge")
-  Hypergraph.empty[String, TokenRange]()
+  newEdge
+  // RESUME HERE 2024-09-19: Blocks connect HG and singleton, everything is part of a block or not part of a block
+  // Complication #1: Multiple blocks require transposition detection
+  // Complication #2: Multiple hyperedges require selecting the correct one
+  // Complication #3: A singletom may match parts of different hyperedges, requiring hypergraph and singleton splitting
 
 def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
     tokenArray: Vector[Token]
