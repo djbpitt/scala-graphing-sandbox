@@ -222,17 +222,20 @@ def processSingletonSingleton(compactedEditSteps: Vector[CompoundEditStep]) = {
   hypergraph
 }
 
+def createLocalTA(singletonTokens: Vector[Token], HGTokens: Vector[Vector[Token]]) = {
+  // temporary workaround for empty HG (not yet processing)
+  if HGTokens.nonEmpty then
+    singletonTokens ++
+      HGTokens.zipWithIndex
+        .flatMap((tokens, index) => Token(index.toString, index.toString, index, -1) +: tokens)
+  else Vector()
+}
 def processSingletonHG(
     singletonTokens: Vector[Token],
     HGTokens: Vector[Vector[Token]]
 ): Hypergraph[String, TokenRange] =
   val localTokenArray: Vector[Token] =
-    // temporary workaround for empty HG (not yet processing)
-    if HGTokens.nonEmpty then
-      singletonTokens ++
-        HGTokens.zipWithIndex
-          .flatMap((tokens, index) => Token(index.toString, index.toString, index, -1) +: tokens)
-    else Vector()
+    createLocalTA(singletonTokens, HGTokens)
   println(localTokenArray)
   val hypergraph = Hypergraph.empty[String, TokenRange]()
   hypergraph

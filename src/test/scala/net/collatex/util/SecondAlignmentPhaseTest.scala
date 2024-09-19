@@ -68,11 +68,16 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
       Token(", ", ", ", 0, 1),
       Token("Mom", "Mom", 0, 2),
       Token("!", "!", 0, 3),
-      Token("0", "0", 0, -1),
+      Token("-1", "-1", 0, 4),
       Token("Hi", "Hi", 1, 5),
       Token(", ", ", ", 1, 6),
       Token("Dad", "Dad", 1, 7),
-      Token("!", "!", 1, 8)
+      Token("!", "!", 1, 8),
+      Token("-2", "-2", 1, 9),
+      Token("Hi", "Hi", 2, 10),
+      Token(", ", ", ", 2, 11),
+      Token("parents", "parents", 2, 12),
+      Token("!", "!", 2, 13)
     )
     val hg = Hypergraph(
       Map(
@@ -97,4 +102,34 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
       Vector(Token("Hi", "Hi", 1, 5), Token(", ", ", ", 1, 6))
     )
     val result = identifyHGTokenRanges(hg)
+    assert(result == expected)
+  test("test createLocalTA()"):
+    val singletonTokens = Vector(
+      Token("Hi", "Hi", 2, 10),
+      Token(", ", ", ", 2, 11),
+      Token("parents", "parents", 2, 12),
+      Token("!", "!", 2, 13)
+    )
+    val hgTokens = Vector(
+      Vector(Token("Mom", "Mom", 0, 2)),
+      Vector(Token("Dad", "Dad", 1, 7)),
+      Vector(Token("!", "!", 1, 8)),
+      Vector(Token("Hi", "Hi", 1, 5), Token(", ", ", ", 1, 6))
+    )
+    val expected = Vector(
+      Token("Hi", "Hi", 2, 10),
+      Token(", ", ", ", 2, 11),
+      Token("parents", "parents", 2, 12),
+      Token("!", "!", 2, 13),
+      Token("0", "0", 0, -1),
+      Token("Mom", "Mom", 0, 2),
+      Token("1", "1", 1, -1),
+      Token("Dad", "Dad", 1, 7),
+      Token("2", "2", 2, -1),
+      Token("!", "!", 1, 8),
+      Token("3", "3", 3, -1),
+      Token("Hi", "Hi", 1, 5),
+      Token(", ", ", ", 1, 6)
+    )
+    val result = createLocalTA(singletonTokens, hgTokens)
     assert(result == expected)
