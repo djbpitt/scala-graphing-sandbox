@@ -1,7 +1,7 @@
 package net.collatex.util
 
 import net.collatex.reptilian.TokenRange.LegalTokenRange
-import net.collatex.reptilian.{AlignmentPoint, Siglum, Token, TokenRange, WitnessReadings}
+import net.collatex.reptilian.{AlignmentPoint, Siglum, Token, TokenRange, WitnessReadings, createAlignedBlocks}
 import upickle.default.*
 import smile.clustering.hclust
 import smile.data.DataFrame
@@ -232,13 +232,14 @@ def createLocalTA(singletonTokens: Vector[Token], HGTokens: Vector[Vector[Token]
 }
 def processSingletonHG(
     singletonTokens: Vector[Token],
-    HGTokens: Vector[Vector[Token]]
-): Hypergraph[String, TokenRange] =
-  val localTokenArray: Vector[Token] =
+    hg: Hypergraph[String, TokenRange]
+)(using gTA: Vector[Token]): Hypergraph[String, TokenRange] =
+  val HGTokens = identifyHGTokenRanges(hg)
+  val localTA: Vector[Token] =
     createLocalTA(singletonTokens, HGTokens)
-  println(localTokenArray)
-  val hypergraph = Hypergraph.empty[String, TokenRange]()
-  hypergraph
+  val (_, _, fdb) = createAlignedBlocks(localTA, -1, false) // full-depth blocks
+  val newHypergraph = Hypergraph.empty[String, TokenRange]()
+  newHypergraph
 
 def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
     tokenArray: Vector[Token]
@@ -261,6 +262,7 @@ def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
 
   val hg: Map[Int, Hypergraph[String, TokenRange]] = nodeToClusters.zipWithIndex
     .foldLeft(Map.empty[Int, Hypergraph[String, TokenRange]])((y, x) => {
+      // TODO: If height == 0 witnesses are identical (or possibly transposed!); can we take a shortcut?
       x match
         case (SingletonSingleton(item1, item2, height), i: Int) =>
           // prepare arguments
@@ -271,13 +273,10 @@ def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
           val hypergraph: Hypergraph[String, TokenRange] = processSingletonSingleton(compactedEditSteps)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (SingletonHG(item1, item2, height), i: Int) =>
-          // prepare arguments
+          // prepare arguments, tokens for singleton and Hypergraph instance (!) for hypergraph
           val singletonTokens = darwinReadings(item1).toVector
-          val HGTokens = // temporarily exclude empty HG from processing
-            if y(item2).hyperedges.nonEmpty then identifyHGTokenRanges(y(item2))
-            else Vector()
-          // process
-          val hypergraph = processSingletonHG(singletonTokens, HGTokens)
+          val hg = if y(item2).hyperedges.nonEmpty then y(item2) else Hypergraph.empty[String, TokenRange]()
+          val hypergraph = processSingletonHG(singletonTokens, hg)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (HGHG(item1, item2, height), i: Int) =>
           y + ((i + darwinReadings.size) -> Hypergraph.empty[String, TokenRange]())
