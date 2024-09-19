@@ -234,12 +234,19 @@ def processSingletonHG(
     singletonTokens: Vector[Token],
     hg: Hypergraph[String, TokenRange]
 )(using gTA: Vector[Token]): Hypergraph[String, TokenRange] =
-  val HGTokens = identifyHGTokenRanges(hg)
+  val HGTokens = identifyHGTokenRanges(hg) // needed for local TA
   val localTA: Vector[Token] =
     createLocalTA(singletonTokens, HGTokens)
   val (_, _, fdb) = createAlignedBlocks(localTA, -1, false) // full-depth blocks
-  val newHypergraph = Hypergraph.empty[String, TokenRange]()
-  newHypergraph
+  println(s"fdb: $fdb")
+  println(localTA(22).g) // gTA offset of first HG token to find correct hyperedge into which to merge singleton
+  println(s"singletonTokens: $singletonTokens")
+  println(s"hg: $hg")
+  // FIXME: Works only with identical witnesses, single groups in hyperedge, etc.
+  val newEdge = // merge singleton token range into original hg; must unpack because constructor expects varargs
+    Hypergraph.hyperedge("0", (hg.members("0") + TokenRange(singletonTokens.head.g, singletonTokens.last.g)).toSeq: _*)
+  println(s"newEdge: $newEdge")
+  Hypergraph.empty[String, TokenRange]()
 
 def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
     tokenArray: Vector[Token]
