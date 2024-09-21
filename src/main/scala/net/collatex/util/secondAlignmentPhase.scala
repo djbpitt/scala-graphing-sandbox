@@ -246,8 +246,19 @@ def processSingletonHG(
   println(s"lTA: $lTA")
   val lSts = lTA.groupBy(_.w).map((i, tokens) => tokens.map(_.t).mkString)
   lSts.foreach(println)
-  println(s"fdb: $fdb")
-  // FIXME: Works only with identical witnesses, single groups in hyperedge, etc.
+  println(s"fdb: $fdb") // assume single block (for now)
+  // Split singleton into preblock, block, postblock
+  val singletonPreBlockRange = TokenRange(0, fdb.head.instances.head)
+  val singletonBlockRange = TokenRange(fdb.head.instances.head, fdb.head.instances.head + fdb.head.length)
+  val singletonPostBlockRange = TokenRange(fdb.head.instances.head + fdb.head.length, fdb.head.instances.last - 1)
+  println(s"singletonPreBlock: $singletonPreBlockRange")
+  println(lTA.slice(singletonPreBlockRange.start, singletonPreBlockRange.until).map(_.t).mkString)
+  println(s"singletonBlock: $singletonBlockRange")
+  println(lTA.slice(singletonBlockRange.start, singletonBlockRange.until).map(_.t).mkString)
+  println(s"singletonPostBlock: $singletonPostBlockRange")
+  println(lTA.slice(singletonPostBlockRange.start, singletonPostBlockRange.until).map(_.t).mkString)
+  // Split input hypergraph into preblock, block, postblock
+
   val newEdge = // merge singleton token range into original hg; must unpack because constructor expects varargs
     Hypergraph.hyperedge("0", (hg.members("0") + TokenRange(singletonTokens.head.g, singletonTokens.last.g)).toSeq: _*)
   newEdge
