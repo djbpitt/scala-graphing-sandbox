@@ -14,14 +14,14 @@ import SplitTokenRangeResult.*
 // yet to be aligned and that it then calls the suffix array, traversal graph code itself
 // Basically an inverse of the current control flow.
 
-def splitTokenRange(tr: LegalTokenRange, positionToSplit: Int): SplitTokenRangeResult =
-  if positionToSplit < tr.start || positionToSplit > tr.until then IllegalSplitValue
-  else if positionToSplit == tr.start then SecondOnlyPopulated(EmptyTokenRange(tr.start, tr.start), tr)
-  else if positionToSplit == tr.until then FirstOnlyPopulated(tr, EmptyTokenRange(tr.until, tr.until))
+def splitTokenRange(tr: LegalTokenRange, positionToSplit: Int): Either[IllegalSplitValue.type, SplitTokenRangeResult] =
+  if positionToSplit < tr.start || positionToSplit > tr.until then Left(IllegalSplitValue)
+  else if positionToSplit == tr.start then Right(SecondOnlyPopulated(EmptyTokenRange(tr.start, tr.start), tr))
+  else if positionToSplit == tr.until then Right(FirstOnlyPopulated(tr, EmptyTokenRange(tr.until, tr.until)))
   else
     val range1: LegalTokenRange = LegalTokenRange(tr.start, positionToSplit)
     val range2: LegalTokenRange = LegalTokenRange(positionToSplit, tr.until)
-    BothPopulated(range1, range2)
+    Right(BothPopulated(range1, range2))
 
 /** splitWitnessGroup()
   *
@@ -41,23 +41,29 @@ def splitTokenRange(tr: LegalTokenRange, positionToSplit: Int): SplitTokenRangeR
 def splitWitnessGroup(
     wg: WitnessReadings,
     positionsToSplit: immutable.Map[Siglum, Int]
-): (WitnessReadings, WitnessReadings) =
+) =
   val splits =
     wg.collect { case (e: Siglum, f: LegalTokenRange) =>
       e -> splitTokenRange(f, positionsToSplit(e))
     }
+  // TODO: Can we combine all rights with one another and all lefts with one another?
+  // What happens, with lefts, if we hit a SecondOnlyPopulated? Currently we do nothing;
+  //   if we merge, we'll add an empty token range, which we probably don't want — but
+  //   which we could filter out later.
+  // FIXME: We throw away IllegalSplitValue errors silently. Log? Incorporate
+  //   into visualization?
   val lefts = splits.foldLeft(immutable.Map.empty[Siglum, TokenRange])((acc, kv) =>
     kv match {
-      case (e: Siglum, f: BothPopulated)      => acc + (e -> f.range1)
-      case (e: Siglum, f: FirstOnlyPopulated) => acc + (e -> f.range1)
-      case _                                  => acc
+      case (e: Siglum, Right(f: BothPopulated))      => acc + (e -> f.range1)
+      case (e: Siglum, Right(f: FirstOnlyPopulated)) => acc + (e -> f.range1)
+      case _                                         => acc
     }
   )
   val rights = splits.foldLeft(immutable.Map.empty[Siglum, TokenRange])((acc, kv) =>
     kv match {
-      case (e: Siglum, f: BothPopulated)       => acc + (e -> f.range2)
-      case (e: Siglum, f: SecondOnlyPopulated) => acc + (e -> f.range2)
-      case _                                   => acc
+      case (e: Siglum, Right(f: BothPopulated))       => acc + (e -> f.range2)
+      case (e: Siglum, Right(f: SecondOnlyPopulated)) => acc + (e -> f.range2)
+      case _                                          => acc
     }
   )
   (lefts, rights)

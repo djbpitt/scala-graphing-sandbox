@@ -1,7 +1,8 @@
 package net.collatex.util
 
-import net.collatex.reptilian.TokenRange.LegalTokenRange
-import net.collatex.reptilian.{AlignmentPoint, Siglum, Token, TokenRange, WitnessReadings, createAlignedBlocks}
+import net.collatex.reptilian.SplitTokenRangeResult.*
+import net.collatex.reptilian.TokenRange.*
+import net.collatex.reptilian.{AlignmentPoint, Siglum, SplitTokenRangeResult, Token, TokenRange, WitnessReadings, createAlignedBlocks, splitTokenRange}
 import upickle.default.*
 import smile.clustering.hclust
 import smile.data.DataFrame
@@ -247,16 +248,17 @@ def processSingletonHG(
   val lSts = lTA.groupBy(_.w).map((i, tokens) => tokens.map(_.t).mkString)
   lSts.foreach(println)
   println(s"fdb: $fdb") // assume single block (for now)
+  val firstBlock = fdb.head
   // Split singleton into preblock, block, postblock
-  val singletonPreBlockRange = TokenRange(0, fdb.head.instances.head)
-  val singletonBlockRange = TokenRange(fdb.head.instances.head, fdb.head.instances.head + fdb.head.length)
-  val singletonPostBlockRange = TokenRange(fdb.head.instances.head + fdb.head.length, fdb.head.instances.last - 1)
-  println(s"singletonPreBlock: $singletonPreBlockRange")
-  println(lTA.slice(singletonPreBlockRange.start, singletonPreBlockRange.until).map(_.t).mkString)
-  println(s"singletonBlock: $singletonBlockRange")
-  println(lTA.slice(singletonBlockRange.start, singletonBlockRange.until).map(_.t).mkString)
-  println(s"singletonPostBlock: $singletonPostBlockRange")
-  println(lTA.slice(singletonPostBlockRange.start, singletonPostBlockRange.until).map(_.t).mkString)
+  val firstSingletonSplit = // split at start of block to break off leading preblock
+    splitTokenRange(
+      LegalTokenRange(firstBlock.instances.head, firstBlock.instances.head + firstBlock.length),
+      firstBlock.instances.head
+    )
+  println(firstSingletonSplit)
+  val preBlock = firstSingletonSplit match
+    case Left(s) => RuntimeException("Illegal split value")
+    case Right(s) => s.range1
   // Split input hypergraph into preblock, block, postblock
 
   val newEdge = // merge singleton token range into original hg; must unpack because constructor expects varargs

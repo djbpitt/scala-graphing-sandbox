@@ -2,7 +2,6 @@ package net.collatex.reptilian
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-
 import scala.math.Ordering
 
 opaque type Siglum = String
@@ -38,42 +37,43 @@ enum SplitTokenRangeResult:
   case BothPopulated(range1: LegalTokenRange, range2: LegalTokenRange) extends SplitTokenRangeResult
   case FirstOnlyPopulated(range1: LegalTokenRange, range2: EmptyTokenRange) extends SplitTokenRangeResult
   case SecondOnlyPopulated(range1: EmptyTokenRange, range2: LegalTokenRange) extends SplitTokenRangeResult
-  case IllegalSplitValue extends SplitTokenRangeResult
+  def range1: TokenRange
+  def range2: TokenRange
+import SplitTokenRangeResult.*
+
+case object IllegalSplitValue
 
 type WitnessReadings = Map[Siglum, TokenRange] // type alias
 
 sealed trait AlignmentUnit // supertype ExpandedNode (with children) and AlignmentPoint (with groups)
 
-final case class AlignmentPoint(witnessGroups: Set[WitnessReadings])
-    extends AlignmentUnit:
-    def combineWitnessGroups: WitnessReadings = // create single WitnessGroups for instance
-      val result = this.witnessGroups.flatten.toMap
-      result
+final case class AlignmentPoint(witnessGroups: Set[WitnessReadings]) extends AlignmentUnit:
+  def combineWitnessGroups: WitnessReadings = // create single WitnessGroups for instance
+    val result = this.witnessGroups.flatten.toMap
+    result
 
 /** Custom constructor to simplify creation of AlignmentPoint
- *
- * Input is a varargs of (Siglum, TokenRange). Will eventually create only WitnessGroups
- * and no WitnessReadings
- */
+  *
+  * Input is a varargs of (Siglum, TokenRange). Will eventually create only WitnessGroups and no WitnessReadings
+  */
 object AlignmentPoint {
   def apply(m: (Siglum, TokenRange)*)(using gTa: Vector[Token]): AlignmentPoint =
     val wr = m.toMap
     val wg = wr
-    .groupBy((_, offsets) =>
-      gTa
-        .slice(offsets.start, offsets.until)
-        .map(_.n)
-    ) // groups readings by shared text (n property); can we improve the performance here?
-    .values // we don't care about the shared text after we've used it for grouping
-    .toSet
+      .groupBy((_, offsets) =>
+        gTa
+          .slice(offsets.start, offsets.until)
+          .map(_.n)
+      ) // groups readings by shared text (n property); can we improve the performance here?
+      .values // we don't care about the shared text after we've used it for grouping
+      .toSet
     AlignmentPoint(wg)
 }
 
 /** Zone not yet processed
- *
- * Same input as AlignmentPoint (varargs of (Siglum, TokenRange)), but create only
- * WitnessReadings and no WitnessGroups
- * */
+  *
+  * Same input as AlignmentPoint (varargs of (Siglum, TokenRange)), but create only WitnessReadings and no WitnessGroups
+  */
 final case class UnalignedZone(witnessReadings: WitnessReadings) extends AlignmentUnit
 
 object UnalignedZone {
