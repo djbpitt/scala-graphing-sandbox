@@ -14,6 +14,8 @@ import SplitTokenRangeResult.*
 // yet to be aligned and that it then calls the suffix array, traversal graph code itself
 // Basically an inverse of the current control flow.
 
+// RESUME HERE 2024-09-21: Revise to allow split on empty range; handle on return, rather than here
+
 def splitTokenRange(tr: LegalTokenRange, positionToSplit: Int): Either[IllegalSplitValue.type, SplitTokenRangeResult] =
   if positionToSplit < tr.start || positionToSplit > tr.until then Left(IllegalSplitValue)
   else if positionToSplit == tr.start then Right(SecondOnlyPopulated(EmptyTokenRange(tr.start, tr.start), tr))
