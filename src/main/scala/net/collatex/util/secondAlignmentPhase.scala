@@ -245,6 +245,19 @@ def createLocalTA(singletonTokens: Vector[Token], HGTokens: Vector[Vector[Token]
   else Vector()
 }
 
+def splitSingleton(singletonTokenRange: TokenRange, blockTokenRange: TokenRange) =
+  // Split singleton into preblock, block, postblock; ignore block because we already know it
+  val firstSplitResult =
+    splitTokenRange(singletonTokenRange, blockTokenRange.until)
+  val (pre, post) = firstSplitResult match
+    case Left(_) => throw RuntimeException("First split failed")
+    case Right(s) =>
+      splitTokenRange(s.range1, blockTokenRange.start) match
+        case Left(_) => throw RuntimeException("Second split failed")
+        case Right(s1) =>
+          (s1.range1, s.range2)
+  (pre, post)
+
 def processSingletonHG(
     singletonTokens: Vector[Token],
     hg: Hypergraph[String, TokenRange]
@@ -254,22 +267,14 @@ def processSingletonHG(
     createLocalTA(singletonTokens, HGTokens)
   val (_, _, fdb) = createAlignedBlocks(lTA, -1, false) // full-depth blocks
   val firstBlock = fdb.head
-  // Split singleton into preblock, block, postblock
-  val firstSplitResult =
-    splitTokenRange(
-      TokenRange(singletonTokens.head.g, singletonTokens.last.g),
-      lTA(firstBlock.instances.head + firstBlock.length - 1).g
-    )
-  val (pre, block, post) = firstSplitResult match
-    case Left(_) => throw RuntimeException("First split failed")
-    case Right(s) =>
-      splitTokenRange(s.range1, lTA(firstBlock.instances.head).g) match
-        case Left(_) => throw RuntimeException("Second split failed")
-        case Right(s1) =>
-          (s1.range1, s1.range2, s.range2)
-  println(s"pre: $pre; block: $block; post: $post")
+  val singletonTokenRange = TokenRange(singletonTokens.head.g, singletonTokens.last.g)
+  val blockTokenRange =
+    TokenRange(lTA(firstBlock.instances.head).g,lTA(firstBlock.instances.head + firstBlock.length - 1).g)
+  val (pre: TokenRange, post: TokenRange) = splitSingleton(singletonTokenRange, blockTokenRange)
+  println(s"pre: $pre; block: $blockTokenRange; post: $post")
+  println(s"blockTokenRange: $blockTokenRange")
   println(s"pre text: ${gTA.slice(pre.start, pre.until).map(_.t).mkString}")
-  println(s"block text: ${gTA.slice(block.start, block.until).map(_.t).mkString}")
+  println(s"block text: ${gTA.slice(blockTokenRange.start, blockTokenRange.until).map(_.t).mkString}")
   println(s"post text: ${gTA.slice(post.start, post.until).map(_.t).mkString}")
 
   val newEdge = // merge singleton token range into original hg; must unpack because constructor expects varargs
