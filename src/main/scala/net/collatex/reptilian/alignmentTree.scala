@@ -41,7 +41,11 @@ enum SplitTokenRangeResult:
   def range2: TokenRange
 import SplitTokenRangeResult.*
 
-case object IllegalSplitValue
+enum SplitTokenRangeError:
+  case IllegalSplitValueError
+  case EmptyTokenRangeError
+  case IllegalTokenRangeError
+import SplitTokenRangeError.*
 
 type WitnessReadings = Map[Siglum, TokenRange] // type alias
 

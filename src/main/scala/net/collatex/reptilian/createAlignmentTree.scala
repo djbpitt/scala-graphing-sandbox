@@ -5,6 +5,7 @@ import scala.collection.{immutable, mutable}
 import scala.collection.mutable.{ListBuffer, Map}
 import TokenRange.*
 import SplitTokenRangeResult.*
+import net.collatex.reptilian.SplitTokenRangeError.*
 
 // This method transform an alignment on the global level of the fullest depth blocks
 // into an alignment tree by splitting
@@ -14,13 +15,13 @@ import SplitTokenRangeResult.*
 // yet to be aligned and that it then calls the suffix array, traversal graph code itself
 // Basically an inverse of the current control flow.
 
-def splitTokenRange(tr: TokenRange, positionToSplit: Int): Either[IllegalSplitValue.type, SplitTokenRangeResult] =
+def splitTokenRange(tr: TokenRange, positionToSplit: Int): Either[SplitTokenRangeError, SplitTokenRangeResult] =
   tr match
-    case _: EmptyTokenRange => Left(IllegalSplitValue) // no split position can fall within an empty range
-    case _: IllegalTokenRange => Left(IllegalSplitValue) // illegal range is always an error
+    case _: EmptyTokenRange => Left(EmptyTokenRangeError) // no split position can fall within an empty range
+    case _: IllegalTokenRange => Left(IllegalTokenRangeError) // illegal range is always an error
     case x: LegalTokenRange if positionToSplit == x.start => Right(SecondOnlyPopulated(EmptyTokenRange(x.start, x.start), x))
     case x: LegalTokenRange if positionToSplit == x.until => Right(FirstOnlyPopulated(x, EmptyTokenRange(x.until, x.until)))
-    case x: LegalTokenRange if positionToSplit < x.start || positionToSplit > x.until => Left(IllegalSplitValue)
+    case x: LegalTokenRange if positionToSplit < x.start || positionToSplit > x.until => Left(IllegalSplitValueError)
     case x: LegalTokenRange =>
       val range1: LegalTokenRange = LegalTokenRange(x.start, positionToSplit)
       val range2: LegalTokenRange = LegalTokenRange(positionToSplit, x.until)
