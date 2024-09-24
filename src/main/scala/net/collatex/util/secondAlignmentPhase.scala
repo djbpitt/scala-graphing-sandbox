@@ -247,13 +247,14 @@ def createLocalTA(singletonTokens: Vector[Token], HGTokens: Vector[Vector[Token]
 
 def splitSingleton(singletonTokenRange: TokenRange, blockTokenRange: TokenRange) =
   // Split singleton into preblock, block, postblock; ignore block because we already know it
+  // TODO: Return Either and let caller manage exceptions
   val firstSplitResult =
     splitTokenRange(singletonTokenRange, blockTokenRange.until)
   val (pre, post) = firstSplitResult match
-    case Left(_) => throw RuntimeException("First split failed")
+    case Left(_) => throw RuntimeException("First split (for post) failed")
     case Right(s) =>
       splitTokenRange(s.range1, blockTokenRange.start) match
-        case Left(_) => throw RuntimeException("Second split failed")
+        case Left(_) => throw RuntimeException("Second split (for pre) failed")
         case Right(s1) =>
           (s1.range1, s.range2)
   (pre, post)

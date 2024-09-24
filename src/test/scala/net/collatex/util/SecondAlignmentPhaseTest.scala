@@ -133,3 +133,31 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     )
     val result = createLocalTA(singletonTokens, hgTokens)
     assert(result == expected)
+  test("test splitSingleton() with pre and post"):
+    val expected = (TokenRange(0, 2), TokenRange(4, 5))
+    val result = splitSingleton(TokenRange(0, 5), TokenRange(2, 4))
+    assert(result == expected)
+  test("test splitSingleton() with pre only"):
+    val expected = (TokenRange(0, 2), TokenRange(4, 5))
+    val result = splitSingleton(TokenRange(0, 5), TokenRange(2, 4))
+    assert(result == expected)
+  test("test splitSingleton() with post only"):
+    val expected = (TokenRange(0, 0), TokenRange(3, 5))
+    val result = splitSingleton(TokenRange(0, 5), TokenRange(0, 3))
+    assert(result == expected)
+  test("test splitSingleton() without pre or post"):
+    val expected = (TokenRange(0, 0), TokenRange(5, 5))
+    val result = splitSingleton(TokenRange(0, 5), TokenRange(0, 5))
+    assert(result == expected)
+  test("test splitSingleton() with illegal start"):
+    val caught = intercept[RuntimeException](splitSingleton(TokenRange(2, 5), TokenRange(0, 5)))
+    assert(caught.getMessage == "Second split (for pre) failed")
+  test("test splitSingleton() with illegal end"):
+    val caught = intercept[RuntimeException](splitSingleton(TokenRange(0, 4), TokenRange(3, 5)))
+    assert(caught.getMessage == "First split (for post) failed")
+  test("test splitSingleton() with illegal singleton token range"):
+    val caught = intercept[RuntimeException](splitSingleton(TokenRange(5, 1), TokenRange(2, 3)))
+    assert(Set("Second split (for pre) failed", "First split (for post) failed").contains(caught.getMessage))
+  test("test splitSingleton() with empty singleton token range"):
+    val caught = intercept[RuntimeException](splitSingleton(TokenRange(3, 3), TokenRange(3, 3)))
+    assert(Set("Second split (for pre) failed", "First split (for post) failed").contains(caught.getMessage))
