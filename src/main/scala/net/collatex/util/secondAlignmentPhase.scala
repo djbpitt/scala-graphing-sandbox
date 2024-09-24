@@ -5,6 +5,7 @@ import net.collatex.reptilian.TokenRange.*
 import net.collatex.reptilian.{
   AlignmentPoint,
   Siglum,
+  SplitTokenRangeError,
   SplitTokenRangeResult,
   Token,
   TokenRange,
@@ -252,11 +253,6 @@ def processSingletonHG(
   val lTA: Vector[Token] =
     createLocalTA(singletonTokens, HGTokens)
   val (_, _, fdb) = createAlignedBlocks(lTA, -1, false) // full-depth blocks
-  println("\nSingletonHG")
-  println(s"lTA: $lTA")
-  val lSts = lTA.groupBy(_.w).map((i, tokens) => tokens.map(_.t).mkString)
-  lSts.foreach(println)
-  println(s"fdb: $fdb") // assume single block (for now)
   val firstBlock = fdb.head
   // Split singleton into preblock, block, postblock
   val firstSplitResult =
@@ -264,16 +260,17 @@ def processSingletonHG(
       TokenRange(singletonTokens.head.g, singletonTokens.last.g),
       lTA(firstBlock.instances.head + firstBlock.length - 1).g
     )
-  println(s"firstSplitResult: $firstSplitResult")
-//  val secondSplitResult = firstSplitResult match
-//    case Left(s) => throw RuntimeException("First split failed")
-//    case Right(s) => splitTokenRange(s.range1, )
-
-//  println(firstSingletonSplit)
-//  val preBlock = firstSingletonSplit match
-//    case Left(s) => RuntimeException("Illegal split value")
-//    case Right(s) => s.range1
-  // Split input hypergraph into preblock, block, postblock
+  val (pre, block, post) = firstSplitResult match
+    case Left(_) => throw RuntimeException("First split failed")
+    case Right(s) =>
+      splitTokenRange(s.range1, lTA(firstBlock.instances.head).g) match
+        case Left(_) => throw RuntimeException("Second split failed")
+        case Right(s1) =>
+          (s1.range1, s1.range2, s.range2)
+  println(s"pre: $pre; block: $block; post: $post")
+  println(s"pre text: ${gTA.slice(pre.start, pre.until).map(_.t).mkString}")
+  println(s"block text: ${gTA.slice(block.start, block.until).map(_.t).mkString}")
+  println(s"post text: ${gTA.slice(post.start, post.until).map(_.t).mkString}")
 
   val newEdge = // merge singleton token range into original hg; must unpack because constructor expects varargs
     Hypergraph.hyperedge("0", (hg.members("0") + TokenRange(singletonTokens.head.g, singletonTokens.last.g)).toSeq: _*)
