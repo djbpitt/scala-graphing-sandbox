@@ -42,6 +42,14 @@ class AlignmentTreeTest extends AnyFunSuite:
     val expected = Left(IllegalSplitValue)
     val result = splitTokenRange(LegalTokenRange(1, 4), 5)
     assert(result == expected)
+  test("Split empty token range (should fail)"):
+    val expected = Left(IllegalSplitValue)
+    val result = splitTokenRange(EmptyTokenRange(1,1), 1)
+    assert(result == expected)
+  test("Split illegal token range (should fail)"):
+    val expected = Left(IllegalSplitValue)
+    val result = splitTokenRange(EmptyTokenRange(4,2), 3)
+    assert(result == expected)
 
   /** Tests for splitWitnessGroup()
     */

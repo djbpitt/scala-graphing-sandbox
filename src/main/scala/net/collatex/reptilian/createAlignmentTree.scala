@@ -14,16 +14,17 @@ import SplitTokenRangeResult.*
 // yet to be aligned and that it then calls the suffix array, traversal graph code itself
 // Basically an inverse of the current control flow.
 
-// RESUME HERE 2024-09-21: Revise to allow split on empty range; handle on return, rather than here
-
-def splitTokenRange(tr: LegalTokenRange, positionToSplit: Int): Either[IllegalSplitValue.type, SplitTokenRangeResult] =
-  if positionToSplit < tr.start || positionToSplit > tr.until then Left(IllegalSplitValue)
-  else if positionToSplit == tr.start then Right(SecondOnlyPopulated(EmptyTokenRange(tr.start, tr.start), tr))
-  else if positionToSplit == tr.until then Right(FirstOnlyPopulated(tr, EmptyTokenRange(tr.until, tr.until)))
-  else
-    val range1: LegalTokenRange = LegalTokenRange(tr.start, positionToSplit)
-    val range2: LegalTokenRange = LegalTokenRange(positionToSplit, tr.until)
-    Right(BothPopulated(range1, range2))
+def splitTokenRange(tr: TokenRange, positionToSplit: Int): Either[IllegalSplitValue.type, SplitTokenRangeResult] =
+  tr match
+    case _: EmptyTokenRange => Left(IllegalSplitValue) // no split position can fall within an empty range
+    case _: IllegalTokenRange => Left(IllegalSplitValue) // illegal range is always an error
+    case x: LegalTokenRange if positionToSplit == x.start => Right(SecondOnlyPopulated(EmptyTokenRange(x.start, x.start), x))
+    case x: LegalTokenRange if positionToSplit == x.until => Right(FirstOnlyPopulated(x, EmptyTokenRange(x.until, x.until)))
+    case x: LegalTokenRange if positionToSplit < x.start || positionToSplit > x.until => Left(IllegalSplitValue)
+    case x: LegalTokenRange =>
+      val range1: LegalTokenRange = LegalTokenRange(x.start, positionToSplit)
+      val range2: LegalTokenRange = LegalTokenRange(positionToSplit, x.until)
+      Right(BothPopulated(range1, range2))
 
 /** splitWitnessGroup()
   *
