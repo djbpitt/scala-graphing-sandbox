@@ -2,7 +2,16 @@ package net.collatex.util
 
 import net.collatex.reptilian.SplitTokenRangeResult.*
 import net.collatex.reptilian.TokenRange.*
-import net.collatex.reptilian.{AlignmentPoint, Siglum, SplitTokenRangeResult, Token, TokenRange, WitnessReadings, createAlignedBlocks, splitTokenRange}
+import net.collatex.reptilian.{
+  AlignmentPoint,
+  Siglum,
+  SplitTokenRangeResult,
+  Token,
+  TokenRange,
+  WitnessReadings,
+  createAlignedBlocks,
+  splitTokenRange
+}
 import upickle.default.*
 import smile.clustering.hclust
 import smile.data.DataFrame
@@ -250,15 +259,20 @@ def processSingletonHG(
   println(s"fdb: $fdb") // assume single block (for now)
   val firstBlock = fdb.head
   // Split singleton into preblock, block, postblock
-  val firstSingletonSplit = // split at start of block to break off leading preblock
+  val firstSplitResult =
     splitTokenRange(
-      LegalTokenRange(firstBlock.instances.head, firstBlock.instances.head + firstBlock.length),
-      firstBlock.instances.head
+      TokenRange(singletonTokens.head.g, singletonTokens.last.g),
+      lTA(firstBlock.instances.head + firstBlock.length - 1).g
     )
-  println(firstSingletonSplit)
-  val preBlock = firstSingletonSplit match
-    case Left(s) => RuntimeException("Illegal split value")
-    case Right(s) => s.range1
+  println(s"firstSplitResult: $firstSplitResult")
+//  val secondSplitResult = firstSplitResult match
+//    case Left(s) => throw RuntimeException("First split failed")
+//    case Right(s) => splitTokenRange(s.range1, )
+
+//  println(firstSingletonSplit)
+//  val preBlock = firstSingletonSplit match
+//    case Left(s) => RuntimeException("Illegal split value")
+//    case Right(s) => s.range1
   // Split input hypergraph into preblock, block, postblock
 
   val newEdge = // merge singleton token range into original hg; must unpack because constructor expects varargs

@@ -42,7 +42,7 @@ enum SplitTokenRangeResult:
 import SplitTokenRangeResult.*
 
 enum SplitTokenRangeError:
-  case IllegalSplitValueError
+  case IllegalSplitValueError(start: Int, until: Int, splitPos: Int)
   case EmptyTokenRangeError
   case IllegalTokenRangeError
 import SplitTokenRangeError.*

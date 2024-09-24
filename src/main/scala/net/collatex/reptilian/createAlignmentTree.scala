@@ -17,11 +17,14 @@ import net.collatex.reptilian.SplitTokenRangeError.*
 
 def splitTokenRange(tr: TokenRange, positionToSplit: Int): Either[SplitTokenRangeError, SplitTokenRangeResult] =
   tr match
-    case _: EmptyTokenRange => Left(EmptyTokenRangeError) // no split position can fall within an empty range
+    case _: EmptyTokenRange   => Left(EmptyTokenRangeError) // no split position can fall within an empty range
     case _: IllegalTokenRange => Left(IllegalTokenRangeError) // illegal range is always an error
-    case x: LegalTokenRange if positionToSplit == x.start => Right(SecondOnlyPopulated(EmptyTokenRange(x.start, x.start), x))
-    case x: LegalTokenRange if positionToSplit == x.until => Right(FirstOnlyPopulated(x, EmptyTokenRange(x.until, x.until)))
-    case x: LegalTokenRange if positionToSplit < x.start || positionToSplit > x.until => Left(IllegalSplitValueError)
+    case x: LegalTokenRange if positionToSplit == x.start =>
+      Right(SecondOnlyPopulated(EmptyTokenRange(x.start, x.start), x))
+    case x: LegalTokenRange if positionToSplit == x.until =>
+      Right(FirstOnlyPopulated(x, EmptyTokenRange(x.until, x.until)))
+    case x: LegalTokenRange if positionToSplit < x.start || positionToSplit > x.until =>
+      Left(IllegalSplitValueError(x.start, x.until, positionToSplit))
     case x: LegalTokenRange =>
       val range1: LegalTokenRange = LegalTokenRange(x.start, positionToSplit)
       val range2: LegalTokenRange = LegalTokenRange(positionToSplit, x.until)
