@@ -100,8 +100,6 @@ def clusterReadings(data: Array[Array[Double]]): List[ClusterInfo] =
   val result = (clustering.tree zip clustering.height)
     .map(e => ClusterInfo.of(e(0)(0), e(0)(1), e(1), data.length))
     .toList
-  println("Clustering")
-  result.foreach(println)
   result
 
 def substitutionCost[A](a: A, b: A): Double =
@@ -269,18 +267,24 @@ def processSingletonHG(
   val (_, _, fdb) = createAlignedBlocks(lTA, -1, false) // full-depth blocks
   val firstBlock = fdb.head
   val singletonTokenRange = TokenRange(singletonTokens.head.g, singletonTokens.last.g)
-  val blockTokenRange =
-    TokenRange(lTA(firstBlock.instances.head).g,lTA(firstBlock.instances.head + firstBlock.length - 1).g)
-  val (pre: TokenRange, post: TokenRange) = splitSingleton(singletonTokenRange, blockTokenRange)
-  println(s"pre: $pre; block: $blockTokenRange; post: $post")
-  println(s"blockTokenRange: $blockTokenRange")
-  println(s"pre text: ${gTA.slice(pre.start, pre.until).map(_.t).mkString}")
-  println(s"block text: ${gTA.slice(blockTokenRange.start, blockTokenRange.until).map(_.t).mkString}")
-  println(s"post text: ${gTA.slice(post.start, post.until).map(_.t).mkString}")
-
-  val newEdge = // merge singleton token range into original hg; must unpack because constructor expects varargs
-    Hypergraph.hyperedge("0", (hg.members("0") + TokenRange(singletonTokens.head.g, singletonTokens.last.g)).toSeq: _*)
-  newEdge
+  val blockSingletonTokenRange =
+    TokenRange(lTA(firstBlock.instances.head).g, lTA(firstBlock.instances.head + firstBlock.length - 1).g)
+  val (pre: TokenRange, post: TokenRange) = splitSingleton(singletonTokenRange, blockSingletonTokenRange)
+  val singletonPreHyperedge = pre match
+    case x: EmptyTokenRange => Hypergraph.empty[String, TokenRange]()
+    case _                  => Hypergraph.hyperedge("0", pre)
+  val singletonPostHyperedge = post match
+    case x: EmptyTokenRange => Hypergraph.empty[String, TokenRange]()
+    case _                  => Hypergraph.hyperedge("1", post)
+  // FIXME: We aren’t yet splitting the incoming HG; here we fake it
+  val blockHyperedge = // must unpack because constructor expects varargs
+    Hypergraph.hyperedge(
+      "2",
+      (hg.members(hg.hyperedges.head) + blockSingletonTokenRange).toSeq: _*
+    )
+  val result = singletonPreHyperedge + blockHyperedge + singletonPostHyperedge
+  println(s"result: $result")
+  result
   // RESUME HERE 2024-09-19: Blocks connect HG and singleton, everything is part of a block or not part of a block
   // Complication #1: Multiple blocks require transposition detection
   // Complication #2: Multiple hyperedges require selecting the correct one

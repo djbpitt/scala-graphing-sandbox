@@ -16,14 +16,18 @@ AP_8 -- "AP_8_2"
 AP_8 -- "AP_8_1b"
 AP_8 -- "AP_8_1a"
 AP_8 -- "AP_8_0"
-"AP_7_0_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved "]
-"AP_7_0" [label="Group 0"]
-"AP_7_0" -- "AP_7_0_reading"
-AP_7 -- "AP_7_0"
-"AP_9_0_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved "]
-"AP_9_0" [label="Group 0"]
-"AP_9_0" -- "AP_9_0_reading"
-AP_9 -- "AP_9_0"
+"AP_7_2_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved "]
+"AP_7_2" [label="Group 2"]
+"AP_7_2" -- "AP_7_2_reading"
+AP_7 -- "AP_7_2"
+"AP_9_2_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved "]
+"AP_9_1_reading" [shape=box label="preserved . character of domestic varieties ; difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more "]
+"AP_9_1" [label="Group 1"]
+"AP_9_2" [label="Group 2"]
+"AP_9_2" -- "AP_9_2_reading"
+"AP_9_1" -- "AP_9_1_reading"
+AP_9 -- "AP_9_2"
+AP_9 -- "AP_9_1"
 "AP_6_0_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved "]
 "AP_6_0" [label="Group 0"]
 "AP_6_0" -- "AP_6_0_reading"
