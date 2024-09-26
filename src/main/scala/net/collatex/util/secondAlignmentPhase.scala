@@ -255,6 +255,7 @@ def splitSingleton(singletonTokenRange: TokenRange, blockTokenRange: TokenRange)
         case Left(_) => throw RuntimeException("Second split (for pre) failed")
         case Right(s1) =>
           (s1.range1, s.range2)
+  println(s"post: $post")
   (pre, post)
 
 def processSingletonHG(
@@ -266,9 +267,9 @@ def processSingletonHG(
     createLocalTA(singletonTokens, HGTokens)
   val (_, _, fdb) = createAlignedBlocks(lTA, -1, false) // full-depth blocks
   val firstBlock = fdb.head
-  val singletonTokenRange = TokenRange(singletonTokens.head.g, singletonTokens.last.g)
+  val singletonTokenRange = TokenRange(singletonTokens.head.g, singletonTokens.last.g + 1)
   val blockSingletonTokenRange =
-    TokenRange(lTA(firstBlock.instances.head).g, lTA(firstBlock.instances.head + firstBlock.length - 1).g)
+    TokenRange(lTA(firstBlock.instances.head).g, lTA(firstBlock.instances.head + firstBlock.length - 1).g + 1)
   val (pre: TokenRange, post: TokenRange) = splitSingleton(singletonTokenRange, blockSingletonTokenRange)
   val singletonPreHyperedge = pre match
     case x: EmptyTokenRange => Hypergraph.empty[String, TokenRange]()

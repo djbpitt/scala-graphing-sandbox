@@ -1,35 +1,35 @@
 graph MyGraph {
 rankdir = LR
-"AP_8_2_reading" [shape=box label="there is not a shadow of evidence in favour of this view : to assert that we could not breed our cart and race - horses , long and short - horned cattle , and poultry of various breeds , and esculent vegetables , for an unlimited number of generations , would be opposed to all experience . character of domestic varieties "]
-"AP_8_1b_reading" [shape=box label="; "]
-"AP_8_1a_reading" [shape=box label=": "]
-"AP_8_0_reading" [shape=box label="difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species "]
-"AP_8_0" [label="Group 0"]
-"AP_8_1a" [label="Group 1a"]
-"AP_8_1b" [label="Group 1b"]
-"AP_8_2" [label="Group 2"]
-"AP_8_2" -- "AP_8_2_reading"
-"AP_8_1b" -- "AP_8_1b_reading"
-"AP_8_1a" -- "AP_8_1a_reading"
-"AP_8_0" -- "AP_8_0_reading"
-AP_8 -- "AP_8_2"
-AP_8 -- "AP_8_1b"
-AP_8 -- "AP_8_1a"
-AP_8 -- "AP_8_0"
-"AP_7_2_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved "]
-"AP_7_2" [label="Group 2"]
-"AP_7_2" -- "AP_7_2_reading"
-AP_7 -- "AP_7_2"
-"AP_9_2_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved "]
-"AP_9_1_reading" [shape=box label="preserved . character of domestic varieties ; difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more "]
-"AP_9_1" [label="Group 1"]
-"AP_9_2" [label="Group 2"]
-"AP_9_2" -- "AP_9_2_reading"
-"AP_9_1" -- "AP_9_1_reading"
-AP_9 -- "AP_9_2"
-AP_9 -- "AP_9_1"
-"AP_6_0_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved "]
-"AP_6_0" [label="Group 0"]
-"AP_6_0" -- "AP_6_0_reading"
-AP_6 -- "AP_6_0"
+"Cluster_8_2_reading" [shape=box label="there is not a shadow of evidence in favour of this view : to assert that we could not breed our cart and race - horses , long and short - horned cattle , and poultry of various breeds , and esculent vegetables , for an unlimited number of generations , would be opposed to all experience . character of domestic varieties "]
+"Cluster_8_1b_reading" [shape=box label="; "]
+"Cluster_8_1a_reading" [shape=box label=": "]
+"Cluster_8_0_reading" [shape=box label="difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species "]
+"Cluster_8_0" [label="Group 0"]
+"Cluster_8_1a" [label="Group 1a"]
+"Cluster_8_1b" [label="Group 1b"]
+"Cluster_8_2" [label="Group 2"]
+"Cluster_8_2" -- "Cluster_8_2_reading"
+"Cluster_8_1b" -- "Cluster_8_1b_reading"
+"Cluster_8_1a" -- "Cluster_8_1a_reading"
+"Cluster_8_0" -- "Cluster_8_0_reading"
+Cluster_8 -- "Cluster_8_2"
+Cluster_8 -- "Cluster_8_1b"
+Cluster_8 -- "Cluster_8_1a"
+Cluster_8 -- "Cluster_8_0"
+"Cluster_7_2_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved "]
+"Cluster_7_2" [label="Group 2"]
+"Cluster_7_2" -- "Cluster_7_2_reading"
+Cluster_7 -- "Cluster_7_2"
+"Cluster_9_2_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved "]
+"Cluster_9_1_reading" [shape=box label=". character of domestic varieties ; difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species "]
+"Cluster_9_1" [label="Group 1"]
+"Cluster_9_2" [label="Group 2"]
+"Cluster_9_2" -- "Cluster_9_2_reading"
+"Cluster_9_1" -- "Cluster_9_1_reading"
+Cluster_9 -- "Cluster_9_2"
+Cluster_9 -- "Cluster_9_1"
+"Cluster_6_0_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved "]
+"Cluster_6_0" [label="Group 0"]
+"Cluster_6_0" -- "Cluster_6_0_reading"
+Cluster_6 -- "Cluster_6_0"
 }

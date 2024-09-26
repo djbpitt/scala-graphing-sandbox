@@ -25,11 +25,11 @@ def hypergraphToDot(h: Map[Int, Hypergraph[String, TokenRange]])(using tokenArra
   val first = "graph MyGraph {\nrankdir = LR"
   val last = "}"
   val middle = (h flatMap ((i: Int, x: Hypergraph[String, TokenRange]) =>
-    val ap_id = s"AP_$i" // AP_8
+    val ap_id = s"Cluster_$i" // Cluster_8
     val group_ids = x.hyperedges
       .map(e => s"${ap_id}_$e")
       .toSeq
-      .sorted // AP_8_1b
+      .sorted // Cluster_8_1b
     val group_labels = x.hyperedges
       .map(e => s"Group $e")
       .toSeq
@@ -46,7 +46,7 @@ def hypergraphToDot(h: Map[Int, Hypergraph[String, TokenRange]])(using tokenArra
     val ap_to_group_edges = group_ids
       .map(e => s"$ap_id -- \"$e\"")
       .toVector
-      .sorted // AP_8 -- "AP_b_1b"
+      .sorted // Cluster_8 -- "Cluster_b_1b"
     val group_to_reading_edges = group_ids
       .zip(group_reading_ids)
       .map((gid, rid) => s"\"$gid\" -- \"$rid\"")
