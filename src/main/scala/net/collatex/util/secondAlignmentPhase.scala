@@ -4,6 +4,7 @@ import net.collatex.reptilian.SplitTokenRangeResult.*
 import net.collatex.reptilian.TokenRange.*
 import net.collatex.reptilian.{
   AlignmentPoint,
+  FullDepthBlock,
   Siglum,
   SplitTokenRangeError,
   SplitTokenRangeResult,
@@ -218,7 +219,7 @@ def compactEditSteps(
     }
   nextStep(allSingleSteps.tail, Vector[CompoundEditStep](), allSingleSteps.head)
 
-def processSingletonSingleton(compactedEditSteps: Vector[CompoundEditStep]) = {
+def mergeSingletonSingleton(compactedEditSteps: Vector[CompoundEditStep]) = {
   val hyperedges: Vector[Hypergraph[String, TokenRange]] = compactedEditSteps.zipWithIndex map {
     case (x: CompoundEditStep.CompoundStepMatch, offset: Int) =>
       Hypergraph.hyperedge(offset.toString, x.tr1, x.tr2)
@@ -258,14 +259,18 @@ def splitSingleton(singletonTokenRange: TokenRange, blockTokenRange: TokenRange)
   println(s"post: $post")
   (pre, post)
 
-def processSingletonHG(
+def mergeSingletonHG(
     singletonTokens: Vector[Token],
     hg: Hypergraph[String, TokenRange]
-)(using gTA: Vector[Token]): Hypergraph[String, TokenRange] =
+)(using gTA: Vector[Token]): Hypergraph[String, TokenRange] = {
+  // TODO: Currently find all blocks, assume there is only one
+  // TODO: Check for transpositions and determine block order
   val HGTokens = identifyHGTokenRanges(hg) // needed for local TA
   val lTA: Vector[Token] =
     createLocalTA(singletonTokens, HGTokens)
   val (_, _, fdb) = createAlignedBlocks(lTA, -1, false) // full-depth blocks
+  // TODO: Transposition detection and block filtering goes either here or inside createAlignedBlocks()
+  // RESUME HERE 2024-09-26: Write tests for mergeSingletonHG(), assuming exactly one block
   val firstBlock = fdb.head
   val singletonTokenRange = TokenRange(singletonTokens.head.g, singletonTokens.last.g + 1)
   val blockSingletonTokenRange =
@@ -284,12 +289,11 @@ def processSingletonHG(
       (hg.members(hg.hyperedges.head) + blockSingletonTokenRange).toSeq: _*
     )
   val result = singletonPreHyperedge + blockHyperedge + singletonPostHyperedge
-  println(s"result: $result")
   result
-  // RESUME HERE 2024-09-19: Blocks connect HG and singleton, everything is part of a block or not part of a block
-  // Complication #1: Multiple blocks require transposition detection
-  // Complication #2: Multiple hyperedges require selecting the correct one
-  // Complication #3: A singletom may match parts of different hyperedges, requiring hypergraph and singleton splitting
+}
+// Complication #1: Multiple blocks require transposition detection
+// Complication #2: Multiple hyperedges require selecting the correct one
+// Complication #3: A singletom may match parts of different hyperedges, requiring hypergraph and singleton splitting
 
 def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
     tokenArray: Vector[Token]
@@ -320,13 +324,13 @@ def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
           val w2: List[Token] = darwinReadings(item2)
           val compactedEditSteps = compactEditSteps(tokensToEditSteps(w1, w2))
           // process
-          val hypergraph: Hypergraph[String, TokenRange] = processSingletonSingleton(compactedEditSteps)
+          val hypergraph: Hypergraph[String, TokenRange] = mergeSingletonSingleton(compactedEditSteps)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (SingletonHG(item1, item2, height), i: Int) =>
           // prepare arguments, tokens for singleton and Hypergraph instance (!) for hypergraph
           val singletonTokens = darwinReadings(item1).toVector
           val hg = if y(item2).hyperedges.nonEmpty then y(item2) else Hypergraph.empty[String, TokenRange]()
-          val hypergraph = processSingletonHG(singletonTokens, hg)
+          val hypergraph = mergeSingletonHG(singletonTokens, hg)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (HGHG(item1, item2, height), i: Int) =>
           y + ((i + darwinReadings.size) -> Hypergraph.empty[String, TokenRange]())
