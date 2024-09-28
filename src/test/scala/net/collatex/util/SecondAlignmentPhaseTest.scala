@@ -225,3 +225,55 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     )
     val result = mergeSingletonHG(singletonTokens, hg)
     assert(result == expected)
+  test("test mergeSingletonHG() with one block and singleton splitting (pre and post)"):
+    val expected = Hypergraph(
+      Map(
+        "9" -> Set(TokenRange(0, 3), TokenRange(4, 7), TokenRange(9, 12)),
+        "8" -> Set(TokenRange(8, 9)),
+        "12" -> Set(TokenRange(12, 15))
+      ),
+      Map(
+        TokenRange(12, 15) -> Set("12"),
+        TokenRange(9, 12) -> Set("9"),
+        TokenRange(4, 7) -> Set("9"),
+        TokenRange(0, 3) -> Set("9"),
+        TokenRange(8, 9) -> Set("8")
+      )
+    )
+    given gTA: Vector[Token] = Vector(
+      Token("Hi", "hi", 0, 0),
+      Token(", ", ", ", 0, 1),
+      Token("Mom", "mom", 0, 2),
+      Token("Sep3", "Sep3", 0, 3),
+      Token("Hi", "hi", 1, 4),
+      Token(", ", ", ", 1, 5),
+      Token("Mom", "mom", 1, 6),
+      Token("Sep8", "Sep8", 1, 7),
+      Token("Oh ", "Oh", 2, 8),
+      Token("Hi", "hi", 2, 9),
+      Token(", ", ", ", 2, 10),
+      Token("Mom", "mom", 2, 11),
+      Token("of ", "of", 2, 12),
+      Token("mine", "mine", 2, 13),
+      Token("!", "!", 2, 14)
+    )
+    val singletonTokens = Vector[Token](
+      Token("Oh ", "Oh", 2, 8),
+      Token("Hi", "hi", 2, 9),
+      Token(", ", ", ", 2, 10),
+      Token("Mom", "mom", 2, 11),
+      Token("of ", "of", 2, 12),
+      Token("mine", "mine", 2, 13),
+      Token("!", "!", 2, 14)
+    )
+    val hg = Hypergraph(
+      Map(
+        "0" -> Set(TokenRange(0, 3), TokenRange(4, 7))
+      ),
+      Map(
+        TokenRange(0, 3) -> Set("0"),
+        TokenRange(4, 7) -> Set("0")
+      )
+    )
+    val result = mergeSingletonHG(singletonTokens, hg)
+    assert(result == expected)
