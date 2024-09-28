@@ -277,3 +277,44 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     )
     val result = mergeSingletonHG(singletonTokens, hg)
     assert(result == expected)
+  test("test mergeSingletonHG() that requires hypergraph (only) splitting with pre and post"):
+    given gTA: Vector[Token] = Vector[Token](
+      Token("a", "a", 0, 0),
+      Token("b", "b", 0, 1),
+      Token("Sep2", "Sep2", 0, 2),
+      Token("x", "x", 1, 3),
+      Token("a", "b", 1, 4),
+      Token("b", "b", 1, 5),
+      Token("y", "y", 1, 6),
+      Token("Sep7", "Sep7", 1, 7),
+      Token("x", "x", 2, 8),
+      Token("a", "b", 2, 9),
+      Token("b", "b", 2, 10),
+      Token("y", "y", 2, 11)
+    )
+    val singletonTokens = Vector[Token](
+      Token("a", "a", 0, 0),
+      Token("b", "b", 0, 1)
+    )
+    val hg = Hypergraph[String, TokenRange](
+      Map("3" -> Set(TokenRange(3, 7), TokenRange(9, 12))),
+      Map(TokenRange(3, 7) -> Set("3"), TokenRange(9, 12) -> Set("3"))
+    )
+    val expected = Hypergraph(
+      Map(
+        "0" -> Set(TokenRange(0, 2), TokenRange(4, 6), TokenRange(9, 11)), // two-token block
+        "3" -> Set(TokenRange(3, 4), TokenRange(8, 9)), // hg pre
+        "6" -> Set(TokenRange(6, 7), TokenRange(11, 12)) // hg post
+      ),
+      Map(
+        TokenRange(3, 4) -> Set("3"),
+        TokenRange(8, 9) -> Set("3"),
+        TokenRange(0, 2) -> Set("0"),
+        TokenRange(4, 6) -> Set("0"),
+        TokenRange(9, 11) -> Set("0"),
+        TokenRange(6, 7) -> Set("6"),
+        TokenRange(11, 12) -> Set("6")
+      )
+    )
+    val result = mergeSingletonHG(singletonTokens, hg)
+    assert(result == expected)
