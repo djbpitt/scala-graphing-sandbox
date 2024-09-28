@@ -161,3 +161,67 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
   test("test splitSingleton() with empty singleton token range"):
     val caught = intercept[RuntimeException](splitSingleton(TokenRange(3, 3), TokenRange(3, 3)))
     assert(Set("Second split (for pre) failed", "First split (for post) failed").contains(caught.getMessage))
+  test("test mergeSingletonHG() with zero blocks"):
+    val expected = Hypergraph(
+      Map(
+        "8" -> Set(TokenRange(8, 9), TokenRange(3, 4)),
+        "15" -> Set(TokenRange(15, 19)),
+        "5" -> Set(TokenRange(5, 7), TokenRange(0, 2)),
+        "2" -> Set(TokenRange(2, 3)),
+        "7" -> Set(TokenRange(7, 8))
+      ),
+      Map(
+        TokenRange(5, 7) -> Set("5"),
+        TokenRange(3, 4) -> Set("8"),
+        TokenRange(7, 8) -> Set("7"),
+        TokenRange(2, 3) -> Set("2"),
+        TokenRange(8, 9) -> Set("8"),
+        TokenRange(15, 19) -> Set("15"),
+        TokenRange(0, 2) -> Set("5")
+      )
+    )
+    given gTA: Vector[Token] = Vector(
+      Token("Hi", "Hi", 0, 0),
+      Token(", ", ", ", 0, 1),
+      Token("Mom", "Mom", 0, 2),
+      Token("!", "!", 0, 3),
+      Token("Sep4", "Sep4", 0, 4),
+      Token("Hi", "Hi", 1, 5),
+      Token(", ", ", ", 1, 6),
+      Token("Dad", "Dad", 1, 7),
+      Token("!", "!", 1, 8),
+      Token("Sep9", "Sep9", 1, 9),
+      Token("Hi", "Hi", 2, 10),
+      Token(", ", ", ", 2, 11),
+      Token("parents", "parents", 2, 12),
+      Token("!", "!", 2, 13),
+      Token("Sep14", "Sep14", 2, 14),
+      Token("There ", "there", 3, 15),
+      Token("are ", "are", 3, 16),
+      Token("no ", "no", 3, 17),
+      Token("blocks", "blocks", 3, 18)
+    )
+    val singletonTokens = Vector[Token](
+      Token("There  ", "there", 3, 15),
+      Token("are ", "are", 3, 16),
+      Token("no ", "no", 3, 17),
+      Token("blocks", "blocks", 3, 18)
+    )
+    val hg = Hypergraph(
+      Map(
+        "2" -> Set(TokenRange(2, 3)),
+        "7" -> Set(TokenRange(7, 8)),
+        "8" -> Set(TokenRange(8, 9), TokenRange(3, 4)),
+        "5" -> Set(TokenRange(5, 7), TokenRange(0, 2))
+      ),
+      Map(
+        TokenRange(5, 7) -> Set("5"),
+        TokenRange(3, 4) -> Set("8"),
+        TokenRange(7, 8) -> Set("7"),
+        TokenRange(2, 3) -> Set("2"),
+        TokenRange(8, 9) -> Set("8"),
+        TokenRange(0, 2) -> Set("5")
+      )
+    )
+    val result = mergeSingletonHG(singletonTokens, hg)
+    assert(result == expected)
