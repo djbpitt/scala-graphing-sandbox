@@ -270,25 +270,34 @@ def mergeSingletonHG(
     createLocalTA(singletonTokens, HGTokens)
   val (_, _, fdb) = createAlignedBlocks(lTA, -1, false) // full-depth blocks
   // TODO: Transposition detection and block filtering goes either here or inside createAlignedBlocks()
-  // RESUME HERE 2024-09-26: Write tests for mergeSingletonHG(), assuming exactly one block
-  val firstBlock = fdb.head
   val singletonTokenRange = TokenRange(singletonTokens.head.g, singletonTokens.last.g + 1)
-  val blockSingletonTokenRange =
-    TokenRange(lTA(firstBlock.instances.head).g, lTA(firstBlock.instances.head + firstBlock.length - 1).g + 1)
-  val (pre: TokenRange, post: TokenRange) = splitSingleton(singletonTokenRange, blockSingletonTokenRange)
-  val singletonPreHyperedge = pre match
-    case x: EmptyTokenRange => Hypergraph.empty[String, TokenRange]()
-    case _                  => Hypergraph.hyperedge("0", pre)
-  val singletonPostHyperedge = post match
-    case x: EmptyTokenRange => Hypergraph.empty[String, TokenRange]()
-    case _                  => Hypergraph.hyperedge("1", post)
-  // FIXME: We aren’t yet splitting the incoming HG; here we fake it
-  val blockHyperedge = // must unpack because constructor expects varargs
-    Hypergraph.hyperedge(
-      "2",
-      (hg.members(hg.hyperedges.head) + blockSingletonTokenRange).toSeq: _*
-    )
-  val result = singletonPreHyperedge + blockHyperedge + singletonPostHyperedge
+  val result =
+    if fdb.isEmpty then
+      val hyperedgeId = singletonTokenRange.start.toString
+      hg + Hypergraph.hyperedge(hyperedgeId, singletonTokenRange)
+    else
+      val firstBlock = fdb.head
+      val blockSingletonTokenRange =
+        TokenRange(lTA(firstBlock.instances.head).g, lTA(firstBlock.instances.head + firstBlock.length - 1).g + 1)
+      val (pre: TokenRange, post: TokenRange) = splitSingleton(singletonTokenRange, blockSingletonTokenRange)
+      val singletonPreHyperedge = pre match
+        case x: EmptyTokenRange => Hypergraph.empty[String, TokenRange]()
+        case _                  =>
+          val hyperedgeId = pre.start.toString
+          Hypergraph.hyperedge(hyperedgeId, pre)
+      val singletonPostHyperedge = post match
+        case x: EmptyTokenRange => Hypergraph.empty[String, TokenRange]()
+        case _                  =>
+          val hyperedgeId = post.start.toString
+          Hypergraph.hyperedge(hyperedgeId, post)
+      // FIXME: We aren’t yet splitting the incoming HG; here we fake it
+      val blockHyperedge = // must unpack because constructor expects varargs
+        val hyperedgeId = blockSingletonTokenRange.start.toString
+        Hypergraph.hyperedge(
+          hyperedgeId,
+          (hg.members(hg.hyperedges.head) + blockSingletonTokenRange).toSeq: _*
+        )
+      singletonPreHyperedge + blockHyperedge + singletonPostHyperedge
   result
 }
 // Complication #1: Multiple blocks require transposition detection
