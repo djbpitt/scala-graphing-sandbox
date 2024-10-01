@@ -290,7 +290,7 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     val result = splitHyperedge(he, block)
     assert(result == expected)
 
-  ignore("test mergeSingletonHG() that requires hypergraph (only) splitting with pre and post"):
+  test("test mergeSingletonHG() that requires hypergraph (only) splitting with pre and post"):
     given gTA: Vector[Token] = Vector[Token](
       Token("a", "a", 0, 0),
       Token("b", "b", 0, 1),

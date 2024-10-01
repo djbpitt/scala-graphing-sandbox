@@ -262,7 +262,6 @@ def splitHyperedge(he: Set[TokenRange], block: FullDepthBlock) =
   val result: Set[TokenRange] = splitCandidates.map((e, f) => splitSingleton(e, f).toList).flatten.toSet
   result // set of all pre and post token ranges for hyperedge
 
-
 def mergeSingletonHG(
     singletonTokens: Vector[Token],
     hg: Hypergraph[String, TokenRange]
@@ -294,14 +293,26 @@ def mergeSingletonHG(
         case _ =>
           val hyperedgeId = post.start.toString
           Hypergraph.hyperedge(hyperedgeId, post)
-      // FIXME: We aren’t yet splitting the incoming HG; here we fake it
+      val hgPresAndPostsTokenRanges = splitHyperedge(
+        hg.members(hg.hyperedges.head), // Filter out singleton block start
+        FullDepthBlock(firstBlock.instances.filterNot(e => blockSingletonTokenRange.contains(e)), firstBlock.length)
+      )
+      val hgPresAndPostsHes =
+        hgPresAndPostsTokenRanges
+          .map(e => Hypergraph.hyperedge(e.toString, e))
+          .foldLeft(Hypergraph.empty[String, TokenRange]())((y, x) => y + x)
       val blockHyperedge = // must unpack because constructor expects varargs
         val hyperedgeId = blockSingletonTokenRange.start.toString
         Hypergraph.hyperedge(
           hyperedgeId,
           (hg.members(hg.hyperedges.head) + blockSingletonTokenRange).toSeq: _*
         )
-      singletonPreHyperedge + blockHyperedge + singletonPostHyperedge
+      println("Hi, Mom!")
+      println(s"singletonPreHyperedge: $singletonPreHyperedge")
+      println(s"blockHyperedge: $blockHyperedge")
+      println(s"singletonPostHyperedge: $singletonPostHyperedge")
+      println(s"hgPresAndPostsHes: $hgPresAndPostsHes")
+      singletonPreHyperedge + blockHyperedge + singletonPostHyperedge + hgPresAndPostsHes
   result
 }
 // Complication #1: Multiple blocks require transposition detection
