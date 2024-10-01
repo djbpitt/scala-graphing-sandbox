@@ -252,16 +252,6 @@ def splitSingleton(singletonTokenRange: TokenRange, blockTokenRange: TokenRange)
   val post = TokenRange(blockTokenRange.until, singletonTokenRange.until)
   (pre, post)
 
-def tmpSplitSingleton(singletonTokenRange: TokenRange, blockTokenRange: TokenRange) =
-  val postSplitResult =
-    splitTokenRange(singletonTokenRange, blockTokenRange.until)
-  val preSplitResult = splitTokenRange(singletonTokenRange, blockTokenRange.start)
-  val (pre, post) = (preSplitResult, postSplitResult) match
-    case (Left(_), _)                        => throw RuntimeException("Error in pre split")
-    case (_, Left(_))                        => throw RuntimeException("Error in post split")
-    case (Right(preValue), Right(postValue)) => (preValue, postValue)
-  (pre.range1, post.range2)
-
 def mergeSingletonHG(
     singletonTokens: Vector[Token],
     hg: Hypergraph[String, TokenRange]
