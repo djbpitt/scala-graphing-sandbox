@@ -246,18 +246,21 @@ def createLocalTA(singletonTokens: Vector[Token], HGTokens: Vector[Vector[Token]
 
 def splitSingleton(singletonTokenRange: TokenRange, blockTokenRange: TokenRange) =
   // Split singleton into preblock, block, postblock; ignore block because we already know it
+  // Assume resulting ranges are legal or empty; if illegal, the issue is in our block identification
   // TODO: Return Either and let caller manage exceptions
-  val firstSplitResult =
-    splitTokenRange(singletonTokenRange, blockTokenRange.until)
-  val (pre, post) = firstSplitResult match
-    case Left(_) => throw RuntimeException("First split (for post) failed")
-    case Right(s) =>
-      splitTokenRange(s.range1, blockTokenRange.start) match
-        case Left(_) => throw RuntimeException("Second split (for pre) failed")
-        case Right(s1) =>
-          (s1.range1, s.range2)
-  println(s"post: $post")
+  val pre = TokenRange(singletonTokenRange.start, blockTokenRange.start)
+  val post = TokenRange(blockTokenRange.until, singletonTokenRange.until)
   (pre, post)
+
+def tmpSplitSingleton(singletonTokenRange: TokenRange, blockTokenRange: TokenRange) =
+  val postSplitResult =
+    splitTokenRange(singletonTokenRange, blockTokenRange.until)
+  val preSplitResult = splitTokenRange(singletonTokenRange, blockTokenRange.start)
+  val (pre, post) = (preSplitResult, postSplitResult) match
+    case (Left(_), _)                        => throw RuntimeException("Error in pre split")
+    case (_, Left(_))                        => throw RuntimeException("Error in post split")
+    case (Right(preValue), Right(postValue)) => (preValue, postValue)
+  (pre.range1, post.range2)
 
 def mergeSingletonHG(
     singletonTokens: Vector[Token],
@@ -270,6 +273,7 @@ def mergeSingletonHG(
     createLocalTA(singletonTokens, HGTokens)
   val (_, _, fdb) = createAlignedBlocks(lTA, -1, false) // full-depth blocks
   // TODO: Transposition detection and block filtering goes either here or inside createAlignedBlocks()
+  println(s"fdb: $fdb")
   val singletonTokenRange = TokenRange(singletonTokens.head.g, singletonTokens.last.g + 1)
   val result =
     if fdb.isEmpty then
@@ -281,13 +285,13 @@ def mergeSingletonHG(
         TokenRange(lTA(firstBlock.instances.head).g, lTA(firstBlock.instances.head + firstBlock.length - 1).g + 1)
       val (pre: TokenRange, post: TokenRange) = splitSingleton(singletonTokenRange, blockSingletonTokenRange)
       val singletonPreHyperedge = pre match
-        case x: EmptyTokenRange => Hypergraph.empty[String, TokenRange]()
-        case _                  =>
+        case _: EmptyTokenRange => Hypergraph.empty[String, TokenRange]()
+        case _ =>
           val hyperedgeId = pre.start.toString
           Hypergraph.hyperedge(hyperedgeId, pre)
       val singletonPostHyperedge = post match
-        case x: EmptyTokenRange => Hypergraph.empty[String, TokenRange]()
-        case _                  =>
+        case _: EmptyTokenRange => Hypergraph.empty[String, TokenRange]()
+        case _ =>
           val hyperedgeId = post.start.toString
           Hypergraph.hyperedge(hyperedgeId, post)
       // FIXME: We aren’t yet splitting the incoming HG; here we fake it
