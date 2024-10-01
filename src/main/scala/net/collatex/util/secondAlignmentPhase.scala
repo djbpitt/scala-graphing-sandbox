@@ -252,6 +252,15 @@ def splitSingleton(singletonTokenRange: TokenRange, blockTokenRange: TokenRange)
   val post = TokenRange(blockTokenRange.until, singletonTokenRange.until)
   (pre, post)
 
+def splitHyperedge(he: Set[TokenRange], block: FullDepthBlock) =
+  // FIXME: We have a Hyperedge case class that we don’t use
+  // FIXME: Here our hyperedge is a set of token ranges
+  // TODO: Should we exclude the singleton block start here or in the caller?
+  // TODO: For now we do it in the caller
+  val splitCandidates = he.toSeq.sortBy(_.start).zip(block.instances.sorted)
+  splitCandidates
+  
+
 def mergeSingletonHG(
     singletonTokens: Vector[Token],
     hg: Hypergraph[String, TokenRange]
@@ -263,7 +272,6 @@ def mergeSingletonHG(
     createLocalTA(singletonTokens, HGTokens)
   val (_, _, fdb) = createAlignedBlocks(lTA, -1, false) // full-depth blocks
   // TODO: Transposition detection and block filtering goes either here or inside createAlignedBlocks()
-  println(s"fdb: $fdb")
   val singletonTokenRange = TokenRange(singletonTokens.head.g, singletonTokens.last.g + 1)
   val result =
     if fdb.isEmpty then
