@@ -279,9 +279,14 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     assert(result == expected)
 
   test("test splitHyperedge()"):
-    val he: Set[TokenRange] = Set(TokenRange(6,10), TokenRange(0,5))
+    val he: Set[TokenRange] = Set(TokenRange(6, 10), TokenRange(0, 5))
     val block: FullDepthBlock = FullDepthBlock(Vector(2, 8), 2)
-    val expected = List((TokenRange(0, 5), 2), (TokenRange(6, 10), 8))
+    val expected = Set(
+      TokenRange(0,2),
+      TokenRange(4,5),
+      TokenRange(6,8),
+      TokenRange(10,10)
+    )
     val result = splitHyperedge(he, block)
     assert(result == expected)
 

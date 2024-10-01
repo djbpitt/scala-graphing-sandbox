@@ -257,9 +257,11 @@ def splitHyperedge(he: Set[TokenRange], block: FullDepthBlock) =
   // FIXME: Here our hyperedge is a set of token ranges
   // TODO: Should we exclude the singleton block start here or in the caller?
   // TODO: For now we do it in the caller
-  val splitCandidates = he.toSeq.sortBy(_.start).zip(block.instances.sorted)
-  splitCandidates
-  
+  val blockRanges = block.instances.sorted.map(e => TokenRange(e, e + block.length))
+  val splitCandidates = he.toSeq.sortBy(_.start).zip(blockRanges)
+  val result: Set[TokenRange] = splitCandidates.map((e, f) => splitSingleton(e, f).toList).flatten.toSet
+  result // set of all pre and post token ranges for hyperedge
+
 
 def mergeSingletonHG(
     singletonTokens: Vector[Token],
