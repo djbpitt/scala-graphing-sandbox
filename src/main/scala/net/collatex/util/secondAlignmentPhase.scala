@@ -2,18 +2,7 @@ package net.collatex.util
 
 import net.collatex.reptilian.SplitTokenRangeResult.*
 import net.collatex.reptilian.TokenRange.*
-import net.collatex.reptilian.{
-  AlignmentPoint,
-  FullDepthBlock,
-  Siglum,
-  SplitTokenRangeError,
-  SplitTokenRangeResult,
-  Token,
-  TokenRange,
-  WitnessReadings,
-  createAlignedBlocks,
-  splitTokenRange
-}
+import net.collatex.reptilian.{AlignmentPoint, FullDepthBlock, Siglum, SplitTokenRangeError, SplitTokenRangeResult, Token, TokenJSON, TokenRange, WitnessReadings, createAlignedBlocks, splitTokenRange}
 import upickle.default.*
 import smile.clustering.hclust
 import smile.data.DataFrame
@@ -46,7 +35,9 @@ def readJsonData: List[List[Token]] =
   val datafilePath =
     os.pwd / "src" / "main" / "data" / "unaligned_data_node_296_tokenized.json"
   val fileContents = os.read(datafilePath)
-  val darwin = read[List[List[Token]]](fileContents)
+  // To avoid reading directly into enum subtype, read into TokenJSON and then remap
+  val darwinJSON = read[List[List[TokenJSON]]](fileContents)
+  val darwin = darwinJSON.map(_.map(e => Token(e.t, e.n, e.w, e.g)))
   darwin
 
 enum ClusterInfo:
