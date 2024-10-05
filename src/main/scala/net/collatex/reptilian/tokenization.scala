@@ -19,11 +19,18 @@ import scala.util.matching.Regex
   * Tokenization and normalization are under user control (to be implemented)
   */
 // Read external JSON into TokenJSON to avoid reading into enum subtype; then remap
-case class TokenJSON(t: String, n: String, w:Int, g:Int) derives ReadWriter
+case class TokenJSON(t: String, n: String, w: Int, g: Int) derives ReadWriter
 
-sealed trait TokenEnum(t: String, n: String, w: Int, g: Int)
-case class Token(t: String, n: String, w: Int, g: Int)
-    extends TokenEnum(t, n, w, g)
+enum TokenEnum:
+  case Token(t: String, n: String, w: Int, g: Int) extends TokenEnum
+  case TokenSep(t: String, n: String, w: Int, g: Int) extends TokenEnum
+  case tokenSg(t: String, n: String, w: Int, g: Int) extends TokenEnum
+  case tokenHG(t: String, n: String, w: Int, g: Int, he: String) extends TokenEnum
+  def t: String
+  def n: String
+  def w: Int
+  def g: Int
+import TokenEnum.*
 
 /** Used as partially applied function to create tokenizer
   *

@@ -6,6 +6,7 @@ import scala.collection.mutable.{ListBuffer, Map}
 import TokenRange.*
 import SplitTokenRangeResult.*
 import net.collatex.reptilian.SplitTokenRangeError.*
+import net.collatex.reptilian.TokenEnum.Token
 
 // This method transform an alignment on the global level of the fullest depth blocks
 // into an alignment tree by splitting
@@ -118,7 +119,7 @@ def splitUnalignedZone(
 def alignTokenArray(
     sigla: List[Siglum],
     selection: UnalignedZone
-)(using gTa: Vector[Token]) = {
+)(using gTa: Vector[TokenEnum]) = {
   // find the full depth blocks for the alignment
   // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
   // ??: Modify createAlignedBlocks() not to return unused values
@@ -173,7 +174,7 @@ def alignTokenArray(
     sortedReadingNodes
 }
 
-def createAlignmentTree(sigla: List[Siglum])(using gTa: Vector[Token]): ExpandedNode = {
+def createAlignmentTree(sigla: List[Siglum])(using gTa: Vector[TokenEnum]): ExpandedNode = {
   // NB: We are embarrassed by the mutable map (and by other things, such has having to scan token array)
   // Housekeeping; TODO: Think about witness-set metadata
   val witnessRanges: mutable.Map[Siglum, TokenRange] = mutable.Map.empty
@@ -215,7 +216,7 @@ def createAlignmentTree(sigla: List[Siglum])(using gTa: Vector[Token]): Expanded
 def setupNodeExpansion(
     sigla: List[Siglum],
     selection: UnalignedZone
-)(using gTa: Vector[Token]) = {
+)(using gTa: Vector[TokenEnum]) = {
   val blocks = alignTokenArray(sigla, selection)
   if blocks.isEmpty
   then
@@ -244,7 +245,7 @@ def recursiveBuildAlignment(
     unalignedZone: UnalignedZone,
     remainingAlignment: List[AlignmentPoint],
     sigla: List[Siglum]
-)(using gTa: Vector[Token]): ExpandedNode = {
+)(using gTa: Vector[TokenEnum]): ExpandedNode = {
   // On first run, unalignedZone contains full token ranges and remainingAlignment contains all sortedReadingNodes
   // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
   val firstReadingNode =

@@ -1,5 +1,6 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.TokenEnum.Token
 import os.Path
 
 //import scala.collection.mutable.ListBuffer
@@ -42,7 +43,7 @@ def readData(pathToData: Path): List[(String, String)] =
   ) // One string per witness
   val witnessStrings: List[String] = witnessInputInfo.map(_._2)
   val sigla: List[Siglum] = witnessInputInfo.map(_._1).map(Siglum(_))
-  given gTa:Vector[Token] = tokenize(tokenizer)(witnessStrings) // global token array
+  given gTa:Vector[TokenEnum] = tokenize(tokenizer)(witnessStrings) // global token array
 
   /** Create alignment tree
     */

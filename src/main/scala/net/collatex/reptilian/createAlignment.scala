@@ -15,6 +15,7 @@ package net.collatex.reptilian
  * Edges weighted by number of witnesses that share order (1 < n < witnessCount)
  */
 
+import net.collatex.reptilian.TokenEnum.Token
 import scalax.collection.GraphPredef.EdgeAssoc
 import scalax.collection.edge.Implicits.edge2WDiEdgeAssoc
 import scalax.collection.mutable.Graph
@@ -334,6 +335,6 @@ def alignmentIntsToBlocks(alignment: Set[Int], blocks: Iterable[FullDepthBlock])
   alignmentBlocks
 
 // Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
-def createAlignment(sigla: List[Siglum])(using tokenArray: Vector[Token]): ExpandedNode =
+def createAlignment(sigla: List[Siglum])(using tokenArray: Vector[TokenEnum]): ExpandedNode =
   createAlignmentTree(sigla)
 

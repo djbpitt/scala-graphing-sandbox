@@ -3,6 +3,7 @@ package net.collatex.reptilian
 import net.collatex.reptilian.SplitTokenRangeError.*
 import net.collatex.reptilian.TokenRange.*
 import net.collatex.reptilian.SplitTokenRangeResult.*
+import net.collatex.reptilian.TokenEnum.Token
 //import net.collatex.util.splitAlignmentPoint
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -100,7 +101,7 @@ class AlignmentTreeTest extends AnyFunSuite:
 //    assert(result == expected)
   
   test("Test for TokenRange.tString"):
-    implicit val gTa: Vector[Token] = Vector(
+    implicit val gTa: Vector[TokenEnum] = Vector(
       Token("Hi ", "hi", 0, 0),
       Token(", ", ",", 0, 1),
       Token("Mom ", "mom", 0, 2),

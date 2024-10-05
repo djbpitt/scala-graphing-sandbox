@@ -1,5 +1,7 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.TokenEnum.Token
+
 /** Block is an lcp interval
  *
  * @param start  start position in suffix array

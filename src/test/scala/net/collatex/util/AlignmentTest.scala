@@ -1,7 +1,8 @@
 package net.collatex.util
 
 import org.scalatest.funsuite.AnyFunSuite
-import net.collatex.reptilian.{AlignmentPoint, Siglum, Token, TokenRange}
+import net.collatex.reptilian.{AlignmentPoint, Siglum, TokenRange}
+import net.collatex.reptilian.TokenEnum.*
 
 class AlignmentTest extends AnyFunSuite:
   test("Create SingletonSingleton matrix"):

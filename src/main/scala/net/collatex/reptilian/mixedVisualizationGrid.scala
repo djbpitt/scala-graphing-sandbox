@@ -1,5 +1,7 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.TokenEnum.Token
+
 import scala.annotation.{tailrec, unused}
 import scala.xml.{Elem, Node, NodeSeq}
 import math.Ordered.orderingToOrdered
@@ -70,7 +72,7 @@ def computeTokenTextLength(in: String): Double =
   * @return
   *   All witness readings on node as map from siglum (String) to vector of tokens
   */
-def retrieveWitnessReadings(n: AlignmentPoint, gTa: Vector[Token]): Map[Siglum, Vector[Token]] =
+def retrieveWitnessReadings(n: AlignmentPoint, gTa: Vector[TokenEnum]): Map[Siglum, Vector[TokenEnum]] =
   val witnessReadings = n.combineWitnessGroups.map((k, v) => k -> gTa.slice(v.start, v.until))
   witnessReadings
 
@@ -87,7 +89,7 @@ val memoizedComputeTokenTextLength = memoizeFnc(computeTokenTextLength)
   * @return
   *   Size of reading (sum of lengths of t values of tokens plus intertoken spaces)
   */
-def computeReadingTextLength(in: Vector[Token]): Double =
+def computeReadingTextLength(in: Vector[TokenEnum]): Double =
   in.foldLeft(0d)((e, f) => e + memoizedComputeTokenTextLength(f.t))
 
 /** findMissingWitnesses()
@@ -103,7 +105,7 @@ def findMissingWitnesses(n: AlignmentPoint, sigla: Set[Siglum]): Vector[Siglum] 
   val missingWitnesses = sigla.diff(n.combineWitnessGroups.keySet).toVector.sorted
   missingWitnesses
 
-def computeAlignmentNodeRenderingWidth(n: AlignmentPoint, gTa: Vector[Token]): Double =
+def computeAlignmentNodeRenderingWidth(n: AlignmentPoint, gTa: Vector[TokenEnum]): Double =
   // FIXME: Temporarily add 28 to allow for two-character siglum plus colon plus space
   val maxAlignmentPointWidth = 1000000000000d // 160.0
   List(
@@ -114,7 +116,7 @@ def computeAlignmentNodeRenderingWidth(n: AlignmentPoint, gTa: Vector[Token]): D
 def createHorizNodeData(
     nodeSequence: Vector[NumberedNode],
     sigla: Set[Siglum]
-)(using tokenArray: Vector[Token]): Vector[HorizNodeData] =
+)(using tokenArray: Vector[TokenEnum]): Vector[HorizNodeData] =
   @tailrec
   def nextNode(nodes: Vector[NumberedNode], pos: Int, acc: Vector[HorizNodeData]): Vector[HorizNodeData] =
     if nodes.isEmpty then acc
@@ -200,7 +202,7 @@ def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   *   <html> element in HTML namespace, with embedded SVG
   */
 def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(using
-    tokenArray: Vector[Token]
+    tokenArray: Vector[TokenEnum]
 ): scala.xml.Node =
   /** Constants */
   val ribbonWidth = 18

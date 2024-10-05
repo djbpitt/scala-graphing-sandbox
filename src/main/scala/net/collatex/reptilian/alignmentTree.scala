@@ -1,5 +1,7 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.TokenEnum.Token
+
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.math.Ordering
@@ -21,7 +23,7 @@ enum TokenRange:
   case IllegalTokenRange(start: Int, until: Int)
   def start: Int
   def until: Int
-  def tString(using gTa: Vector[Token]): String =
+  def tString(using gTa: Vector[TokenEnum]): String =
     gTa.slice(this.start, this.until).map(_.t).mkString // concatenate t values
   def decreaseStart(): TokenRange = TokenRange(this.start - 1, this.until)
   def contains(pos: Int): Boolean =
@@ -100,7 +102,7 @@ final case class ExpandedNode(
 
 def blocksToNodes(
     blocks: Iterable[FullDepthBlock],
-    tokenArray: Vector[Token],
+    tokenArray: Vector[TokenEnum],
     sigla: List[Siglum]
 ): Iterable[AlignmentPoint] =
   blocks
@@ -108,7 +110,7 @@ def blocksToNodes(
 // Convert local alignment offsets to global token-array offsets for the reading node
 def fullDepthBlockToAlignmentPoint(
     block: FullDepthBlock,
-    tokenArray: Vector[Token],
+    tokenArray: Vector[TokenEnum],
     sigla: List[Siglum]
 ): AlignmentPoint =
 //  println(s"block: $block")

@@ -2,7 +2,8 @@ package net.collatex.util
 
 import net.collatex.reptilian.SplitTokenRangeResult.*
 import net.collatex.reptilian.TokenRange.*
-import net.collatex.reptilian.{AlignmentPoint, FullDepthBlock, Siglum, SplitTokenRangeError, SplitTokenRangeResult, Token, TokenJSON, TokenRange, WitnessReadings, createAlignedBlocks, splitTokenRange}
+import net.collatex.reptilian.{AlignmentPoint, FullDepthBlock, Siglum, SplitTokenRangeError, SplitTokenRangeResult, TokenEnum, TokenJSON, TokenRange, WitnessReadings, createAlignedBlocks, splitTokenRange}
+import net.collatex.reptilian.TokenEnum.*
 import upickle.default.*
 import smile.clustering.hclust
 import smile.data.DataFrame
@@ -37,7 +38,7 @@ def readJsonData: List[List[Token]] =
   val fileContents = os.read(datafilePath)
   // To avoid reading directly into enum subtype, read into TokenJSON and then remap
   val darwinJSON = read[List[List[TokenJSON]]](fileContents)
-  val darwin = darwinJSON.map(_.map(e => Token(e.t, e.n, e.w, e.g)))
+  val darwin: List[List[Token]] = darwinJSON.map(_.map(e => Token(e.t, e.n, e.w, e.g)))
   darwin
 
 enum ClusterInfo:
@@ -148,8 +149,8 @@ enum MatrixStep extends Ordered[MatrixStep]:
   case Up(distance: Double, row: Int, col: Int)
 
 def tokensToEditSteps(
-    w1: List[Token], // rows
-    w2: List[Token] // cols
+    w1: List[TokenEnum], // rows
+    w2: List[TokenEnum] // cols
 ): LazyList[CompoundEditStep] =
   val matrix = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
   // not tailrec, but doesn’t matter because LazyList
@@ -226,7 +227,7 @@ def mergeSingletonSingleton(compactedEditSteps: Vector[CompoundEditStep]) = {
   hypergraph
 }
 
-def createLocalTA(singletonTokens: Vector[Token], HGTokens: Vector[Vector[Token]]) = {
+def createLocalTA(singletonTokens: Vector[TokenEnum], HGTokens: Vector[Vector[TokenEnum]]) = {
   // temporary workaround for empty HG (not yet processing)
   if HGTokens.nonEmpty then
     singletonTokens ++
@@ -256,11 +257,11 @@ def splitHyperedge(he: Set[TokenRange], block: FullDepthBlock) =
 def mergeSingletonHG(
     singletonTokens: Vector[Token],
     hg: Hypergraph[String, TokenRange]
-)(using gTA: Vector[Token]): Hypergraph[String, TokenRange] = {
+)(using gTA: Vector[TokenEnum]): Hypergraph[String, TokenRange] = {
   // TODO: Currently find all blocks, assume there is only one
   // TODO: Check for transpositions and determine block order
   val HGTokens = identifyHGTokenRanges(hg) // needed for local TA
-  val lTA: Vector[Token] =
+  val lTA: Vector[TokenEnum] =
     createLocalTA(singletonTokens, HGTokens)
   val (_, _, fdb) = createAlignedBlocks(lTA, -1, false) // full-depth blocks
   // TODO: Transposition detection and block filtering goes either here or inside createAlignedBlocks()
@@ -311,8 +312,8 @@ def mergeSingletonHG(
 // Complication #3: A singletom may match parts of different hyperedges, requiring hypergraph and singleton splitting
 
 def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
-    tokenArray: Vector[Token]
-): Vector[Vector[Token]] =
+    tokenArray: Vector[TokenEnum]
+): Vector[Vector[TokenEnum]] =
   val HGTokenRange = y.hyperedges map (e => y.members(e).head)
   val HGTokens = HGTokenRange.toVector
     .map(e => tokenArray.slice(e.start, e.until))
@@ -322,7 +323,7 @@ def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
 // darwinHGs is only hypergraphs
 @main def secondAlignmentPhase(): Unit =
   val darwinReadings: List[List[Token]] = readJsonData // we know there's only one
-  given tokenArray: Vector[Token] =
+  given tokenArray: Vector[TokenEnum] =
     darwinReadings.head.toVector ++ darwinReadings.tail.zipWithIndex
       .flatMap((e, index) => List(Token(index.toString, index.toString, index, -1)) ++ e)
       .toVector

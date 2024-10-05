@@ -1,6 +1,7 @@
 package net.collatex.util
 
-import net.collatex.reptilian.{FullDepthBlock, Token, TokenRange}
+import net.collatex.reptilian.{FullDepthBlock, TokenRange}
+import net.collatex.reptilian.TokenEnum.*
 import org.scalatest.funsuite.AnyFunSuite
 
 class SecondAlignmentPhaseTest extends AnyFunSuite:
