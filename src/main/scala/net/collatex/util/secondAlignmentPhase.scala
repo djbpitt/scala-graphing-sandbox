@@ -2,7 +2,19 @@ package net.collatex.util
 
 import net.collatex.reptilian.SplitTokenRangeResult.*
 import net.collatex.reptilian.TokenRange.*
-import net.collatex.reptilian.{AlignmentPoint, FullDepthBlock, Siglum, SplitTokenRangeError, SplitTokenRangeResult, TokenEnum, TokenJSON, TokenRange, WitnessReadings, createAlignedBlocks, splitTokenRange}
+import net.collatex.reptilian.{
+  AlignmentPoint,
+  FullDepthBlock,
+  Siglum,
+  SplitTokenRangeError,
+  SplitTokenRangeResult,
+  TokenEnum,
+  TokenJSON,
+  TokenRange,
+  WitnessReadings,
+  createAlignedBlocks,
+  splitTokenRange
+}
 import net.collatex.reptilian.TokenEnum.*
 import upickle.default.*
 import smile.clustering.hclust
@@ -223,17 +235,23 @@ def mergeSingletonSingleton(compactedEditSteps: Vector[CompoundEditStep]) = {
     case (x: CompoundEditStep.CompoundStepDelete, offset: Int) =>
       Hypergraph.hyperedge(offset.toString, x.tr)
   }
+  // RESUME HERE 2024-10-10: Where do our empty token ranges come from?
   val hypergraph = hyperedges.foldLeft(Hypergraph.empty[String, TokenRange]())((x, y) => y + x)
   hypergraph
 }
 
-def createLocalTA(singletonTokens: Vector[TokenEnum], HGTokens: Vector[Vector[TokenEnum]]) = {
-  // temporary workaround for empty HG (not yet processing)
-  if HGTokens.nonEmpty then
-    singletonTokens ++
+def createLocalTA(singletonTokens: Vector[TokenEnum], hg: Hypergraph[String, TokenRange])(using
+    gTa: Vector[TokenEnum]
+): Vector[TokenEnum] = {
+  // FIXME: Temporary workaround for empty HG (not yet processing)
+  val HGTokens: Vector[Vector[TokenHG]] = identifyHGTokenRanges(hg) // needed for local TA
+  val result: Vector[Vector[TokenEnum]] = if HGTokens.nonEmpty then
+    singletonTokens.map(e => TokenSg(e.t, e.n, e.w, e.g))
+      +:
       HGTokens.zipWithIndex
-        .flatMap((tokens, index) => Token(index.toString, index.toString, index, -1) +: tokens)
-  else Vector()
+        .map((innerVector, index) => Vector(TokenSep(index.toString, index.toString, index, -1)) ++ innerVector)
+    else Vector()
+  result.flatten
 }
 
 def splitSingleton(singletonTokenRange: TokenRange, blockTokenRange: TokenRange) =
@@ -260,9 +278,9 @@ def mergeSingletonHG(
 )(using gTA: Vector[TokenEnum]): Hypergraph[String, TokenRange] = {
   // TODO: Currently find all blocks, assume there is only one
   // TODO: Check for transpositions and determine block order
-  val HGTokens = identifyHGTokenRanges(hg) // needed for local TA
+  println(s"hg: $hg")
   val lTA: Vector[TokenEnum] =
-    createLocalTA(singletonTokens, HGTokens)
+    createLocalTA(singletonTokens, hg)
   val (_, _, fdb) = createAlignedBlocks(lTA, -1, false) // full-depth blocks
   // TODO: Transposition detection and block filtering goes either here or inside createAlignedBlocks()
   val singletonTokenRange = TokenRange(singletonTokens.head.g, singletonTokens.last.g + 1)
@@ -299,11 +317,6 @@ def mergeSingletonHG(
           hyperedgeId,
           (hg.members(hg.hyperedges.head) + blockSingletonTokenRange).toSeq: _*
         )
-      println("Hi, Mom!")
-      println(s"singletonPreHyperedge: $singletonPreHyperedge")
-      println(s"blockHyperedge: $blockHyperedge")
-      println(s"singletonPostHyperedge: $singletonPostHyperedge")
-      println(s"hgPresAndPostsHes: $hgPresAndPostsHes")
       singletonPreHyperedge + blockHyperedge + singletonPostHyperedge + hgPresAndPostsHes
   result
 }
@@ -312,11 +325,11 @@ def mergeSingletonHG(
 // Complication #3: A singletom may match parts of different hyperedges, requiring hypergraph and singleton splitting
 
 def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
-    tokenArray: Vector[TokenEnum]
-): Vector[Vector[TokenEnum]] =
-  val HGTokenRange = y.hyperedges map (e => y.members(e).head)
-  val HGTokens = HGTokenRange.toVector
-    .map(e => tokenArray.slice(e.start, e.until))
+    gTa: Vector[TokenEnum]
+): Vector[Vector[TokenHG]] =
+  val HGTokenRange = y.hyperedges map (e => (e, y.members(e).head)) // one token range per hyperedge
+  val HGTokens: Vector[Vector[TokenHG]] = HGTokenRange.toVector
+    .map((id, tr) => gTa.slice(tr.start, tr.until).map(f => TokenHG(f.t, f.n, f.w, f.g, id)))
   HGTokens
 
 // darwinReadings is only singletons
@@ -335,20 +348,24 @@ def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
       // TODO: If height == 0 witnesses are identical (or possibly transposed!); can we take a shortcut?
       x match
         case (SingletonSingleton(item1, item2, height), i: Int) =>
+          println("SgSg")
           // prepare arguments
           val w1: List[Token] = darwinReadings(item1)
           val w2: List[Token] = darwinReadings(item2)
           val compactedEditSteps = compactEditSteps(tokensToEditSteps(w1, w2))
           // process
           val hypergraph: Hypergraph[String, TokenRange] = mergeSingletonSingleton(compactedEditSteps)
+          println("SgSg result: $hypergraph")
           y + ((i + darwinReadings.size) -> hypergraph)
         case (SingletonHG(item1, item2, height), i: Int) =>
+          println("SgHG")
           // prepare arguments, tokens for singleton and Hypergraph instance (!) for hypergraph
           val singletonTokens = darwinReadings(item1).toVector
           val hg = if y(item2).hyperedges.nonEmpty then y(item2) else Hypergraph.empty[String, TokenRange]()
           val hypergraph = mergeSingletonHG(singletonTokens, hg)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (HGHG(item1, item2, height), i: Int) =>
+          println("HGHG")
           y + ((i + darwinReadings.size) -> Hypergraph.empty[String, TokenRange]())
     })
   // hypergraphToText(hg) // NB: Token range may be incorrect (eek!)

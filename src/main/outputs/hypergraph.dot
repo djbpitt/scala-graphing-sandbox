@@ -36,8 +36,8 @@ Cluster_7 -- "Cluster_7_EmptyTokenRange(22,22)"
 Cluster_7 -- "Cluster_7_EmptyTokenRange(21,21)"
 Cluster_7 -- "Cluster_7_EmptyTokenRange(0,0)"
 Cluster_7 -- "Cluster_7_44"
-"Cluster_9_LegalTokenRange(22,49)_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved 1natural selection , as will "]
-"Cluster_9_IllegalTokenRange(70,43)_reading" [shape=box label=""]
+"Cluster_9_LegalTokenRange(22,45)_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved 1natural "]
+"Cluster_9_IllegalTokenRange(66,43)_reading" [shape=box label=""]
 "Cluster_9_EmptyTokenRange(21,21)_reading" [shape=box label=""]
 "Cluster_9_EmptyTokenRange(0,0)_reading" [shape=box label=""]
 "Cluster_9_87_reading" [shape=box label=". character of domestic varieties ; difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species "]
@@ -46,16 +46,16 @@ Cluster_7 -- "Cluster_7_44"
 "Cluster_9_87" [label="Group 87"]
 "Cluster_9_EmptyTokenRange(0,0)" [label="Group EmptyTokenRange(0,0)"]
 "Cluster_9_EmptyTokenRange(21,21)" [label="Group EmptyTokenRange(21,21)"]
-"Cluster_9_IllegalTokenRange(70,43)" [label="Group IllegalTokenRange(70,43)"]
-"Cluster_9_LegalTokenRange(22,49)" [label="Group LegalTokenRange(22,49)"]
-"Cluster_9_LegalTokenRange(22,49)" -- "Cluster_9_LegalTokenRange(22,49)_reading"
-"Cluster_9_IllegalTokenRange(70,43)" -- "Cluster_9_IllegalTokenRange(70,43)_reading"
+"Cluster_9_IllegalTokenRange(66,43)" [label="Group IllegalTokenRange(66,43)"]
+"Cluster_9_LegalTokenRange(22,45)" [label="Group LegalTokenRange(22,45)"]
+"Cluster_9_LegalTokenRange(22,45)" -- "Cluster_9_LegalTokenRange(22,45)_reading"
+"Cluster_9_IllegalTokenRange(66,43)" -- "Cluster_9_IllegalTokenRange(66,43)_reading"
 "Cluster_9_EmptyTokenRange(21,21)" -- "Cluster_9_EmptyTokenRange(21,21)_reading"
 "Cluster_9_EmptyTokenRange(0,0)" -- "Cluster_9_EmptyTokenRange(0,0)_reading"
 "Cluster_9_87" -- "Cluster_9_87_reading"
 "Cluster_9_66" -- "Cluster_9_66_reading"
-Cluster_9 -- "Cluster_9_LegalTokenRange(22,49)"
-Cluster_9 -- "Cluster_9_IllegalTokenRange(70,43)"
+Cluster_9 -- "Cluster_9_LegalTokenRange(22,45)"
+Cluster_9 -- "Cluster_9_IllegalTokenRange(66,43)"
 Cluster_9 -- "Cluster_9_EmptyTokenRange(21,21)"
 Cluster_9 -- "Cluster_9_EmptyTokenRange(0,0)"
 Cluster_9 -- "Cluster_9_87"
