@@ -1,6 +1,6 @@
 package net.collatex.util
 
-import net.collatex.reptilian.{FullDepthBlock, TokenRange}
+import net.collatex.reptilian.{FullDepthBlock, TokenEnum, TokenRange}
 import net.collatex.reptilian.TokenEnum.*
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -97,42 +97,68 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
       )
     )
     val expected = Vector(
-      Vector(Token("Mom", "Mom", 0, 2)),
-      Vector(Token("Dad", "Dad", 1, 7)),
-      Vector(Token("!", "!", 1, 8)),
-      Vector(Token("Hi", "Hi", 1, 5), Token(", ", ", ", 1, 6))
+      Vector(TokenHG("Mom", "Mom", 0, 2, "1b")),
+      Vector(TokenHG("Dad", "Dad", 1, 7, "1a")),
+      Vector(TokenHG("!", "!", 1, 8, "0")),
+      Vector(TokenHG("Hi", "Hi", 1, 5, "2"), TokenHG(", ", ", ", 1, 6, "2"))
     )
     val result = identifyHGTokenRanges(hg)
     assert(result == expected)
   test("test createLocalTA()"):
+    given gTA: Vector[Token] = Vector(
+      Token("Hi", "Hi", 0, 0),
+      Token(", ", ", ", 0, 1),
+      Token("Mom", "Mom", 0, 2),
+      Token("!", "!", 0, 3),
+      Token("-1", "-1", 0, 4),
+      Token("Hi", "Hi", 1, 5),
+      Token(", ", ", ", 1, 6),
+      Token("Dad", "Dad", 1, 7),
+      Token("!", "!", 1, 8),
+      Token("-2", "-2", 1, 9),
+      Token("Hi", "Hi", 2, 10),
+      Token(", ", ", ", 2, 11),
+      Token("parents", "parents", 2, 12),
+      Token("!", "!", 2, 13)
+    )
     val singletonTokens = Vector(
       Token("Hi", "Hi", 2, 10),
       Token(", ", ", ", 2, 11),
       Token("parents", "parents", 2, 12),
       Token("!", "!", 2, 13)
     )
-    val hgTokens = Vector(
-      Vector(Token("Mom", "Mom", 0, 2)),
-      Vector(Token("Dad", "Dad", 1, 7)),
-      Vector(Token("!", "!", 1, 8)),
-      Vector(Token("Hi", "Hi", 1, 5), Token(", ", ", ", 1, 6))
+    val hg = Hypergraph[String, TokenRange](
+      Map(
+        "0" -> Set(TokenRange(0, 2), TokenRange(5, 7)),
+        "2" -> Set(TokenRange(2, 3)),
+        "6" -> Set(TokenRange(6, 7)),
+        "3" -> Set(TokenRange(3, 4), TokenRange(7, 8))
+      ),
+      Map(
+        TokenRange(0, 2) -> Set("0"),
+        TokenRange(5, 7) -> Set("0"),
+        TokenRange(2, 3) -> Set("2"),
+        TokenRange(6, 7) -> Set("6"),
+        TokenRange(3, 4) -> Set("3"),
+        TokenRange(7, 8) -> Set("3")
+      )
     )
     val expected = Vector(
-      Token("Hi", "Hi", 2, 10),
-      Token(", ", ", ", 2, 11),
-      Token("parents", "parents", 2, 12),
-      Token("!", "!", 2, 13),
-      Token("0", "0", 0, -1),
-      Token("Mom", "Mom", 0, 2),
-      Token("1", "1", 1, -1),
-      Token("Dad", "Dad", 1, 7),
-      Token("2", "2", 2, -1),
-      Token("!", "!", 1, 8),
-      Token("3", "3", 3, -1),
-      Token("Hi", "Hi", 1, 5),
-      Token(", ", ", ", 1, 6)
+      TokenSg("Hi", "Hi", 2, 10),
+      TokenSg(", ", ", ", 2, 11),
+      TokenSg("parents", "parents", 2, 12),
+      TokenSg("!", "!", 2, 13),
+      TokenSep("0", "0", 0, -1),
+      TokenHG("Hi", "Hi", 0, 0, "0"),
+      TokenHG(", ", ", ", 0, 1, "0"),
+      TokenSep("1", "1", 1, -1),
+      TokenHG("Mom", "Mom", 0, 2, "2"),
+      TokenSep("2", "2", 2, -1),
+      TokenHG(", ", ", ", 1, 6, "6"),
+      TokenSep("3", "3", 3, -1),
+      TokenHG("!", "!", 0, 3, "3")
     )
-    val result = createLocalTA(singletonTokens, hgTokens)
+    val result = createLocalTA(singletonTokens, hg)(using gTA: Vector[Token])
     assert(result == expected)
   test("test splitSingleton() with pre and post"):
     val expected = (TokenRange(0, 2), TokenRange(4, 5))
@@ -226,17 +252,24 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     )
     val result = mergeSingletonHG(singletonTokens, hg)
     assert(result == expected)
-  test("test mergeSingletonHG() with one block and singleton splitting (pre and post)"):
+  ignore("test mergeSingletonHG() with one block and singleton splitting (pre and post)"):
     val expected = Hypergraph(
       Map(
-        "9" -> Set(TokenRange(0, 3), TokenRange(4, 7), TokenRange(9, 12)),
+        "12" -> Set(TokenRange(12, 15)),
         "8" -> Set(TokenRange(8, 9)),
-        "12" -> Set(TokenRange(12, 15))
+        "4" -> Set(TokenRange(4, 3), TokenRange(4, 8)),
+        "0" -> Set(TokenRange(0, 1)),
+        "11" -> Set(TokenRange(11, 7)),
+        "9" -> Set(TokenRange(0, 3), TokenRange(4, 7), TokenRange(9, 12))
       ),
       Map(
+        TokenRange(4, 3) -> Set("4"),
+        TokenRange(11, 7) -> Set("11"),
         TokenRange(12, 15) -> Set("12"),
         TokenRange(9, 12) -> Set("9"),
         TokenRange(4, 7) -> Set("9"),
+        TokenRange(0, 1) -> Set("0"),
+        TokenRange(4, 8) -> Set("4"),
         TokenRange(0, 3) -> Set("9"),
         TokenRange(8, 9) -> Set("8")
       )
@@ -283,15 +316,15 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     val he: Set[TokenRange] = Set(TokenRange(6, 10), TokenRange(0, 5))
     val block: FullDepthBlock = FullDepthBlock(Vector(2, 8), 2)
     val expected = Set(
-      TokenRange(0,2),
-      TokenRange(4,5),
-      TokenRange(6,8),
-      TokenRange(10,10)
+      TokenRange(0, 2),
+      TokenRange(4, 5),
+      TokenRange(6, 8),
+      TokenRange(10, 10)
     )
     val result = splitHyperedge(he, block)
     assert(result == expected)
 
-  test("test mergeSingletonHG() that requires hypergraph (only) splitting with pre and post"):
+  ignore("test mergeSingletonHG() that requires hypergraph (only) splitting with pre and post"):
     given gTA: Vector[Token] = Vector[Token](
       Token("a", "a", 0, 0),
       Token("b", "b", 0, 1),

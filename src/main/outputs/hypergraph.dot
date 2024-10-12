@@ -17,21 +17,33 @@ Cluster_8 -- "Cluster_8_1b"
 Cluster_8 -- "Cluster_8_1a"
 Cluster_8 -- "Cluster_8_0"
 "Cluster_7_44_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved "]
+"Cluster_7_43_reading" [shape=box label=""]
+"Cluster_7_0_reading" [shape=box label="natural  selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved 0"]
+"Cluster_7_0" [label="Group 0"]
+"Cluster_7_43" [label="Group 43"]
 "Cluster_7_44" [label="Group 44"]
 "Cluster_7_44" -- "Cluster_7_44_reading"
+"Cluster_7_43" -- "Cluster_7_43_reading"
+"Cluster_7_0" -- "Cluster_7_0_reading"
 Cluster_7 -- "Cluster_7_44"
+Cluster_7 -- "Cluster_7_43"
+Cluster_7 -- "Cluster_7_0"
+"Cluster_9_90_reading" [shape=box label=""]
 "Cluster_9_87_reading" [shape=box label=". character of domestic varieties ; difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species "]
-"Cluster_9_66_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved "]
-"Cluster_9_22_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved 1natural "]
-"Cluster_9_22" [label="Group 22"]
+"Cluster_9_66_reading" [shape=box label=""]
+"Cluster_9_43_reading" [shape=box label="1natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved 2natural selection , "]
+"Cluster_9_43" [label="Group 43"]
 "Cluster_9_66" [label="Group 66"]
 "Cluster_9_87" [label="Group 87"]
+"Cluster_9_90" [label="Group 90"]
+"Cluster_9_90" -- "Cluster_9_90_reading"
 "Cluster_9_87" -- "Cluster_9_87_reading"
 "Cluster_9_66" -- "Cluster_9_66_reading"
-"Cluster_9_22" -- "Cluster_9_22_reading"
+"Cluster_9_43" -- "Cluster_9_43_reading"
+Cluster_9 -- "Cluster_9_90"
 Cluster_9 -- "Cluster_9_87"
 Cluster_9 -- "Cluster_9_66"
-Cluster_9 -- "Cluster_9_22"
+Cluster_9 -- "Cluster_9_43"
 "Cluster_6_0_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved "]
 "Cluster_6_0" [label="Group 0"]
 "Cluster_6_0" -- "Cluster_6_0_reading"

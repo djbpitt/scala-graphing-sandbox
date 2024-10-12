@@ -235,7 +235,7 @@ def mergeSingletonSingleton(compactedEditSteps: Vector[CompoundEditStep]) = {
     case (x: CompoundEditStep.CompoundStepDelete, offset: Int) =>
       Hypergraph.hyperedge(offset.toString, x.tr)
   }
-  // RESUME HERE 2024-10-10: Where do our empty token ranges come from?
+  // RESUME HERE 2024-10-12: Finish code for hyperedge splitting before doing anything else
   val hypergraph = hyperedges.foldLeft(Hypergraph.empty[String, TokenRange]())((x, y) => y + x)
   hypergraph
 }
@@ -243,15 +243,12 @@ def mergeSingletonSingleton(compactedEditSteps: Vector[CompoundEditStep]) = {
 def createLocalTA(singletonTokens: Vector[TokenEnum], hg: Hypergraph[String, TokenRange])(using
     gTa: Vector[TokenEnum]
 ): Vector[TokenEnum] = {
-  // FIXME: Temporary workaround for empty HG (not yet processing)
   val HGTokens: Vector[Vector[TokenHG]] = identifyHGTokenRanges(hg) // needed for local TA
   val result: Vector[Vector[TokenEnum]] =
-    if HGTokens.nonEmpty then
-      singletonTokens.map(e => TokenSg(e.t, e.n, e.w, e.g))
-        +:
-          HGTokens.zipWithIndex
-            .map((innerVector, index) => Vector(TokenSep(index.toString, index.toString, index, -1)) ++ innerVector)
-    else Vector()
+    singletonTokens.map(e => TokenSg(e.t, e.n, e.w, e.g))
+      +:
+        HGTokens.zipWithIndex
+          .map((innerVector, index) => Vector(TokenSep(index.toString, index.toString, index, -1)) ++ innerVector)
   result.flatten
 }
 
@@ -279,13 +276,10 @@ def mergeSingletonHG(
 )(using gTA: Vector[TokenEnum]): Hypergraph[String, TokenRange] = {
   // TODO: Currently find all blocks, assume there is only one
   // TODO: Check for transpositions and determine block order
-  println(s"hg: $hg")
   val lTA: Vector[TokenEnum] =
     createLocalTA(singletonTokens, hg)
-  println(s"lTA: $lTA")
   val (_, _, fdb) = createAlignedBlocks(lTA, -1, false) // full-depth blocks
   // TODO: Transposition detection and block filtering goes either here or inside createAlignedBlocks()
-  println(s"fdb: $fdb")
   val singletonTokenRange = TokenRange(singletonTokens.head.g, singletonTokens.last.g + 1)
   val result =
     if fdb.isEmpty then
@@ -293,6 +287,7 @@ def mergeSingletonHG(
       hg + Hypergraph.hyperedge(hyperedgeId, singletonTokenRange)
     else
       val firstBlock = fdb.head
+      println(s"firstBLock: $firstBlock")
       val blockSingletonTokenRange =
         TokenRange(lTA(firstBlock.instances.head).g, lTA(firstBlock.instances.head + firstBlock.length - 1).g + 1)
       val (pre: TokenRange, post: TokenRange) = splitSingleton(singletonTokenRange, blockSingletonTokenRange)
@@ -306,18 +301,16 @@ def mergeSingletonHG(
         case _ =>
           val hyperedgeId = post.start.toString
           Hypergraph.hyperedge(hyperedgeId, post)
-      val hgPresAndPostsTokenRanges = splitHyperedge(
+      val hgPresAndPostsTokenRanges: Set[TokenRange] = splitHyperedge(
         hg.members(hg.hyperedges.head), // Filter out singleton block start
-        FullDepthBlock(firstBlock.instances.filterNot(e => blockSingletonTokenRange.contains(e)), firstBlock.length)
+        FullDepthBlock(Vector(firstBlock.instances.last), firstBlock.length)
       )
-      println(s"hgPreAndPostTokenRanges: $hgPresAndPostsTokenRanges")
       val hgPresAndPostsHesTmp: Set[Hypergraph[String, TokenRange]] =
         hgPresAndPostsTokenRanges map {
           case _: EmptyTokenRange => Hypergraph.empty[String, TokenRange]()
-          case x => Hypergraph.hyperedge(x.start.toString, x)
+          case x                  => Hypergraph.hyperedge(x.start.toString, x)
         }
       val hgPresAndPostsHes = hgPresAndPostsHesTmp.foldLeft(Hypergraph.empty[String, TokenRange]())((y, x) => y + x)
-      println(s"hgPreAndPostsHes: $hgPresAndPostsHes")
       val blockHyperedge = // must unpack because constructor expects varargs
         val hyperedgeId = blockSingletonTokenRange.start.toString
         Hypergraph.hyperedge(
@@ -325,7 +318,6 @@ def mergeSingletonHG(
           (hg.members(hg.hyperedges.head) + blockSingletonTokenRange).toSeq: _*
         )
       singletonPreHyperedge + blockHyperedge + singletonPostHyperedge + hgPresAndPostsHes
-  println(result)
   result
 }
 // Complication #1: Multiple blocks require transposition detection
@@ -356,24 +348,29 @@ def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
       // TODO: If height == 0 witnesses are identical (or possibly transposed!); can we take a shortcut?
       x match
         case (SingletonSingleton(item1, item2, height), i: Int) =>
-          println("SgSg")
           // prepare arguments
           val w1: List[Token] = darwinReadings(item1)
           val w2: List[Token] = darwinReadings(item2)
           val compactedEditSteps = compactEditSteps(tokensToEditSteps(w1, w2))
           // process
           val hypergraph: Hypergraph[String, TokenRange] = mergeSingletonSingleton(compactedEditSteps)
-          println(s"SgSg result: $hypergraph")
+          println("SgSg")
+          println(s"item2: $item2")
+          println(s"creating item: ${i + darwinReadings.size}")
+          println(s"new item: $hypergraph")
           y + ((i + darwinReadings.size) -> hypergraph)
         case (SingletonHG(item1, item2, height), i: Int) =>
-          println("SgHG")
           // prepare arguments, tokens for singleton and Hypergraph instance (!) for hypergraph
           val singletonTokens = darwinReadings(item1).toVector
-          val hg = if y(item2).hyperedges.nonEmpty then y(item2) else Hypergraph.empty[String, TokenRange]()
+          val hg = y(item2)
           val hypergraph = mergeSingletonHG(singletonTokens, hg)
+          println("SgHG")
+          println(s"reading item2: $item2")
+          println(s"item2 value is: $hg")
+          println(s"creating item ${i + darwinReadings.size}")
+          println(s"new value is: $hypergraph")
           y + ((i + darwinReadings.size) -> hypergraph)
         case (HGHG(item1, item2, height), i: Int) =>
-          println("HGHG")
           y + ((i + darwinReadings.size) -> Hypergraph.empty[String, TokenRange]())
     })
   // hypergraphToText(hg) // NB: Token range may be incorrect (eek!)
