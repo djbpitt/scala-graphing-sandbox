@@ -245,11 +245,12 @@ def createLocalTA(singletonTokens: Vector[TokenEnum], hg: Hypergraph[String, Tok
 ): Vector[TokenEnum] = {
   // FIXME: Temporary workaround for empty HG (not yet processing)
   val HGTokens: Vector[Vector[TokenHG]] = identifyHGTokenRanges(hg) // needed for local TA
-  val result: Vector[Vector[TokenEnum]] = if HGTokens.nonEmpty then
-    singletonTokens.map(e => TokenSg(e.t, e.n, e.w, e.g))
-      +:
-      HGTokens.zipWithIndex
-        .map((innerVector, index) => Vector(TokenSep(index.toString, index.toString, index, -1)) ++ innerVector)
+  val result: Vector[Vector[TokenEnum]] =
+    if HGTokens.nonEmpty then
+      singletonTokens.map(e => TokenSg(e.t, e.n, e.w, e.g))
+        +:
+          HGTokens.zipWithIndex
+            .map((innerVector, index) => Vector(TokenSep(index.toString, index.toString, index, -1)) ++ innerVector)
     else Vector()
   result.flatten
 }
@@ -281,8 +282,10 @@ def mergeSingletonHG(
   println(s"hg: $hg")
   val lTA: Vector[TokenEnum] =
     createLocalTA(singletonTokens, hg)
+  println(s"lTA: $lTA")
   val (_, _, fdb) = createAlignedBlocks(lTA, -1, false) // full-depth blocks
   // TODO: Transposition detection and block filtering goes either here or inside createAlignedBlocks()
+  println(s"fdb: $fdb")
   val singletonTokenRange = TokenRange(singletonTokens.head.g, singletonTokens.last.g + 1)
   val result =
     if fdb.isEmpty then
@@ -307,10 +310,14 @@ def mergeSingletonHG(
         hg.members(hg.hyperedges.head), // Filter out singleton block start
         FullDepthBlock(firstBlock.instances.filterNot(e => blockSingletonTokenRange.contains(e)), firstBlock.length)
       )
-      val hgPresAndPostsHes =
-        hgPresAndPostsTokenRanges
-          .map(e => Hypergraph.hyperedge(e.toString, e))
-          .foldLeft(Hypergraph.empty[String, TokenRange]())((y, x) => y + x)
+      println(s"hgPreAndPostTokenRanges: $hgPresAndPostsTokenRanges")
+      val hgPresAndPostsHesTmp: Set[Hypergraph[String, TokenRange]] =
+        hgPresAndPostsTokenRanges map {
+          case _: EmptyTokenRange => Hypergraph.empty[String, TokenRange]()
+          case x => Hypergraph.hyperedge(x.start.toString, x)
+        }
+      val hgPresAndPostsHes = hgPresAndPostsHesTmp.foldLeft(Hypergraph.empty[String, TokenRange]())((y, x) => y + x)
+      println(s"hgPreAndPostsHes: $hgPresAndPostsHes")
       val blockHyperedge = // must unpack because constructor expects varargs
         val hyperedgeId = blockSingletonTokenRange.start.toString
         Hypergraph.hyperedge(
@@ -318,6 +325,7 @@ def mergeSingletonHG(
           (hg.members(hg.hyperedges.head) + blockSingletonTokenRange).toSeq: _*
         )
       singletonPreHyperedge + blockHyperedge + singletonPostHyperedge + hgPresAndPostsHes
+  println(result)
   result
 }
 // Complication #1: Multiple blocks require transposition detection
@@ -355,7 +363,7 @@ def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
           val compactedEditSteps = compactEditSteps(tokensToEditSteps(w1, w2))
           // process
           val hypergraph: Hypergraph[String, TokenRange] = mergeSingletonSingleton(compactedEditSteps)
-          println("SgSg result: $hypergraph")
+          println(s"SgSg result: $hypergraph")
           y + ((i + darwinReadings.size) -> hypergraph)
         case (SingletonHG(item1, item2, height), i: Int) =>
           println("SgHG")
