@@ -235,7 +235,6 @@ def mergeSingletonSingleton(compactedEditSteps: Vector[CompoundEditStep]) = {
     case (x: CompoundEditStep.CompoundStepDelete, offset: Int) =>
       Hypergraph.hyperedge(offset.toString, x.tr)
   }
-  // RESUME HERE 2024-10-12: Finish code for hyperedge splitting before doing anything else
   val hypergraph = hyperedges.foldLeft(Hypergraph.empty[String, TokenRange]())((x, y) => y + x)
   hypergraph
 }
@@ -287,7 +286,29 @@ def mergeSingletonHG(
       hg + Hypergraph.hyperedge(hyperedgeId, singletonTokenRange)
     else
       val firstBlock = fdb.head
-      println(s"firstBLock: $firstBlock")
+      val blockStartInHe = firstBlock.instances.last
+      var heForBlock = hg.members(lTA(blockStartInHe).asInstanceOf[TokenHG].he)
+      val heTrInBlock: TokenRange = // TokenRange that contains block in hyperedge (to be split)
+        heForBlock
+          .filter(e => lTA(e.start).w == lTA(blockStartInHe).w)
+          .head
+      val heBlockRange: TokenRange = // TokenRange of block (used to split heTrInBlock)
+        TokenRange(lTA(firstBlock.instances.last).g, lTA(firstBlock.instances.last + firstBlock.length - 1).g + 1)
+      val (hePre: TokenRange, hePost: TokenRange) = splitSingleton(heTrInBlock, heBlockRange)
+      def computePreOrPostLength(toSplit: TokenRange): Int =
+        (toSplit: @unchecked) match
+          case x: EmptyTokenRange => 0
+          case x: LegalTokenRange => x.until - x.start
+      val hePreLength = computePreOrPostLength(hePre)
+      val hePostLength = computePreOrPostLength(hePost)
+      val preTokenRanges: Seq[TokenRange] = heForBlock.map(e => TokenRange(e.start, e.start + hePreLength)).toSeq
+      val allHePres: Hypergraph[String, TokenRange] =
+        Hypergraph.hyperedge(preTokenRanges.head.start.toString, preTokenRanges: _*)
+      val postTokenRanges: Seq[TokenRange] = heForBlock.map(e => TokenRange(e.until - hePostLength, e.until)).toSeq
+      val allHePosts: Hypergraph[String, TokenRange] =
+        Hypergraph.hyperedge(postTokenRanges.head.start.toString, preTokenRanges: _*)
+      println(s"allHePres: $allHePres")
+      println(s"allHePosts: $allHePosts")
       val blockSingletonTokenRange =
         TokenRange(lTA(firstBlock.instances.head).g, lTA(firstBlock.instances.head + firstBlock.length - 1).g + 1)
       val (pre: TokenRange, post: TokenRange) = splitSingleton(singletonTokenRange, blockSingletonTokenRange)
@@ -355,9 +376,6 @@ def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
           // process
           val hypergraph: Hypergraph[String, TokenRange] = mergeSingletonSingleton(compactedEditSteps)
           println("SgSg")
-          println(s"item2: $item2")
-          println(s"creating item: ${i + darwinReadings.size}")
-          println(s"new item: $hypergraph")
           y + ((i + darwinReadings.size) -> hypergraph)
         case (SingletonHG(item1, item2, height), i: Int) =>
           // prepare arguments, tokens for singleton and Hypergraph instance (!) for hypergraph
@@ -365,10 +383,6 @@ def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
           val hg = y(item2)
           val hypergraph = mergeSingletonHG(singletonTokens, hg)
           println("SgHG")
-          println(s"reading item2: $item2")
-          println(s"item2 value is: $hg")
-          println(s"creating item ${i + darwinReadings.size}")
-          println(s"new value is: $hypergraph")
           y + ((i + darwinReadings.size) -> hypergraph)
         case (HGHG(item1, item2, height), i: Int) =>
           y + ((i + darwinReadings.size) -> Hypergraph.empty[String, TokenRange]())
