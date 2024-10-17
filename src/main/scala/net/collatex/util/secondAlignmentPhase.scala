@@ -287,7 +287,8 @@ def mergeSingletonHG(
     else
       val firstBlock = fdb.head
       val blockStartInHe = firstBlock.instances.last
-      var heForBlock = hg.members(lTA(blockStartInHe).asInstanceOf[TokenHG].he)
+      val heForBlock = hg.members(lTA(blockStartInHe).asInstanceOf[TokenHG].he)
+      println(heForBlock)
       val heTrInBlock: TokenRange = // TokenRange that contains block in hyperedge (to be split)
         heForBlock
           .filter(e => lTA(e.start).w == lTA(blockStartInHe).w)
