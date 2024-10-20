@@ -316,7 +316,8 @@ def mergeSingletonHG(
       val blockSingletonTokenRange =
         TokenRange(lTA(firstBlock.instances.head).g, lTA(firstBlock.instances.head + firstBlock.length - 1).g + 1)
       val blockHyperedge = Hypergraph.vertices(blockSingletonTokenRange) * allHgBlockHe
-      val (sgPre: TokenRange, sgPost: TokenRange) = splitSingleton(singletonTokenRange, blockSingletonTokenRange)
+      val (sgPre: TokenRange, sgPost: TokenRange) =
+        splitSingleton(singletonTokenRange, blockSingletonTokenRange)
       val singletonPreHyperedge = sgPre match
         case _: EmptyTokenRange => Hypergraph.empty[String, TokenRange]()
         case _ =>
