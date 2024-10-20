@@ -26,7 +26,6 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
       Map("0" -> Set(TokenRange(5, 9), TokenRange(0, 4))),
       Map(TokenRange(5, 9) -> Set("0"), TokenRange(0, 4) -> Set("0"))
     )
-    println(result)
     assert(result == expected)
   test("test different singletons"):
     val tokenArray =
@@ -61,7 +60,6 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
         TokenRange(0, 2) -> Set("2")
       )
     )
-    println(result)
     assert(result == expected)
   test("test identifyHGTokenRanges()"):
     given gTA: Vector[Token] = Vector(
@@ -176,18 +174,18 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     val expected = (TokenRange(0, 0), TokenRange(5, 5))
     val result = splitSingleton(TokenRange(0, 5), TokenRange(0, 5))
     assert(result == expected)
-  ignore("test splitSingleton() with illegal start"):
+  test("test splitSingleton() with illegal start"):
     val caught = intercept[RuntimeException](splitSingleton(TokenRange(2, 5), TokenRange(0, 5)))
-    assert(caught.getMessage == "Second split (for pre) failed")
-  ignore("test splitSingleton() with illegal end"):
+    assert(caught.getMessage == "pre value IllegalTokenRange(2,0) is illegal")
+  test("test splitSingleton() with illegal end"):
     val caught = intercept[RuntimeException](splitSingleton(TokenRange(0, 4), TokenRange(3, 5)))
-    assert(caught.getMessage == "First split (for post) failed")
-  ignore("test splitSingleton() with illegal singleton token range"):
+    assert(caught.getMessage == "post value IllegalTokenRange(5,4) is illegal")
+  test("test splitSingleton() with illegal singleton token range"):
     val caught = intercept[RuntimeException](splitSingleton(TokenRange(5, 1), TokenRange(2, 3)))
-    assert(Set("Second split (for pre) failed", "First split (for post) failed").contains(caught.getMessage))
-  ignore("test splitSingleton() with empty singleton token range"):
-    val caught = intercept[RuntimeException](splitSingleton(TokenRange(3, 3), TokenRange(3, 3)))
-    assert(Set("Second split (for pre) failed", "First split (for post) failed").contains(caught.getMessage))
+    assert(caught.getMessage == "both pre (IllegalTokenRange(5,2)) and post(IllegalTokenRange(3,1)) are illegal")
+  test("test splitSingleton() with empty singleton token range"):
+    val caught = intercept[RuntimeException](splitSingleton(TokenRange(2, 4), TokenRange(3, 3)))
+    assert(caught.getMessage == "cannot split on empty block range: EmptyTokenRange(3,3)")
   test("test mergeSingletonHG() with zero blocks"):
     val expected = Hypergraph(
       Map(
@@ -304,7 +302,6 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     )
     val result = mergeSingletonHG(singletonTokens, hg)
     assert(result == expected)
-
   test("test splitHyperedge()"):
     val he: Set[TokenRange] = Set(TokenRange(6, 10), TokenRange(0, 5))
     val block: FullDepthBlock = FullDepthBlock(Vector(2, 8), 2)
@@ -316,7 +313,6 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     )
     val result = splitHyperedge(he, block)
     assert(result == expected)
-
   test("test mergeSingletonHG() that requires hypergraph (only) splitting with pre and post"):
     given gTA: Vector[Token] = Vector[Token](
       Token("a", "a", 0, 0),
@@ -354,6 +350,60 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
         TokenRange(9, 11) -> Set("0"),
         TokenRange(6, 7) -> Set("6"),
         TokenRange(11, 12) -> Set("6")
+      )
+    )
+    val resultRanges =
+      val mergeResult = mergeSingletonHG(singletonTokens, hg)
+      mergeResult.hyperedges.map(e => mergeResult.members(e))
+    val expectedRanges =
+      expected.hyperedges.map(e => expected.members(e))
+    assert(resultRanges == expectedRanges)
+  test("test mergeSingletonHG() that requires splitting both singleton and hypergraph with pre and post for both"):
+    given gTA: Vector[Token] = Vector[Token](
+      Token("z", "z", 0, 0),
+      Token("a", "a", 0, 1),
+      Token("b", "b", 0, 2),
+      Token("zz", "zz", 0, 3),
+      Token("Sep4", "Sep4", 0, 4),
+      Token("x", "x", 1, 5),
+      Token("a", "a", 1, 6),
+      Token("b", "b", 1, 7),
+      Token("y", "y", 1, 8),
+      Token("Sep9", "Sep9", 1, 9),
+      Token("x", "x", 2, 10),
+      Token("a", "a", 2, 11),
+      Token("b", "b", 2, 12),
+      Token("y", "y", 2, 13)
+    )
+    val singletonTokens =
+      Vector[Token](
+        Token("z", "z", 0, 0),
+        Token("a", "a", 0, 1),
+        Token("b", "b", 0, 2),
+        Token("zz", "zz", 0, 3)
+      )
+    val hg = Hypergraph[String, TokenRange](
+      Map("5" -> Set(TokenRange(5, 9), TokenRange(10, 14))),
+      Map(TokenRange(5, 9) -> Set("5"), TokenRange(10, 14) -> Set("5"))
+    )
+    val expected = Hypergraph(
+      Map(
+        "8" -> Set(TokenRange(8, 9), TokenRange(13, 14)),
+        "5" -> Set(TokenRange(5, 6), TokenRange(10, 11)),
+        "6" -> Set(TokenRange(6, 8), TokenRange(11, 13), TokenRange(1, 3)),
+        "0" -> Set(TokenRange(0, 1)),
+        "3" -> Set(TokenRange(3, 4))
+      ),
+      Map(
+        TokenRange(1, 3) -> Set("6"),
+        TokenRange(0, 1) -> Set("0"),
+        TokenRange(8, 9) -> Set("8"),
+        TokenRange(11, 13) -> Set("6"),
+        TokenRange(6, 8) -> Set("6"),
+        TokenRange(13, 14) -> Set("8"),
+        TokenRange(10, 11) -> Set("5"),
+        TokenRange(5, 6) -> Set("5"),
+        TokenRange(3, 4) -> Set("3")
       )
     )
     val resultRanges =

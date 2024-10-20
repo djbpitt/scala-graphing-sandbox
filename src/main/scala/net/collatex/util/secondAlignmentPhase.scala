@@ -255,8 +255,14 @@ def splitSingleton(singletonTokenRange: TokenRange, blockTokenRange: TokenRange)
   // Split singleton into preblock, block, postblock; ignore block because we already know it
   // Assume resulting ranges are legal or empty; if illegal, the issue is in our block identification
   // TODO: Return Either and let caller manage exceptions
+  if blockTokenRange.getClass.getSimpleName == "EmptyTokenRange" then
+    throw RuntimeException(s"cannot split on empty block range: $blockTokenRange")
   val pre = TokenRange(singletonTokenRange.start, blockTokenRange.start)
   val post = TokenRange(blockTokenRange.until, singletonTokenRange.until)
+  if pre.getClass.getSimpleName == "IllegalTokenRange" && post.getClass.getSimpleName == "IllegalTokenRange" then
+    throw RuntimeException(s"both pre ($pre) and post($post) are illegal")
+  if pre.getClass.getSimpleName == "IllegalTokenRange" then throw RuntimeException(s"pre value $pre is illegal")
+  if post.getClass.getSimpleName == "IllegalTokenRange" then throw RuntimeException(s"post value $post is illegal")
   (pre, post)
 
 def splitHyperedge(he: Set[TokenRange], block: FullDepthBlock) =
