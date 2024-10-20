@@ -324,18 +324,18 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     val result = splitHyperedge(he, block)
     assert(result == expected)
 
-  ignore("test mergeSingletonHG() that requires hypergraph (only) splitting with pre and post"):
+  test("test mergeSingletonHG() that requires hypergraph (only) splitting with pre and post"):
     given gTA: Vector[Token] = Vector[Token](
       Token("a", "a", 0, 0),
       Token("b", "b", 0, 1),
       Token("Sep2", "Sep2", 0, 2),
       Token("x", "x", 1, 3),
-      Token("a", "b", 1, 4),
+      Token("a", "a", 1, 4),
       Token("b", "b", 1, 5),
       Token("y", "y", 1, 6),
       Token("Sep7", "Sep7", 1, 7),
       Token("x", "x", 2, 8),
-      Token("a", "b", 2, 9),
+      Token("a", "a", 2, 9),
       Token("b", "b", 2, 10),
       Token("y", "y", 2, 11)
     )
@@ -344,8 +344,8 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
       Token("b", "b", 0, 1)
     )
     val hg = Hypergraph[String, TokenRange](
-      Map("3" -> Set(TokenRange(3, 7), TokenRange(9, 12))),
-      Map(TokenRange(3, 7) -> Set("3"), TokenRange(9, 12) -> Set("3"))
+      Map("3" -> Set(TokenRange(3, 7), TokenRange(8, 12))),
+      Map(TokenRange(3, 7) -> Set("3"), TokenRange(8, 12) -> Set("3"))
     )
     val expected = Hypergraph(
       Map(
@@ -363,5 +363,9 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
         TokenRange(11, 12) -> Set("6")
       )
     )
-    val result = mergeSingletonHG(singletonTokens, hg)
-    assert(result == expected)
+    val resultRanges =
+      val mergeResult = mergeSingletonHG(singletonTokens, hg)
+      mergeResult.hyperedges.map(e => mergeResult.members(e))
+    val expectedRanges =
+      expected.hyperedges.map(e => expected.members(e))
+    assert(resultRanges == expectedRanges)

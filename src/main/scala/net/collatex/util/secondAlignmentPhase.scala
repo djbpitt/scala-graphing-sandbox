@@ -288,11 +288,8 @@ def mergeSingletonHG(
       val firstBlock = fdb.head
       val blockStartInHe = firstBlock.instances.last
       val heForBlock = hg.members(lTA(blockStartInHe).asInstanceOf[TokenHG].he)
-      println(heForBlock)
       val heTrInBlock: TokenRange = // TokenRange that contains block in hyperedge (to be split)
-        heForBlock
-          .filter(e => lTA(e.start).w == lTA(blockStartInHe).w)
-          .head
+        heForBlock.filter(e => gTA(e.start).w == lTA(blockStartInHe).w).head
       val heBlockRange: TokenRange = // TokenRange of block (used to split heTrInBlock)
         TokenRange(lTA(firstBlock.instances.last).g, lTA(firstBlock.instances.last + firstBlock.length - 1).g + 1)
       val (hePre: TokenRange, hePost: TokenRange) = splitSingleton(heTrInBlock, heBlockRange)
@@ -318,7 +315,7 @@ def mergeSingletonHG(
         Hypergraph.hyperedge(allHeBlockTRs.head.start.toString, allHeBlockTRs: _*)
       val blockSingletonTokenRange =
         TokenRange(lTA(firstBlock.instances.head).g, lTA(firstBlock.instances.head + firstBlock.length - 1).g + 1)
-      val blockHyperedge = allHgBlockHe * Hypergraph.vertices(blockSingletonTokenRange)
+      val blockHyperedge = Hypergraph.vertices(blockSingletonTokenRange) * allHgBlockHe
       val (sgPre: TokenRange, sgPost: TokenRange) = splitSingleton(singletonTokenRange, blockSingletonTokenRange)
       val singletonPreHyperedge = sgPre match
         case _: EmptyTokenRange => Hypergraph.empty[String, TokenRange]()
@@ -331,7 +328,6 @@ def mergeSingletonHG(
           val hyperedgeId = sgPost.start.toString
           Hypergraph.hyperedge(hyperedgeId, sgPost)
       singletonPreHyperedge + singletonPostHyperedge + blockHyperedge + allHePres + allHePosts
-  println(s"singletonHG result: $result")
   result
 }
 // Complication #1: Multiple blocks require transposition detection
