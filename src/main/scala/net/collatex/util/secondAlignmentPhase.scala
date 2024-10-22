@@ -356,7 +356,7 @@ def mergeHgHg(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, Token
     ++ hg2.hyperedges.map(e => (e, hg2.members(e).head))
   val HGTokens = HGTokenRanges.toVector
     .map((id, tr) => gTa.slice(tr.start, tr.until).map(f => TokenHG(f.t, f.n, f.w, f.g, id)))
-  HGTokens
+  HGTokens.sortBy(e => e.map(_.n).toString) // sort to facilitate testing
     .flatMap(inner => inner :+ TokenSep("Sep" + inner.head.g.toString, "Sep" + inner.head.g.toString, -1, -1))
     .dropRight(1)
 
@@ -391,6 +391,7 @@ def mergeHgHg(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, Token
           println("SgHG")
           y + ((i + darwinReadings.size) -> hypergraph)
         case (HGHG(item1, item2, height), i: Int) =>
+          println("HGHG")
           val hypergraph = mergeHgHg(y(item1), y(item2)) // currently just lTA
           y + ((i + darwinReadings.size) -> Hypergraph.empty[String, TokenRange]())
     })

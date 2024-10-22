@@ -412,3 +412,38 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     val expectedRanges =
       expected.hyperedges.map(e => expected.members(e))
     assert(resultRanges == expectedRanges)
+  test("create local token array for HGHG merge"):
+    //FIXME: mergeHgHg temporarily only creates token array; change test when this distribution of responsibilities changes
+    given gTa: Vector[TokenEnum] = Vector(
+      Token("Hi ", "hi", 0, 0),
+      Token("Mom ", "mom", 0, 1),
+      Token("Sep2", "Sep2", 0, 2),
+      Token("Hi ", "hi", 1, 3),
+      Token("Mom ", "mom", 1, 4),
+      Token("Sep5", "Sep5", 1, 5),
+      Token("Bye ", "bye", 2, 6),
+      Token("Dad ", "dad", 2, 7),
+      Token("Sep8", "Sep8", 2, 8),
+      Token("Bye ", "bye ", 3, 9),
+      Token("Dad ", "dad", 3, 10),
+      Token("Sep11", "sep11", 3, 11),
+      Token("!", "!", 3, 12)
+    )
+    val hg1 = Hypergraph.hyperedge(
+      "0",
+      TokenRange(0, 2),
+      TokenRange(3, 5)
+    )
+    val hg2 = Hypergraph.hyperedge("6", TokenRange(6, 8), TokenRange(9, 11)) +
+      Hypergraph.hyperedge("12", TokenRange(12, 13))
+    val expected = Vector(
+      TokenHG("!", "!", 3, 12, "12"),
+      TokenSep("Sep12", "Sep12", -1, -1),
+      TokenHG("Bye ", "bye", 2, 6, "6"),
+      TokenHG("Dad ", "dad", 2, 7, "6"),
+      TokenSep("Sep6", "Sep6", -1, -1),
+      TokenHG("Hi ", "hi", 0, 0, "0"),
+      TokenHG("Mom ", "mom", 0, 1, "0")
+    )
+    val result = mergeHgHg(hg1, hg2)
+    assert(result == expected)
