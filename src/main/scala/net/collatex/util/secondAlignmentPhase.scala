@@ -349,6 +349,17 @@ def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
     .map((id, tr) => gTa.slice(tr.start, tr.until).map(f => TokenHG(f.t, f.n, f.w, f.g, id)))
   HGTokens
 
+def mergeHgHg(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, TokenRange])(using
+    gTa: Vector[TokenEnum]
+): Vector[TokenEnum] =
+  val HGTokenRanges = hg1.hyperedges.map(e => (e, hg1.members(e).head))
+    ++ hg2.hyperedges.map(e => (e, hg2.members(e).head))
+  val HGTokens = HGTokenRanges.toVector
+    .map((id, tr) => gTa.slice(tr.start, tr.until).map(f => TokenHG(f.t, f.n, f.w, f.g, id)))
+  HGTokens
+    .flatMap(inner => inner :+ TokenSep("Sep" + inner.head.g.toString, "Sep" + inner.head.g.toString, -1, -1))
+    .dropRight(1)
+
 // darwinReadings is only singletons
 // darwinHGs is only hypergraphs
 @main def secondAlignmentPhase(): Unit =
@@ -359,7 +370,6 @@ def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
       .toVector
   val nodeToClusters =
     (vectorizeReadings andThen clusterReadings)(darwinReadings) // list of tuples
-
   val hg: Map[Int, Hypergraph[String, TokenRange]] = nodeToClusters.zipWithIndex
     .foldLeft(Map.empty[Int, Hypergraph[String, TokenRange]])((y, x) => {
       // TODO: If height == 0 witnesses are identical (or possibly transposed!); can we take a shortcut?
@@ -381,6 +391,7 @@ def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
           println("SgHG")
           y + ((i + darwinReadings.size) -> hypergraph)
         case (HGHG(item1, item2, height), i: Int) =>
+          val hypergraph = mergeHgHg(y(item1), y(item2)) // currently just lTA
           y + ((i + darwinReadings.size) -> Hypergraph.empty[String, TokenRange]())
     })
   // hypergraphToText(hg) // NB: Token range may be incorrect (eek!)
