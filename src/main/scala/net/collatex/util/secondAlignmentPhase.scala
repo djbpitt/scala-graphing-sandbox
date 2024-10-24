@@ -372,27 +372,16 @@ def mergeHgHg(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, Token
     val blockRange = TokenRange(lTa(e).g, lTa(e).g + firstBlock.length)
     val blockHyperedge = lTa(e).asInstanceOf[TokenHG].he
     val blockWitness = gTa(blockRange.start).w
-    val blockHeTr = both.members(blockHyperedge).filter(e => gTa(e.start).w == blockWitness)
+    val blockHeTr = both.members(blockHyperedge).filter(e => gTa(e.start).w == blockWitness).head
+    val (hePre: TokenRange, hePost: TokenRange) = splitSingleton(blockHeTr, blockRange)
     println(s"blockRange: $blockRange")
     println(s"blockHyperedge: $blockHyperedge")
     println(s"blockWitness: $blockWitness")
     println(s"blockHeTr: $blockHeTr")
+    println(s"hePre: $hePre")
+    println(s"hePost: $hePost")
     e
   )
-//  val firstBlockTr =
-//    TokenRange(lTa(firstBlockInstances.head).g, lTa(firstBlockInstances.head + firstBlock.length - 1).g + 1)
-//  val firstBlockWitness = gTa(firstBlockInstances.head).w
-//  println(s"firstBlockInstances: $firstBlockInstances")
-//  println(s"firstBlockWitness: $firstBlockWitness")
-//  println(s"firstBlockTr: $firstBlockTr")
-//  val firstBlockHyperedgeLabels = firstBlockInstances
-//    .map(e => lTa(e).asInstanceOf[TokenHG].he)
-//  println(s"firstBlockHyperedgeLabels: $firstBlockHyperedgeLabels")
-//  val firstBlockHyperedges = firstBlockHyperedgeLabels.map(e => both.members(e))
-//  println(s"firstBlockHyperedges: $firstBlockHyperedges")
-//  val heTrInBlock: TokenRange = // TokenRange that contains block in hyperedge (to be split)
-//    firstBlockHyperedges.flatten.filter(e => gTa(e.start).w == lTa(firstBlockInstances.head).w).head
-//  println(s"heTrInBlock: $heTrInBlock")
   lTa
 
 // darwinReadings is only singletons
