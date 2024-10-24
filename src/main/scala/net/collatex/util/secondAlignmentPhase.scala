@@ -359,10 +359,23 @@ def insertSeparators(HGTokens: Vector[Vector[TokenEnum]]): Vector[TokenEnum] =
 def createHgTa(using gTa: Vector[TokenEnum]) = insertSeparators compose identifyHGTokenRanges
 
 def mergeHgHg(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, TokenRange])(using
-    Vector[TokenEnum]
+    gTa: Vector[TokenEnum]
 ): Vector[TokenEnum] =
-  val result = createHgTa(hg1 + hg2)
-  result
+  val both = hg1 + hg2
+  val lTa = createHgTa(both)
+  val (_, _, fdb) = createAlignedBlocks(lTa, -1, false) // List(FullDepthBlock(Vector(0, 125),5), FullDepthBlock(Vector(6, 28),17))
+  println(fdb)
+  val firstBlock = fdb.head
+  val firstBlockInstances = firstBlock.instances
+  println(s"firstBlockInstances: $firstBlockInstances")
+  val firstBlockTr = TokenRange(lTa(firstBlockInstances.last).g, lTa(firstBlockInstances.last + firstBlock.length - 1).g + 1)
+  println(s"firstBlockTr: $firstBlockTr")
+  val firstBlockHyperedgeLabels = firstBlockInstances
+    .map(e => lTa(e).asInstanceOf[TokenHG].he)
+  println(s"firstBlockHyperedgeLabels: $firstBlockHyperedgeLabels")
+  val firstBlockHyperedges = firstBlockHyperedgeLabels.map(e => both.members(e))
+  println(s"firstBlockHyperedges: $firstBlockHyperedges")
+  lTa
 
 // darwinReadings is only singletons
 // darwinHGs is only hypergraphs
@@ -385,17 +398,14 @@ def mergeHgHg(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, Token
           val compactedEditSteps = compactEditSteps(tokensToEditSteps(w1, w2))
           // process
           val hypergraph: Hypergraph[String, TokenRange] = mergeSingletonSingleton(compactedEditSteps)
-          println("SgSg")
           y + ((i + darwinReadings.size) -> hypergraph)
         case (SingletonHG(item1, item2, height), i: Int) =>
           // prepare arguments, tokens for singleton and Hypergraph instance (!) for hypergraph
           val singletonTokens = darwinReadings(item1).toVector
           val hg = y(item2)
           val hypergraph = mergeSingletonHG(singletonTokens, hg)
-          println("SgHG")
           y + ((i + darwinReadings.size) -> hypergraph)
         case (HGHG(item1, item2, height), i: Int) =>
-          println("HGHG")
           val hypergraph = mergeHgHg(y(item1), y(item2)) // currently just lTA
           y + ((i + darwinReadings.size) -> Hypergraph.empty[String, TokenRange]())
     })
