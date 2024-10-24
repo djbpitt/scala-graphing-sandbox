@@ -445,5 +445,5 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
       TokenHG("Hi ", "hi", 0, 0, "0"),
       TokenHG("Mom ", "mom", 0, 1, "0")
     )
-    val result = mergeHgHg(hg1, hg2)
+    val result = createHgTa(hg1 + hg2)
     assert(result == expected)

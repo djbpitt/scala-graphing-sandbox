@@ -349,16 +349,20 @@ def identifyHGTokenRanges(y: Hypergraph[String, TokenRange])(using
     .map((id, tr) => gTa.slice(tr.start, tr.until).map(f => TokenHG(f.t, f.n, f.w, f.g, id)))
   HGTokens
 
-def mergeHgHg(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, TokenRange])(using
-    gTa: Vector[TokenEnum]
-): Vector[TokenEnum] =
-  val HGTokenRanges = hg1.hyperedges.map(e => (e, hg1.members(e).head))
-    ++ hg2.hyperedges.map(e => (e, hg2.members(e).head))
-  val HGTokens = HGTokenRanges.toVector
-    .map((id, tr) => gTa.slice(tr.start, tr.until).map(f => TokenHG(f.t, f.n, f.w, f.g, id)))
-  HGTokens.sortBy(e => e.map(_.n).toString) // sort to facilitate testing
+def insertSeparators(HGTokens: Vector[Vector[TokenEnum]]): Vector[TokenEnum] =
+  val result = HGTokens
+    .sortBy(e => e.map(_.n).toString) // sort to facilitate testing
     .flatMap(inner => inner :+ TokenSep("Sep" + inner.head.g.toString, "Sep" + inner.head.g.toString, -1, -1))
     .dropRight(1)
+  result
+
+def createHgTa(using gTa: Vector[TokenEnum]) = insertSeparators compose identifyHGTokenRanges
+
+def mergeHgHg(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, TokenRange])(using
+    Vector[TokenEnum]
+): Vector[TokenEnum] =
+  val result = createHgTa(hg1 + hg2)
+  result
 
 // darwinReadings is only singletons
 // darwinHGs is only hypergraphs
