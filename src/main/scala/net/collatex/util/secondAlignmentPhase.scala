@@ -224,16 +224,16 @@ def compactEditSteps(
   nextStep(allSingleSteps.tail, Vector[CompoundEditStep](), allSingleSteps.head)
 
 def mergeSingletonSingleton(compactedEditSteps: Vector[CompoundEditStep]) = {
-  val hyperedges: Vector[Hypergraph[String, TokenRange]] = compactedEditSteps.zipWithIndex map {
-    case (x: CompoundEditStep.CompoundStepMatch, offset: Int) =>
-      Hypergraph.hyperedge(offset.toString, x.tr1, x.tr2)
-    case (x: CompoundEditStep.CompoundStepNonMatch, offset: Int) =>
-      Hypergraph.hyperedge(offset.toString + "a", x.tr1) +
-        Hypergraph.hyperedge(offset.toString + "b", x.tr2)
-    case (x: CompoundEditStep.CompoundStepInsert, offset: Int) =>
-      Hypergraph.hyperedge(offset.toString, x.tr)
-    case (x: CompoundEditStep.CompoundStepDelete, offset: Int) =>
-      Hypergraph.hyperedge(offset.toString, x.tr)
+  val hyperedges: Vector[Hypergraph[String, TokenRange]] = compactedEditSteps map {
+    case x: CompoundEditStep.CompoundStepMatch =>
+      Hypergraph.hyperedge(x.tr1.start.toString, x.tr1, x.tr2)
+    case x: CompoundEditStep.CompoundStepNonMatch =>
+      Hypergraph.hyperedge(x.tr1.start.toString, x.tr1) +
+        Hypergraph.hyperedge(x.tr2.start.toString, x.tr2)
+    case x: CompoundEditStep.CompoundStepInsert =>
+      Hypergraph.hyperedge(x.tr.toString, x.tr)
+    case x: CompoundEditStep.CompoundStepDelete =>
+      Hypergraph.hyperedge(x.tr.toString, x.tr)
   }
   val hypergraph = hyperedges.foldLeft(Hypergraph.empty[String, TokenRange]())((x, y) => y + x)
   hypergraph
@@ -363,12 +363,14 @@ def mergeHgHg(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, Token
 ): Vector[TokenEnum] =
   val both = hg1 + hg2
   val lTa = createHgTa(both)
-  val (_, _, fdb) = createAlignedBlocks(lTa, -1, false) // List(FullDepthBlock(Vector(0, 125),5), FullDepthBlock(Vector(6, 28),17))
+  val (_, _, fdb) =
+    createAlignedBlocks(lTa, -1, false) // List(FullDepthBlock(Vector(0, 125),5), FullDepthBlock(Vector(6, 28),17))
   println(fdb)
   val firstBlock = fdb.head
   val firstBlockInstances = firstBlock.instances
   println(s"firstBlockInstances: $firstBlockInstances")
-  val firstBlockTr = TokenRange(lTa(firstBlockInstances.last).g, lTa(firstBlockInstances.last + firstBlock.length - 1).g + 1)
+  val firstBlockTr =
+    TokenRange(lTa(firstBlockInstances.last).g, lTa(firstBlockInstances.last + firstBlock.length - 1).g + 1)
   println(s"firstBlockTr: $firstBlockTr")
   val firstBlockHyperedgeLabels = firstBlockInstances
     .map(e => lTa(e).asInstanceOf[TokenHG].he)

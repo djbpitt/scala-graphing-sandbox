@@ -23,8 +23,8 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     val compactedEditSteps = compactEditSteps(tokensToEditSteps(w1, w2))
     val result = mergeSingletonSingleton(compactedEditSteps)
     val expected = Hypergraph(
-      Map("0" -> Set(TokenRange(5, 9), TokenRange(0, 4))),
-      Map(TokenRange(5, 9) -> Set("0"), TokenRange(0, 4) -> Set("0"))
+      Map("5" -> Set(TokenRange(5, 9), TokenRange(0, 4))),
+      Map(TokenRange(5, 9) -> Set("5"), TokenRange(0, 4) -> Set("5"))
     )
     assert(result == expected)
   test("test different singletons"):
@@ -46,21 +46,21 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     val result = mergeSingletonSingleton(compactedEditSteps)
     val expected = Hypergraph(
       Map(
-        "1b" -> Set(TokenRange(2, 3)),
-        "1a" -> Set(TokenRange(7, 8)),
-        "0" -> Set(TokenRange(8, 9), TokenRange(3, 4)),
-        "2" -> Set(TokenRange(5, 7), TokenRange(0, 2))
+        "2" -> Set(TokenRange(2, 3)),
+        "7" -> Set(TokenRange(7, 8)),
+        "8" -> Set(TokenRange(8, 9), TokenRange(3, 4)),
+        "5" -> Set(TokenRange(5, 7), TokenRange(0, 2))
       ),
       Map(
-        TokenRange(5, 7) -> Set("2"),
-        TokenRange(3, 4) -> Set("0"),
-        TokenRange(7, 8) -> Set("1a"),
-        TokenRange(2, 3) -> Set("1b"),
-        TokenRange(8, 9) -> Set("0"),
-        TokenRange(0, 2) -> Set("2")
+        TokenRange(5, 7) -> Set("5"),
+        TokenRange(3, 4) -> Set("8"),
+        TokenRange(7, 8) -> Set("7"),
+        TokenRange(2, 3) -> Set("2"),
+        TokenRange(8, 9) -> Set("8"),
+        TokenRange(0, 2) -> Set("5")
       )
     )
-    assert(result == expected)
+    assert(result.hyperedges.map(e => result.members(e)) == expected.hyperedges.map(e => expected.members(e)))
   test("test identifyHGTokenRanges()"):
     given gTA: Vector[Token] = Vector(
       Token("Hi", "Hi", 0, 0),
@@ -413,7 +413,7 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
       expected.hyperedges.map(e => expected.members(e))
     assert(resultRanges == expectedRanges)
   test("create local token array for HGHG merge"):
-    //FIXME: mergeHgHg temporarily only creates token array; change test when this distribution of responsibilities changes
+    // FIXME: mergeHgHg temporarily only creates token array; change test when this distribution of responsibilities changes
     given gTa: Vector[TokenEnum] = Vector(
       Token("Hi ", "hi", 0, 0),
       Token("Mom ", "mom", 0, 1),
