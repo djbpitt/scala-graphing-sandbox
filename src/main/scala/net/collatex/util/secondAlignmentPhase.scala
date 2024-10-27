@@ -376,7 +376,6 @@ def mergeHgHg(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, Token
   val lTa = createHgTa(both)
   val (_, _, fdb) =
     createAlignedBlocks(lTa, -1, false) // List(FullDepthBlock(Vector(0, 125),5), FullDepthBlock(Vector(6, 28),17))
-  println(fdb)
   val firstBlock = fdb.head
   val firstBlockInstances = firstBlock.instances
   val stuff = firstBlockInstances.map(e =>
@@ -386,14 +385,18 @@ def mergeHgHg(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, Token
       both.members(blockHyperedge).filter(e => gTa(e.start).w == gTa(blockRange.start).w).head,
       blockRange
     )
-    val hePreLength = computePreOrPostLength(hePre)
-    val hePostLength = computePreOrPostLength(hePost)
-    val preTokenRanges = computePreTokenRanges(both.members(blockHyperedge), hePreLength)
-    val postTokenRanges = computePostTokenRanges(both.members(blockHyperedge), hePostLength)
+    val preLength = computePreOrPostLength(hePre)
+    val preTokenRanges = computePreTokenRanges(both.members(blockHyperedge), preLength)
     val allPres = computesPresOrPosts(preTokenRanges)
+    val postLength = computePreOrPostLength(hePost)
+    val postTokenRanges = computePostTokenRanges(both.members(blockHyperedge), postLength)
     val allPosts = computesPresOrPosts(postTokenRanges)
-    e
-  )
+    val blockTokenRanges = preTokenRanges.zip(postTokenRanges).map((pre, post) => TokenRange(pre.until, post.start))
+    val allBlock = computesPresOrPosts(blockTokenRanges)
+    val everything = allPres + allPosts + allBlock
+    everything
+  ).fold(Hypergraph.empty[String, TokenRange]())(_ + _)
+  println(stuff)
   lTa
 
 // darwinReadings is only singletons
