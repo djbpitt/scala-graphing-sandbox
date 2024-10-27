@@ -385,11 +385,9 @@ def mergeHgHg(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, Token
       both.members(blockHyperedge).filter(e => gTa(e.start).w == gTa(blockRange.start).w).head,
       blockRange
     )
-    val preLength = computePreOrPostLength(hePre)
-    val preTokenRanges = computePreTokenRanges(both.members(blockHyperedge), preLength)
+    val preTokenRanges = computePreTokenRanges(both.members(blockHyperedge), computePreOrPostLength(hePre))
     val allPres = computesPresOrPosts(preTokenRanges)
-    val postLength = computePreOrPostLength(hePost)
-    val postTokenRanges = computePostTokenRanges(both.members(blockHyperedge), postLength)
+    val postTokenRanges = computePostTokenRanges(both.members(blockHyperedge), computePreOrPostLength(hePost))
     val allPosts = computesPresOrPosts(postTokenRanges)
     val blockTokenRanges = preTokenRanges.zip(postTokenRanges).map((pre, post) => TokenRange(pre.until, post.start))
     val allBlock = computesPresOrPosts(blockTokenRanges)
