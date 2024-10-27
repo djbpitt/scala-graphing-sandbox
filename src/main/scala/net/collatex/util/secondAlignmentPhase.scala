@@ -275,6 +275,25 @@ def splitHyperedge(he: Set[TokenRange], block: FullDepthBlock) =
   val result: Set[TokenRange] = splitCandidates.map((e, f) => splitSingleton(e, f).toList).flatten.toSet
   result // set of all pre and post token ranges for hyperedge
 
+def computePreOrPostLength(toSplit: TokenRange): Int =
+  (toSplit: @unchecked) match
+    case x: EmptyTokenRange => 0
+    case x: LegalTokenRange => x.until - x.start
+
+def computePreTokenRanges(heForBlock: Set[TokenRange], hePreLength: Int) = {
+  heForBlock.map(e => TokenRange(e.start, e.start + hePreLength)).toSeq
+}
+
+def computePostTokenRanges(heForBlock: Set[TokenRange], hePostLength: Int) = {
+  heForBlock.map(e => TokenRange(e.until - hePostLength, e.until)).toSeq
+}
+
+def computesPresOrPosts(preTokenRanges: Seq[TokenRange]): Hypergraph[String, TokenRange] = {
+  preTokenRanges.head match
+    case _: EmptyTokenRange => Hypergraph.empty[String, TokenRange]()
+    case _: TokenRange      => Hypergraph.hyperedge(preTokenRanges.head.start.toString, preTokenRanges: _*)
+}
+
 def mergeSingletonHG(
     singletonTokens: Vector[Token],
     hg: Hypergraph[String, TokenRange]
@@ -299,22 +318,14 @@ def mergeSingletonHG(
       val heBlockRange: TokenRange = // TokenRange of block (used to split heTrInBlock)
         TokenRange(lTA(firstBlock.instances.last).g, lTA(firstBlock.instances.last + firstBlock.length - 1).g + 1)
       val (hePre: TokenRange, hePost: TokenRange) = splitSingleton(heTrInBlock, heBlockRange)
-      def computePreOrPostLength(toSplit: TokenRange): Int =
-        (toSplit: @unchecked) match
-          case x: EmptyTokenRange => 0
-          case x: LegalTokenRange => x.until - x.start
       val hePreLength = computePreOrPostLength(hePre)
       val hePostLength = computePreOrPostLength(hePost)
-      val preTokenRanges: Seq[TokenRange] = heForBlock.map(e => TokenRange(e.start, e.start + hePreLength)).toSeq
+      val preTokenRanges: Seq[TokenRange] = computePreTokenRanges(heForBlock, hePreLength)
       val allHePres: Hypergraph[String, TokenRange] =
-        preTokenRanges.head match
-          case _: EmptyTokenRange => Hypergraph.empty[String, TokenRange]()
-          case _: TokenRange      => Hypergraph.hyperedge(preTokenRanges.head.start.toString, preTokenRanges: _*)
-      val postTokenRanges: Seq[TokenRange] = heForBlock.map(e => TokenRange(e.until - hePostLength, e.until)).toSeq
+        computesPresOrPosts(preTokenRanges)
+      val postTokenRanges: Seq[TokenRange] = computePostTokenRanges(heForBlock, hePostLength)
       val allHePosts: Hypergraph[String, TokenRange] =
-        postTokenRanges.head match
-          case _: EmptyTokenRange => Hypergraph.empty[String, TokenRange]()
-          case _: TokenRange      => Hypergraph.hyperedge(postTokenRanges.head.start.toString, postTokenRanges: _*)
+        computesPresOrPosts(postTokenRanges)
       val allHeBlockTRs: Seq[TokenRange] =
         heForBlock.map(e => TokenRange(e.start + hePreLength, e.until - hePostLength)).toSeq
       val allHgBlockHe: Hypergraph[String, TokenRange] =
@@ -371,15 +382,16 @@ def mergeHgHg(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, Token
   val stuff = firstBlockInstances.map(e =>
     val blockRange = TokenRange(lTa(e).g, lTa(e).g + firstBlock.length)
     val blockHyperedge = lTa(e).asInstanceOf[TokenHG].he
-    val blockWitness = gTa(blockRange.start).w
-    val blockHeTr = both.members(blockHyperedge).filter(e => gTa(e.start).w == blockWitness).head
-    val (hePre: TokenRange, hePost: TokenRange) = splitSingleton(blockHeTr, blockRange)
-    println(s"blockRange: $blockRange")
-    println(s"blockHyperedge: $blockHyperedge")
-    println(s"blockWitness: $blockWitness")
-    println(s"blockHeTr: $blockHeTr")
-    println(s"hePre: $hePre")
-    println(s"hePost: $hePost")
+    val (hePre: TokenRange, hePost: TokenRange) = splitSingleton(
+      both.members(blockHyperedge).filter(e => gTa(e.start).w == gTa(blockRange.start).w).head,
+      blockRange
+    )
+    val hePreLength = computePreOrPostLength(hePre)
+    val hePostLength = computePreOrPostLength(hePost)
+    val preTokenRanges = computePreTokenRanges(both.members(blockHyperedge), hePreLength)
+    val postTokenRanges = computePostTokenRanges(both.members(blockHyperedge), hePostLength)
+    val allPres = computesPresOrPosts(preTokenRanges)
+    val allPosts = computesPresOrPosts(postTokenRanges)
     e
   )
   lTa
