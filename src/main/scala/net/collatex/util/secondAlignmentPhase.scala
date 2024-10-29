@@ -376,14 +376,14 @@ def mergeHgHg(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, Token
   val lTa = createHgTa(both)
   val (_, _, fdb) =
     createAlignedBlocks(lTa, -1, false) // List(FullDepthBlock(Vector(0, 125),5), FullDepthBlock(Vector(6, 28),17))
+  //
   // Experimenting with full-depth (and—later—transposition) checking
-  val tmp = for block <- fdb yield
-    val tokenLists = block.instances.map(e => lTa(e))
-    for tokenList <- tokenLists yield
-      both.members(tokenList.asInstanceOf[TokenHG].he)
-  println(tmp)
-
+  val witnessesInMerge = both // compute set of all witness identifiers
+    .vertices
+    .map(e => gTa(e.start).w)
+  println(s"witnesses in merge: $witnessesInMerge")
   // End of experimentation
+  //
   val firstBlock = fdb.head
   val firstBlockInstances = firstBlock.instances
   val stuff = firstBlockInstances.map(e =>
