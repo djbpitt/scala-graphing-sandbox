@@ -382,6 +382,11 @@ def mergeHgHg(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, Token
     .vertices
     .map(e => gTa(e.start).w)
   println(s"witnesses in merge: $witnessesInMerge")
+  fdb
+    .map(_.instances)
+    .map(_.map(e => lTa(e).asInstanceOf[TokenHG].he))
+    .map(_.flatMap(e => both.members(e)))
+    .foreach(println) // all three token ranges for each of the two blocks
   // End of experimentation
   //
   val firstBlock = fdb.head
