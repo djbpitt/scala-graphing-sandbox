@@ -362,10 +362,13 @@ def createTreeMap(hg: Hypergraph[String, TokenRange]): TreeMap[Int, String] =
     .to(TreeMap)
 
 @main def tm(): Unit =
-  val heTm = Vector(hg1, hg2).map(createTreeMap)
   val sepRegex = """Sep\d+"""
   val seps = gTa.filter(_.t matches sepRegex)
   val starts = Token("Sep-1", "Sep-1", -1, -1) +: seps
   val ends = seps :+ Token("Sep" + gTa.size.toString, "", 5, gTa.size)
-  println(s"starts: $starts")
-  println(s"ends: $ends")
+  val heStarts = Hypergraph.hyperedge("starts", starts.map(e => TokenRange(e.g, e.g)):_*)
+  val heEnds = Hypergraph.hyperedge("ends", ends.map(e => TokenRange(e.g, e.g)):_*)
+  println(heStarts)
+  println(heEnds)
+  val heTm = Vector(hg1 + heStarts + heEnds, hg2 + heStarts + heEnds).map(createTreeMap)
+  println(heTm)
