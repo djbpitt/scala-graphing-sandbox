@@ -1,9 +1,14 @@
 /*
- * When aligning two hyper-graphs we have to detected transpositions between the two graphs.
- * To detect transpositions we need have order. We run into the problem that the Hyperedges in a alignment hypergraph are partially ordered.
- * Partially ordered items cannot be sorted the traditional way, because not all the items can be compared. 
+ * When aligning two hyper-graphs we have to detect transpositions between the two graphs.
+ * To detect transpositions we need have order. Same for creation a variant graph or an alignment table.
+ *
+ * We run into the problem that the Token ranges, and thus the Hyperedges in an alignment hypergraph, are partially ordered.
+ * Token ranges only state something about a single witness, thus two token ranges within the same witness can be compared.
+ * Two token ranges of different witnesses however can't be compared.
+ *
+ * Partially ordered items cannot be sorted the traditional way, because not all the items can be compared.
  * To sort them we have to create a dependency graph and then topologically sort the nodes in the graph.
- * 
+ *
  * 1. Create a dependency graph for each of the hyper-graphs
  * a. Create 'fake' hyperedges for the start and end nodes, find the start and end coordinates in the global token array
  * b. Go over the hyperedges in each hypergraph
