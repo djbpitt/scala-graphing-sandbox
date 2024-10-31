@@ -95,7 +95,7 @@ val gTa: Vector[Token] =
     Token("shall ", "shall", 1, 40),
     Token("be ", "be", 1, 41),
     Token("preserved ", "preserved", 1, 42),
-    Token("Sep43", "Sep43", 1, -43),
+    Token("Sep43", "Sep43", 1, 43),
     Token("natural ", "natural", 2, 44),
     Token("selection ", "selection", 2, 45),
     Token(", ", ",", 2, 46),
@@ -362,7 +362,10 @@ def createTreeMap(hg: Hypergraph[String, TokenRange]): TreeMap[Int, String] =
     .to(TreeMap)
 
 @main def tm(): Unit =
-  val result = Vector(hg1, hg2).map(createTreeMap)
-  val next = result.head.minAfter(255 + 1)
-  println(result)
-  println(next)
+  val heTm = Vector(hg1, hg2).map(createTreeMap)
+  val sepRegex = """Sep\d+"""
+  val seps = gTa.filter(_.t matches sepRegex)
+  val starts = Token("Sep-1", "Sep-1", -1, -1) +: seps
+  val ends = seps :+ Token("Sep" + gTa.size.toString, "", 5, gTa.size)
+  println(s"starts: $starts")
+  println(s"ends: $ends")
