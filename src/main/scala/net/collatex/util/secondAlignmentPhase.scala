@@ -372,6 +372,8 @@ def createHgTa(using gTa: Vector[TokenEnum]) = insertSeparators compose identify
 def mergeHgHg(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, TokenRange])(using
     gTa: Vector[TokenEnum]
 ): Vector[TokenEnum] =
+  println(s"hg1: $hg1")
+  println(s"hg2: $hg2")
   val both = hg1 + hg2
   val lTa = createHgTa(both)
   val (_, _, fdb) =
