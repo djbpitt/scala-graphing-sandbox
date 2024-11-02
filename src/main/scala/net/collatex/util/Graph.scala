@@ -2,6 +2,8 @@ package net.collatex.util
 
 
 
+import cats.implicits.catsSyntaxSemigroup
+
 import scala.annotation.targetName
 import scala.collection.immutable.Set
 import scala.collection.mutable
@@ -66,12 +68,19 @@ enum Graph[N]:
       case g: DirectedGraph[N] => g.adjacencyMap.filter(t => t._2._1.isEmpty).keySet
 
   //Not finished!
-  //  @targetName("overlay")
-  //  def +(other: Graph[N]): Graph[N] =
-  //    this match
-  //      case _: EmptyGraph[N] => return other
-  //      case g: SingleNodeGraph[N] => return Set(g.node)
-  //      case g: DirectedGraph[N] => Graph(g.adjacencyMap |+| other.adjacencyMap)
+  @targetName("overlay")
+  def +(other: Graph[N]): Graph[N] =
+    (this, other) match
+      case (_: EmptyGraph[N], other: Graph[N]) => other
+      case (one: Graph[N], _: EmptyGraph[N]) => one
+      case (one: SingleNodeGraph[N], other: DirectedGraph[N]) =>
+        // convert the single node graph into two map entries so that we can merge the graphs
+        val t1 = one.node -> (Set.empty[N], Set.empty[N])
+        val m1 = Map.apply(t1)
+        val m2 = other.adjacencyMap
+        // create a new graph with the entries combined
+        DirectedGraph(m1 |+| m2)
+
 
   // Connects two graphs with one or more edges.
   @targetName("connect")
