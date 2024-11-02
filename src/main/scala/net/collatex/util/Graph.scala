@@ -22,6 +22,10 @@ class LabelledNode(label: String)
 // constructor!
 object Graph:
   def empty[N]: Graph[N] = Graph.EmptyGraph()
+  def node[N](node: N): Graph[N] = SingleNodeGraph(node)
+  def edge[N](source: N, target: N): Graph[N] =
+    node(source) * node(target)
+
   def lNode(label: String): Graph[LabelledNode] =
     val labelledNode = LabelledNode(label)
     val graph = Graph.SingleNodeGraph[LabelledNode](labelledNode)
