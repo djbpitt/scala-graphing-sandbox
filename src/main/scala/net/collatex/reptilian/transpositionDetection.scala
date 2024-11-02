@@ -21,29 +21,32 @@ import scala.collection.immutable.{SortedMap, TreeMap}
  * nodes in the graph.
  *
  * 1. Create a dependency graph (DAG) for each of the hyper-graphs:
- *    0. Every hyperedge in the hypergraph becomes a node (use the hyperedge label as the
+ *    a. Every hyperedge in the hypergraph becomes a node (use the hyperedge label as the
  *       identifier) in the dependency graph. Like a variant graph, a dependency graph needs
  *       a start and an end, which need to have the start and end offsets in the global token
  *       array of the starts and ends. This provides the lowest and highest offsets for each
  *       witness, which we need in order to know where they start and stop in the global token
  *       array. (NB: Create separators in the global token array to facilitate finding the
  *       seams between witnesses.
- *    a. Create 'fake' hyperedges for the start and end nodes and find the start and end
+ *    b. Create 'fake' hyperedges for the start and end nodes and find the start and end
  *       coordinates in the global token array. Start and end nodes must contain all witnesses.
-          Create two sets: one with the fake start hyperedges and the hyperedges of the graph
-          And one with the fake end hyperedge and the hyperedges of the graph
- *    b. Go over the hyperedges + the fake end in each hypergraph to transform the hyper-graphs to a sorted
- *       Map[Int, String], where Int is the position where a token range starts in the global
- *       token array and String is the edge label where the data comes from.
- *    d. Create the outgoing edges for the dependency graph by going over the hyperedges + fake start
- *       and using the sorted to determine what the next item in the map is for the positions in
- *       each of the witnesses.
- *    This finds the hyperedges, which are the nodes in the dependency graph to connect to.
- *    De-duplicate the edges because when witnesses will point to the same ones.
+ *       Create two (not just one) hypergraphs: one with the fake start (but not end) hyperedges
+ *       and the hyperedges of the graph and one with the fake end (but not start) hyperedge and
+ *       the hyperedges of the graph. We use the one with ends to create the map and the one with
+ *       the start to create the edges for the dependency graph.
+ *    c. Create the map: Go over the hyperedges + the fake end in each hypergraph to transform
+ *       the hypergraphs to a sorted Map[Int, String], where Int is the position where a token
+ *       range starts in the global token array and String is the edge label where the data comes
+ *       from.
+ *    d. Create the outgoing edges for the dependency graph: Go over the hyperedges + fake start
+ *       and use the sorted to determine what the next item in the map is for the positions in
+ *       each of the witnesses. We want one edge for multiple witnesses, so fetch for every
+ *       witness and deduplicate before combining.
+ *    e. Combine edges into dependency graph using fold. Visualize for sanity checking.
  * 2. Topological sort the dependency graph
  * 3. Rank the hyperedges
  * 4. Create a traversal/decision graph for the traversal of the two sorted and ranked hyperedges
- * 5. Beam search the traversal graph
+ * 5. Beam search the traversal graph to create the alignment (resolving transpositions)
  *
  * Later optimization: We can determine the relative order of two blocks for a hyperedge that
  * appears in both blocks.
@@ -370,7 +373,7 @@ def createTreeMap(hg: Hypergraph[String, TokenRange]): TreeMap[Int, String] =
   val ends = seps :+ Token("Sep" + gTa.size.toString, "", 5, gTa.size)
   val heStarts = Hypergraph.hyperedge("starts", starts.map(e => TokenRange(e.g, e.g)):_*)
   val heEnds = Hypergraph.hyperedge("ends", ends.map(e => TokenRange(e.g, e.g)):_*)
-  println(heStarts)
-  println(heEnds)
-  val heTm = Vector(hg1 + heStarts + heEnds, hg2 + heStarts + heEnds).map(createTreeMap)
-  println(heTm)
+  val hgWithStarts = Vector(hg1 + heStarts, hg2 + heStarts)
+  val tmWithEnds = Vector(hg1 + heEnds, hg2 + heEnds).map(createTreeMap)
+  println(s"hgWithStarts: $hgWithStarts")
+  println(s"tmWithEnds: $tmWithEnds")
