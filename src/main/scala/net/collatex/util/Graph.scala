@@ -67,6 +67,13 @@ enum Graph[N]:
       case g: SingleNodeGraph[N] => Set(g.node)
       case g: DirectedGraph[N] => g.adjacencyMap.filter(t => t._2._1.isEmpty).keySet
 
+  def toMap: Map[N, (Set[N], Set[N])] =
+    this match
+      case _: EmptyGraph[N] => Map.empty
+      case g: SingleNodeGraph[N] =>
+        Map.apply(g.node -> (Set.empty[N], Set.empty[N]))
+      case g: DirectedGraph[N] => g.adjacencyMap
+
   //Not finished!
   @targetName("overlay")
   def +(other: Graph[N]): Graph[N] =
