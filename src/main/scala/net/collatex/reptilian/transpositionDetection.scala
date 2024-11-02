@@ -1,7 +1,7 @@
 package net.collatex.reptilian
 
 import net.collatex.reptilian.TokenEnum.Token
-import net.collatex.util.Hypergraph
+import net.collatex.util.{Graph, Hypergraph}
 
 import scala.collection.immutable.{SortedMap, TreeMap}
 
@@ -33,15 +33,16 @@ import scala.collection.immutable.{SortedMap, TreeMap}
  *       Create two (not just one) hypergraphs: one with the fake start (but not end) hyperedges
  *       and the hyperedges of the graph and one with the fake end (but not start) hyperedge and
  *       the hyperedges of the graph. We use the one with ends to create the map and the one with
- *       the start to create the edges for the dependency graph.
+ *       the starts to create the edges for the dependency graph.
  *    c. Create the map: Go over the hyperedges + the fake end in each hypergraph to transform
- *       the hypergraphs to a sorted Map[Int, String], where Int is the position where a token
- *       range starts in the global token array and String is the edge label where the data comes
- *       from.
+ *       the hypergraphs to a TreeMap (sorted Map[Int, String]), where Int is the position where
+ *       a token range starts in the global token array and String is the edge label where the
+ *       data come from.
  *    d. Create the outgoing edges for the dependency graph: Go over the hyperedges + fake start
- *       and use the sorted to determine what the next item in the map is for the positions in
- *       each of the witnesses. We want one edge for multiple witnesses, so fetch for every
- *       witness and deduplicate before combining.
+ *       and use the sorted keys to determine what the next item in the map is for the positions in
+ *       each of the witnesses. There will be duplicate targets and we want one edge for multiple
+ *       witnesses with the same target, so fetch for every witness and deduplicate before combining
+ *       (next step).
  *    e. Combine edges into dependency graph using fold. Visualize for sanity checking.
  * 2. Topological sort the dependency graph
  * 3. Rank the hyperedges
@@ -366,14 +367,22 @@ def createTreeMap(hg: Hypergraph[String, TokenRange]): TreeMap[Int, String] =
     .map((tr, l) => tr.start -> l.head)
     .to(TreeMap)
 
+// Take in hypergraph with fake starts plus tree map and return dependency graph
+def createDependencyGraph(
+    hg: Hypergraph[String, TokenRange],
+    tm: TreeMap[Int, String]
+): Graph[Int] = Graph.empty[Int]
+
 @main def tm(): Unit =
   val sepRegex = """Sep\d+"""
   val seps = gTa.filter(_.t matches sepRegex)
   val starts = Token("Sep-1", "Sep-1", -1, -1) +: seps
   val ends = seps :+ Token("Sep" + gTa.size.toString, "", 5, gTa.size)
-  val heStarts = Hypergraph.hyperedge("starts", starts.map(e => TokenRange(e.g, e.g)):_*)
-  val heEnds = Hypergraph.hyperedge("ends", ends.map(e => TokenRange(e.g, e.g)):_*)
+  val heStarts = Hypergraph.hyperedge("starts", starts.map(e => TokenRange(e.g, e.g)): _*)
+  val heEnds = Hypergraph.hyperedge("ends", ends.map(e => TokenRange(e.g, e.g)): _*)
   val hgWithStarts = Vector(hg1 + heStarts, hg2 + heStarts)
   val tmWithEnds = Vector(hg1 + heEnds, hg2 + heEnds).map(createTreeMap)
-  println(s"hgWithStarts: $hgWithStarts")
-  println(s"tmWithEnds: $tmWithEnds")
+  val dependencyGraphs: Vector[Graph[Int]] =
+    hgWithStarts.zip(tmWithEnds)
+      .map((hg, tm) => createDependencyGraph(hg, tm))
+  dependencyGraphs.foreach(println)
