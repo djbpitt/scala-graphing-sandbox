@@ -376,11 +376,13 @@ def createTreeMap(hg: Hypergraph[String, TokenRange]): TreeMap[Int, String] =
 def createDependencyGraph(
     hg: Hypergraph[String, TokenRange],
     tm: TreeMap[Int, String]
-): Graph[Int] =
+): Graph[String] =
   val targets = hg.hyperedges.map(e => hg.members(e))
     .map(_.map(f => tm.minAfter(f.start + 1).get).map(_._2))
-  println(s"targets: $targets")
-  Graph.empty[Int]
+  val edges = hg.hyperedges.zip(targets)
+    .flatMap((source, targets) => targets.map(target => Graph.edge(source, target)))
+  val dependencyGraph = edges.foldLeft(Graph.empty[String])(_ + _)
+  dependencyGraph
 
 @main def tm(): Unit =
   val sepRegex = """Sep\d+"""
@@ -391,9 +393,7 @@ def createDependencyGraph(
   val heEnds = Hypergraph.hyperedge("ends", ends.map(e => TokenRange(e.g, e.g)): _*)
   val hgWithStarts = Vector(hg1 + heStarts, hg2 + heStarts)
   val tmWithEnds = Vector(hg1 + heEnds, hg2 + heEnds).map(createTreeMap)
-  val dependencyGraphs: Vector[Graph[Int]] =
+  val dependencyGraphs: Vector[Graph[String]] =
     hgWithStarts.zip(tmWithEnds)
       .map((hg, tm) => createDependencyGraph(hg, tm))
-  println(s"hgWithStarts: $hgWithStarts")
-  println(s"tmWithEnds: $tmWithEnds")
   dependencyGraphs.foreach(println)
