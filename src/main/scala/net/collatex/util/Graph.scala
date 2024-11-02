@@ -98,6 +98,10 @@ enum Graph[N]:
     (this, other) match
       case (_: EmptyGraph[N], other: Graph[N]) => other
       case (one: Graph[N], _: EmptyGraph[N]) => one
+      case (one: SingleNodeGraph[N], other: SingleNodeGraph[N]) =>
+        val t1: (Set[N], Set[N]) = (Set(), Set(other.node))
+        val t2: (Set[N], Set[N]) = (Set(one.node), Set())
+        DirectedGraph(Map.apply(one.node -> t1, other.node -> t2))
       case (one: SingleNodeGraph[N], other: Graph[N]) =>
         // connect the node from one to all the roots of other
         // we update the pairing for one.
