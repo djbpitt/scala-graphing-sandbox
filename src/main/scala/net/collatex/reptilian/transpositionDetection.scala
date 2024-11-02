@@ -368,10 +368,19 @@ def createTreeMap(hg: Hypergraph[String, TokenRange]): TreeMap[Int, String] =
     .to(TreeMap)
 
 // Take in hypergraph with fake starts plus tree map and return dependency graph
+// For each key in hg 1) find all target TokenRange starts, 2) look up start value
+//   in tm keys, and 3) retrieve next tm key sequentially, and return value associated
+//   with that next key. E.g., with hyperedge
+//   255 -> Set(TokenRange(255,272), TokenRange(174, 191)) locate keys 255 and
+//   174 in treemap, find next key sequentially, and return associated value.
 def createDependencyGraph(
     hg: Hypergraph[String, TokenRange],
     tm: TreeMap[Int, String]
-): Graph[Int] = Graph.empty[Int]
+): Graph[Int] =
+  val targets = hg.hyperedges.map(e => hg.members(e))
+    .map(_.map(f => tm.minAfter(f.start + 1).get).map(_._2))
+  println(s"targets: $targets")
+  Graph.empty[Int]
 
 @main def tm(): Unit =
   val sepRegex = """Sep\d+"""
@@ -385,4 +394,6 @@ def createDependencyGraph(
   val dependencyGraphs: Vector[Graph[Int]] =
     hgWithStarts.zip(tmWithEnds)
       .map((hg, tm) => createDependencyGraph(hg, tm))
+  println(s"hgWithStarts: $hgWithStarts")
+  println(s"tmWithEnds: $tmWithEnds")
   dependencyGraphs.foreach(println)
