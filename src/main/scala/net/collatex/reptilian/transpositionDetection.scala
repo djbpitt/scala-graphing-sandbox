@@ -384,6 +384,18 @@ def createDependencyGraph(
   val dependencyGraph = edges.foldLeft(Graph.empty[String])(_ + _)
   dependencyGraph
 
+def dependencyGraphToDot(depGraph: Graph[String]): String =
+  val prologue = "digraph G {\n\t"
+  val epilogue = "\n}"
+  val edges = depGraph.toMap
+    .map((k, v) => k -> v._2)
+    .flatMap((k, v) => v.map(target => k -> target))
+  val readings = edges
+  val dotEdges = edges
+    .map((k, v) => k + " -> " + v)
+    .mkString(";\n\t")
+  prologue + dotEdges + epilogue
+
 @main def tm(): Unit =
   val sepRegex = """Sep\d+"""
   val seps = gTa.filter(_.t matches sepRegex)
@@ -396,4 +408,6 @@ def createDependencyGraph(
   val dependencyGraphs: Vector[Graph[String]] =
     hgWithStarts.zip(tmWithEnds)
       .map((hg, tm) => createDependencyGraph(hg, tm))
+  val dots = dependencyGraphs.map(dependencyGraphToDot)
   dependencyGraphs.foreach(println)
+  dots.foreach(println)
