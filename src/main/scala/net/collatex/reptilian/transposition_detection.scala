@@ -32,7 +32,7 @@ import scala.collection.immutable.{SortedMap, TreeMap}
  *       coordinates in the global token array. Start and end nodes must contain all witnesses.
           Create two sets: one with the fake start hyperedges and the hyperedges of the graph
           And one with the fake end hyperedge and the hyperedges of the graph
- *    b. Go over the hyperedges + the fake end in each hypergraph to add the hypergraphs to a sorted
+ *    b. Go over the hyperedges + the fake end in each hypergraph to transform the hyper-graphs to a sorted
  *       Map[Int, String], where Int is the position where a token range starts in the global
  *       token array and String is the edge label where the data comes from.
  *    d. Create the outgoing edges for the dependency graph by going over the hyperedges + fake start
