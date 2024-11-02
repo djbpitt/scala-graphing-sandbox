@@ -30,11 +30,13 @@ import scala.collection.immutable.{SortedMap, TreeMap}
  *       seams between witnesses.
  *    a. Create 'fake' hyperedges for the start and end nodes and find the start and end
  *       coordinates in the global token array. Start and end nodes must contain all witnesses.
- *    b. Go over the hyperedges in each hypergraph to add the hypergraphs to a sorted
+          Create two sets: one with the fake start hyperedges and the hyperedges of the graph
+          And one with the fake end hyperedge and the hyperedges of the graph
+ *    b. Go over the hyperedges + the fake end in each hypergraph to add the hypergraphs to a sorted
  *       Map[Int, String], where Int is the position where a token range starts in the global
  *       token array and String is the edge label where the data comes from.
- *    d. Create the outgoing edges for the dependency graph by going over the hyperedges and
- *       using the sorted to determine what the next item in the map is for the positions in
+ *    d. Create the outgoing edges for the dependency graph by going over the hyperedges + fake start
+ *       and using the sorted to determine what the next item in the map is for the positions in
  *       each of the witnesses.
  *    This finds the hyperedges, which are the nodes in the dependency graph to connect to.
  *    De-duplicate the edges because when witnesses will point to the same ones.
@@ -43,7 +45,7 @@ import scala.collection.immutable.{SortedMap, TreeMap}
  * 4. Create a traversal/decision graph for the traversal of the two sorted and ranked hyperedges
  * 5. Beam search the traversal graph
  *
- * Later optimization: We can determmine the relative order of two blocks for a hyperedge that
+ * Later optimization: We can determine the relative order of two blocks for a hyperedge that
  * appears in both blocks.
  * */
 
