@@ -56,7 +56,7 @@ import scala.collection.immutable.{SortedMap, TreeMap}
 // Data
 // Separators in global token array have the form Token("Sepnn", "Sepnn", w, nn), where
 // w = witness number of preceding witness and nn = global offset
-val gTa: Vector[Token] =
+given gTa: Vector[Token] =
   Vector(
     Token("natural  ", "natural", 0, 0),
     Token("selection ", "selection", 0, 1),
@@ -377,24 +377,38 @@ def createDependencyGraph(
     hg: Hypergraph[String, TokenRange],
     tm: TreeMap[Int, String]
 ): Graph[String] =
-  val targets = hg.hyperedges.map(e => hg.members(e))
+  val targets = hg.hyperedges
+    .map(e => hg.members(e))
     .map(_.map(f => tm.minAfter(f.start + 1).get).map(_._2))
-  val edges = hg.hyperedges.zip(targets)
+  val edges = hg.hyperedges
+    .zip(targets)
     .flatMap((source, targets) => targets.map(target => Graph.edge(source, target)))
   val dependencyGraph = edges.foldLeft(Graph.empty[String])(_ + _)
   dependencyGraph
 
-def dependencyGraphToDot(depGraph: Graph[String]): String =
+def dependencyGraphToDot(
+    depGraph: Graph[String],
+    hg: Hypergraph[String, TokenRange]
+)(using gTa: Vector[Token]): String =
   val prologue = "digraph G {\n\t"
   val epilogue = "\n}"
   val edges = depGraph.toMap
     .map((k, v) => k -> v._2)
     .flatMap((k, v) => v.map(target => k -> target))
   val readings = edges
+    .flatMap((k, v) => Set(k, v))
+    .toSet.diff(Set("starts", "ends"))
+    .map(k => k -> Vector("\"", k, ": ", hg.members(k).head.tString, "\"").mkString)
+    .toMap ++ Map("starts" -> "starts", "ends" -> "ends")
   val dotEdges = edges
     .map((k, v) => k + " -> " + v)
     .mkString(";\n\t")
-  prologue + dotEdges + epilogue
+  val dotNodes = ";\n\t" + readings
+    .map((k, v) => Vector(k, "[label=", v, "]").mkString)
+    .mkString(";\n\t")
+
+  println(s"dotNodes: $dotNodes")
+  prologue + dotEdges + dotNodes + epilogue
 
 @main def tm(): Unit =
   val sepRegex = """Sep\d+"""
@@ -406,8 +420,11 @@ def dependencyGraphToDot(depGraph: Graph[String]): String =
   val hgWithStarts = Vector(hg1 + heStarts, hg2 + heStarts)
   val tmWithEnds = Vector(hg1 + heEnds, hg2 + heEnds).map(createTreeMap)
   val dependencyGraphs: Vector[Graph[String]] =
-    hgWithStarts.zip(tmWithEnds)
+    hgWithStarts
+      .zip(tmWithEnds)
       .map((hg, tm) => createDependencyGraph(hg, tm))
-  val dots = dependencyGraphs.map(dependencyGraphToDot)
+  val dots = dependencyGraphs
+    .zip(Vector(hg1, hg2))
+    .map((dg, hg) => dependencyGraphToDot(dg, hg))
   dependencyGraphs.foreach(println)
   dots.foreach(println)
