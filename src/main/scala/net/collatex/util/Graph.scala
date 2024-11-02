@@ -74,17 +74,15 @@ enum Graph[N]:
         Map.apply(g.node -> (Set.empty[N], Set.empty[N]))
       case g: DirectedGraph[N] => g.adjacencyMap
 
-  //Not finished!
   @targetName("overlay")
   def +(other: Graph[N]): Graph[N] =
     (this, other) match
       case (_: EmptyGraph[N], other: Graph[N]) => other
       case (one: Graph[N], _: EmptyGraph[N]) => one
-      case (one: SingleNodeGraph[N], other: DirectedGraph[N]) =>
-        // convert the single node graph into two map entries so that we can merge the graphs
-        val t1 = one.node -> (Set.empty[N], Set.empty[N])
-        val m1 = Map.apply(t1)
-        val m2 = other.adjacencyMap
+      case (one: Graph[N], other: Graph[N]) =>
+        // convert graphs into two maps so that we can merge the graphs
+        val m1 = one.toMap
+        val m2 = other.toMap
         // create a new graph with the entries combined
         DirectedGraph(m1 |+| m2)
 
