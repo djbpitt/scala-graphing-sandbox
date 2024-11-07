@@ -3,7 +3,7 @@ package net.collatex.reptilian
 import net.collatex.reptilian.TokenEnum.Token
 import net.collatex.util.{Graph, Hypergraph}
 
-import scala.collection.immutable.{SortedMap, TreeMap}
+import scala.collection.immutable.TreeMap
 
 /* Method
  *
@@ -376,11 +376,42 @@ def createTreeMap(hg: Hypergraph[String, TokenRange]): TreeMap[Int, String] =
 def createDependencyGraph(
     hg: Hypergraph[String, TokenRange],
     tm: TreeMap[Int, String]
-): Graph[String] =
+)(using gTa: Vector[Token]): Graph[String] =
+  println(tm)
+  val tmp = hg.hyperedges.map(e => hg.members(e).toVector).toVector
+  val tmp1 = tmp.map(_.map(e => e.start))
+  val tmp2 = tmp1.map(_.map(e => tm.minAfter(e + 1)))
+  val tmp3 = tmp.map(_.map(_.start match {
+    case -1 => -1
+    case x => gTa(x).w
+  }))
+  val z = tmp.zip(tmp1).zip(tmp2).zip(tmp3).map { case (((a: Any, b: Any), c: Any), d:Any) =>
+    <tr>
+      <td>{a}</td>
+      <td>{b}</td>
+      <td>{c}</td>
+      <td>{d}</td>
+    </tr>
+  }
+  val h = <html>
+    <head>
+      <title>Hi, Mom!</title>
+      <style type="text/css">
+        tr, table, td, th {{
+        border: 1px black solid;
+        border-collapse: collapse
+        }}
+        td, td {{padding: 2px 3px;}}
+      </style>
+    </head>
+    <body><table>{z}</table></body>
+  </html>
+  println(s"z: $h")
+
   val targets = hg.hyperedges
     .map(e => hg.members(e))
     .map(_.map(f => tm.minAfter(f.start + 1).get).map(_._2))
-  println("Result")
+  // println("Result he + target")
   hg.hyperedges.zip(targets).foreach(e => println(s"he + target: $e"))
   val edges = hg.hyperedges
     .zip(targets)
@@ -402,7 +433,8 @@ def dependencyGraphToDot(
   edges.foreach(e => println(s"dot edge: $e"))
   val readings = edges
     .flatMap((k, v) => Set(k, v))
-    .toSet.diff(Set("starts", "ends"))
+    .toSet
+    .diff(Set("starts", "ends"))
     .map(k => k -> Vector("\"", k, ": ", hg.members(k).head.tString, "\"").mkString)
     .toMap ++ Map("starts" -> "starts", "ends" -> "ends")
   val dotEdges = edges
