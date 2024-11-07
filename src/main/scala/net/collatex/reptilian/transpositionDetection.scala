@@ -380,6 +380,8 @@ def createDependencyGraph(
   val targets = hg.hyperedges
     .map(e => hg.members(e))
     .map(_.map(f => tm.minAfter(f.start + 1).get).map(_._2))
+  println("Result")
+  hg.hyperedges.zip(targets).foreach(e => println(s"he + target: $e"))
   val edges = hg.hyperedges
     .zip(targets)
     .flatMap((source, targets) => targets.map(target => Graph.edge(source, target)))
@@ -394,7 +396,10 @@ def dependencyGraphToDot(
   val epilogue = "\n}"
   val edges = depGraph.toMap
     .map((k, v) => k -> v._2)
-    .flatMap((k, v) => v.map(target => k -> target))
+    .map((k, v) => v.map(target => k -> target))
+    .flatten
+  println("Result")
+  edges.foreach(e => println(s"dot edge: $e"))
   val readings = edges
     .flatMap((k, v) => Set(k, v))
     .toSet.diff(Set("starts", "ends"))
@@ -407,7 +412,6 @@ def dependencyGraphToDot(
     .map((k, v) => Vector(k, "[label=", v, "]").mkString)
     .mkString(";\n\t")
 
-  println(s"dotNodes: $dotNodes")
   prologue + dotEdges + dotNodes + epilogue
 
 @main def tm(): Unit =
@@ -426,5 +430,5 @@ def dependencyGraphToDot(
   val dots = dependencyGraphs
     .zip(Vector(hg1, hg2))
     .map((dg, hg) => dependencyGraphToDot(dg, hg))
-  dependencyGraphs.foreach(println)
+  dependencyGraphs.foreach(e => println(s"dependency graph: $e"))
   dots.foreach(println)

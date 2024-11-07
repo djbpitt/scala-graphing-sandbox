@@ -1,6 +1,8 @@
 digraph G {
+	22 -> ends;
 	22 -> 87;
 	87 -> ends;
+	starts -> ends;
 	starts -> 22;
 	22[label="22: natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved "];
 	87[label="87: . character of domestic varieties ; difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species "];
