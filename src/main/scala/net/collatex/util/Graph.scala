@@ -134,4 +134,33 @@ enum Graph[N]:
       case (one: DirectedGraph[N], other: DirectedGraph[N]) =>
         throw new RuntimeException("Not implemented yet! Would be one leaves x other roots")
 
+// Topological sort written as Kotlin code
 
+//class VariantGraphTraversal
+//  private constructor(private val graph: VariantGraph, private val witnesses: Set<Witness?>?) : Iterable<VariantGraph.Vertex?> {
+//
+//  fun topologicallySortedTextNodes(graph: VariantGraph): List<VariantGraph.Vertex> {
+//    // https://en.wikipedia.org/wiki/Topological_sorting
+//    // Kahn's algorithm
+//    val sorted: MutableList<VariantGraph.Vertex> = mutableListOf()
+//    val todo: MutableSet<VariantGraph.Vertex> = mutableSetOf(graph.start)
+//    val handledEdges: MutableSet<VariantGraph.Edge> = mutableSetOf()
+//    while (todo.isNotEmpty()) {
+//      val node = todo.iterator().next()
+//      todo.remove(node)
+//      sorted += node
+//      for ((targetNode, e) in node.outgoingEdges()) {
+//        if (e !in handledEdges) {
+//          handledEdges += e
+//          if (handledEdges.containsAll(targetNode.incomingEdges().values)) {
+//            todo += targetNode
+//          }
+//        }
+//      }
+//    }
+//  return if (witnesses==null) {
+//    sorted
+//  } else {
+//    sorted.filter { vertex -> vertex === graph.start || vertex.witnesses().containsAll(witnesses) }
+//  }
+//}
