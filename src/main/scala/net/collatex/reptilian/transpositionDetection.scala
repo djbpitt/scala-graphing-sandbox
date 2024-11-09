@@ -4,6 +4,7 @@ import net.collatex.reptilian.TokenEnum.Token
 import net.collatex.util.{Graph, Hypergraph}
 
 import scala.collection.immutable.TreeMap
+import scala.xml.{Text, Null}
 
 /* Method
  *
@@ -377,42 +378,98 @@ def createDependencyGraph(
     hg: Hypergraph[String, TokenRange],
     tm: TreeMap[Int, String]
 )(using gTa: Vector[Token]): Graph[String] =
-  println(tm)
-  val tmp = hg.hyperedges.map(e => hg.members(e).toVector).toVector
-  val tmp1 = tmp.map(_.map(e => e.start))
-  val tmp2 = tmp1.map(_.map(e => tm.minAfter(e + 1)))
-  val tmp3 = tmp.map(_.map(_.start match {
-    case -1 => -1
-    case x => gTa(x).w
-  }))
-  val z = tmp.zip(tmp1).zip(tmp2).zip(tmp3).map { case (((a: Any, b: Any), c: Any), d:Any) =>
-    <tr>
-      <td>{a}</td>
-      <td>{b}</td>
-      <td>{c}</td>
-      <td>{d}</td>
-    </tr>
-  }
+  // println(tm)
+  /*
+    For each hyperedge
+      a) Covert to vector and sort by hyperedge label, with "starts" first
+      b) Create <tbody>, inside which:
+    For each token range within the hyperedge, sorted by witness
+      a) Create <tr>, inside which
+      b) If first token range, create <th> with rowspan matching count of token ranges
+      c) Compute source and target
+      d) If hyperedge lable is "starts", retrieve witness id from next token; otherwise from same token
+      e) Create <td> for witness id, token range, source, target
+   */
+  // outer vector is hyperedges, inner vector is token ranges within hyperedge
+  def processTokR(tokr: TokenRange, he: String) =
+    val witness = <th>{
+      he match {
+        case "starts" => gTa(tokr.start + 1).w
+        case _        => gTa(tokr.start).w
+      }
+    }</th>
+    val tokenRange = <td>{tokr}</td>
+    val source = <td>{tokr.start}</td>
+    val target = <td>{tm.minAfter(tokr.start + 1)}</td>
+    Seq(witness, tokenRange, source, target)
+  val thead =
+    <thead>
+      <tr>
+        <th>Label</th>
+        <th>Witness</th>
+        <th>Token range</th>
+        <th>Source</th>
+        <th>Target</th>
+      </tr>
+    </thead>
+  val tbodys =
+    val sortedHes = // move starts to beginning, sort labels as integers, rather than strings
+      val allHes = hg.hyperedges.toSeq.sorted
+      allHes.last +: allHes.dropRight(1).sortBy(_.toInt)
+    for he <- sortedHes yield
+      val tokrs = hg.members(he).toSeq.sortBy(e => e.start) // gTa is already ordered
+      val heHead =
+        val th = if tokrs.size > 1 then <th rowspan={tokrs.size.toString}>{he}</th> else <th>{he}</th>
+        val rowData = processTokR(tokrs.head, he)
+        <tr>{Seq(th, rowData)}</tr>
+      val heTail =
+        tokrs.tail.map(e => <tr>{processTokR(e, he)}</tr>)
+      <tbody>{Seq(heHead, heTail)}</tbody>
   val h = <html>
     <head>
       <title>Hi, Mom!</title>
       <style type="text/css">
-        tr, table, td, th {{
-        border: 1px black solid;
+        table {{
         border-collapse: collapse
         }}
-        td, td {{padding: 2px 3px;}}
-      </style>
+        table {{
+        background-color: seashell;
+        }}
+        table,
+        thead,
+        tbody {{
+        border: 2px black solid;
+        }}
+        th {{
+        border-left: 2px black solid;
+        border-right: 2px black solid;
+        border-top: 1px darkgray solid;
+        border-bottom: 1px darkgrah solid;
+        }}
+        th,
+        td {{
+        padding: 2px 3px;
+        }}
+        td {{
+        border: 1px darkgray solid;
+        }}
+        tr:first-child > th:nth-child(2),
+        tr:not(:first-child) > th:first-child,
+        tr:first-child > td:nth-child(4),
+        tr:not(:first-child) > td:nth-child(3){{
+        text-align: right;
+        }}</style>
+
     </head>
-    <body><table>{z}</table></body>
+    <body><table>{Seq(thead, tbodys)}</table></body>
   </html>
-  println(s"z: $h")
+  println(s"h: $h")
 
   val targets = hg.hyperedges
     .map(e => hg.members(e))
     .map(_.map(f => tm.minAfter(f.start + 1).get).map(_._2))
   // println("Result he + target")
-  hg.hyperedges.zip(targets).foreach(e => println(s"he + target: $e"))
+  // hg.hyperedges.zip(targets).foreach(e => println(s"he + target: $e"))
   val edges = hg.hyperedges
     .zip(targets)
     .flatMap((source, targets) => targets.map(target => Graph.edge(source, target)))
@@ -429,8 +486,8 @@ def dependencyGraphToDot(
     .map((k, v) => k -> v._2)
     .map((k, v) => v.map(target => k -> target))
     .flatten
-  println("Result")
-  edges.foreach(e => println(s"dot edge: $e"))
+  // println("Result")
+  // edges.foreach(e => println(s"dot edge: $e"))
   val readings = edges
     .flatMap((k, v) => Set(k, v))
     .toSet
@@ -462,5 +519,5 @@ def dependencyGraphToDot(
   val dots = dependencyGraphs
     .zip(Vector(hg1, hg2))
     .map((dg, hg) => dependencyGraphToDot(dg, hg))
-  dependencyGraphs.foreach(e => println(s"dependency graph: $e"))
-  dots.foreach(println)
+  // dependencyGraphs.foreach(e => println(s"dependency graph: $e"))
+  // dots.foreach(println)
