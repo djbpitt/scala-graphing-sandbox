@@ -4,7 +4,8 @@ import net.collatex.reptilian.TokenEnum.Token
 import net.collatex.util.{Graph, Hypergraph}
 
 import scala.collection.immutable.TreeMap
-import scala.xml.{Text, Null}
+import scala.xml.dtd.DocType
+import scala.xml.{Null, Text}
 
 /* Method
  *
@@ -425,44 +426,49 @@ def createDependencyGraph(
       val heTail =
         tokrs.tail.map(e => <tr>{processTokR(e, he)}</tr>)
       <tbody>{Seq(heHead, heTail)}</tbody>
-  val h = <html>
+  val h = <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
       <title>Hi, Mom!</title>
       <style type="text/css">
         table {{
-        border-collapse: collapse
+          border-collapse: collapse
         }}
         table {{
-        background-color: seashell;
+          background-color: seashell;
         }}
         table,
         thead,
         tbody {{
-        border: 2px black solid;
+          border: 2px black solid;
         }}
         th {{
-        border-left: 2px black solid;
-        border-right: 2px black solid;
-        border-top: 1px darkgray solid;
-        border-bottom: 1px darkgrah solid;
+          border-left: 2px black solid;
+          border-right: 2px black solid;
+          border-top: 1px darkgray solid;
+          border-bottom: 1px darkgray solid;
         }}
         th,
         td {{
-        padding: 2px 3px;
+          padding: 2px 3px;
         }}
         td {{
-        border: 1px darkgray solid;
+          border: 1px darkgray solid;
         }}
         tr:first-child > th:nth-child(2),
         tr:not(:first-child) > th:first-child,
         tr:first-child > td:nth-child(4),
         tr:not(:first-child) > td:nth-child(3){{
-        text-align: right;
+         text-align: right;
         }}</style>
 
     </head>
     <body><table>{Seq(thead, tbodys)}</table></body>
   </html>
+  val doctypeHtml: scala.xml.dtd.DocType = DocType("html") // used for single-column and mixed output
+  val dependencyTablePath =
+    os.pwd / "src" / "main" / "outputs" /
+      s"dependency-graph-table-${hg.hyperedges.filterNot(_ == "starts").toSeq.sortBy(_.toInt).mkString("-")}.xhtml"
+  scala.xml.XML.save(dependencyTablePath.toString, h, "UTF-8", true, doctypeHtml)
   println(s"h: $h")
 
   val targets = hg.hyperedges
