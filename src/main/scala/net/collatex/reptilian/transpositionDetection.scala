@@ -392,6 +392,7 @@ def createDependencyGraph(
       e) Create <td> for witness id, token range, source, target
    */
   // outer vector is hyperedges, inner vector is token ranges within hyperedge
+  val hgId = hg.hyperedges.filterNot(_ == "starts").toSeq.sortBy(_.toInt).mkString("-")
   def processTokR(tokr: TokenRange, he: String) =
     val witness = <th>{
       he match {
@@ -428,13 +429,11 @@ def createDependencyGraph(
       <tbody>{Seq(heHead, heTail)}</tbody>
   val h = <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
-      <title>Hi, Mom!</title>
+      <title>{hgId}</title>
       <style type="text/css">
         table {{
-          border-collapse: collapse
-        }}
-        table {{
           background-color: seashell;
+          border-collapse: collapse;
         }}
         table,
         thead,
@@ -447,12 +446,12 @@ def createDependencyGraph(
           border-top: 1px darkgray solid;
           border-bottom: 1px darkgray solid;
         }}
+        td {{
+        border: 1px darkgray solid;
+        }}
         th,
         td {{
           padding: 2px 3px;
-        }}
-        td {{
-          border: 1px darkgray solid;
         }}
         tr:first-child > th:nth-child(2),
         tr:not(:first-child) > th:first-child,
@@ -460,16 +459,15 @@ def createDependencyGraph(
         tr:not(:first-child) > td:nth-child(3){{
          text-align: right;
         }}</style>
-
     </head>
     <body><table>{Seq(thead, tbodys)}</table></body>
   </html>
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html") // used for single-column and mixed output
   val dependencyTablePath =
     os.pwd / "src" / "main" / "outputs" /
-      s"dependency-graph-table-${hg.hyperedges.filterNot(_ == "starts").toSeq.sortBy(_.toInt).mkString("-")}.xhtml"
+      s"dependency-graph-table-$hgId.xhtml"
   scala.xml.XML.save(dependencyTablePath.toString, h, "UTF-8", true, doctypeHtml)
-  println(s"h: $h")
+  // println(s"h: $h")
 
   val targets = hg.hyperedges
     .map(e => hg.members(e))
