@@ -4,6 +4,16 @@
     <head>
       <title>22-87</title>
       <style type="text/css">
+        section {
+          background-color: seashell;
+          border: 2px black solid;
+          width: fit-content;
+          margin-left: .5em;
+          padding: 0 .2em;
+        }
+        ul {
+          padding-left: 1.5em;
+        }
         table {
           background-color: seashell;
           border-collapse: collapse;
@@ -40,6 +50,11 @@
         <th>Token range</th>
         <th>Source</th>
         <th>Target</th>
+        <th>Edge</th>
       </tr>
-    </thead><tbody><tr><th rowspan="6">starts</th><th>0</th><td>EmptyTokenRange(-1,-1)</td><td>-1</td><td>Some((0,22))</td></tr><tr><th>1</th><td>EmptyTokenRange(21,21)</td><td>21</td><td>Some((22,22))</td></tr><tr><th>2</th><td>EmptyTokenRange(43,43)</td><td>43</td><td>Some((44,22))</td></tr><tr><th>3</th><td>EmptyTokenRange(65,65)</td><td>65</td><td>Some((66,22))</td></tr><tr><th>4</th><td>EmptyTokenRange(110,110)</td><td>110</td><td>Some((191,ends))</td></tr><tr><th>5</th><td>EmptyTokenRange(191,191)</td><td>191</td><td>Some((272,ends))</td></tr></tbody><tbody><tr><th rowspan="4">22</th><th>0</th><td>LegalTokenRange(0,21)</td><td>0</td><td>Some((21,ends))</td></tr><tr><th>1</th><td>LegalTokenRange(22,43)</td><td>22</td><td>Some((43,ends))</td></tr><tr><th>2</th><td>LegalTokenRange(44,65)</td><td>44</td><td>Some((65,ends))</td></tr><tr><th>3</th><td>LegalTokenRange(66,87)</td><td>66</td><td>Some((87,87))</td></tr></tbody><tbody><tr><th>87</th><th>3</th><td>LegalTokenRange(87,110)</td><td>87</td><td>Some((110,ends))</td></tr></tbody></table></body>
+    </thead><tbody><tr><th rowspan="6">starts</th><th>0</th><td>EmptyTokenRange(-1,-1)</td><td>-1</td><td>Some((0,22))</td><td>starts → 22</td></tr><tr><th>1</th><td>EmptyTokenRange(21,21)</td><td>21</td><td>Some((22,22))</td><td>starts → 22</td></tr><tr><th>2</th><td>EmptyTokenRange(43,43)</td><td>43</td><td>Some((44,22))</td><td>starts → 22</td></tr><tr><th>3</th><td>EmptyTokenRange(65,65)</td><td>65</td><td>Some((66,22))</td><td>starts → 22</td></tr><tr><th>4</th><td>EmptyTokenRange(110,110)</td><td>110</td><td>Some((191,ends))</td><td>starts → ends</td></tr><tr><th>5</th><td>EmptyTokenRange(191,191)</td><td>191</td><td>Some((272,ends))</td><td>starts → ends</td></tr></tbody><tbody><tr><th rowspan="4">22</th><th>0</th><td>LegalTokenRange(0,21)</td><td>0</td><td>Some((21,ends))</td><td>22 → ends</td></tr><tr><th>1</th><td>LegalTokenRange(22,43)</td><td>22</td><td>Some((43,ends))</td><td>22 → ends</td></tr><tr><th>2</th><td>LegalTokenRange(44,65)</td><td>44</td><td>Some((65,ends))</td><td>22 → ends</td></tr><tr><th>3</th><td>LegalTokenRange(66,87)</td><td>66</td><td>Some((87,87))</td><td>22 → 87</td></tr></tbody><tbody><tr><th>87</th><th>3</th><td>LegalTokenRange(87,110)</td><td>87</td><td>Some((110,ends))</td><td>87 → ends</td></tr></tbody></table></body>
+    <section>
+    <h2>Edges</h2>
+    <ul><li>starts → 22</li><li>starts → ends</li></ul><ul><li>22 → ends</li><li>22 → 87</li></ul><ul><li>87 → ends</li></ul>
+    </section>
   </html>
