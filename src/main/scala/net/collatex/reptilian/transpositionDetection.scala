@@ -5,7 +5,7 @@ import net.collatex.util.{Graph, Hypergraph}
 
 import scala.collection.immutable.TreeMap
 import scala.xml.dtd.DocType
-import scala.xml.{Null, Text}
+import scala.xml.{Elem, Null, Text}
 
 /* Method
  *
@@ -417,7 +417,7 @@ def createDependencyGraph(
         <th>Edge</th>
       </tr>
     </thead>
-  val tbodysAndEdges =
+  val tbodys =
     val sortedHes = // move starts to beginning, sort labels as integers, rather than strings
       val allHes = hg.hyperedges.toSeq.sorted
       allHes.last +: allHes.dropRight(1).sortBy(_.toInt)
@@ -430,11 +430,16 @@ def createDependencyGraph(
       val heTail =
         tokrs.tail.map(e => <tr>{processTokR(e, he)}</tr>)
       val rows = heHead +: heTail
-      val columnData = for row <- rows yield
-        row \\ "td"
-      val edgeData = columnData.map(_.last).distinct.map(_.text)
-      val edges = <ul>{edgeData.map(e => <li>{e}</li>)}</ul>
-      (<tbody>{Seq(heHead, heTail)}</tbody>, edges)
+      val columnData = for row <- rows yield row \\ "td"
+      val edgeData = columnData.map(_.last).zipWithIndex
+      // TODO: 2024-11-12 Use case class and convert to html only to render
+      val uniqueness: Seq[String] = edgeData map { // is edge first with this value in its tbody
+        case (td: Elem, offset: Int) if edgeData.map(_._1).slice(0, offset).contains(td) => "old"
+        case _ => "new"
+      }
+      edgeData.map(_._1).zip(uniqueness).foreach(println)
+      val result = <tbody>{Seq(heHead, heTail)}</tbody>
+      result
   val h = <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
       <title>{hgId}</title>
@@ -478,11 +483,9 @@ def createDependencyGraph(
          text-align: right;
         }}</style>
     </head>
-    <body><table>{Seq(thead, tbodysAndEdges.map(_._1))}</table></body>
-    <section>
-    <h2>Edges</h2>
-    {tbodysAndEdges.map(_._2)}
-    </section>
+    <body>
+      <table>{Seq(thead, tbodys)}</table>
+    </body>
   </html>
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html") // used for single-column and mixed output
   val dependencyTablePath =
