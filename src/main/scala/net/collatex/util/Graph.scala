@@ -1,7 +1,5 @@
 package net.collatex.util
 
-
-
 import cats.implicits.catsSyntaxSemigroup
 
 import scala.annotation.targetName
@@ -10,6 +8,7 @@ import scala.collection.mutable
 
 // @author: Ronald Haentjens Dekker
 // This class represents a Directed Acyclic Graph.
+// The acyclic nature is not enforced at this time.
 // The implementation is based on adjacency maps.
 // The N generic is the node
 
@@ -19,16 +18,16 @@ import scala.collection.mutable
 // The identity is determined by the memory pointer
 class LabelledNode(label: String)
 
-// constructor!
+// constructor
 object Graph:
-  def empty[N]: Graph[N] = Graph.EmptyGraph()
+  def empty[N]: Graph[N] = EmptyGraph()
   def node[N](node: N): Graph[N] = SingleNodeGraph(node)
   def edge[N](source: N, target: N): Graph[N] =
     node(source) * node(target)
 
   def lNode(label: String): Graph[LabelledNode] =
     val labelledNode = LabelledNode(label)
-    val graph = Graph.SingleNodeGraph[LabelledNode](labelledNode)
+    val graph = SingleNodeGraph[LabelledNode](labelledNode)
     graph
 
 enum Graph[N]:
