@@ -412,36 +412,48 @@ def createDependencyGraph(
         <th>Edge</th>
       </tr>
     </thead>
-  val tbodys =
+
+  def computeRowDatas(hes: Set[String]): Seq[Seq[EdgeData]] = {
     val sortedHes = // move starts to beginning, sort labels as integers, rather than strings
       // TODO: We sort twice, but we don’t want to treat "starts" as a magic value
-      val allHes = hg.hyperedges.toSeq.sorted
+      val allHes = hes.toSeq.sorted
       allHes.last +: allHes.dropRight(1).sortBy(_.toInt)
-    for he <- sortedHes yield
+    val rds = for he <- sortedHes yield
       val tokrs = hg.members(he).toSeq.sortBy(e => e.start) // gTa is already ordered
-      val rowDatas: Seq[EdgeData] = tokrs.map(e => computeEdgeData(e, he))
+      tokrs.map(e => computeEdgeData(e, he))
+    rds
+  }
+
+  def computeUniqueness(heData: Seq[EdgeData]): Seq[String] =
+    heData.zipWithIndex map {
+      case (ed: EdgeData, offset: Int) if heData.slice(0, offset).map(_.edge).contains(ed.edge) => "old"
+      case _                                                                                    => "new"
+    }
+
+  // Used to create html table and again to computes edges for graph and GraphViz
+  val rowDatas: Seq[Seq[EdgeData]] = computeRowDatas(hg.hyperedges)
+  val uniquenesses: Seq[Seq[String]] = rowDatas.map(computeUniqueness)
+
+  val tbodys =
+    for (rd, uniqueness) <- rowDatas.zip(uniquenesses) yield
       val heHead =
         val th =
-          if tokrs.size > 1 then <th rowspan={tokrs.size.toString}>{he}</th>
-          else <th>{he}</th>
+          if rd.size > 1 then <th rowspan={rd.size.toString}>{rd.head.he}</th>
+          else <th>{rd.head.he}</th>
         val rowCells =
           Seq(
-            <th>{rowDatas.head.witness.toString}</th>
-            <td>{rowDatas.head.tokenRange.toString}</td>,
-            <td>{rowDatas.head.source.toString}</td>,
-            <td>{rowDatas.head.target.get._2}</td>,
-            <td class="new">{rowDatas.head.edge}</td>
+            <th>{rd.head.witness.toString}</th>
+            <td>{rd.head.tokenRange.toString}</td>,
+            <td>{rd.head.source.toString}</td>,
+            <td>{rd.head.target.get._2}</td>,
+            <td class="new">{rd.head.edge}</td>
           )
         <tr>{Seq(th, rowCells)}</tr>
-      val uniqueness: Seq[String] = rowDatas.zipWithIndex map {
-        case (ed: EdgeData, offset: Int) if rowDatas.slice(0, offset).map(_.edge).contains(ed.edge) => "old"
-        case _                                                                                      => "new"
+      val edgeCells: Seq[Elem] = rd.map(_.edge).zip(uniqueness) map {
+        case (ed: Siglum, uniq: Siglum) if uniq == "old" => <td class="old">{ed}</td>
+        case (ed: Siglum, _)                             => <td class="new">{ed}</td>
       }
-      val edgeCells: Seq[Elem] = rowDatas.map(_.edge).zip(uniqueness) map {
-        case (ed: String, uniq: String) if uniq == "old" => <td class="old">{ed}</td>
-        case (ed: String, _)                             => <td class="new">{ed}</td>
-      }
-      val heTail = rowDatas
+      val heTail = rd
         .zip(edgeCells)
         .tail
         .map((ed, ev) => <tr>
@@ -509,14 +521,9 @@ def createDependencyGraph(
       s"dependency-graph-table-$hgId.xhtml"
   scala.xml.XML.save(dependencyTablePath.toString, h, "UTF-8", true, doctypeHtml)
 
-  val targets = hg.hyperedges
-    .map(e => hg.members(e))
-    .map(_.map(f => tm.minAfter(f.start + 1).get).map(_._2))
-  val edges = hg.hyperedges
-    .zip(targets)
-    .flatMap((source, targets) => targets.map(target => Graph.edge(source, target)))
-  val dependencyGraph = edges.foldLeft(Graph.empty[String])(_ + _)
-  dependencyGraph
+  val edges = rowDatas.flatMap(_.map(_.edge).distinct)
+  println(edges)
+  Graph.empty[String]
 
 def dependencyGraphToDot(
     depGraph: Graph[String],
