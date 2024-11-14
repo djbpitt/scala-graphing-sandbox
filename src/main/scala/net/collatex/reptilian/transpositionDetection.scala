@@ -5,7 +5,7 @@ import net.collatex.util.{Graph, Hypergraph}
 
 import scala.collection.immutable.TreeMap
 import scala.xml.dtd.DocType
-import scala.xml.{Null, Text}
+import scala.xml.{Elem, Null, Text}
 
 /* Method
  *
@@ -402,8 +402,10 @@ def createDependencyGraph(
     }</th>
     val tokenRange = <td>{tokr}</td>
     val source = <td>{tokr.start}</td>
-    val target = <td>{tm.minAfter(tokr.start + 1)}</td>
-    Seq(witness, tokenRange, source, target)
+    val targetValue = tm.minAfter(tokr.start + 1)
+    val target = <td>{targetValue}</td>
+    val edge = <td>{s"$he → ${targetValue.get._2}"}</td>
+    Seq(witness, tokenRange, source, target, edge)
   val thead =
     <thead>
       <tr>
@@ -412,6 +414,7 @@ def createDependencyGraph(
         <th>Token range</th>
         <th>Source</th>
         <th>Target</th>
+        <th>Edge</th>
       </tr>
     </thead>
   val tbodys =
@@ -426,11 +429,31 @@ def createDependencyGraph(
         <tr>{Seq(th, rowData)}</tr>
       val heTail =
         tokrs.tail.map(e => <tr>{processTokR(e, he)}</tr>)
-      <tbody>{Seq(heHead, heTail)}</tbody>
+      val rows = heHead +: heTail
+      val columnData = for row <- rows yield row \\ "td"
+      val edgeData = columnData.map(_.last).zipWithIndex
+      // TODO: 2024-11-12 Use case class and convert to html only to render
+      val uniqueness: Seq[String] = edgeData map { // is edge first with this value in its tbody
+        case (td: Elem, offset: Int) if edgeData.map(_._1).slice(0, offset).contains(td) => "old"
+        case _ => "new"
+      }
+      edgeData.map(_._1).zip(uniqueness).foreach(println)
+      val result = <tbody>{Seq(heHead, heTail)}</tbody>
+      result
   val h = <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
       <title>{hgId}</title>
       <style type="text/css">
+        section {{
+          background-color: seashell;
+          border: 2px black solid;
+          width: fit-content;
+          margin-left: .5em;
+          padding: 0 .2em;
+        }}
+        ul {{
+          padding-left: 1.5em;
+        }}
         table {{
           background-color: seashell;
           border-collapse: collapse;
@@ -460,20 +483,19 @@ def createDependencyGraph(
          text-align: right;
         }}</style>
     </head>
-    <body><table>{Seq(thead, tbodys)}</table></body>
+    <body>
+      <table>{Seq(thead, tbodys)}</table>
+    </body>
   </html>
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html") // used for single-column and mixed output
   val dependencyTablePath =
     os.pwd / "src" / "main" / "outputs" /
       s"dependency-graph-table-$hgId.xhtml"
   scala.xml.XML.save(dependencyTablePath.toString, h, "UTF-8", true, doctypeHtml)
-  // println(s"h: $h")
 
   val targets = hg.hyperedges
     .map(e => hg.members(e))
     .map(_.map(f => tm.minAfter(f.start + 1).get).map(_._2))
-  // println("Result he + target")
-  // hg.hyperedges.zip(targets).foreach(e => println(s"he + target: $e"))
   val edges = hg.hyperedges
     .zip(targets)
     .flatMap((source, targets) => targets.map(target => Graph.edge(source, target)))
@@ -523,5 +545,3 @@ def dependencyGraphToDot(
   val dots = dependencyGraphs
     .zip(Vector(hg1, hg2))
     .map((dg, hg) => dependencyGraphToDot(dg, hg))
-  // dependencyGraphs.foreach(e => println(s"dependency graph: $e"))
-  // dots.foreach(println)
