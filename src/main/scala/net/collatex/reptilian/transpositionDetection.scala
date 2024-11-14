@@ -379,7 +379,6 @@ def createDependencyGraph(
     hg: Hypergraph[String, TokenRange],
     tm: TreeMap[Int, String]
 )(using gTa: Vector[Token]): Graph[String] =
-  // println(tm)
   /*
     For each hyperedge
       a) Covert to vector and sort by hyperedge label, with "starts" first
@@ -393,19 +392,15 @@ def createDependencyGraph(
    */
   // outer vector is hyperedges, inner vector is token ranges within hyperedge
   val hgId = hg.hyperedges.filterNot(_ == "starts").toSeq.sortBy(_.toInt).mkString("-")
-  def processTokR(tokr: TokenRange, he: String) =
-    val witness = <th>{
-      he match {
-        case "starts" => gTa(tokr.start + 1).w
-        case _        => gTa(tokr.start).w
-      }
-    }</th>
-    val tokenRange = <td>{tokr}</td>
-    val source = <td>{tokr.start}</td>
-    val targetValue = tm.minAfter(tokr.start + 1)
-    val target = <td>{targetValue}</td>
-    val edge = <td>{s"$he → ${targetValue.get._2}"}</td>
-    Seq(witness, tokenRange, source, target, edge)
+  def computeEdgeData(tokr: TokenRange, he: String): EdgeData =
+    val witness = he match {
+      case "starts" => gTa(tokr.start + 1).w
+      case _        => gTa(tokr.start).w
+    }
+    val source = tokr.start
+    val target = tm.minAfter(tokr.start + 1)
+    val edge = s"$he → ${target.get._2}"
+    EdgeData(he, witness, tokr, source, target, edge)
   val thead =
     <thead>
       <tr>
@@ -419,25 +414,43 @@ def createDependencyGraph(
     </thead>
   val tbodys =
     val sortedHes = // move starts to beginning, sort labels as integers, rather than strings
+      // TODO: We sort twice, but we don’t want to treat "starts" as a magic value
       val allHes = hg.hyperedges.toSeq.sorted
       allHes.last +: allHes.dropRight(1).sortBy(_.toInt)
     for he <- sortedHes yield
       val tokrs = hg.members(he).toSeq.sortBy(e => e.start) // gTa is already ordered
+      val rowDatas: Seq[EdgeData] = tokrs.map(e => computeEdgeData(e, he))
       val heHead =
-        val th = if tokrs.size > 1 then <th rowspan={tokrs.size.toString}>{he}</th> else <th>{he}</th>
-        val rowData = processTokR(tokrs.head, he)
-        <tr>{Seq(th, rowData)}</tr>
-      val heTail =
-        tokrs.tail.map(e => <tr>{processTokR(e, he)}</tr>)
-      val rows = heHead +: heTail
-      val columnData = for row <- rows yield row \\ "td"
-      val edgeData = columnData.map(_.last).zipWithIndex
-      // TODO: 2024-11-12 Use case class and convert to html only to render
-      val uniqueness: Seq[String] = edgeData map { // is edge first with this value in its tbody
-        case (td: Elem, offset: Int) if edgeData.map(_._1).slice(0, offset).contains(td) => "old"
-        case _ => "new"
+        val th =
+          if tokrs.size > 1 then <th rowspan={tokrs.size.toString}>{he}</th>
+          else <th>{he}</th>
+        val rowCells =
+          Seq(
+            <th>{rowDatas.head.witness.toString}</th>
+            <td>{rowDatas.head.tokenRange.toString}</td>,
+            <td>{rowDatas.head.source.toString}</td>,
+            <td>{rowDatas.head.target.get._2}</td>,
+            <td class="new">{rowDatas.head.edge}</td>
+          )
+        <tr>{Seq(th, rowCells)}</tr>
+      val uniqueness: Seq[String] = rowDatas.zipWithIndex map {
+        case (ed: EdgeData, offset: Int) if rowDatas.slice(0, offset).map(_.edge).contains(ed.edge) => "old"
+        case _                                                                                      => "new"
       }
-      edgeData.map(_._1).zip(uniqueness).foreach(println)
+      val edgeCells: Seq[Elem] = rowDatas.map(_.edge).zip(uniqueness) map {
+        case (ed: String, uniq: String) if uniq == "old" => <td class="old">{ed}</td>
+        case (ed: String, _)                             => <td class="new">{ed}</td>
+      }
+      val heTail = rowDatas
+        .zip(edgeCells)
+        .tail
+        .map((ed, ev) => <tr>
+          <th>{ed.witness}</th>
+          <td>{ed.tokenRange.toString}</td>
+          <td>{ed.source.toString}</td>
+          <td>{ed.target.get._2}</td>
+          {ev}
+        </tr>)
       val result = <tbody>{Seq(heHead, heTail)}</tbody>
       result
   val h = <html xmlns="http://www.w3.org/1999/xhtml">
@@ -481,6 +494,9 @@ def createDependencyGraph(
         tr:first-child > td:nth-child(4),
         tr:not(:first-child) > td:nth-child(3){{
          text-align: right;
+        }}
+        .old {{
+        color: lightgray;
         }}</style>
     </head>
     <body>
@@ -545,3 +561,12 @@ def dependencyGraphToDot(
   val dots = dependencyGraphs
     .zip(Vector(hg1, hg2))
     .map((dg, hg) => dependencyGraphToDot(dg, hg))
+
+case class EdgeData(
+    he: String,
+    witness: Int,
+    tokenRange: TokenRange,
+    source: Int,
+    target: Option[(Int, String)],
+    edge: String
+)
