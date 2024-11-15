@@ -423,19 +423,12 @@ def createDependencyGraph(
       tokrs.map(e => computeEdgeData(e, he))
     rds
   }
-
-  def computeUniqueness(heData: Seq[EdgeData]): Seq[String] =
-    heData.zipWithIndex map {
-      case (ed: EdgeData, offset: Int) if heData.slice(0, offset).map(_.edge).contains(ed.edge) => "old"
-      case _                                                                                    => "new"
-    }
-
+  
   // Used to create html table and again to computes edges for graph and GraphViz
   val rowDatas: Seq[Seq[EdgeData]] = computeRowDatas(hg.hyperedges)
-  val uniquenesses: Seq[Seq[String]] = rowDatas.map(computeUniqueness)
 
   val tbodys =
-    for (rd, uniqueness) <- rowDatas.zip(uniquenesses) yield
+    for rd <- rowDatas yield
       val heHead =
         val th =
           if rd.size > 1 then <th rowspan={rd.size.toString}>{rd.head.he}</th>
@@ -446,22 +439,22 @@ def createDependencyGraph(
             <td>{rd.head.tokenRange.toString}</td>,
             <td>{rd.head.source.toString}</td>,
             <td>{rd.head.target.get._2}</td>,
-            <td class="new">{rd.head.edge}</td>
+            <td>{rd.head.edge}</td>
           )
         <tr>{Seq(th, rowCells)}</tr>
-      val edgeCells: Seq[Elem] = rd.map(_.edge).zip(uniqueness) map {
-        case (ed: Siglum, uniq: Siglum) if uniq == "old" => <td class="old">{ed}</td>
-        case (ed: Siglum, _)                             => <td class="new">{ed}</td>
-      }
       val heTail = rd
-        .zip(edgeCells)
+        .zipWithIndex
         .tail
-        .map((ed, ev) => <tr>
+        .map((ed, offset) => <tr>
           <th>{ed.witness}</th>
           <td>{ed.tokenRange.toString}</td>
           <td>{ed.source.toString}</td>
           <td>{ed.target.get._2}</td>
-          {ev}
+          {if rd.slice(0, offset).map(_.edge).contains(ed.edge) then
+            <td class="old">{ed.edge}</td>
+          else
+            <td>{ed.edge}</td>
+            }
         </tr>)
       val result = <tbody>{Seq(heHead, heTail)}</tbody>
       result
