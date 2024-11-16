@@ -399,7 +399,8 @@ def createDependencyGraph(
     }
     val source = tokr.start
     val target = tm.minAfter(tokr.start + 1)
-    val edge = s"$he → ${target.get._2}"
+    val edge = EdgeEndpoints(he, target.get._2)
+    // s"$he → ${target.get._2}"
     EdgeData(he, witness, tokr, source, target, edge)
   val thead =
     <thead>
@@ -423,11 +424,13 @@ def createDependencyGraph(
       tokrs.map(e => computeEdgeData(e, he))
     rds
   }
-  
+
   // Used to create html table and again to computes edges for graph and GraphViz
   val rowDatas: Seq[Seq[EdgeData]] = computeRowDatas(hg.hyperedges)
 
   val tbodys =
+    def edgeEndpointsToString(ep: EdgeEndpoints): String = // format edge for html table
+      s"${ep.source} → ${ep.target}"
     for rd <- rowDatas yield
       val heHead =
         val th =
@@ -439,23 +442,23 @@ def createDependencyGraph(
             <td>{rd.head.tokenRange.toString}</td>,
             <td>{rd.head.source.toString}</td>,
             <td>{rd.head.target.get._2}</td>,
-            <td>{rd.head.edge}</td>
+            <td>{edgeEndpointsToString(rd.head.edge)}</td>
           )
         <tr>{Seq(th, rowCells)}</tr>
-      val heTail = rd
-        .zipWithIndex
-        .tail
-        .map((ed, offset) => <tr>
+      val heTail = rd.zipWithIndex.tail
+        .map((ed, offset) =>
+          <tr>
           <th>{ed.witness}</th>
           <td>{ed.tokenRange.toString}</td>
           <td>{ed.source.toString}</td>
           <td>{ed.target.get._2}</td>
-          {if rd.slice(0, offset).map(_.edge).contains(ed.edge) then
-            <td class="old">{ed.edge}</td>
-          else
-            <td>{ed.edge}</td>
-            }
-        </tr>)
+          {
+            if rd.slice(0, offset).map(_.edge).contains(ed.edge) then
+              <td class="old">{edgeEndpointsToString(ed.edge)}</td>
+            else <td>{edgeEndpointsToString(ed.edge)}</td>
+          }
+        </tr>
+        )
       val result = <tbody>{Seq(heHead, heTail)}</tbody>
       result
   val h = <html xmlns="http://www.w3.org/1999/xhtml">
@@ -568,5 +571,9 @@ case class EdgeData(
     tokenRange: TokenRange,
     source: Int,
     target: Option[(Int, String)],
-    edge: String
+    edge: EdgeEndpoints
+)
+case class EdgeEndpoints(
+    source: String,
+    target: String
 )
