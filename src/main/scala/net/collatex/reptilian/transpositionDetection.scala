@@ -108,7 +108,7 @@ def createDependencyGraph(
   createHtmlTable(rowDatas) // unit; writes html tables to disk
 
   val edges = rowDatas.flatMap(_.map(_.edge).distinct)
-  println(edges)
+  println(s"edges: $edges")
   Graph.empty[String]
 
 def dependencyGraphToDot(
@@ -141,16 +141,17 @@ def dependencyGraphToDot(
 def hgsToDepGraphs(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, TokenRange])(using
     gTa: Vector[Token]
 ): Unit =
-  val sepRegex = """Sep\d+"""
-  val seps = gTa.filter(_.t matches sepRegex)
-  val starts = Token("Sep-1", "Sep-1", -1, -1) +: seps
-  val ends = seps :+ Token("Sep" + gTa.size.toString, "", 5, gTa.size)
-  val heStarts = Hypergraph.hyperedge("starts", starts.map(e => TokenRange(e.g, e.g)): _*)
-  val heEnds = Hypergraph.hyperedge("ends", ends.map(e => TokenRange(e.g, e.g)): _*)
-  val hgWithStarts = Vector(hg1 + heStarts, hg2 + heStarts)
-  val tmWithEnds = Vector(hg1 + heEnds, hg2 + heEnds).map(createTreeMap)
   val dependencyGraphs: Vector[Graph[String]] =
-    hgWithStarts
+    val seps = gTa.filter(_.t matches """Sep\d+""")
+    val heStarts =
+      Hypergraph.hyperedge("starts", (Token("Sep-1", "Sep-1", -1, -1) +: seps).map(e => TokenRange(e.g, e.g)): _*)
+    val tmWithEnds =
+      val heEnds = Hypergraph.hyperedge(
+        "ends",
+        (seps :+ Token("Sep" + gTa.size.toString, "", 5, gTa.size)).map(e => TokenRange(e.g, e.g)): _*
+      )
+      Vector(hg1 + heEnds, hg2 + heEnds).map(createTreeMap)
+    Vector(hg1 + heStarts, hg2 + heStarts)
       .zip(tmWithEnds)
       .map((hg, tm) => createDependencyGraph(hg, tm))
   dependencyGraphs.foreach(println)
@@ -177,3 +178,18 @@ case class EdgeEndpoints(
     source: String,
     target: String
 )
+case class TokenArrayWithStartsAndEnds(
+    tokens: Vector[Token],
+    starts: Vector[TokenRange],
+    ends: Vector[TokenRange]
+)
+object TokenArrayWithStartsAndEnds:
+  def apply(tokens: Vector[Token]): TokenArrayWithStartsAndEnds =
+    val seps = gTa.filter(_.t matches """Sep\d+""")
+    def computeStarts(tokens: Vector[Token]): Vector[TokenRange] =
+      (Token("Sep-1", "Sep-1", -1, -1) +: seps)
+        .map(e => TokenRange(e.g, e.g))
+    def computeEnds(tokens: Vector[Token]): Vector[TokenRange] =
+      (seps :+ Token("Sep" + gTa.size.toString, "", gTa.last.w + 1, gTa.size))
+        .map(e => TokenRange(e.g, e.g))
+    new TokenArrayWithStartsAndEnds(tokens, computeStarts(tokens), computeEnds(tokens))
