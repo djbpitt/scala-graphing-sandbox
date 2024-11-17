@@ -111,6 +111,12 @@ def createDependencyGraph(
   println(s"edges: $edges")
   Graph.empty[String]
 
+def sonOfCreateDependencyGraph(hg: Hypergraph[String, TokenRange])(using
+    egTa: TokenArrayWithStartsAndEnds
+): TreeMap[Int, String] =
+  val tm = createTreeMap(Hypergraph.hyperedge("ends", egTa.ends: _*) + hg)
+  tm
+
 def dependencyGraphToDot(
     depGraph: Graph[String],
     hg: Hypergraph[String, TokenRange]
@@ -141,6 +147,10 @@ def dependencyGraphToDot(
 def hgsToDepGraphs(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, TokenRange])(using
     gTa: Vector[Token]
 ): Unit =
+
+  given egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
+  val tms = Vector(hg1, hg2).map(sonOfCreateDependencyGraph)
+
   val dependencyGraphs: Vector[Graph[String]] =
     val seps = gTa.filter(_.t matches """Sep\d+""")
     val heStarts =
@@ -151,6 +161,7 @@ def hgsToDepGraphs(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, 
         (seps :+ Token("Sep" + gTa.size.toString, "", 5, gTa.size)).map(e => TokenRange(e.g, e.g)): _*
       )
       Vector(hg1 + heEnds, hg2 + heEnds).map(createTreeMap)
+    tms.zip(tmWithEnds).map((n, o) => n == o).foreach(println)
     Vector(hg1 + heStarts, hg2 + heStarts)
       .zip(tmWithEnds)
       .map((hg, tm) => createDependencyGraph(hg, tm))
