@@ -1,53 +1,56 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE html >
 <html xmlns="http://www.w3.org/1999/xhtml">
-    <head>
-      <title>22-87</title>
-      <style type="text/css">
-        section {
-          background-color: seashell;
-          border: 2px black solid;
-          width: fit-content;
-          margin-left: .5em;
-          padding: 0 .2em;
-        }
-        ul {
-          padding-left: 1.5em;
-        }
-        table {
-          background-color: seashell;
-          border-collapse: collapse;
-        }
-        table,
-        thead,
-        tbody {
-          border: 2px black solid;
-        }
-        th {
-          border-left: 2px black solid;
-          border-right: 2px black solid;
-          border-top: 1px darkgray solid;
-          border-bottom: 1px darkgray solid;
-        }
-        td {
-        border: 1px darkgray solid;
-        }
-        th,
-        td {
-          padding: 2px 3px;
-        }
-        tr:first-child &gt; th:nth-child(2),
-        tr:not(:first-child) &gt; th:first-child,
-        tr:first-child &gt; td:nth-child(4),
-        tr:not(:first-child) &gt; td:nth-child(3){
-         text-align: right;
-        }
-        .old {
-        color: lightgray;
-        }</style>
-    </head>
-    <body>
-      <table><thead>
+      <head>
+        <title>
+          22-87
+        </title>
+        <style>section {
+  background-color: seashell;
+  border: 2px black solid;
+  width: fit-content;
+  margin-left: .5em;
+  padding: 0 .2em;
+}
+ul {
+  padding-left: 1.5em;
+}
+table {
+  background-color: seashell;
+  border-collapse: collapse;
+}
+table,
+thead,
+tbody {
+  border: 2px black solid;
+}
+th {
+  border-left: 2px black solid;
+  border-right: 2px black solid;
+  border-top: 1px darkgray solid;
+  border-bottom: 1px darkgray solid;
+}
+td {
+  border: 1px darkgray solid;
+}
+th,
+td {
+  padding: 2px 3px;
+}
+tr:first-child &gt; th:nth-child(2),
+tr:not(:first-child) &gt; th:first-child,
+tr:first-child &gt; td:nth-child(4),
+tr:not(:first-child) &gt; td:nth-child(3) {
+  text-align: right;
+}
+.old {
+  color: lightgray;
+}
+</style>
+      </head>
+      <body>
+        <table>
+          <thead>
       <tr>
         <th>Label</th>
         <th>Witness</th>
@@ -56,54 +59,175 @@
         <th>Target</th>
         <th>Edge</th>
       </tr>
-    </thead><tbody><tr><th rowspan="6">starts</th><th>0</th><td>EmptyTokenRange(-1,-1)</td><td>-1</td><td>22</td><td>starts → 22</td></tr><tr>
-          <th>1</th>
-          <td>EmptyTokenRange(21,21)</td>
-          <td>21</td>
-          <td>22</td>
-          <td class="old">starts → 22</td>
+    </thead><tbody>
+        <tr>
+          <th rowspan="6">
+            starts
+          </th><th>
+              0
+            </th><td>
+                EmptyTokenRange(-1,-1)
+              </td><td>
+              -1
+            </td><td>
+              22
+            </td><td>
+              starts → 22
+            </td>
         </tr><tr>
-          <th>2</th>
-          <td>EmptyTokenRange(43,43)</td>
-          <td>43</td>
-          <td>22</td>
-          <td class="old">starts → 22</td>
+            <th>
+              1
+            </th>
+            <td>
+              EmptyTokenRange(21,21)
+            </td>
+            <td>
+              21
+            </td>
+            <td>
+              22
+            </td><td class="old">
+              starts → 22
+            </td>
+          </tr><tr>
+            <th>
+              2
+            </th>
+            <td>
+              EmptyTokenRange(43,43)
+            </td>
+            <td>
+              43
+            </td>
+            <td>
+              22
+            </td><td class="old">
+              starts → 22
+            </td>
+          </tr><tr>
+            <th>
+              3
+            </th>
+            <td>
+              EmptyTokenRange(65,65)
+            </td>
+            <td>
+              65
+            </td>
+            <td>
+              22
+            </td><td class="old">
+              starts → 22
+            </td>
+          </tr><tr>
+            <th>
+              4
+            </th>
+            <td>
+              EmptyTokenRange(110,110)
+            </td>
+            <td>
+              110
+            </td>
+            <td>
+              ends
+            </td><td>
+            starts → ends
+          </td>
+          </tr><tr>
+            <th>
+              5
+            </th>
+            <td>
+              EmptyTokenRange(191,191)
+            </td>
+            <td>
+              191
+            </td>
+            <td>
+              ends
+            </td><td class="old">
+              starts → ends
+            </td>
+          </tr>
+      </tbody><tbody>
+        <tr>
+          <th rowspan="4">
+            22
+          </th><th>
+              0
+            </th><td>
+                LegalTokenRange(0,21)
+              </td><td>
+              0
+            </td><td>
+              ends
+            </td><td>
+              22 → ends
+            </td>
         </tr><tr>
-          <th>3</th>
-          <td>EmptyTokenRange(65,65)</td>
-          <td>65</td>
-          <td>22</td>
-          <td class="old">starts → 22</td>
-        </tr><tr>
-          <th>4</th>
-          <td>EmptyTokenRange(110,110)</td>
-          <td>110</td>
-          <td>ends</td>
-          <td>starts → ends</td>
-        </tr><tr>
-          <th>5</th>
-          <td>EmptyTokenRange(191,191)</td>
-          <td>191</td>
-          <td>ends</td>
-          <td class="old">starts → ends</td>
-        </tr></tbody><tbody><tr><th rowspan="4">22</th><th>0</th><td>LegalTokenRange(0,21)</td><td>0</td><td>ends</td><td>22 → ends</td></tr><tr>
-          <th>1</th>
-          <td>LegalTokenRange(22,43)</td>
-          <td>22</td>
-          <td>ends</td>
-          <td class="old">22 → ends</td>
-        </tr><tr>
-          <th>2</th>
-          <td>LegalTokenRange(44,65)</td>
-          <td>44</td>
-          <td>ends</td>
-          <td class="old">22 → ends</td>
-        </tr><tr>
-          <th>3</th>
-          <td>LegalTokenRange(66,87)</td>
-          <td>66</td>
-          <td>87</td>
-          <td>22 → 87</td>
-        </tr></tbody><tbody><tr><th>87</th><th>3</th><td>LegalTokenRange(87,110)</td><td>87</td><td>ends</td><td>87 → ends</td></tr></tbody></table>
-    </body>
-  </html>
+            <th>
+              1
+            </th>
+            <td>
+              LegalTokenRange(22,43)
+            </td>
+            <td>
+              22
+            </td>
+            <td>
+              ends
+            </td><td class="old">
+              22 → ends
+            </td>
+          </tr><tr>
+            <th>
+              2
+            </th>
+            <td>
+              LegalTokenRange(44,65)
+            </td>
+            <td>
+              44
+            </td>
+            <td>
+              ends
+            </td><td class="old">
+              22 → ends
+            </td>
+          </tr><tr>
+            <th>
+              3
+            </th>
+            <td>
+              LegalTokenRange(66,87)
+            </td>
+            <td>
+              66
+            </td>
+            <td>
+              87
+            </td><td>
+            22 → 87
+          </td>
+          </tr>
+      </tbody><tbody>
+        <tr>
+          <th>
+            87
+          </th><th>
+              3
+            </th><td>
+                LegalTokenRange(87,110)
+              </td><td>
+              87
+            </td><td>
+              ends
+            </td><td>
+              87 → ends
+            </td>
+        </tr>
+      </tbody>
+        </table>
+      </body>
+    </html>
