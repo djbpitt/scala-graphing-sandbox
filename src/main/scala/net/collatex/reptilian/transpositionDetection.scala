@@ -3,6 +3,7 @@ import net.collatex.reptilian.TokenEnum.Token
 import net.collatex.util.{Graph, Hypergraph}
 import scala.collection.immutable.TreeMap
 import net.collatex.reptilian.returnSampleData
+import scala.math.Ordering
 
 /* Method
  *
@@ -53,10 +54,11 @@ import net.collatex.reptilian.returnSampleData
  * */
 
 // Sorted map (treemap?) from start of token range (Int) to hyperedge label (String)
-def createTreeMap(hg: Hypergraph[String, TokenRange]): TreeMap[Int, String] =
-  hg.am2
+def createTreeMap(hg: Hypergraph[EdgeLabel, TokenRange]): TreeMap[Int, EdgeLabel] =
+  val result = hg.am2
     .map((tr, l) => tr.start -> l.head)
     .to(TreeMap)
+  result
 
 // Take in hypergraph with fake starts plus tree map and return dependency graph
 // For each key in hg 1) find all target TokenRange starts, 2) look up start value
@@ -65,9 +67,10 @@ def createTreeMap(hg: Hypergraph[String, TokenRange]): TreeMap[Int, String] =
 //   255 -> Set(TokenRange(255,272), TokenRange(174, 191)) locate keys 255 and
 //   174 in treemap, find next key sequentially, and return associated value.
 def createDependencyGraph(
-    hg: Hypergraph[String, TokenRange],
-    tm: TreeMap[Int, String]
+    hg: Hypergraph[EdgeLabel, TokenRange],
+    tm: TreeMap[Int, EdgeLabel]
 )(using gTa: Vector[Token]): Graph[String] =
+  println(s"hg.hyperedges: ${hg.hyperedges}")
   /*
     For each hyperedge
       a) Covert to vector and sort by hyperedge label, with "starts" first
@@ -80,23 +83,21 @@ def createDependencyGraph(
       e) Create <td> for witness id, token range, source, target
    */
   // outer vector is hyperedges, inner vector is token ranges within hyperedge
-  def computeEdgeData(tokr: TokenRange, he: String): EdgeData =
+  def computeEdgeData(tokr: TokenRange, he: EdgeLabel): EdgeData =
     val witness = he match {
-      case "starts" => gTa(tokr.start + 1).w
-      case _        => gTa(tokr.start).w
+      case _:EdgeLabel.Terminal => gTa(tokr.start + 1).w
+      case _:EdgeLabel.Internal        => gTa(tokr.start).w
     }
-    val source = tokr.start
-    val target = tm.minAfter(tokr.start + 1)
-    val edge = EdgeEndpoints(he, target.get._2)
-    // s"$he → ${target.get._2}"
-    EdgeData(he, witness, tokr, source, target, edge)
+    val source = NodeType(tokr.start)
+    val tmTarget = tm.minAfter(tokr.start + 1)
+    val tmp = tmTarget.get._2
+    val edge = EdgeEndpoints(source, NodeType(tmp))
+    EdgeData(he, witness, tokr, source, tmTarget, edge)
 
-  def computeRowDatas(hes: Set[String]): Seq[Seq[EdgeData]] = {
-    val sortedHes = // move starts to beginning, sort labels as integers, rather than strings
-      // TODO: We sort twice, but we don’t want to treat "starts" as a magic value
-      val allHes = hes.toSeq.sorted
-      allHes.last +: allHes.dropRight(1).sortBy(_.toInt)
-    val rds = for he <- sortedHes yield
+  def computeRowDatas(hes: Set[EdgeLabel]): Seq[Seq[EdgeData]] = {
+    println(s"hes: $hes")
+    val sortedHes = hes.toSeq.sorted
+    val rds: Seq[Seq[EdgeData]] = for he <- sortedHes yield
       val tokrs = hg.members(he).toSeq.sortBy(e => e.start) // gTa is already ordered
       tokrs.map(e => computeEdgeData(e, he))
     rds
@@ -104,71 +105,96 @@ def createDependencyGraph(
 
   // Used to create html table and again to computes edges for graph and GraphViz
   val rowDatas: Seq[Seq[EdgeData]] = computeRowDatas(hg.hyperedges)
-
   createHtmlTable(rowDatas) // unit; writes html tables to disk
-
   val edges = rowDatas.flatMap(_.map(_.edge).distinct)
   println(s"edges: $edges")
   Graph.empty[String]
 
-def sonOfCreateDependencyGraph(hg: Hypergraph[String, TokenRange])(using
+def sonOfCreateDependencyGraph(hg: Hypergraph[EdgeLabel, TokenRange])(using
     egTa: TokenArrayWithStartsAndEnds
-): TreeMap[Int, String] =
-  val tm = createTreeMap(Hypergraph.hyperedge("ends", egTa.ends: _*) + hg)
-  tm
+) =
+  val startsWithHg = Hypergraph.hyperedge(EdgeLabel("starts"), egTa.starts: _*) + hg
+  val tm = createTreeMap(Hypergraph.hyperedge(EdgeLabel("ends"), egTa.ends: _*) + hg)
+  def computeEdgeData(tokr: TokenRange, he: EdgeLabel): EdgeData =
+    val witness = he match {
+      case _: EdgeLabel.Terminal => gTa(tokr.start + 1).w
+      case _: EdgeLabel.Internal => gTa(tokr.start).w
+    }
+    val source = NodeType(tokr.start)
+    val tmTarget = tm.minAfter(tokr.start + 1)
+    val tmp = tmTarget.get._2
+    val edge = EdgeEndpoints(NodeType(he), NodeType(tmp))
+    EdgeData(he, witness, tokr, source, tmTarget, edge)
 
-def dependencyGraphToDot(
-    depGraph: Graph[String],
-    hg: Hypergraph[String, TokenRange]
-)(using gTa: Vector[Token]): String =
-  val prologue = "digraph G {\n\t"
-  val epilogue = "\n}"
-  val edges = depGraph.toMap
-    .map((k, v) => k -> v._2)
-    .map((k, v) => v.map(target => k -> target))
-    .flatten
-  // println("Result")
-  // edges.foreach(e => println(s"dot edge: $e"))
-  val readings = edges
-    .flatMap((k, v) => Set(k, v))
-    .toSet
-    .diff(Set("starts", "ends"))
-    .map(k => k -> Vector("\"", k, ": ", hg.members(k).head.tString, "\"").mkString)
-    .toMap ++ Map("starts" -> "starts", "ends" -> "ends")
-  val dotEdges = edges
-    .map((k, v) => k + " -> " + v)
-    .mkString(";\n\t")
-  val dotNodes = ";\n\t" + readings
-    .map((k, v) => Vector(k, "[label=", v, "]").mkString)
-    .mkString(";\n\t")
+  def computeRowDatas(hes: Set[EdgeLabel]): Seq[Seq[EdgeData]] = {
+    println(s"hes: $hes")
+    val sortedHes = hes.toSeq.sorted
+    val rds: Seq[Seq[EdgeData]] = for he <- sortedHes yield
+      val tokrs = startsWithHg.members(he).toSeq.sortBy(e => e.start) // gTa is already ordered
+      tokrs.map(e => computeEdgeData(e, he))
+    rds
+  }
 
-  prologue + dotEdges + dotNodes + epilogue
+  // Used to create html table and again to computes edges for graph and GraphViz
+  val rowDatas: Seq[Seq[EdgeData]] = computeRowDatas(startsWithHg.hyperedges)
+  createHtmlTable(rowDatas) // unit; writes html tables to disk
+  val edges = rowDatas.flatMap(_.map(_.edge).distinct)
+  println(s"edges: $edges")
+  Graph.empty[String]
 
-def hgsToDepGraphs(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, TokenRange])(using
-    gTa: Vector[Token]
-): Unit =
 
+//def dependencyGraphToDot(
+//    depGraph: Graph[String],
+//    hg: Hypergraph[String, TokenRange]
+//)(using gTa: Vector[Token]): String =
+//  val prologue = "digraph G {\n\t"
+//  val epilogue = "\n}"
+//  val edges = depGraph.toMap
+//    .map((k, v) => k -> v._2)
+//    .map((k, v) => v.map(target => k -> target))
+//    .flatten
+//  // println("Result")
+//  // edges.foreach(e => println(s"dot edge: $e"))
+//  val readings = edges
+//    .flatMap((k, v) => Set(k, v))
+//    .toSet
+//    .diff(Set("starts", "ends"))
+//    .map(k => k -> Vector("\"", k, ": ", hg.members(k).head.tString, "\"").mkString)
+//    .toMap ++ Map("starts" -> "starts", "ends" -> "ends")
+//  val dotEdges = edges
+//    .map((k, v) => k + " -> " + v)
+//    .mkString(";\n\t")
+//  val dotNodes = ";\n\t" + readings
+//    .map((k, v) => Vector(k, "[label=", v, "]").mkString)
+//    .mkString(";\n\t")
+//
+//  prologue + dotEdges + dotNodes + epilogue
+
+def hgsToDepGraphs(
+    hg1: Hypergraph[EdgeLabel, TokenRange],
+    hg2: Hypergraph[EdgeLabel, TokenRange]
+)(using gTa: Vector[Token]): Unit =
   given egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
-  val tms = Vector(hg1, hg2).map(sonOfCreateDependencyGraph)
+  val result = Vector(hg1, hg2).map(sonOfCreateDependencyGraph)
+  result.foreach(e => println(s"new depGraph: $e"))
 
-  val dependencyGraphs: Vector[Graph[String]] =
-    val seps = gTa.filter(_.t matches """Sep\d+""")
-    val heStarts =
-      Hypergraph.hyperedge("starts", (Token("Sep-1", "Sep-1", -1, -1) +: seps).map(e => TokenRange(e.g, e.g)): _*)
-    val tmWithEnds =
-      val heEnds = Hypergraph.hyperedge(
-        "ends",
-        (seps :+ Token("Sep" + gTa.size.toString, "", 5, gTa.size)).map(e => TokenRange(e.g, e.g)): _*
-      )
-      Vector(hg1 + heEnds, hg2 + heEnds).map(createTreeMap)
-    tms.zip(tmWithEnds).map((n, o) => n == o).foreach(println)
-    Vector(hg1 + heStarts, hg2 + heStarts)
-      .zip(tmWithEnds)
-      .map((hg, tm) => createDependencyGraph(hg, tm))
-  dependencyGraphs.foreach(println)
-  val dots = dependencyGraphs
-    .zip(Vector(hg1, hg2))
-    .map((dg, hg) => dependencyGraphToDot(dg, hg))
+//  val dependencyGraphs: Vector[Graph[String]] =
+//    val seps = gTa.filter(_.t matches """Sep\d+""")
+//    val heStarts =
+//      Hypergraph.hyperedge("starts", (Token("Sep-1", "Sep-1", -1, -1) +: seps).map(e => TokenRange(e.g, e.g)): _*)
+//    val tmWithEnds =
+//      val heEnds = Hypergraph.hyperedge(
+//        "ends",
+//        (seps :+ Token("Sep" + gTa.size.toString, "", 5, gTa.size)).map(e => TokenRange(e.g, e.g)): _*
+//      )
+//      Vector(hg1 + heEnds, hg2 + heEnds).map(createTreeMap)
+//    Vector(hg1 + heStarts, hg2 + heStarts)
+//      .zip(tmWithEnds)
+//      .map((hg, tm) => createDependencyGraph(hg, tm))
+//  dependencyGraphs.foreach(println)
+//  val dots = dependencyGraphs
+//    .zip(Vector(hg1, hg2))
+//    .map((dg, hg) => dependencyGraphToDot(dg, hg))
 
 @main def runWithSampleData(): Unit =
   val (gTaInput, hg1Input, hg2Input) = returnSampleData()
@@ -178,17 +204,53 @@ def hgsToDepGraphs(hg1: Hypergraph[String, TokenRange], hg2: Hypergraph[String, 
   hgsToDepGraphs(hg1, hg2)
 
 case class EdgeData(
-    he: String,
+    he: EdgeLabel,
     witness: Int,
     tokenRange: TokenRange,
-    source: Int,
-    target: Option[(Int, String)],
+    source: NodeType,
+    tmTarget: Option[(Int, EdgeLabel)],
     edge: EdgeEndpoints
 )
 case class EdgeEndpoints(
-    source: String,
-    target: String
+    source: NodeType,
+    target: NodeType
 )
+enum NodeType:
+  case Internal(label: Int)
+  case Terminal(label: String)
+  override def toString: String = this match
+    case Internal(label) => label.toString
+    case Terminal(label) => label
+
+object NodeType:
+  def apply(label: String): NodeType = NodeType.Terminal(label)
+  def apply(label: Int): NodeType = NodeType.Internal(label)
+//  def apply(label: EdgeLabel.Terminal): NodeType = NodeType.Terminal(label.label)
+//  def apply(label: EdgeLabel.Internal): NodeType = NodeType.Internal(label.label)
+  def apply(label: EdgeLabel): NodeType =
+    label match
+      case EdgeLabel.Terminal(label) => NodeType.Terminal(label)
+      case EdgeLabel.Internal(label) => NodeType.Internal(label)
+
+enum EdgeLabel:
+  case Internal(label: Int)
+  case Terminal(label: String)
+  override def toString: String = this match
+    case Internal(label) => label.toString
+    case Terminal(label) => label
+
+object EdgeLabel:
+  def apply(label: String): EdgeLabel = EdgeLabel.Terminal(label)
+  def apply(label: Int): EdgeLabel = EdgeLabel.Internal(label)
+  given Ordering[EdgeLabel] = // Sort "starts" first, other numerically
+    def EdgeLabelToInt(edgeLabel: EdgeLabel): Int =
+      edgeLabel match
+        case _:EdgeLabel.Terminal => Int.MinValue
+        case EdgeLabel.Internal(label) => label
+    (a: EdgeLabel, b: EdgeLabel) =>
+      EdgeLabelToInt(a).compare(EdgeLabelToInt(b))
+
+
 case class TokenArrayWithStartsAndEnds(
     tokens: Vector[Token],
     starts: Vector[TokenRange],
@@ -196,11 +258,11 @@ case class TokenArrayWithStartsAndEnds(
 )
 object TokenArrayWithStartsAndEnds:
   def apply(tokens: Vector[Token]): TokenArrayWithStartsAndEnds =
-    val seps = gTa.filter(_.t matches """Sep\d+""")
-    def computeStarts(tokens: Vector[Token]): Vector[TokenRange] =
+    val seps = tokens.filter(_.t matches """Sep\d+""")
+    def computeStarts(): Vector[TokenRange] =
       (Token("Sep-1", "Sep-1", -1, -1) +: seps)
         .map(e => TokenRange(e.g, e.g))
-    def computeEnds(tokens: Vector[Token]): Vector[TokenRange] =
-      (seps :+ Token("Sep" + gTa.size.toString, "", gTa.last.w + 1, gTa.size))
+    def computeEnds(): Vector[TokenRange] =
+      (seps :+ Token("Sep" + tokens.size.toString, "", tokens.last.w + 1, tokens.size))
         .map(e => TokenRange(e.g, e.g))
-    new TokenArrayWithStartsAndEnds(tokens, computeStarts(tokens), computeEnds(tokens))
+    new TokenArrayWithStartsAndEnds(tokens, computeStarts(), computeEnds())

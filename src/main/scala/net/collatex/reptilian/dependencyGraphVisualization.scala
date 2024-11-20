@@ -3,7 +3,7 @@ package net.collatex.reptilian
 import scala.xml.dtd.DocType
 
 def createHtmlTable(rds: Seq[Seq[EdgeData]]): Unit = // inner sequences are tbody groups
-  val hgId = rds.flatMap(_.map(_.he).distinct.filterNot(_ == "starts")).sortBy(_.toInt).mkString("-")
+  val hgId = rds.flatMap(_.map(_.he).sorted.distinct).drop(1).mkString("-") // "starts" is always first
   def edgeEndpointsToString(ep: EdgeEndpoints): String = // format edge for html table
     s"${ep.source} → ${ep.target}"
   val css: String =
@@ -82,7 +82,7 @@ def createHtmlTable(rds: Seq[Seq[EdgeData]]): Unit = // inner sequences are tbod
               {rd.head.source.toString}
             </td>,
             <td>
-              {rd.head.target.get._2}
+              {rd.head.tmTarget.get._2}
             </td>,
             <td>
               {edgeEndpointsToString(rd.head.edge)}
@@ -104,7 +104,7 @@ def createHtmlTable(rds: Seq[Seq[EdgeData]]): Unit = // inner sequences are tbod
               {ed.source.toString}
             </td>
             <td>
-              {ed.target.get._2}
+              {ed.tmTarget.get._2}
             </td>{if rd.slice(0, offset).map(_.edge).contains(ed.edge) then
             <td class="old">
               {edgeEndpointsToString(ed.edge)}

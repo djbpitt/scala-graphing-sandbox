@@ -279,39 +279,39 @@ val gTa: Vector[Token] = Vector(
   Token("more ", "more", 5, 270),
   Token("species ", "species", 5, 271)
 )
-val hg1: Hypergraph[String, TokenRange] = Hypergraph(
+val hg1: Hypergraph[EdgeLabel, TokenRange] = Hypergraph(
   Map(
-    "173" -> Set(TokenRange(173, 174)),
-    "254" -> Set(TokenRange(254, 255)),
-    "255" -> Set(TokenRange(255, 272), TokenRange(174, 191)),
-    "192" -> Set(TokenRange(192, 254), TokenRange(111, 173))
+    EdgeLabel(173) -> Set(TokenRange(173, 174)),
+    EdgeLabel(254) -> Set(TokenRange(254, 255)),
+    EdgeLabel(255) -> Set(TokenRange(255, 272), TokenRange(174, 191)),
+    EdgeLabel(192) -> Set(TokenRange(192, 254), TokenRange(111, 173))
   ),
   Map(
-    TokenRange(254, 255) -> Set("254"),
-    TokenRange(174, 191) -> Set("255"),
-    TokenRange(173, 174) -> Set("173"),
-    TokenRange(192, 254) -> Set("192"),
-    TokenRange(111, 173) -> Set("192"),
-    TokenRange(255, 272) -> Set("255")
+    TokenRange(254, 255) -> Set(EdgeLabel(254)),
+    TokenRange(174, 191) -> Set(EdgeLabel(255)),
+    TokenRange(173, 174) -> Set(EdgeLabel(173)),
+    TokenRange(192, 254) -> Set(EdgeLabel(192)),
+    TokenRange(111, 173) -> Set(EdgeLabel(192)),
+    TokenRange(255, 272) -> Set(EdgeLabel(255))
   )
 )
-val hg2: Hypergraph[String, TokenRange] = Hypergraph(
+val hg2: Hypergraph[EdgeLabel, TokenRange] = Hypergraph(
   Map(
-    "22" -> Set(TokenRange(22, 43), TokenRange(0, 21), TokenRange(44, 65), TokenRange(66, 87)),
-    "87" -> Set(TokenRange(87, 110))
+    EdgeLabel(22) -> Set(TokenRange(22, 43), TokenRange(0, 21), TokenRange(44, 65), TokenRange(66, 87)),
+    EdgeLabel(87) -> Set(TokenRange(87, 110))
   ),
   Map(
-    TokenRange(44, 65) -> Set("22"),
-    TokenRange(87, 110) -> Set("87"),
-    TokenRange(66, 87) -> Set("22"),
-    TokenRange(0, 21) -> Set("22"),
-    TokenRange(22, 43) -> Set("22")
+    TokenRange(44, 65) -> Set(EdgeLabel(22)),
+    TokenRange(87, 110) -> Set(EdgeLabel(87)),
+    TokenRange(66, 87) -> Set(EdgeLabel(22)),
+    TokenRange(0, 21) -> Set(EdgeLabel(22)),
+    TokenRange(22, 43) -> Set(EdgeLabel(22))
   )
 )
 
 def returnSampleData(): (
     Vector[Token],
-    Hypergraph[String, TokenRange],
-    Hypergraph[String, TokenRange]
+    Hypergraph[EdgeLabel, TokenRange],
+    Hypergraph[EdgeLabel, TokenRange]
 ) =
   (gTa, hg1, hg2)
