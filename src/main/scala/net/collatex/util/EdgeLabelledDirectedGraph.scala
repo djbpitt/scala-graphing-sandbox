@@ -1,9 +1,10 @@
 package net.collatex.util
 
-import cats.implicits.catsSyntaxSemigroup
 
-import scala.annotation.targetName
-import scala.collection.immutable.Set
+ import cats.implicits.catsSyntaxSemigroup
+
+ import scala.annotation.targetName
+ import scala.collection.immutable.Set
 
 // @author: Ronald Haentjens Dekker
 // This class represents an Edge Labelled Directed Acyclic Graph.
@@ -19,12 +20,7 @@ object EdgeLabelledDirectedGraph:
   def empty[N, E]: EdgeLabelledDirectedGraph[N, E] = EmptyGraph()
   def node[N, E](node: N): EdgeLabelledDirectedGraph[N, E] = SingleNodeGraph(node)
   def edge[N, E](source: N, target: N, label: E): EdgeLabelledDirectedGraph[N, E] =
-    // TODO: here I need two infix operators, to implement the a |-- label --> b construct
-    // where |-- is left associative, returns a tuple
-    // and --> is right associative
-    // node(source) * node(target) should become node(source) |-- label --> node(target)
-    // NOTE: Place holder
-    DirectedGraph[N, E](Map.empty[N, (Set[(N, E)], Set[(N, E)])])
+    node(source) |-- label -->: node(target)
 
   def lNode[E](label: String): EdgeLabelledDirectedGraph[LabelledNode, E] =
     val labelledNode = LabelledNode(label)
@@ -36,6 +32,29 @@ enum EdgeLabelledDirectedGraph[N, E]:
   case EmptyGraph()
   case SingleNodeGraph(node: N)
   case DirectedGraph(adjacencyMap: Map[N, (Set[(N, E)], Set[(N, E)])])
+
+  // NOTE: here I need two infix operators, to implement the 'a' |-- label --> 'b' construct
+  // where |-- is left associative, does the actual operation
+  // and --> is right associative, returns a tuple
+  @targetName("start arrow operator")
+  def |--(otherGraphAndLabel: (EdgeLabelledDirectedGraph[N, E], E)): EdgeLabelledDirectedGraph[N, E] =
+    val other = otherGraphAndLabel._1
+    val edgeLabel = otherGraphAndLabel._2
+    (this, other) match
+      case (_: EmptyGraph[N, E], other: EdgeLabelledDirectedGraph[N, E]) => other
+      case (one: EdgeLabelledDirectedGraph[N, E], _: EmptyGraph[N, E]) => one
+      case (one: SingleNodeGraph[N, E], other: SingleNodeGraph[N, E]) =>
+        val t1: (Set[(N, E)], Set[(N, E)]) = (Set(), Set((other.node, edgeLabel)))
+        val t2: (Set[(N, E)], Set[(N, E)]) = (Set((one.node, edgeLabel)), Set())
+        DirectedGraph(Map.apply(one.node -> t1, other.node -> t2))
+      case (_, _) =>
+        // This is just to make the method compile while working on the implementation
+        EdgeLabelledDirectedGraph.empty[N, E]
+
+
+  
+  @targetName("end arrow operator")
+  def -->:(weight: E): (EdgeLabelledDirectedGraph[N, E], E) =  (this, weight)
 
   def toMap: Map[N, (Set[(N, E)], Set[(N, E)])] =
     this match
@@ -94,6 +113,7 @@ enum EdgeLabelledDirectedGraph[N, E]:
 //
 //
 //
+////  NOTE: partly implemented above
 ////  //TODO: change Graph type everywhere to EdgeLabelledDirectedGraph
 ////  // Connects two graphs with one or more edges.
 ////  @targetName("connect")
