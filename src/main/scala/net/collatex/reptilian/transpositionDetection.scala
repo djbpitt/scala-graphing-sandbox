@@ -66,51 +66,7 @@ def createTreeMap(hg: Hypergraph[EdgeLabel, TokenRange]): TreeMap[Int, EdgeLabel
 //   with that next key. E.g., with hyperedge
 //   255 -> Set(TokenRange(255,272), TokenRange(174, 191)) locate keys 255 and
 //   174 in treemap, find next key sequentially, and return associated value.
-def createDependencyGraph(
-    hg: Hypergraph[EdgeLabel, TokenRange],
-    tm: TreeMap[Int, EdgeLabel]
-)(using gTa: Vector[Token]): Graph[String] =
-  println(s"hg.hyperedges: ${hg.hyperedges}")
-  /*
-    For each hyperedge
-      a) Covert to vector and sort by hyperedge label, with "starts" first
-      b) Create <tbody>, inside which:
-    For each token range within the hyperedge, sorted by witness
-      a) Create <tr>, inside which
-      b) If first token range, create <th> with rowspan matching count of token ranges
-      c) Compute source and target
-      d) If hyperedge lable is "starts", retrieve witness id from next token; otherwise from same token
-      e) Create <td> for witness id, token range, source, target
-   */
-  // outer vector is hyperedges, inner vector is token ranges within hyperedge
-  def computeEdgeData(tokr: TokenRange, he: EdgeLabel): EdgeData =
-    val witness = he match {
-      case _:EdgeLabel.Terminal => gTa(tokr.start + 1).w
-      case _:EdgeLabel.Internal        => gTa(tokr.start).w
-    }
-    val source = NodeType(tokr.start)
-    val tmTarget = tm.minAfter(tokr.start + 1)
-    val tmp = tmTarget.get._2
-    val edge = EdgeEndpoints(source, NodeType(tmp))
-    EdgeData(he, witness, tokr, source, tmTarget, edge)
-
-  def computeRowDatas(hes: Set[EdgeLabel]): Seq[Seq[EdgeData]] = {
-    println(s"hes: $hes")
-    val sortedHes = hes.toSeq.sorted
-    val rds: Seq[Seq[EdgeData]] = for he <- sortedHes yield
-      val tokrs = hg.members(he).toSeq.sortBy(e => e.start) // gTa is already ordered
-      tokrs.map(e => computeEdgeData(e, he))
-    rds
-  }
-
-  // Used to create html table and again to computes edges for graph and GraphViz
-  val rowDatas: Seq[Seq[EdgeData]] = computeRowDatas(hg.hyperedges)
-  createHtmlTable(rowDatas) // unit; writes html tables to disk
-  val edges = rowDatas.flatMap(_.map(_.edge).distinct)
-  println(s"edges: $edges")
-  Graph.empty[String]
-
-def sonOfCreateDependencyGraph(hg: Hypergraph[EdgeLabel, TokenRange])(using
+def createDependencyGraph(hg: Hypergraph[EdgeLabel, TokenRange])(using
     egTa: TokenArrayWithStartsAndEnds
 ) =
   val startsWithHg = Hypergraph.hyperedge(EdgeLabel("starts"), egTa.starts: _*) + hg
@@ -127,7 +83,6 @@ def sonOfCreateDependencyGraph(hg: Hypergraph[EdgeLabel, TokenRange])(using
     EdgeData(he, witness, tokr, source, tmTarget, edge)
 
   def computeRowDatas(hes: Set[EdgeLabel]): Seq[Seq[EdgeData]] = {
-    println(s"hes: $hes")
     val sortedHes = hes.toSeq.sorted
     val rds: Seq[Seq[EdgeData]] = for he <- sortedHes yield
       val tokrs = startsWithHg.members(he).toSeq.sortBy(e => e.start) // gTa is already ordered
@@ -138,9 +93,11 @@ def sonOfCreateDependencyGraph(hg: Hypergraph[EdgeLabel, TokenRange])(using
   // Used to create html table and again to computes edges for graph and GraphViz
   val rowDatas: Seq[Seq[EdgeData]] = computeRowDatas(startsWithHg.hyperedges)
   createHtmlTable(rowDatas) // unit; writes html tables to disk
-  val edges = rowDatas.flatMap(_.map(_.edge).distinct)
-  println(s"edges: $edges")
-  Graph.empty[String]
+  val depGraph = rowDatas
+    .flatMap(_.map(_.edge).distinct)
+    .map(e => Graph.edge(e.source, e.target))
+    .fold(Graph.empty[NodeType])(_ + _)
+  depGraph
 
 
 //def dependencyGraphToDot(
@@ -175,26 +132,8 @@ def hgsToDepGraphs(
     hg2: Hypergraph[EdgeLabel, TokenRange]
 )(using gTa: Vector[Token]): Unit =
   given egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
-  val result = Vector(hg1, hg2).map(sonOfCreateDependencyGraph)
-  result.foreach(e => println(s"new depGraph: $e"))
-
-//  val dependencyGraphs: Vector[Graph[String]] =
-//    val seps = gTa.filter(_.t matches """Sep\d+""")
-//    val heStarts =
-//      Hypergraph.hyperedge("starts", (Token("Sep-1", "Sep-1", -1, -1) +: seps).map(e => TokenRange(e.g, e.g)): _*)
-//    val tmWithEnds =
-//      val heEnds = Hypergraph.hyperedge(
-//        "ends",
-//        (seps :+ Token("Sep" + gTa.size.toString, "", 5, gTa.size)).map(e => TokenRange(e.g, e.g)): _*
-//      )
-//      Vector(hg1 + heEnds, hg2 + heEnds).map(createTreeMap)
-//    Vector(hg1 + heStarts, hg2 + heStarts)
-//      .zip(tmWithEnds)
-//      .map((hg, tm) => createDependencyGraph(hg, tm))
-//  dependencyGraphs.foreach(println)
-//  val dots = dependencyGraphs
-//    .zip(Vector(hg1, hg2))
-//    .map((dg, hg) => dependencyGraphToDot(dg, hg))
+  val result = Vector(hg1, hg2).map(createDependencyGraph)
+  result.foreach(e => println(s"depGraph: $e"))
 
 @main def runWithSampleData(): Unit =
   val (gTaInput, hg1Input, hg2Input) = returnSampleData()
