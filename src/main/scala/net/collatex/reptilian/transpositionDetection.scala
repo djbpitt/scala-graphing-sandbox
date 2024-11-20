@@ -99,34 +99,6 @@ def createDependencyGraph(hg: Hypergraph[EdgeLabel, TokenRange])(using
     .fold(Graph.empty[NodeType])(_ + _)
   depGraph
 
-
-//def dependencyGraphToDot(
-//    depGraph: Graph[String],
-//    hg: Hypergraph[String, TokenRange]
-//)(using gTa: Vector[Token]): String =
-//  val prologue = "digraph G {\n\t"
-//  val epilogue = "\n}"
-//  val edges = depGraph.toMap
-//    .map((k, v) => k -> v._2)
-//    .map((k, v) => v.map(target => k -> target))
-//    .flatten
-//  // println("Result")
-//  // edges.foreach(e => println(s"dot edge: $e"))
-//  val readings = edges
-//    .flatMap((k, v) => Set(k, v))
-//    .toSet
-//    .diff(Set("starts", "ends"))
-//    .map(k => k -> Vector("\"", k, ": ", hg.members(k).head.tString, "\"").mkString)
-//    .toMap ++ Map("starts" -> "starts", "ends" -> "ends")
-//  val dotEdges = edges
-//    .map((k, v) => k + " -> " + v)
-//    .mkString(";\n\t")
-//  val dotNodes = ";\n\t" + readings
-//    .map((k, v) => Vector(k, "[label=", v, "]").mkString)
-//    .mkString(";\n\t")
-//
-//  prologue + dotEdges + dotNodes + epilogue
-
 def hgsToDepGraphs(
     hg1: Hypergraph[EdgeLabel, TokenRange],
     hg2: Hypergraph[EdgeLabel, TokenRange]
