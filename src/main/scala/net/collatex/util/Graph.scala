@@ -20,7 +20,7 @@ class LabelledNode(label: String)
 
 // constructor
 object Graph:
-  def empty[N]: Graph[N] = EmptyGraph()
+  def empty: Graph[Any] = EmptyGraph()
   def node[N](node: N): Graph[N] = SingleNodeGraph(node)
   def edge[N](source: N, target: N): Graph[N] =
     node(source) * node(target)
@@ -31,13 +31,13 @@ object Graph:
     graph
 
 enum Graph[N]:
-  case EmptyGraph()
+  case EmptyGraph() extends Graph[Any]
   case SingleNodeGraph(node: N)
   case DirectedGraph(adjacencyMap: Map[N, (Set[N], Set[N])])
 
   def node_size: Int =
     this match {
-      case _: EmptyGraph[N] => 0
+      case _: EmptyGraph => 0
       case _: SingleNodeGraph[N] => 1
       case g: DirectedGraph[N] => g.adjacencyMap.size
     }
@@ -45,7 +45,7 @@ enum Graph[N]:
   // we might want to use a varargs instead
   def incoming(node: Option[N]=None): Set[N] =
     (this, node) match
-      case (_: EmptyGraph[N], _) => Set.empty
+      case (_: EmptyGraph, _) => Set.empty
       case (_: SingleNodeGraph[N], _) => Set.empty
       case (_: DirectedGraph[N], None) => Set.empty // This is an error situation
       case (g: DirectedGraph[N], Some(n)) => g.adjacencyMap(n)._1
@@ -53,26 +53,26 @@ enum Graph[N]:
   // we might want to use a varargs instead
   def outgoing(node: Option[N]=None): Set[N] =
     (this, node) match
-      case (_: EmptyGraph[N], _) => Set.empty
+      case (_: EmptyGraph, _) => Set.empty
       case (_: SingleNodeGraph[N], _) => Set.empty
       case (_: DirectedGraph[N], None) => Set.empty // This is an error situation
       case (g: DirectedGraph[N], Some(n)) => g.adjacencyMap(n)._2
 
   def leafs(): Set[N] =
     this match
-      case _: EmptyGraph[N] => Set.empty
+      case _: EmptyGraph => Set.empty
       case g: SingleNodeGraph[N] => Set(g.node)
       case g: DirectedGraph[N] => g.adjacencyMap.filter(t => t._2._2.isEmpty).keySet
 
   def roots(): Set[N] =
     this match
-      case _: EmptyGraph[N] => Set.empty
+      case _: EmptyGraph => Set.empty
       case g: SingleNodeGraph[N] => Set(g.node)
       case g: DirectedGraph[N] => g.adjacencyMap.filter(t => t._2._1.isEmpty).keySet
 
   def toMap: Map[N, (Set[N], Set[N])] =
     this match
-      case _: EmptyGraph[N] => Map.empty
+      case _: EmptyGraph => Map.empty
       case g: SingleNodeGraph[N] =>
         Map.apply(g.node -> (Set.empty[N], Set.empty[N]))
       case g: DirectedGraph[N] => g.adjacencyMap
@@ -80,8 +80,8 @@ enum Graph[N]:
   @targetName("overlay")
   def +(other: Graph[N]): Graph[N] =
     (this, other) match
-      case (_: EmptyGraph[N], other: Graph[N]) => other
-      case (one: Graph[N], _: EmptyGraph[N]) => one
+      case (_: EmptyGraph, other: Graph[N]) => other
+      case (one: Graph[N], _: EmptyGraph) => one
       case (one: Graph[N], other: Graph[N]) =>
         // convert graphs into two maps so that we can merge the graphs
         val m1 = one.toMap
@@ -95,8 +95,8 @@ enum Graph[N]:
   def *(other: Graph[N]): Graph[N] =
     // NOTE: add single node graph, single node graph shortcut
     (this, other) match
-      case (_: EmptyGraph[N], other: Graph[N]) => other
-      case (one: Graph[N], _: EmptyGraph[N]) => one
+      case (_: EmptyGraph, other: Graph[N]) => other
+      case (one: Graph[N], _: EmptyGraph) => one
       case (one: SingleNodeGraph[N], other: SingleNodeGraph[N]) =>
         val t1: (Set[N], Set[N]) = (Set(), Set(other.node))
         val t2: (Set[N], Set[N]) = (Set(one.node), Set())

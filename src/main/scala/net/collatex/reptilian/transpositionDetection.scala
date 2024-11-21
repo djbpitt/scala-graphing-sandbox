@@ -27,7 +27,7 @@ import scala.math.Ordering
  *       array of the starts and ends. This provides the lowest and highest offsets for each
  *       witness, which we need in order to know where they start and stop in the global token
  *       array. (NB: Create separators in the global token array to facilitate finding the
- *       seams between witnesses.
+ *       seams between witnesses.)
  *    b. Create 'fake' hyperedges for the start and end nodes and find the start and end
  *       coordinates in the global token array. Start and end nodes must contain all witnesses.
  *       Create two (not just one) hypergraphs: one with the fake start (but not end) hyperedges
@@ -96,7 +96,7 @@ def createDependencyGraph(hg: Hypergraph[EdgeLabel, TokenRange])(using
   val depGraph = rowDatas
     .flatMap(_.map(_.edge).distinct)
     .map(e => Graph.edge(e.source, e.target))
-    .fold(Graph.empty[NodeType])(_ + _)
+    .fold(Graph.empty)(_ + _)
   depGraph
 
 def hgsToDepGraphs(
