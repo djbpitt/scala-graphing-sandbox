@@ -112,10 +112,8 @@ def hgsToDepGraphs(
   // result.foreach(e => println(s"depGraph: $e"))
 
 @main def runWithSampleData(): Unit =
-  val (gTaInput, hg1Input, hg2Input) = returnSampleData()
+  val (gTaInput, hg1, hg2) = returnSampleData()
   given gTa: Vector[Token] = gTaInput
-  val hg1 = hg1Input
-  val hg2 = hg2Input
   hgsToDepGraphs(hg1, hg2)
 
 case class EdgeData(
