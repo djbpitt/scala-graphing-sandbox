@@ -108,13 +108,14 @@ def createHtmlTable(rds: Seq[Seq[EdgeData]]): Unit = // inner sequences are tbod
             </td>
             <td>
               {ed.tmTarget.get._2}
-            </td>{if rd.slice(0, offset).map(_.edge).contains(ed.edge) then
-            <td class="old">
+            </td>{
+            if rd.slice(0, offset).map(_.edge).contains(ed.edge) then <td class="old">
               {edgeEndpointsToString(ed.edge)}
             </td>
-          else <td>
+            else <td>
             {edgeEndpointsToString(ed.edge)}
-          </td>}
+          </td>
+          }
           </tr>
         )
       val result = <tbody>
@@ -140,29 +141,31 @@ def createHtmlTable(rds: Seq[Seq[EdgeData]]): Unit = // inner sequences are tbod
       s"dependency-graph-table-$hgId.xhtml"
   scala.xml.XML.save(dependencyTablePath.toString, h, "UTF-8", true, doctypeHtml)
 
-//def dependencyGraphToDot(
-//    depGraph: Graph[NodeType],
-//    hg: Hypergraph[EdgeLabel, TokenRange]
-//)(using gTa: Vector[Token]): String =
-//  val prologue = "digraph G {\n\t"
-//  val epilogue = "\n}"
-//  val edges = depGraph.toMap
-//    .map((k, v) => k -> v._2)
-//    .map((k, v) => v.map(target => k -> target))
-//    .flatten
-//  // println("Result")
-//  // edges.foreach(e => println(s"dot edge: $e"))
-//  val readings = edges
-//    .flatMap((k, v) => Set(k, v))
-//    .toSet
-//    .diff(Set(NodeType("starts"), NodeType("ends")))
-//    .map(k => k -> Vector("\"", k, ": ", hg.members(k).head.tString, "\"").mkString)
-//    .toMap ++ Map("starts" -> "starts", "ends" -> "ends")
-//  val dotEdges = edges
-//    .map((k, v) => k + " -> " + v)
-//    .mkString(";\n\t")
-//  val dotNodes = ";\n\t" + readings
-//    .map((k, v) => Vector(k, "[label=", v, "]").mkString)
-//    .mkString(";\n\t")
-//
-//  prologue + dotEdges + dotNodes + epilogue
+def dependencyGraphToDot(
+    depGraph: Graph[NodeType],
+    hg: Hypergraph[EdgeLabel, TokenRange]
+)(using gTa: Vector[Token]): String =
+  val prologue = "digraph G {\n\t"
+  val epilogue = "\n}"
+  val edges = depGraph.toMap
+    .map((k, v) => k -> v._2)
+    .map((k, v) => v.map(target => k -> target))
+    .flatten
+  // println("Result")
+  // edges.foreach(e => println(s"dot edge: $e"))
+  val readings = edges
+    .flatMap((k, v) => Set(k, v))
+    .toSet
+    .diff(Set(NodeType("starts"), NodeType("ends")))
+    .map(k => k -> Vector("\"", k, ": ", hg.members(EdgeLabel(k)).head.tString, "\"").mkString)
+    .toMap ++ Map(NodeType("starts") -> "starts", NodeType("ends") -> "ends")
+  val dotEdges = edges
+    .map((k, v) =>
+      Vector(k.toString, " -> ", v.toString)
+        .mkString(";\n\t")
+    )
+  val dotNodes = ";\n\t" + readings
+    .map((k, v) => Vector(k, "[label=", v, "]").mkString)
+    .mkString(";\n\t")
+
+  prologue + dotEdges + dotNodes + epilogue

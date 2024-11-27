@@ -1,8 +1,11 @@
 package net.collatex.reptilian
+import net.collatex.reptilian.NodeType.Internal
 import net.collatex.reptilian.TokenEnum.Token
 import net.collatex.util.{Graph, Hypergraph}
+
 import scala.collection.immutable.TreeMap
 import net.collatex.reptilian.returnSampleData
+
 import scala.math.Ordering
 
 /* Method
@@ -153,6 +156,11 @@ enum EdgeLabel:
 object EdgeLabel:
   def apply(label: String): EdgeLabel = EdgeLabel.Terminal(label)
   def apply(label: Int): EdgeLabel = EdgeLabel.Internal(label)
+  def apply(label:NodeType): EdgeLabel =
+    label match
+      case NodeType.Terminal(label) => EdgeLabel.Terminal(label)
+      case NodeType.Internal(label) => EdgeLabel.Internal(label)
+
   given Ordering[EdgeLabel] = // Sort "starts" first, other numerically
     def EdgeLabelToInt(edgeLabel: EdgeLabel): Int =
       edgeLabel match
