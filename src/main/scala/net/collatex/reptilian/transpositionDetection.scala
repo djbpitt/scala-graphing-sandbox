@@ -69,9 +69,8 @@ def createTreeMap(hg: Hypergraph[EdgeLabel, TokenRange]): TreeMap[Int, EdgeLabel
 //   with that next key. E.g., with hyperedge
 //   255 -> Set(TokenRange(255,272), TokenRange(174, 191)) locate keys 255 and
 //   174 in treemap, find next key sequentially, and return associated value.
-def createDependencyGraph(hg: Hypergraph[EdgeLabel, TokenRange])(using
-    egTa: TokenArrayWithStartsAndEnds
-) =
+def createDependencyGraph(hg: Hypergraph[EdgeLabel, TokenRange])
+    (using egTa: TokenArrayWithStartsAndEnds) =
   val startsWithHg = Hypergraph.hyperedge(EdgeLabel("starts"), egTa.starts: _*) + hg
   val tm = createTreeMap(Hypergraph.hyperedge(EdgeLabel("ends"), egTa.ends: _*) + hg)
   def computeEdgeData(tokr: TokenRange, he: EdgeLabel): EdgeData =
@@ -100,6 +99,8 @@ def createDependencyGraph(hg: Hypergraph[EdgeLabel, TokenRange])(using
     .flatMap(_.map(_.edge).distinct)
     .map(e => Graph.edge(e.source, e.target))
     .fold(Graph.empty)(_ + _)
+  given copyOfGTa: Vector[TokenEnum] = gTa
+  dependencyGraphToDot(depGraph, hg)
   depGraph
 
 def hgsToDepGraphs(
@@ -108,7 +109,7 @@ def hgsToDepGraphs(
 )(using gTa: Vector[Token]): Unit =
   given egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
   val result = Vector(hg1, hg2).map(createDependencyGraph)
-  result.foreach(e => println(s"depGraph: $e"))
+  // result.foreach(e => println(s"depGraph: $e"))
 
 @main def runWithSampleData(): Unit =
   val (gTaInput, hg1Input, hg2Input) = returnSampleData()

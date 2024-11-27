@@ -1,0 +1,15 @@
+digraph G {
+	starts -> ends;
+	starts -> 192;
+	192 -> 173;
+	192 -> 254;
+	173 -> 255;
+	254 -> 255;
+	255 -> ends;
+	starts[label=starts];
+	192[label="192: there is not a shadow of evidence in favour of this view : to assert that we could not breed our cart and race - horses , long and short - horned cattle , and poultry of various breeds , and esculent vegetables , for an unlimited number of generations , would be opposed to all experience . character of domestic varieties "];
+	173[label="173: ; "];
+	254[label="254: : "];
+	255[label="255: difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species "];
+	ends[label=ends]
+}
