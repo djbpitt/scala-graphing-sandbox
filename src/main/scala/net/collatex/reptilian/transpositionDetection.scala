@@ -110,7 +110,8 @@ def hgsToDepGraphs(
 )(using gTa: Vector[Token]): Unit =
   given egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
   val result = Vector(hg1, hg2).map(e => createDependencyGraph(e, debug))
-  // result.foreach(e => println(s"depGraph: $e"))
+  result.foreach(e => println(s"depGraph: $e"))
+  
 
 @main def runWithSampleData(): Unit =
   val (gTaInput, hg1, hg2) = returnSampleData()

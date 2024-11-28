@@ -2,7 +2,7 @@ package net.collatex.util
 
 import cats.implicits.catsSyntaxSemigroup
 
-import scala.annotation.targetName
+import scala.annotation.{tailrec, targetName}
 import scala.collection.immutable.Set
 import scala.collection.mutable
 
@@ -11,7 +11,6 @@ import scala.collection.mutable
 // The acyclic nature is not enforced at this time.
 // The implementation is based on adjacency maps.
 // The N generic is the node
-
 
 // Labelled nodes are classes, not case classes
 // so that the label does not determine its identity
@@ -37,38 +36,38 @@ enum Graph[N]:
 
   def node_size: Int =
     this match {
-      case _: EmptyGraph[N] => 0
+      case _: EmptyGraph[N]      => 0
       case _: SingleNodeGraph[N] => 1
-      case g: DirectedGraph[N] => g.adjacencyMap.size
+      case g: DirectedGraph[N]   => g.adjacencyMap.size
     }
 
   // we might want to use a varargs instead
-  def incoming(node: Option[N]=None): Set[N] =
+  def incoming(node: Option[N] = None): Set[N] =
     (this, node) match
-      case (_: EmptyGraph[N], _) => Set.empty
-      case (_: SingleNodeGraph[N], _) => Set.empty
-      case (_: DirectedGraph[N], None) => Set.empty // This is an error situation
+      case (_: EmptyGraph[N], _)          => Set.empty
+      case (_: SingleNodeGraph[N], _)     => Set.empty
+      case (_: DirectedGraph[N], None)    => Set.empty // This is an error situation
       case (g: DirectedGraph[N], Some(n)) => g.adjacencyMap(n)._1
 
   // we might want to use a varargs instead
-  def outgoing(node: Option[N]=None): Set[N] =
+  def outgoing(node: Option[N] = None): Set[N] =
     (this, node) match
-      case (_: EmptyGraph[N], _) => Set.empty
-      case (_: SingleNodeGraph[N], _) => Set.empty
-      case (_: DirectedGraph[N], None) => Set.empty // This is an error situation
+      case (_: EmptyGraph[N], _)          => Set.empty
+      case (_: SingleNodeGraph[N], _)     => Set.empty
+      case (_: DirectedGraph[N], None)    => Set.empty // This is an error situation
       case (g: DirectedGraph[N], Some(n)) => g.adjacencyMap(n)._2
 
   def leafs(): Set[N] =
     this match
-      case _: EmptyGraph[N] => Set.empty
+      case _: EmptyGraph[N]      => Set.empty
       case g: SingleNodeGraph[N] => Set(g.node)
-      case g: DirectedGraph[N] => g.adjacencyMap.filter(t => t._2._2.isEmpty).keySet
+      case g: DirectedGraph[N]   => g.adjacencyMap.filter(t => t._2._2.isEmpty).keySet
 
   def roots(): Set[N] =
     this match
-      case _: EmptyGraph[N] => Set.empty
+      case _: EmptyGraph[N]      => Set.empty
       case g: SingleNodeGraph[N] => Set(g.node)
-      case g: DirectedGraph[N] => g.adjacencyMap.filter(t => t._2._1.isEmpty).keySet
+      case g: DirectedGraph[N]   => g.adjacencyMap.filter(t => t._2._1.isEmpty).keySet
 
   def toMap: Map[N, (Set[N], Set[N])] =
     this match
@@ -81,14 +80,13 @@ enum Graph[N]:
   def +(other: Graph[N]): Graph[N] =
     (this, other) match
       case (_: EmptyGraph[N], other: Graph[N]) => other
-      case (one: Graph[N], _: EmptyGraph[N]) => one
-      case (one: Graph[N], other: Graph[N]) =>
+      case (one: Graph[N], _: EmptyGraph[N])   => one
+      case (one: Graph[N], other: Graph[N])    =>
         // convert graphs into two maps so that we can merge the graphs
         val m1 = one.toMap
         val m2 = other.toMap
         // create a new graph with the entries combined
         DirectedGraph(m1 |+| m2)
-
 
   // Connects two graphs with one or more edges.
   @targetName("connect")
@@ -96,7 +94,7 @@ enum Graph[N]:
     // NOTE: add single node graph, single node graph shortcut
     (this, other) match
       case (_: EmptyGraph[N], other: Graph[N]) => other
-      case (one: Graph[N], _: EmptyGraph[N]) => one
+      case (one: Graph[N], _: EmptyGraph[N])   => one
       case (one: SingleNodeGraph[N], other: SingleNodeGraph[N]) =>
         val t1: (Set[N], Set[N]) = (Set(), Set(other.node))
         val t2: (Set[N], Set[N]) = (Set(one.node), Set())
@@ -118,8 +116,7 @@ enum Graph[N]:
         outgoing(one.node) = other.roots()
         // val result = the combination of outgoing and incoming per node
         val keys = outgoing.keySet union incoming.keySet
-        val pairs = for key <- keys yield
-          key -> (incoming(key), outgoing(key))
+        val pairs = for key <- keys yield key -> (incoming(key), outgoing(key))
         val result = pairs.toMap
 
         DirectedGraph(result)
@@ -133,8 +130,36 @@ enum Graph[N]:
       case (one: DirectedGraph[N], other: DirectedGraph[N]) =>
         throw new RuntimeException("Not implemented yet! Would be one leaves x other roots")
 
-// Topological sort written as Kotlin code
+  def topologicalSort(): Vector[N] =
+    // https://en.wikipedia.org/wiki/Topological_sorting
+    // Kahn's algorithm
+    @tailrec
+    def addToSort(sorted: Vector[N], todo: Set[N], handledEdges: Set[(N, N)]): Vector[N] =
+      if todo.isEmpty then sorted
+      else
+        val current = todo.head
+        val sortedNew = sorted :+ current
+        val outgoingEdgesOfCurrentNode = this
+          .outgoing(Some(current))
+          .map(e => (current, e))
+          .diff(handledEdges) // outgoing edges of current node, unvisited
+        val incomingEdgesOfTargetNodes =
+          outgoingEdgesOfCurrentNode
+            .map((_, target) =>
+              this
+                .incoming(Some(target))
+                .map(e => (e, target)) // incoming edges of target node
+            )
+            .filter(_.subsetOf(handledEdges))
+        val newTodo = incomingEdgesOfTargetNodes.flatMap(_.map(_._2))
+        addToSort(
+          sortedNew,
+          newTodo ++ todo.tail,
+          handledEdges ++ outgoingEdgesOfCurrentNode
+        )
+    addToSort(Vector.empty[N], this.roots(), Set.empty[(N, N)])
 
+// Topological sort written as Kotlin code
 //class VariantGraphTraversal
 //  private constructor(private val graph: VariantGraph, private val witnesses: Set<Witness?>?) : Iterable<VariantGraph.Vertex?> {
 //
