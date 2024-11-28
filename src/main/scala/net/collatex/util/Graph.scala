@@ -143,48 +143,19 @@ enum Graph[N]:
           .outgoing(Some(current))
           .map(e => (current, e))
           .diff(handledEdges) // outgoing edges of current node, unvisited
+        val handledEdgesNew = handledEdges ++ outgoingEdgesOfCurrentNode
         val incomingEdgesOfTargetNodes =
           outgoingEdgesOfCurrentNode
             .map((_, target) =>
               this
                 .incoming(Some(target))
-                .map(e => (e, target)) // incoming edges of target node
+                .map(e => (e, target))
             )
-            .filter(_.subsetOf(handledEdges))
-        val newTodo = incomingEdgesOfTargetNodes.flatMap(_.map(_._2))
+            .filter(_.subsetOf(handledEdgesNew)) // new incoming edges of target node
+        val todoNew = incomingEdgesOfTargetNodes.flatMap(_.map(_._2)) ++ todo.tail
         addToSort(
           sortedNew,
-          newTodo ++ todo.tail,
-          handledEdges ++ outgoingEdgesOfCurrentNode
+          todoNew,
+          handledEdgesNew
         )
     addToSort(Vector.empty[N], this.roots(), Set.empty[(N, N)])
-
-// Topological sort written as Kotlin code
-//class VariantGraphTraversal
-//  private constructor(private val graph: VariantGraph, private val witnesses: Set<Witness?>?) : Iterable<VariantGraph.Vertex?> {
-//
-//  fun topologicallySortedTextNodes(graph: VariantGraph): List<VariantGraph.Vertex> {
-//    // https://en.wikipedia.org/wiki/Topological_sorting
-//    // Kahn's algorithm
-//    val sorted: MutableList<VariantGraph.Vertex> = mutableListOf()
-//    val todo: MutableSet<VariantGraph.Vertex> = mutableSetOf(graph.start)
-//    val handledEdges: MutableSet<VariantGraph.Edge> = mutableSetOf()
-//    while (todo.isNotEmpty()) {
-//      val node = todo.iterator().next()
-//      todo.remove(node)
-//      sorted += node
-//      for ((targetNode, e) in node.outgoingEdges()) {
-//        if (e !in handledEdges) {
-//          handledEdges += e
-//          if (handledEdges.containsAll(targetNode.incomingEdges().values)) {
-//            todo += targetNode
-//          }
-//        }
-//      }
-//    }
-//  return if (witnesses==null) {
-//    sorted
-//  } else {
-//    sorted.filter { vertex -> vertex === graph.start || vertex.witnesses().containsAll(witnesses) }
-//  }
-//}
