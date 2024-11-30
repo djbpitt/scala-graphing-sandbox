@@ -128,7 +128,7 @@ enum Graph[N]:
       case (one: DirectedGraph[N], other: DirectedGraph[N]) =>
         throw new RuntimeException("Not implemented yet! Would be one leaves x other roots")
 
-  def topologicalSort(): Vector[N] =
+  def topologicalSort: Vector[N] =
     // https://en.wikipedia.org/wiki/Topological_sorting
     // Kahn’s algorithm
     @tailrec

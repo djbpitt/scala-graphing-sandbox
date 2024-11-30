@@ -111,8 +111,16 @@ def hgsToDepGraphs(
     debug: Boolean = false
 )(using gTa: Vector[Token]): Unit =
   given egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
-  val result = Vector(hg1, hg2).map(e => createDependencyGraph(e, debug))
-  result.foreach(e => println(s"depGraph: $e"))
+  val depGraphs = Vector(hg1, hg2).map(e => createDependencyGraph(e, debug))
+  val topSorts = depGraphs.map(_.topologicalSort)
+  val result = depGraphs.zip(topSorts).map((depGr, topSort) =>
+    topSort.foldLeft(Map.empty[NodeType, Int])((acc, e) =>
+      val parents = depGr.incomingEdges(e).map(_._1)
+      val parentRanks = parents.map(f => acc(f))
+      val highestParentRank = (parentRanks + 0).max
+      acc + (e -> (highestParentRank + 1))
+  ))
+  result.foreach(println)
   
 
 @main def runWithSampleData(): Unit =
