@@ -130,7 +130,7 @@ enum Graph[N]:
 
   def topologicalSort(): Vector[N] =
     // https://en.wikipedia.org/wiki/Topological_sorting
-    // Kahn's algorithm
+    // Kahn’s algorithm
     @tailrec
     def addToSort(sorted: Vector[N], todo: Set[N], handledEdges: Set[(N, N)]): Vector[N] =
       if todo.isEmpty then sorted
