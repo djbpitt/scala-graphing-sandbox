@@ -43,17 +43,21 @@ enum Graph[N]:
 
   def incomingEdges(node: N): Set[(N, N)] =
     (this, node) match
-      case (_: EmptyGraph[N], _)          => Set.empty
-      case (_: SingleNodeGraph[N], _)     => Set.empty
-      case (g: DirectedGraph[N], n) => g.adjacencyMap(n)._1
-        .map(e => (e, node))
+      case (_: EmptyGraph[N], _)      => Set.empty
+      case (_: SingleNodeGraph[N], _) => Set.empty
+      case (g: DirectedGraph[N], n) =>
+        g.adjacencyMap(n)
+          ._1
+          .map(e => (e, node))
 
   def outgoingEdges(node: N): Set[(N, N)] =
     (this, node) match
-      case (_: EmptyGraph[N], _)          => Set.empty
-      case (_: SingleNodeGraph[N], _)     => Set.empty
-      case (g: DirectedGraph[N], n) => g.adjacencyMap(n)._2
-        .map(e => (node, e))
+      case (_: EmptyGraph[N], _)      => Set.empty
+      case (_: SingleNodeGraph[N], _) => Set.empty
+      case (g: DirectedGraph[N], n) =>
+        g.adjacencyMap(n)
+          ._2
+          .map(e => (node, e))
 
   def leafs(): Set[N] =
     this match
@@ -155,3 +159,19 @@ enum Graph[N]:
           handledEdgesNew
         )
     addToSort(Vector.empty[N], this.roots(), Set.empty[(N, N)])
+
+  /* Compute length of longest path from root to each node
+   * Assumes single root
+   * */
+  def longestPath: Map[N, Int] =
+    val topSort = this.topologicalSort
+    topSort.tail // handle root separately
+      .foldLeft(Map[N, Int](topSort.head -> 0))((acc, e) => // initialize root as 0
+        val highestParentRank =
+          this
+            .incomingEdges(e) // all incoming paths
+            .map(_._1) // source nodes for incoming paths
+            .map(acc(_)) // rank of those source nodes
+            .max // only the largest
+        acc + (e -> (highestParentRank + 1)) // new node is one greater than its source
+      )
