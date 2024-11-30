@@ -75,6 +75,22 @@ enum EdgeLabelledDirectedGraph[N, E]:
         // create a new graph with the entries combined
         DirectedGraph(m1 |+| m2)
 
+  def incomingEdges(node: N): Set[(N, E, N)] =
+    (this, node) match
+      case (_: EmptyGraph[N, E], _) => Set.empty
+      case (_: SingleNodeGraph[N, E], _) => Set.empty
+      case (g: DirectedGraph[N, E], target) => 
+        g.adjacencyMap(target)._1
+          .map((source, edge) => (source, edge, target))
+
+  def outgoingEdges(node: N): Set[(N, E, N)] =
+    (this, node) match
+      case (_: EmptyGraph[N, E], _) => Set.empty
+      case (_: SingleNodeGraph[N, E], _) => Set.empty
+      case (g: DirectedGraph[N, E], source) => 
+        g.adjacencyMap(source)._2
+          .map((target, edge) => (source, edge, target))
+
 
 //  def node_size: Int =
 //    this match {
@@ -83,21 +99,6 @@ enum EdgeLabelledDirectedGraph[N, E]:
 //      case g: DirectedGraph[N, E] => g.adjacencyMap.size
 //    }
 //
-//  // we might want to use a varargs instead
-//  def incoming(node: Option[N]=None): Set[N] =
-//    (this, node) match
-//      case (_: EmptyGraph[N, E], _) => Set.empty
-//      case (_: SingleNodeGraph[N, E], _) => Set.empty
-//      case (_: DirectedGraph[N, E], None) => Set.empty // This is an error situation
-//      case (g: DirectedGraph[N, E], Some(n)) => g.adjacencyMap(n)._1.keySet
-//
-//  // we might want to use a varargs instead
-//  def outgoing(node: Option[N]=None): Set[N] =
-//    (this, node) match
-//      case (_: EmptyGraph[N, E], _) => Set.empty
-//      case (_: SingleNodeGraph[N, E], _) => Set.empty
-//      case (_: DirectedGraph[N, E], None) => Set.empty // This is an error situation
-//      case (g: DirectedGraph[N, E], Some(n)) => g.adjacencyMap(n)._2.keySet
 //
 //  def leafs(): Set[N] =
 //    this match
