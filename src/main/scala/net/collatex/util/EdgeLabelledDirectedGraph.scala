@@ -54,7 +54,7 @@ enum EdgeLabelledDirectedGraph[N, E]:
 
   
   @targetName("end arrow operator")
-  def -->:(weight: E): (EdgeLabelledDirectedGraph[N, E], E) =  (this, weight)
+  def -->:(label: E): (EdgeLabelledDirectedGraph[N, E], E) =  (this, label)
 
   def toMap: Map[N, (Set[(N, E)], Set[(N, E)])] =
     this match
