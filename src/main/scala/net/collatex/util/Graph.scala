@@ -34,28 +34,24 @@ enum Graph[N]:
   case SingleNodeGraph(node: N)
   case DirectedGraph(adjacencyMap: Map[N, (Set[N], Set[N])])
 
-  def node_size: Int =
+  def nodeSize: Int =
     this match {
       case _: EmptyGraph[N]      => 0
       case _: SingleNodeGraph[N] => 1
       case g: DirectedGraph[N]   => g.adjacencyMap.size
     }
 
-  // we might want to use a varargs instead
-  def incoming(node: Option[N] = None): Set[N] =
+  def incomingEdges(node: N): Set[N] =
     (this, node) match
       case (_: EmptyGraph[N], _)          => Set.empty
       case (_: SingleNodeGraph[N], _)     => Set.empty
-      case (_: DirectedGraph[N], None)    => Set.empty // This is an error situation
-      case (g: DirectedGraph[N], Some(n)) => g.adjacencyMap(n)._1
+      case (g: DirectedGraph[N], n) => g.adjacencyMap(n)._1
 
-  // we might want to use a varargs instead
-  def outgoing(node: Option[N] = None): Set[N] =
+  def outgoingEdges(node: N): Set[N] =
     (this, node) match
       case (_: EmptyGraph[N], _)          => Set.empty
       case (_: SingleNodeGraph[N], _)     => Set.empty
-      case (_: DirectedGraph[N], None)    => Set.empty // This is an error situation
-      case (g: DirectedGraph[N], Some(n)) => g.adjacencyMap(n)._2
+      case (g: DirectedGraph[N], n) => g.adjacencyMap(n)._2
 
   def leafs(): Set[N] =
     this match
@@ -140,7 +136,7 @@ enum Graph[N]:
         val current = todo.head
         val sortedNew = sorted :+ current
         val outgoingEdgesOfCurrentNode = this
-          .outgoing(Some(current))
+          .outgoingEdges(current)
           .map(e => (current, e))
           .diff(handledEdges) // outgoing edges of current node, unvisited
         val handledEdgesNew = handledEdges ++ outgoingEdgesOfCurrentNode
@@ -148,7 +144,7 @@ enum Graph[N]:
           outgoingEdgesOfCurrentNode
             .map((_, target) =>
               this
-                .incoming(Some(target))
+                .incomingEdges(target)
                 .map(e => (e, target))
             )
             .filter(_.subsetOf(handledEdgesNew)) // new incoming edges of target node
