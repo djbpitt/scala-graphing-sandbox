@@ -41,17 +41,19 @@ enum Graph[N]:
       case g: DirectedGraph[N]   => g.adjacencyMap.size
     }
 
-  def incomingEdges(node: N): Set[N] =
+  def incomingEdges(node: N): Set[(N, N)] =
     (this, node) match
       case (_: EmptyGraph[N], _)          => Set.empty
       case (_: SingleNodeGraph[N], _)     => Set.empty
       case (g: DirectedGraph[N], n) => g.adjacencyMap(n)._1
+        .map(e => (e, node))
 
-  def outgoingEdges(node: N): Set[N] =
+  def outgoingEdges(node: N): Set[(N, N)] =
     (this, node) match
       case (_: EmptyGraph[N], _)          => Set.empty
       case (_: SingleNodeGraph[N], _)     => Set.empty
       case (g: DirectedGraph[N], n) => g.adjacencyMap(n)._2
+        .map(e => (node, e))
 
   def leafs(): Set[N] =
     this match
@@ -137,7 +139,6 @@ enum Graph[N]:
         val sortedNew = sorted :+ current
         val outgoingEdgesOfCurrentNode = this
           .outgoingEdges(current)
-          .map(e => (current, e))
           .diff(handledEdges) // outgoing edges of current node, unvisited
         val handledEdgesNew = handledEdges ++ outgoingEdgesOfCurrentNode
         val incomingEdgesOfTargetNodes =
@@ -145,7 +146,6 @@ enum Graph[N]:
             .map((_, target) =>
               this
                 .incomingEdges(target)
-                .map(e => (e, target))
             )
             .filter(_.subsetOf(handledEdgesNew)) // new incoming edges of target node
         val todoNew = incomingEdgesOfTargetNodes.flatMap(_.map(_._2)) ++ todo.tail
