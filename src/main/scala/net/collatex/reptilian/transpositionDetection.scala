@@ -48,9 +48,11 @@ import scala.math.Ordering
  *       (next step).
  *    e. Combine edges into dependency graph using fold. Visualize for sanity checking.
  * 2. Topological sort the dependency graph
- * 3. Rank the hyperedges
- * 4. Create a traversal/decision graph for the traversal of the two sorted and ranked hyperedges
- * 5. Beam search the traversal graph to create the alignment (resolving transpositions)
+ * 3. Rank the nodes in the two dependency graphs
+ * 4. Calculate the matches between the two hypergraphs or get them as input into this transposition detection function
+ * 5. Sort the matches first in the order of the first dependency graph, then sort the matches in the order in the second dependency graph
+ * 6. Create a traversal/decision graph for the traversal of the two sorted lists of matches
+ * 7. Beam search or a-star search the traversal graph to create the alignment (resolving transpositions)
  *
  * Later optimization: We can determine the relative order of two blocks for a hyperedge that
  * appears in both blocks.
