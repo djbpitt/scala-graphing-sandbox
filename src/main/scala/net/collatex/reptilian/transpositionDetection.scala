@@ -60,7 +60,7 @@ import scala.math.Ordering
 
 // Take in hypergraph with fake starts plus tree map and return dependency graph
 // For each key in hg 1) find all target TokenRange starts, 2) look up start value
-//   in hgsToDepGraphs keys, and 3) retrieve next hgsToDepGraphs key sequentially, and return value associated
+//   in rankHg keys, and 3) retrieve next rankHg key sequentially, and return value associated
 //   with that next key. E.g., with hyperedge
 //   255 -> Set(TokenRange(255,272), TokenRange(174, 191)) locate keys 255 and
 //   174 in treemap, find next key sequentially, and return associated value.
@@ -105,26 +105,25 @@ def createDependencyGraph(
     dependencyGraphToDot(depGraph, hg) // unit; writes Graphviz dot to disk
   depGraph
 
-def hgsToDepGraphs(
-    hg1: Hypergraph[EdgeLabel, TokenRange],
-    hg2: Hypergraph[EdgeLabel, TokenRange],
+def rankHg(
+    hg: Hypergraph[EdgeLabel, TokenRange],
     debug: Boolean = false
-)(using gTa: Vector[Token]): Unit =
+)(using gTa: Vector[Token]): Map[NodeType, Int] =
   given egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
-  val ranks = Vector(hg1, hg2)
-    .map(e => createDependencyGraph(e, debug))
-    .map(_.longestPath)
-  ranks.foreach(println)
+  val ranks = createDependencyGraph(hg, debug).longestPath
+  ranks
 
 @main def runWithSampleData(): Unit =
   val (gTaInput, hg1, hg2) = returnSampleData()
   given gTa: Vector[Token] = gTaInput
-  hgsToDepGraphs(hg1, hg2)
+  val rankings = Vector(hg1, hg2).map(rankHg(_))
+  rankings.foreach(println)
 
 @main def runWithSampleDataDebug(): Unit =
   val (gTaInput, hg1, hg2) = returnSampleData()
   given gTa: Vector[Token] = gTaInput
-  hgsToDepGraphs(hg1, hg2, true)
+  val rankings = Vector(hg1, hg2).map(e => rankHg(e, true))
+  rankings.foreach(println)
 
 case class EdgeData(
     he: EdgeLabel,
