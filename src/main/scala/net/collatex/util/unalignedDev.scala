@@ -476,8 +476,8 @@
 //
 //          // in FullDepthBlock((x, y), z) x is start, y is exclusive until, z is length; exclusive until includes separator
 //          val (_, _, fdb) =
-//            createAlignedBlocks(stTokenArray, -1, false) // tuple of (all blocks, suffix array, full-depth blocks)
-//            // witnessCount (second argument) is fake because we don't use it
+//            createAlignedBlocks(, -1, false) // tuple of (all blocks, suffix array, full-depth blocks)
+//            // witnessCount (second argumstTokenArrayent) is fake because we don't use it
 //          // match blocks with correct alignment-tree nodes and build new alignment nodes that incorporate singleton
 //          // tree tokens already have global offsets; need to add global offsets for singleton when creating new node
 //          // FIXME: We fake, for now, the situation with a single full-depth block

@@ -113,17 +113,19 @@ def rankHg(
   val ranks = createDependencyGraph(hg, debug).longestPath
   ranks
 
-@main def runWithSampleData(): Unit =
+def realMainFunction(debug: Boolean): Unit =
   val (gTaInput, hg1, hg2) = returnSampleData()
   given gTa: Vector[Token] = gTaInput
-  val rankings = Vector(hg1, hg2).map(rankHg(_))
+  val rankings = Vector(hg1, hg2).map(rankHg(_, debug))
   rankings.foreach(println)
+  val (_, _, blocks) = createAlignedBlocks(gTa, -1, false)
+  println(blocks)
 
-@main def runWithSampleDataDebug(): Unit =
-  val (gTaInput, hg1, hg2) = returnSampleData()
-  given gTa: Vector[Token] = gTaInput
-  val rankings = Vector(hg1, hg2).map(e => rankHg(e, true))
-  rankings.foreach(println)
+@main def runWithSampleData(): Unit = // no files saved to disk
+  realMainFunction(false)
+
+@main def runWithSampleDataDebug(): Unit = // dot and html saved to disk
+  realMainFunction(true)
 
 case class EdgeData(
     he: EdgeLabel,
