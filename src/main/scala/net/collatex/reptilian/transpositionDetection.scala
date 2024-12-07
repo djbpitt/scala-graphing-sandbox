@@ -1,7 +1,7 @@
 package net.collatex.reptilian
 import net.collatex.reptilian.NodeType.Internal
 import net.collatex.reptilian.TokenEnum.Token
-import net.collatex.util.{Graph, Hypergraph}
+import net.collatex.util.{Graph, Hypergraph, createHgTa}
 
 import scala.collection.immutable.TreeMap
 import net.collatex.reptilian.returnSampleData
@@ -118,6 +118,7 @@ def realMainFunction(debug: Boolean): Unit =
   given gTa: Vector[Token] = gTaInput
   val rankings = Vector(hg1, hg2).map(rankHg(_, debug))
   rankings.foreach(println)
+  val lTa = createHgTa(hg1 + hg2)
   val (_, _, blocks) = createAlignedBlocks(gTa, -1, false)
   println(blocks)
 

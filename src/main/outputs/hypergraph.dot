@@ -1,8 +1,8 @@
 graph MyGraph {
 rankdir = LR
-"Cluster_8_255_reading" [shape=box label="difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species "]
-"Cluster_8_254_reading" [shape=box label=": "]
-"Cluster_8_192_reading" [shape=box label="there is not a shadow of evidence in favour of this view : to assert that we could not breed our cart and race - horses , long and short - horned cattle , and poultry of various breeds , and esculent vegetables , for an unlimited number of generations , would be opposed to all experience . character of domestic varieties "]
+"Cluster_8_255_reading" [shape=box label="there is not a shadow of evidence in favour of this view : to assert that we could not breed our cart and race - horses , long and short - horned cattle , and poultry of various breeds , and esculent vegetables , for an unlimited number of generations , would be opposed to all experience . character of domestic varieties "]
+"Cluster_8_254_reading" [shape=box label="difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species "]
+"Cluster_8_192_reading" [shape=box label=": "]
 "Cluster_8_173_reading" [shape=box label="; "]
 "Cluster_8_173" [label="Group 173"]
 "Cluster_8_192" [label="Group 192"]

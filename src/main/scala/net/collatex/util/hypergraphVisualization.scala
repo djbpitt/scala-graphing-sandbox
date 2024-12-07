@@ -1,6 +1,6 @@
 package net.collatex.util
 
-import net.collatex.reptilian.{TokenEnum, TokenRange}
+import net.collatex.reptilian.{EdgeLabel, TokenEnum, TokenRange}
 import net.collatex.reptilian.TokenEnum.*
 
 /** Print sorted list of hyperedges
@@ -22,10 +22,10 @@ def hypergraphToText(h: Map[Int, Hypergraph[String, TokenRange]]): Unit =
   * @param h:
   *   Hypergraph
   */
-def hypergraphToDot(h: Map[Int, Hypergraph[String, TokenRange]])(using tokenArray: Vector[TokenEnum]): String =
+def hypergraphToDot(h: Map[Int, Hypergraph[EdgeLabel, TokenRange]])(using tokenArray: Vector[TokenEnum]): String =
   val first = "graph MyGraph {\nrankdir = LR"
   val last = "}"
-  val middle = (h flatMap ((i: Int, x: Hypergraph[String, TokenRange]) =>
+  val middle = (h flatMap ((i: Int, x: Hypergraph[EdgeLabel, TokenRange]) =>
     val ap_id = s"Cluster_$i" // Cluster_8
     val group_ids = x.hyperedges
       .map(e => s"${ap_id}_$e")

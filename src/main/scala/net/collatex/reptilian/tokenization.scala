@@ -25,7 +25,7 @@ enum TokenEnum:
   case Token(t: String, n: String, w: Int, g: Int) extends TokenEnum
   case TokenSep(t: String, n: String, w: Int, g: Int) extends TokenEnum
   case TokenSg(t: String, n: String, w: Int, g: Int) extends TokenEnum
-  case TokenHG(t: String, n: String, w: Int, g: Int, he: String) extends TokenEnum
+  case TokenHG(t: String, n: String, w: Int, g: Int, he: EdgeLabel) extends TokenEnum
   def t: String
   def n: String
   def w: Int
