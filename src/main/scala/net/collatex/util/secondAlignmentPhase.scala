@@ -239,14 +239,14 @@ def createLocalTA(singletonTokens: Vector[TokenEnum], hg: Hypergraph[EdgeLabel, 
   result.flatten
 }
 
-def splitSingleton(singletonTokenRange: TokenRange, blockTokenRange: TokenRange) =
-  // Split singleton into preblock, block, postblock; ignore block because we already know it
+def splitTokenRange(rangeToSplit: TokenRange, rangeToSplitAround: TokenRange) =
+  // Split token range into preblock, block, postblock; ignore block because we already know it
   // Assume resulting ranges are legal or empty; if illegal, the issue is in our block identification
   // TODO: Return Either and let caller manage exceptions
-  if blockTokenRange.getClass.getSimpleName == "EmptyTokenRange" then
-    throw RuntimeException(s"cannot split on empty block range: $blockTokenRange")
-  val pre = TokenRange(singletonTokenRange.start, blockTokenRange.start)
-  val post = TokenRange(blockTokenRange.until, singletonTokenRange.until)
+  if rangeToSplitAround.getClass.getSimpleName == "EmptyTokenRange" then
+    throw RuntimeException(s"cannot split on empty block range: $rangeToSplitAround")
+  val pre = TokenRange(rangeToSplit.start, rangeToSplitAround.start)
+  val post = TokenRange(rangeToSplitAround.until, rangeToSplit.until)
   if pre.getClass.getSimpleName == "IllegalTokenRange" && post.getClass.getSimpleName == "IllegalTokenRange" then
     throw RuntimeException(s"both pre ($pre) and post($post) are illegal")
   if pre.getClass.getSimpleName == "IllegalTokenRange" then throw RuntimeException(s"pre value $pre is illegal")
@@ -260,7 +260,7 @@ def splitHyperedge(he: Set[TokenRange], block: FullDepthBlock) =
   // TODO: For now we do it in the caller
   val blockRanges = block.instances.sorted.map(e => TokenRange(e, e + block.length))
   val splitCandidates = he.toSeq.sortBy(_.start).zip(blockRanges)
-  val result: Set[TokenRange] = splitCandidates.map((e, f) => splitSingleton(e, f).toList).flatten.toSet
+  val result: Set[TokenRange] = splitCandidates.map((e, f) => splitTokenRange(e, f).toList).flatten.toSet
   result // set of all pre and post token ranges for hyperedge
 
 def computePreOrPostLength(toSplit: TokenRange): Int =
@@ -305,7 +305,7 @@ def mergeSingletonHG(
         heForBlock.filter(e => gTA(e.start).w == lTA(blockStartInHe).w).head
       val heBlockRange: TokenRange = // TokenRange of block (used to split heTrInBlock)
         TokenRange(lTA(firstBlock.instances.last).g, lTA(firstBlock.instances.last + firstBlock.length - 1).g + 1)
-      val (hePre: TokenRange, hePost: TokenRange) = splitSingleton(heTrInBlock, heBlockRange)
+      val (hePre: TokenRange, hePost: TokenRange) = splitTokenRange(heTrInBlock, heBlockRange)
       val hePreLength = computePreOrPostLength(hePre)
       val hePostLength = computePreOrPostLength(hePost)
       val preTokenRanges: Seq[TokenRange] = computePreTokenRanges(heForBlock, hePreLength)
@@ -322,7 +322,7 @@ def mergeSingletonHG(
         TokenRange(lTA(firstBlock.instances.head).g, lTA(firstBlock.instances.head + firstBlock.length - 1).g + 1)
       val blockHyperedge = Hypergraph.vertices(blockSingletonTokenRange) * allHgBlockHe
       val (sgPre: TokenRange, sgPost: TokenRange) =
-        splitSingleton(singletonTokenRange, blockSingletonTokenRange)
+        splitTokenRange(singletonTokenRange, blockSingletonTokenRange)
       val singletonPreHyperedge = sgPre match
         case _: EmptyTokenRange => Hypergraph.empty[EdgeLabel, TokenRange]()
         case _ =>
@@ -382,7 +382,7 @@ def mergeHgHg(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeLabel,
   val stuff = firstBlockInstances.map(e =>
     val blockRange = TokenRange(lTa(e).g, lTa(e).g + firstBlock.length)
     val blockHyperedge = lTa(e).asInstanceOf[TokenHG].he
-    val (hePre: TokenRange, hePost: TokenRange) = splitSingleton(
+    val (hePre: TokenRange, hePost: TokenRange) = splitTokenRange(
       both.members(blockHyperedge).filter(e => gTa(e.start).w == gTa(blockRange.start).w).head,
       blockRange
     )

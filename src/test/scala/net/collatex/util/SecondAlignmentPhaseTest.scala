@@ -158,33 +158,33 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     )
     val result = createLocalTA(singletonTokens, hg)(using gTA: Vector[Token])
     assert(result == expected)
-  test("test splitSingleton() with pre and post"):
+  test("test splitTokenRange() with pre and post"):
     val expected = (TokenRange(0, 2), TokenRange(4, 5))
-    val result = splitSingleton(TokenRange(0, 5), TokenRange(2, 4))
+    val result = splitTokenRange(TokenRange(0, 5), TokenRange(2, 4))
     assert(result == expected)
-  test("test splitSingleton() with pre only"):
+  test("test splitTokenRange() with pre only"):
     val expected = (TokenRange(0, 2), TokenRange(4, 5))
-    val result = splitSingleton(TokenRange(0, 5), TokenRange(2, 4))
+    val result = splitTokenRange(TokenRange(0, 5), TokenRange(2, 4))
     assert(result == expected)
-  test("test splitSingleton() with post only"):
+  test("test splitTokenRange() with post only"):
     val expected = (TokenRange(0, 0), TokenRange(3, 5))
-    val result = splitSingleton(TokenRange(0, 5), TokenRange(0, 3))
+    val result = splitTokenRange(TokenRange(0, 5), TokenRange(0, 3))
     assert(result == expected)
-  test("test splitSingleton() without pre or post"):
+  test("test splitTokenRange() without pre or post"):
     val expected = (TokenRange(0, 0), TokenRange(5, 5))
-    val result = splitSingleton(TokenRange(0, 5), TokenRange(0, 5))
+    val result = splitTokenRange(TokenRange(0, 5), TokenRange(0, 5))
     assert(result == expected)
-  test("test splitSingleton() with illegal start"):
-    val caught = intercept[RuntimeException](splitSingleton(TokenRange(2, 5), TokenRange(0, 5)))
+  test("test splitTokenRange() with illegal start"):
+    val caught = intercept[RuntimeException](splitTokenRange(TokenRange(2, 5), TokenRange(0, 5)))
     assert(caught.getMessage == "pre value IllegalTokenRange(2,0) is illegal")
-  test("test splitSingleton() with illegal end"):
-    val caught = intercept[RuntimeException](splitSingleton(TokenRange(0, 4), TokenRange(3, 5)))
+  test("test splitTokenRange() with illegal end"):
+    val caught = intercept[RuntimeException](splitTokenRange(TokenRange(0, 4), TokenRange(3, 5)))
     assert(caught.getMessage == "post value IllegalTokenRange(5,4) is illegal")
-  test("test splitSingleton() with illegal singleton token range"):
-    val caught = intercept[RuntimeException](splitSingleton(TokenRange(5, 1), TokenRange(2, 3)))
+  test("test splitTokenRange() with illegal singleton token range"):
+    val caught = intercept[RuntimeException](splitTokenRange(TokenRange(5, 1), TokenRange(2, 3)))
     assert(caught.getMessage == "both pre (IllegalTokenRange(5,2)) and post(IllegalTokenRange(3,1)) are illegal")
-  test("test splitSingleton() with empty singleton token range"):
-    val caught = intercept[RuntimeException](splitSingleton(TokenRange(2, 4), TokenRange(3, 3)))
+  test("test splitTokenRange() with empty singleton token range"):
+    val caught = intercept[RuntimeException](splitTokenRange(TokenRange(2, 4), TokenRange(3, 3)))
     assert(caught.getMessage == "cannot split on empty block range: EmptyTokenRange(3,3)")
   test("test mergeSingletonHG() with zero blocks"):
     val expected = Hypergraph[EdgeLabel, TokenRange](

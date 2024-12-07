@@ -116,11 +116,19 @@ def rankHg(
 def realMainFunction(debug: Boolean): Unit =
   val (gTaInput, hg1, hg2) = returnSampleData()
   given gTa: Vector[Token] = gTaInput
-  val lTa: Vector[TokenEnum] = createHgTa(hg1 + hg2)
-  val (_, _, blocks) = createAlignedBlocks(lTa, -1, false)
+  val lTa: Vector[TokenEnum] = createHgTa(hg1 + hg2) // create local token array
+  val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
   println(s"blocks: $blocks")
-  blocks.map(_.instances).map(_.map(e => lTa(e))).foreach(f => println(s"local token: $f"))
-  val rankings = Vector(hg1, hg2).map(rankHg(_, debug))
+  // split hyperedges where needed before ordering and ranking
+  // 2024-12-07 Resume here
+  //   Block contains info about one witness from each hyperedge
+  //   Compute block hyperedge by projecting from block information onto hyperedges
+  //   Compute to-be-processed (= pre and post, but not distinguished) information
+  //     from combination of block and hyperedge information
+  //   Retire block (no further processing needed), cycle to-be-processed into
+  //     inventory of hyperedges to be checked for blocks / splitting
+
+  val rankings = Vector(hg1, hg2).map(rankHg(_, debug)) // perform topological sort and rank
   rankings.foreach(e => println(s"rankings: $e"))
 
 @main def runWithSampleData(): Unit = // no files saved to disk
