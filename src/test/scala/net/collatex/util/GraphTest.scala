@@ -19,7 +19,7 @@ class GraphTest extends AnyFunSuite:
         NodeType(87) -> (Set(NodeType(22)), Set(NodeType("ends")))
       )
     )
-    val result1 = g.topologicalSort()
+    val result1 = g.topologicalSort
     val expected1 = Vector(NodeType("starts"), NodeType(22), NodeType(87), NodeType("ends"))
     assert(result1 == expected1)
 
@@ -34,7 +34,7 @@ class GraphTest extends AnyFunSuite:
         NodeType("ends") -> (Set(NodeType("starts"), NodeType(255)), Set())
       )
     )
-    val result = g.topologicalSort()
+    val result = g.topologicalSort
     val expected =
       Vector(NodeType("starts"), NodeType(192), NodeType(173), NodeType(254), NodeType(255), NodeType("ends"))
     assert( // partially ordered

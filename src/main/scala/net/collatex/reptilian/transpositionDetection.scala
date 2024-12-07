@@ -116,11 +116,12 @@ def rankHg(
 def realMainFunction(debug: Boolean): Unit =
   val (gTaInput, hg1, hg2) = returnSampleData()
   given gTa: Vector[Token] = gTaInput
+  val lTa: Vector[TokenEnum] = createHgTa(hg1 + hg2)
+  val (_, _, blocks) = createAlignedBlocks(lTa, -1, false)
+  println(s"blocks: $blocks")
+  blocks.map(_.instances).map(_.map(e => lTa(e))).foreach(f => println(s"local token: $f"))
   val rankings = Vector(hg1, hg2).map(rankHg(_, debug))
-  rankings.foreach(println)
-  val lTa = createHgTa(hg1 + hg2)
-  val (_, _, blocks) = createAlignedBlocks(gTa, -1, false)
-  println(blocks)
+  rankings.foreach(e => println(s"rankings: $e"))
 
 @main def runWithSampleData(): Unit = // no files saved to disk
   realMainFunction(false)
