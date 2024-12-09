@@ -41,7 +41,7 @@ class AlignmentTreeTest extends AnyFunSuite:
     val result = splitTokenRange(TokenRange(1, 4), 4)
     assert(result == expected)
   test("Split token range with illegal split value"):
-    val expected = Left(IllegalSplitValueError)
+    val expected = Left(IllegalSplitValueError(1, 4, 5))
     val result = splitTokenRange(TokenRange(1, 4), 5)
     assert(result == expected)
   test("Split empty token range (should fail)"):
