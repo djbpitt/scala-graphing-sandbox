@@ -60,7 +60,7 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
         TokenRange(0, 2) -> Set(EdgeLabel("5"))
       )
     )
-    assert(result.hyperedges.map(e => result.members(e)) == expected.hyperedges.map(e => expected.members(e)))
+    assert(result.hyperedgeLabels.map(e => result.members(e)) == expected.hyperedgeLabels.map(e => expected.members(e)))
   test("test identifyHGTokenRanges()"):
     given gTA: Vector[Token] = Vector(
       Token("Hi", "Hi", 0, 0),
@@ -354,9 +354,9 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     )
     val resultRanges =
       val mergeResult = mergeSingletonHG(singletonTokens, hg)
-      mergeResult.hyperedges.map(e => mergeResult.members(e))
+      mergeResult.hyperedgeLabels.map(e => mergeResult.members(e))
     val expectedRanges =
-      expected.hyperedges.map(e => expected.members(e))
+      expected.hyperedgeLabels.map(e => expected.members(e))
     assert(resultRanges == expectedRanges)
   test("test mergeSingletonHG() that requires splitting both singleton and hypergraph with pre and post for both"):
     given gTA: Vector[Token] = Vector[Token](
@@ -408,9 +408,9 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     )
     val resultRanges =
       val mergeResult = mergeSingletonHG(singletonTokens, hg)
-      mergeResult.hyperedges.map(e => mergeResult.members(e))
+      mergeResult.hyperedgeLabels.map(e => mergeResult.members(e))
     val expectedRanges =
-      expected.hyperedges.map(e => expected.members(e))
+      expected.hyperedgeLabels.map(e => expected.members(e))
     assert(resultRanges == expectedRanges)
   test("create local token array for HGHG merge"):
     // FIXME: mergeHgHg temporarily only creates token array; change test when this distribution of responsibilities changes

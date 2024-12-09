@@ -145,7 +145,7 @@ def dependencyGraphToDot(
     depGraph: Graph[NodeType],
     hg: Hypergraph[EdgeLabel, TokenRange]
 )(using copyOfGTa: Vector[TokenEnum]): Unit =
-  val hgId = hg.hyperedges.map(_.toString).toSeq.sorted.mkString("-")
+  val hgId = hg.hyperedgeLabels.map(_.toString).toSeq.sorted.mkString("-")
   val prologue = "digraph G {\n\t"
   val epilogue = "\n}"
   val edges = depGraph.toMap

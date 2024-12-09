@@ -223,7 +223,7 @@ def mergeSingletonSingleton(compactedEditSteps: Vector[CompoundEditStep]) = {
     case x: CompoundEditStep.CompoundStepDelete =>
       Hypergraph.hyperedge(EdgeLabel(x.tr.toString), x.tr)
   }
-  val hypergraph = hyperedges.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange]())((x, y) => y + x)
+  val hypergraph = hyperedges.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((x, y) => y + x)
   hypergraph
 }
 
@@ -278,7 +278,7 @@ def computePostTokenRanges(heForBlock: Set[TokenRange], hePostLength: Int) = {
 
 def computesPresOrPosts(preTokenRanges: Seq[TokenRange]): Hypergraph[EdgeLabel, TokenRange] = {
   preTokenRanges.head match
-    case _: EmptyTokenRange => Hypergraph.empty[EdgeLabel, TokenRange]()
+    case _: EmptyTokenRange => Hypergraph.empty[EdgeLabel, TokenRange]
     case _: TokenRange      => Hypergraph.hyperedge(EdgeLabel(preTokenRanges.head.start.toString), preTokenRanges: _*)
 }
 
@@ -324,12 +324,12 @@ def mergeSingletonHG(
       val (sgPre: TokenRange, sgPost: TokenRange) =
         splitTokenRange(singletonTokenRange, blockSingletonTokenRange)
       val singletonPreHyperedge = sgPre match
-        case _: EmptyTokenRange => Hypergraph.empty[EdgeLabel, TokenRange]()
+        case _: EmptyTokenRange => Hypergraph.empty[EdgeLabel, TokenRange]
         case _ =>
           val hyperedgeId = EdgeLabel(sgPre.start.toString)
           Hypergraph.hyperedge(hyperedgeId, sgPre)
       val singletonPostHyperedge = sgPost match
-        case _: EmptyTokenRange => Hypergraph.empty[EdgeLabel, TokenRange]()
+        case _: EmptyTokenRange => Hypergraph.empty[EdgeLabel, TokenRange]
         case _ =>
           val hyperedgeId = EdgeLabel(sgPost.start.toString)
           Hypergraph.hyperedge(hyperedgeId, sgPost)
@@ -343,7 +343,7 @@ def mergeSingletonHG(
 def identifyHGTokenRanges(y: Hypergraph[EdgeLabel, TokenRange])(using
     gTa: Vector[TokenEnum]
 ): Vector[Vector[TokenHG]] =
-  val HGTokenRange = y.hyperedges map (e => (e, y.members(e).head)) // one token range per hyperedge
+  val HGTokenRange = y.hyperedgeLabels map (e => (e, y.members(e).head)) // one token range per hyperedge
   val HGTokens: Vector[Vector[TokenHG]] = HGTokenRange.toVector
     .map((id, tr) => gTa.slice(tr.start, tr.until).map(f => TokenHG(f.t, f.n, f.w, f.g, id)))
   HGTokens
@@ -394,7 +394,7 @@ def mergeHgHg(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeLabel,
     val allBlock = computesPresOrPosts(blockTokenRanges)
     val everything = allPres + allPosts + allBlock
     everything
-  ).fold(Hypergraph.empty[EdgeLabel, TokenRange]())(_ + _)
+  ).fold(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
   // println(stuff)
   lTa
 
@@ -428,7 +428,7 @@ def mergeHgHg(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeLabel,
           y + ((i + darwinReadings.size) -> hypergraph)
         case (HGHG(item1, item2, height), i: Int) =>
           val hypergraph = mergeHgHg(y(item1), y(item2)) // currently just lTA
-          y + ((i + darwinReadings.size) -> Hypergraph.empty[EdgeLabel, TokenRange]())
+          y + ((i + darwinReadings.size) -> Hypergraph.empty[EdgeLabel, TokenRange])
     })
   // hypergraphToText(hg) // NB: Token range may be incorrect (eek!)
   val dot = hypergraphToDot(hg)

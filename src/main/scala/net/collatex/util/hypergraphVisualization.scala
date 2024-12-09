@@ -12,7 +12,7 @@ import net.collatex.reptilian.TokenEnum.*
   */
 def hypergraphToText(h: Map[Int, Hypergraph[String, TokenRange]]): Unit =
   val output = h map ((i: Int, x: Hypergraph[String, TokenRange]) =>
-    val lines = x.hyperedges.toSeq.sorted map (e => s"$e : ${x.members(e)}")
+    val lines = x.hyperedgeLabels.toSeq.sorted map (e => s"$e : ${x.members(e)}")
     lines.mkString("\n")
   )
   output.foreach(println)
@@ -27,18 +27,18 @@ def hypergraphToDot(h: Map[Int, Hypergraph[EdgeLabel, TokenRange]])(using tokenA
   val last = "}"
   val middle = (h flatMap ((i: Int, x: Hypergraph[EdgeLabel, TokenRange]) =>
     val ap_id = s"Cluster_$i" // Cluster_8
-    val group_ids = x.hyperedges
+    val group_ids = x.hyperedgeLabels
       .map(e => s"${ap_id}_$e")
       .toSeq
       .sorted // Cluster_8_1b
-    val group_labels = x.hyperedges
+    val group_labels = x.hyperedgeLabels
       .map(e => s"Group $e")
       .toSeq
       .sorted // "Group 1b"
     val group_reading_ids = group_ids
       .map(e => e + "_reading")
       .sorted
-    val group_readings = x.hyperedges.toSeq
+    val group_readings = x.hyperedgeLabels.toSeq
       .sorted
       .map(e =>
         val tr = x.members(e).head // representative TokenRange

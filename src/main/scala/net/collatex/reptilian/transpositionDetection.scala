@@ -95,7 +95,7 @@ def createDependencyGraph(
     rds
   }
   // Used to create html table and again to computes edges for graph and GraphViz
-  val rowDatas: Seq[Seq[EdgeData]] = computeRowDatas(startsWithHg.hyperedges)
+  val rowDatas: Seq[Seq[EdgeData]] = computeRowDatas(startsWithHg.hyperedgeLabels)
   val depGraph = rowDatas
     .flatMap(_.map(_.edge).distinct)
     .map(e => Graph.edge(e.source, e.target))

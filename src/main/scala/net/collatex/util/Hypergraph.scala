@@ -14,11 +14,11 @@ import net.collatex.util.Hypergraph.Hyperedge
 // Inspired by bipartite adjacency map from alga-graphs
 
 // algebraic datatype
+// Hypergraph has hyperedges with labels of type L and vertices of type V
 enum Hypergraph[L, V]:
   case EmptyHypergraph()
   case OnlyVerticesHypergraph(v: Set[V])
   case Hyperedge(label: L, v: Set[V])
-  // Hypergraph has hyperedges with labels of type L and vertices of type V
   // Might be better to have a single map instead of two
   case FullHypergraph(am1: Map[L, Set[V]], am2: Map[V, Set[L]])
 
@@ -26,23 +26,26 @@ enum Hypergraph[L, V]:
   def toMap: (Map[L, Set[V]], Map[V, Set[L]]) =
     this match
       case _: EmptyHypergraph[L, V] => (Map.empty, Map.empty)
-      case OnlyVerticesHypergraph(vertices) => (Map.empty, vertices.map(_ -> Set.empty).toMap)
+      case OnlyVerticesHypergraph(vertices) =>
+        (Map.empty, vertices.map(_ -> Set.empty).toMap)
       case Hyperedge(label, vertices) =>
         val vToL = vertices.map(_ -> Set(label)).toMap
         (Map.apply(label -> vertices), vToL)
-      case FullHypergraph(am1, am2) =>
-        (am1, am2)
+      case FullHypergraph(am1, am2) => (am1, am2)
 
+  // Use hyperedges instead
   // returns the set of hyperedge labels present in this hypergraph
-  def hyperedges: Set[L] =
+  @deprecated
+  def hyperedgeLabels: Set[L] =
     this match
       case _: EmptyHypergraph[L, V] => Set.empty
       case _: OnlyVerticesHypergraph[L, V] => Set.empty
       case Hyperedge(label, _) => Set(label)
-      case FullHypergraph(am1, _) =>
-        am1.keySet
+      case FullHypergraph(am1, _) => am1.keySet
 
+  // Use Hyperedge.vertices instead
   // return the vertices associated with the hyperedge with label L
+  @deprecated
   def members(hyperedge: L): Set[V] =
     this match
       case _: EmptyHypergraph[L, V] => Set.empty
@@ -59,7 +62,20 @@ enum Hypergraph[L, V]:
       case Hyperedge(_, vertices) => vertices
       case FullHypergraph(_, am2) => am2.keySet
 
+  // returns all the hyperedges contained in this hypergraph
+  def hyperedges: Set[Hyperedge[L, V]] =
+    this match
+      case _: EmptyHypergraph[L, V] => Set.empty
+      case _: OnlyVerticesHypergraph[L, V] => Set.empty
+      case x: Hyperedge[L, V] => Set(x)
+      case FullHypergraph(am1, _) =>
+        // NOTE: Why is this cast necessary?
+        am1.map((k, v) => Hyperedge(k, v)
+          .asInstanceOf[Hyperedge[L, V]]).toSet
+
   // returns the labels of the hyperedges that vertex V is present in
+  // NOTE: could be renamed to hyperedges(vertex: V)
+  // Hmmm how does Scala react to method overloading?
   def edges(vertex: V): Set[L] =
     this match
       case _: EmptyHypergraph[L, V] => Set.empty
@@ -95,13 +111,13 @@ enum Hypergraph[L, V]:
           val new_hyperedges_to_vertex_map = thisAm1.map((label, vertices) => label -> (vertices | other.vertices))
             |+| otherAm1.map((label, vertices) => label -> (vertices | this.vertices))
           // And of course the second mapping (V->L) needs to be updated too
-          val new_vertices_to_label_map = thisAm2.map((vertex, labels) => vertex -> (labels | other.hyperedges))
-            |+| otherAm2.map((vertex, labels) => vertex -> (labels | this.hyperedges))
+          val new_vertices_to_label_map = thisAm2.map((vertex, labels) => vertex -> (labels | other.hyperedgeLabels))
+            |+| otherAm2.map((vertex, labels) => vertex -> (labels | this.hyperedgeLabels))
           FullHypergraph(new_hyperedges_to_vertex_map, new_vertices_to_label_map)
 
 // constructor
 object Hypergraph:
-  def empty[L, V](): Hypergraph[L, V] = EmptyHypergraph[L, V]()
+  def empty[L, V]: Hypergraph[L, V] = EmptyHypergraph[L, V]()
 
   def vertices[L, V](vertices: V*): Hypergraph[L, V] =
     OnlyVerticesHypergraph(vertices.toSet)
