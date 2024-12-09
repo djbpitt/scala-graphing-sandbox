@@ -2,6 +2,7 @@ package net.collatex.util
 
 import net.collatex.reptilian.{EdgeLabel, FullDepthBlock, TokenEnum, TokenRange}
 import net.collatex.reptilian.TokenEnum.*
+import net.collatex.util.Hypergraph.{FullHypergraph, Hyperedge}
 import org.scalatest.funsuite.AnyFunSuite
 
 class SecondAlignmentPhaseTest extends AnyFunSuite:
@@ -22,9 +23,8 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     val w2 = tokenArray.filter(e => e.w == 1 && e.g != -1).toList
     val compactedEditSteps = compactEditSteps(tokensToEditSteps(w1, w2))
     val result = mergeSingletonSingleton(compactedEditSteps)
-    val expected = Hypergraph(
-      Map(EdgeLabel("5") -> Set(TokenRange(5, 9), TokenRange(0, 4))),
-      Map(TokenRange(5, 9) -> Set(EdgeLabel("5")), TokenRange(0, 4) -> Set(EdgeLabel("5")))
+    val expected = Hyperedge(
+      EdgeLabel("5"), Set(TokenRange(5, 9), TokenRange(0, 4))
     )
     assert(result == expected)
   test("test different singletons"):
@@ -44,7 +44,7 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     val w2 = tokenArray.filter(e => e.w == 1 && e.g != -1).toList
     val compactedEditSteps = compactEditSteps(tokensToEditSteps(w1, w2))
     val result = mergeSingletonSingleton(compactedEditSteps)
-    val expected = Hypergraph(
+    val expected = FullHypergraph(
       Map(
         EdgeLabel("2") -> Set(TokenRange(2, 3)),
         EdgeLabel("7") -> Set(TokenRange(7, 8)),
@@ -78,7 +78,7 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
       Token("parents", "parents", 2, 12),
       Token("!", "!", 2, 13)
     )
-    val hg = Hypergraph(
+    val hg = FullHypergraph(
       Map(
         EdgeLabel("1b") -> Set(TokenRange(2, 3)),
         EdgeLabel("1a") -> Set(TokenRange(7, 8)),
@@ -125,7 +125,7 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
       Token("parents", "parents", 2, 12),
       Token("!", "!", 2, 13)
     )
-    val hg = Hypergraph[EdgeLabel, TokenRange](
+    val hg = FullHypergraph[EdgeLabel, TokenRange](
       Map(
         EdgeLabel("0") -> Set(TokenRange(0, 2), TokenRange(5, 7)),
         EdgeLabel("2") -> Set(TokenRange(2, 3)),
@@ -187,7 +187,7 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     val caught = intercept[RuntimeException](splitTokenRange(TokenRange(2, 4), TokenRange(3, 3)))
     assert(caught.getMessage == "cannot split on empty block range: EmptyTokenRange(3,3)")
   test("test mergeSingletonHG() with zero blocks"):
-    val expected = Hypergraph[EdgeLabel, TokenRange](
+    val expected = FullHypergraph[EdgeLabel, TokenRange](
       Map(
         EdgeLabel("8") -> Set(TokenRange(8, 9), TokenRange(3, 4)),
         EdgeLabel("15") -> Set(TokenRange(15, 19)),
@@ -232,7 +232,7 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
       Token("no ", "no", 3, 17),
       Token("blocks", "blocks", 3, 18)
     )
-    val hg = Hypergraph(
+    val hg = FullHypergraph(
       Map(
         EdgeLabel("2") -> Set(TokenRange(2, 3)),
         EdgeLabel("7") -> Set(TokenRange(7, 8)),
@@ -251,7 +251,7 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
     val result = mergeSingletonHG(singletonTokens, hg)
     assert(result == expected)
   test("test mergeSingletonHG() with one block and singleton splitting (pre and post)"):
-    val expected = Hypergraph[EdgeLabel, TokenRange](
+    val expected = FullHypergraph[EdgeLabel, TokenRange](
       Map(
         EdgeLabel("12") -> Set(TokenRange(12, 15)),
         EdgeLabel("8") -> Set(TokenRange(8, 9)),
@@ -291,7 +291,7 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
       Token("mine", "mine", 2, 13),
       Token("!", "!", 2, 14)
     )
-    val hg = Hypergraph(
+    val hg = FullHypergraph(
       Map(
         EdgeLabel("0") -> Set(TokenRange(0, 3), TokenRange(4, 7))
       ),
@@ -332,11 +332,11 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
       Token("a", "a", 0, 0),
       Token("b", "b", 0, 1)
     )
-    val hg = Hypergraph[EdgeLabel, TokenRange](
+    val hg = FullHypergraph[EdgeLabel, TokenRange](
       Map(EdgeLabel("3") -> Set(TokenRange(3, 7), TokenRange(8, 12))),
       Map(TokenRange(3, 7) -> Set(EdgeLabel("3")), TokenRange(8, 12) -> Set(EdgeLabel("3")))
     )
-    val expected = Hypergraph(
+    val expected = FullHypergraph(
       Map(
         EdgeLabel("0") -> Set(TokenRange(0, 2), TokenRange(4, 6), TokenRange(9, 11)), // two-token block
         EdgeLabel("3") -> Set(TokenRange(3, 4), TokenRange(8, 9)), // hg pre
@@ -382,11 +382,11 @@ class SecondAlignmentPhaseTest extends AnyFunSuite:
         Token("b", "b", 0, 2),
         Token("zz", "zz", 0, 3)
       )
-    val hg = Hypergraph[EdgeLabel, TokenRange](
+    val hg = FullHypergraph[EdgeLabel, TokenRange](
       Map(EdgeLabel("5") -> Set(TokenRange(5, 9), TokenRange(10, 14))),
       Map(TokenRange(5, 9) -> Set(EdgeLabel("5")), TokenRange(10, 14) -> Set(EdgeLabel("5")))
     )
-    val expected = Hypergraph(
+    val expected = FullHypergraph(
       Map(
         EdgeLabel("8") -> Set(TokenRange(8, 9), TokenRange(13, 14)),
         EdgeLabel("5") -> Set(TokenRange(5, 6), TokenRange(10, 11)),

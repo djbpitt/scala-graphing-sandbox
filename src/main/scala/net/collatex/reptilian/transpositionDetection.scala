@@ -71,7 +71,8 @@ def createDependencyGraph(
   val startsWithHg = Hypergraph.hyperedge(EdgeLabel("starts"), egTa.starts: _*) + hg
   // Sorted map (treemap) from start of token range (Int) to hyperedge label (String)
   def createTreeMap(hg: Hypergraph[EdgeLabel, TokenRange]): TreeMap[Int, EdgeLabel] =
-    val result = hg.am2
+    val result = hg.toMap
+      ._2
       .map((tr, l) => tr.start -> l.head)
       .to(TreeMap)
     result

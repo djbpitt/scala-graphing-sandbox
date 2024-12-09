@@ -2,6 +2,7 @@ package net.collatex.reptilian
 import net.collatex.reptilian.TokenEnum.Token
 import net.collatex.reptilian.TokenRange
 import net.collatex.util.Hypergraph
+import net.collatex.util.Hypergraph.FullHypergraph
 // Data
 // Separators in global token array have the form Token("Sepnn", "Sepnn", w, nn), where
 // w = witness number of preceding witness and nn = global offset
@@ -279,7 +280,7 @@ val gTa: Vector[Token] = Vector(
   Token("more ", "more", 5, 270),
   Token("species ", "species", 5, 271)
 )
-val hg1: Hypergraph[EdgeLabel, TokenRange] = Hypergraph(
+val hg1: Hypergraph[EdgeLabel, TokenRange] = FullHypergraph(
   Map(
     EdgeLabel(173) -> Set(TokenRange(173, 174)),
     EdgeLabel(254) -> Set(TokenRange(254, 255)),
@@ -295,7 +296,7 @@ val hg1: Hypergraph[EdgeLabel, TokenRange] = Hypergraph(
     TokenRange(255, 272) -> Set(EdgeLabel(255))
   )
 )
-val hg2: Hypergraph[EdgeLabel, TokenRange] = Hypergraph(
+val hg2: Hypergraph[EdgeLabel, TokenRange] = FullHypergraph(
   Map(
     EdgeLabel(22) -> Set(TokenRange(22, 43), TokenRange(0, 21), TokenRange(44, 65), TokenRange(66, 87)),
     EdgeLabel(87) -> Set(TokenRange(87, 110))
