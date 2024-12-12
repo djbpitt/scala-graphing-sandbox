@@ -43,7 +43,7 @@ enum Hypergraph[L, V]:
       case Hyperedge(label, _) => Set(label)
       case FullHypergraph(am1, _) => am1.keySet
 
-  // Use Hyperedge.vertices instead
+  // Use Hyperedge.vertices or the apply(label: L) methods instead
   // return the vertices associated with the hyperedge with label L
   @deprecated
   def members(hyperedge: L): Set[V] =
@@ -83,6 +83,16 @@ enum Hypergraph[L, V]:
       case Hyperedge(label, vertices) =>
         if vertices.contains(vertex) then Set(label) else Set.empty
       case FullHypergraph(_, am2) => am2(vertex)
+
+  // return the hyperedge stored in the hypergraph for the label L
+  // or None if not present
+  def apply(label: L): Option[Hyperedge[L, V]] =
+    this match
+      case _: EmptyHypergraph[L, V] => None
+      case _: OnlyVerticesHypergraph[L, V] => None
+      case x: Hyperedge[L, V] =>
+        if x.label == label then Some(x) else None
+      case FullHypergraph(am1, _) => Some(Hyperedge(label, am1(label)))
 
   // overlays combines two hypergraphs into one without creating extra hyperedges
   @targetName("overlay")
