@@ -114,32 +114,24 @@ def rankHg(
   ranks
 
 def remapBlockToGTa(block: FullDepthBlock, lTa: Vector[TokenEnum]) =
-  val result = FullDepthBlock(block.instances.map(e => lTa(e).g), block.length)
-  block.instances.foreach(e => println(s"$e, ${lTa(e)}"))
-  result
+  FullDepthBlock(block.instances.map(e => lTa(e).g), block.length)
 
 def splitAllHyperedges(
     hg1: Hypergraph[EdgeLabel, TokenRange],
     hg2: Hypergraph[EdgeLabel, TokenRange],
-    blocks: Iterable[FullDepthBlock],
-    gTa: Vector[Token],
-    lTa: Vector[TokenEnum]): Set[Hypergraph[EdgeLabel, TokenRange]] =
-  val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
-  println(s"blocksLTa: $blocks")
-  println(s"blocksGTa: $blocksGTa")
-
+    blocks: Iterable[FullDepthBlock] // gTa
+)(using gTa: Vector[Token]): Set[Hypergraph[EdgeLabel, TokenRange]] =
+  println(s"blocksGTa: $blocks")
 
   Set(Hypergraph.empty[EdgeLabel, TokenRange])
 
 def realMainFunction(debug: Boolean): Unit =
   val (gTaInput, hg1, hg2) = returnSampleData()
   given gTa: Vector[Token] = gTaInput
-  given lTa: Vector[TokenEnum] = createHgTa(hg1 + hg2) // create local token array
+  val lTa: Vector[TokenEnum] = createHgTa(hg1 + hg2) // create local token array
   val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
-  println(s"blocks: $blocks")
-  //TODO: Currently gTa and lTa cannot both be implicit because types overlap
-  //TODO: Rewrite to allow implicits or (better) convert blocks to gTa earlier
-  val allSplitHyperedges = splitAllHyperedges(hg1, hg2, blocks, gTa, lTa)
+  val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
+  val allSplitHyperedges = splitAllHyperedges(hg1, hg2, blocksGTa)
   // split hyperedges where needed before ordering and ranking
   // 2024-12-07 Resume here
   //   Block contains info about one witness from each hyperedge
