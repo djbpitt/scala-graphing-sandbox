@@ -71,8 +71,7 @@ def createDependencyGraph(
   val startsWithHg = Hypergraph.hyperedge(EdgeLabel("starts"), egTa.starts: _*) + hg
   // Sorted map (treemap) from start of token range (Int) to hyperedge label (String)
   def createTreeMap(hg: Hypergraph[EdgeLabel, TokenRange]): TreeMap[Int, EdgeLabel] =
-    val result = hg.toMap
-      ._2
+    val result = hg.toMap._2
       .map((tr, l) => tr.start -> l.head)
       .to(TreeMap)
     result
@@ -114,12 +113,33 @@ def rankHg(
   val ranks = createDependencyGraph(hg, debug).longestPath
   ranks
 
+def remapBlockToGTa(block: FullDepthBlock, lTa: Vector[TokenEnum]) =
+  val result = FullDepthBlock(block.instances.map(e => lTa(e).g), block.length)
+  block.instances.foreach(e => println(s"$e, ${lTa(e)}"))
+  result
+
+def splitAllHyperedges(
+    hg1: Hypergraph[EdgeLabel, TokenRange],
+    hg2: Hypergraph[EdgeLabel, TokenRange],
+    blocks: Iterable[FullDepthBlock],
+    gTa: Vector[Token],
+    lTa: Vector[TokenEnum]): Set[Hypergraph[EdgeLabel, TokenRange]] =
+  val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
+  println(s"blocksLTa: $blocks")
+  println(s"blocksGTa: $blocksGTa")
+
+
+  Set(Hypergraph.empty[EdgeLabel, TokenRange])
+
 def realMainFunction(debug: Boolean): Unit =
   val (gTaInput, hg1, hg2) = returnSampleData()
   given gTa: Vector[Token] = gTaInput
-  val lTa: Vector[TokenEnum] = createHgTa(hg1 + hg2) // create local token array
+  given lTa: Vector[TokenEnum] = createHgTa(hg1 + hg2) // create local token array
   val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
   println(s"blocks: $blocks")
+  //TODO: Currently gTa and lTa cannot both be implicit because types overlap
+  //TODO: Rewrite to allow implicits or (better) convert blocks to gTa earlier
+  val allSplitHyperedges = splitAllHyperedges(hg1, hg2, blocks, gTa, lTa)
   // split hyperedges where needed before ordering and ranking
   // 2024-12-07 Resume here
   //   Block contains info about one witness from each hyperedge
@@ -128,9 +148,8 @@ def realMainFunction(debug: Boolean): Unit =
   //     from combination of block and hyperedge information
   //   Retire block (no further processing needed), cycle to-be-processed into
   //     inventory of hyperedges to be checked for blocks / splitting
-
   val rankings = Vector(hg1, hg2).map(rankHg(_, debug)) // perform topological sort and rank
-  rankings.foreach(e => println(s"rankings: $e"))
+  // rankings.foreach(e => println(s"rankings: $e"))
 
 @main def runWithSampleData(): Unit = // no files saved to disk
   realMainFunction(false)

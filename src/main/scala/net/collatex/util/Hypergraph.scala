@@ -7,8 +7,6 @@ import cats.kernel.Semigroup
 import cats.instances.set.*
 import net.collatex.util.Hypergraph.Hyperedge
 
-
-
 // Hypergraph
 // @author: Ronald Haentjens Dekker
 // Inspired by bipartite adjacency map from alga-graphs
@@ -38,17 +36,17 @@ enum Hypergraph[L, V]:
   @deprecated
   def hyperedgeLabels: Set[L] =
     this match
-      case _: EmptyHypergraph[L, V] => Set.empty
+      case _: EmptyHypergraph[L, V]        => Set.empty
       case _: OnlyVerticesHypergraph[L, V] => Set.empty
-      case Hyperedge(label, _) => Set(label)
-      case FullHypergraph(am1, _) => am1.keySet
+      case Hyperedge(label, _)             => Set(label)
+      case FullHypergraph(am1, _)          => am1.keySet
 
   // Use Hyperedge.vertices or the apply(label: L) methods instead
   // return the vertices associated with the hyperedge with label L
   @deprecated
   def members(hyperedge: L): Set[V] =
     this match
-      case _: EmptyHypergraph[L, V] => Set.empty
+      case _: EmptyHypergraph[L, V]        => Set.empty
       case _: OnlyVerticesHypergraph[L, V] => Set.empty
       case Hyperedge(label, vertices) =>
         if label == hyperedge then vertices else Set.empty
@@ -57,28 +55,32 @@ enum Hypergraph[L, V]:
   // returns all the vertices in this hypergraph
   def vertices: Set[V] =
     this match
-      case _: EmptyHypergraph[L, V] => Set.empty
+      case _: EmptyHypergraph[L, V]         => Set.empty
       case OnlyVerticesHypergraph(vertices) => vertices
-      case Hyperedge(_, vertices) => vertices
-      case FullHypergraph(_, am2) => am2.keySet
+      case Hyperedge(_, vertices)           => vertices
+      case FullHypergraph(_, am2)           => am2.keySet
 
   // returns all the hyperedges contained in this hypergraph
   def hyperedges: Set[Hyperedge[L, V]] =
     this match
-      case _: EmptyHypergraph[L, V] => Set.empty
+      case _: EmptyHypergraph[L, V]        => Set.empty
       case _: OnlyVerticesHypergraph[L, V] => Set.empty
-      case x: Hyperedge[L, V] => Set(x)
-      case FullHypergraph(am1, _) =>
+      case x: Hyperedge[L, V]              => Set(x)
+      case FullHypergraph(am1, _)          =>
         // NOTE: Why is this cast necessary?
-        am1.map((k, v) => Hyperedge(k, v)
-          .asInstanceOf[Hyperedge[L, V]]).toSet
+        am1
+          .map((k, v) =>
+            Hyperedge(k, v)
+              .asInstanceOf[Hyperedge[L, V]]
+          )
+          .toSet
 
   // returns the labels of the hyperedges that vertex V is present in
   // NOTE: could be renamed to hyperedges(vertex: V)
   // Hmmm how does Scala react to method overloading?
   def edges(vertex: V): Set[L] =
     this match
-      case _: EmptyHypergraph[L, V] => Set.empty
+      case _: EmptyHypergraph[L, V]        => Set.empty
       case _: OnlyVerticesHypergraph[L, V] => Set.empty
       case Hyperedge(label, vertices) =>
         if vertices.contains(vertex) then Set(label) else Set.empty
@@ -88,7 +90,7 @@ enum Hypergraph[L, V]:
   // or None if not present
   def apply(label: L): Option[Hyperedge[L, V]] =
     this match
-      case _: EmptyHypergraph[L, V] => None
+      case _: EmptyHypergraph[L, V]        => None
       case _: OnlyVerticesHypergraph[L, V] => None
       case x: Hyperedge[L, V] =>
         if x.label == label then Some(x) else None
@@ -98,7 +100,7 @@ enum Hypergraph[L, V]:
   @targetName("overlay")
   def +(other: Hypergraph[L, V]): Hypergraph[L, V] =
     (this, other) match
-      case (_: EmptyHypergraph[L, V], _:Hypergraph[L, V]) => other
+      case (_: EmptyHypergraph[L, V], _: Hypergraph[L, V]) => other
       case (_: Hypergraph[L, V], _: EmptyHypergraph[L, V]) => this
       case (OnlyVerticesHypergraph(v1), OnlyVerticesHypergraph(v2)) =>
         OnlyVerticesHypergraph(v1 ++ v2)
@@ -110,20 +112,20 @@ enum Hypergraph[L, V]:
   // connect method connects the nodes of graph 1 to the hyperedges of graph 2 and the other way around
   @targetName("connect")
   def *(other: Hypergraph[L, V]): Hypergraph[L, V] =
-      (this, other) match
-        case (_: EmptyHypergraph[L, V], _: Hypergraph[L, V]) => other
-        case (_: Hypergraph[L, V], _: EmptyHypergraph[L, V]) => this
-        case (_: Hypergraph[L, V], _: Hypergraph[L, V]) =>
-          val (thisAm1, thisAm2) = this.toMap
-          val (otherAm1, otherAm2) = other.toMap
-          // every L of this should connect to every V of other.
-          // every L of other should connect to every V of this.
-          val new_hyperedges_to_vertex_map = thisAm1.map((label, vertices) => label -> (vertices | other.vertices))
-            |+| otherAm1.map((label, vertices) => label -> (vertices | this.vertices))
-          // And of course the second mapping (V->L) needs to be updated too
-          val new_vertices_to_label_map = thisAm2.map((vertex, labels) => vertex -> (labels | other.hyperedgeLabels))
-            |+| otherAm2.map((vertex, labels) => vertex -> (labels | this.hyperedgeLabels))
-          FullHypergraph(new_hyperedges_to_vertex_map, new_vertices_to_label_map)
+    (this, other) match
+      case (_: EmptyHypergraph[L, V], _: Hypergraph[L, V]) => other
+      case (_: Hypergraph[L, V], _: EmptyHypergraph[L, V]) => this
+      case (_: Hypergraph[L, V], _: Hypergraph[L, V]) =>
+        val (thisAm1, thisAm2) = this.toMap
+        val (otherAm1, otherAm2) = other.toMap
+        // every L of this should connect to every V of other.
+        // every L of other should connect to every V of this.
+        val new_hyperedges_to_vertex_map = thisAm1.map((label, vertices) => label -> (vertices | other.vertices))
+          |+| otherAm1.map((label, vertices) => label -> (vertices | this.vertices))
+        // And of course the second mapping (V->L) needs to be updated too
+        val new_vertices_to_label_map = thisAm2.map((vertex, labels) => vertex -> (labels | other.hyperedgeLabels))
+          |+| otherAm2.map((vertex, labels) => vertex -> (labels | this.hyperedgeLabels))
+        FullHypergraph(new_hyperedges_to_vertex_map, new_vertices_to_label_map)
 
 // constructor
 object Hypergraph:
@@ -139,4 +141,3 @@ object Hypergraph:
   val hypergraph = Hypergraph.vertices[String, Int](1)
   val hypergraph2 = Hypergraph.hyperedge[String, Int]("")
   val outerHypergraph = Hypergraph.hyperedge[String, Hyperedge[String, Int]]("alignment point")
-
