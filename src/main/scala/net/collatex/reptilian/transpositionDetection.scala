@@ -5,7 +5,9 @@ import net.collatex.util.{Graph, Hypergraph, createHgTa}
 
 import scala.collection.immutable.TreeMap
 import net.collatex.reptilian.returnSampleData
+import net.collatex.util.Hypergraph.Hyperedge
 
+import scala.annotation.tailrec
 import scala.math.Ordering
 
 /* Method
@@ -116,14 +118,38 @@ def rankHg(
 def remapBlockToGTa(block: FullDepthBlock, lTa: Vector[TokenEnum]) =
   FullDepthBlock(block.instances.map(e => lTa(e).g), block.length)
 
+def findInstanceInHypergraph(hg: Hypergraph[EdgeLabel, TokenRange], instance: Int) =
+  // Find first hyperedge that contains instance; get() should never throw
+  hg.hyperedges.find(e => e.vertices.exists(_.contains(instance))).get
+
 def splitAllHyperedges(
     hg1: Hypergraph[EdgeLabel, TokenRange],
     hg2: Hypergraph[EdgeLabel, TokenRange],
     blocks: Iterable[FullDepthBlock] // gTa
-)(using gTa: Vector[Token]): Set[Hypergraph[EdgeLabel, TokenRange]] =
-  println(s"blocksGTa: $blocks")
-
-  Set(Hypergraph.empty[EdgeLabel, TokenRange])
+)(using
+    gTa: Vector[Token]
+): (Hypergraph[EdgeLabel, TokenRange], Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
+  // Find first instance value in hg1 and second in hg2
+  @tailrec
+  def processBlock(
+      blockQueue: Vector[FullDepthBlock],
+      he1: Hypergraph[EdgeLabel, TokenRange],
+      he2: Hypergraph[EdgeLabel, TokenRange],
+      matches: Set[HyperedgeMatch]
+  ): (Hypergraph[EdgeLabel, TokenRange], Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
+    if blockQueue.isEmpty
+    then (he1, he2, matches)
+    else
+      // Resume here 2024-12-14:
+      // Recreate new hg at each pass or store sets of he's?
+      // We can remove from a set; we don’t know how to remove a hyperedge from an hg
+      //   An hg allows nodes that are not part of he’s, but not in our domain
+      //   Similarly, an hg allows nodes to be part of multiple he’s, but not in our domain
+      val newHe1 = he1
+      val newHe2 = he2
+      val newMatches = matches
+      processBlock(blockQueue.tail, newHe1, newHe2, newMatches)
+  processBlock(blocks.toVector, hg1, hg2, Set.empty[HyperedgeMatch])
 
 def realMainFunction(debug: Boolean): Unit =
   val (gTaInput, hg1, hg2) = returnSampleData()
@@ -133,7 +159,6 @@ def realMainFunction(debug: Boolean): Unit =
   val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
   val allSplitHyperedges = splitAllHyperedges(hg1, hg2, blocksGTa)
   // split hyperedges where needed before ordering and ranking
-  // 2024-12-07 Resume here
   //   Block contains info about one witness from each hyperedge
   //   Compute block hyperedge by projecting from block information onto hyperedges
   //   Compute to-be-processed (= pre and post, but not distinguished) information
@@ -213,3 +238,8 @@ object TokenArrayWithStartsAndEnds:
       (seps :+ Token("Sep" + tokens.size.toString, "", tokens.last.w + 1, tokens.size))
         .map(e => TokenRange(e.g, e.g))
     new TokenArrayWithStartsAndEnds(tokens, computeStarts(), computeEnds())
+
+case class HyperedgeMatch(
+    he1: Hyperedge[EdgeLabel, TokenRange],
+    he2: Hyperedge[EdgeLabel, TokenRange]
+)
