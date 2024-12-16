@@ -41,11 +41,15 @@ enum Hypergraph[L, V]:
       case Hyperedge(label, vertices) =>
         vertices.map(v => (label, v))
       case FullHypergraph(im1, _) =>
-        im1.flatMap((label, vertices) =>
-          vertices.map(v => (label, v))).toSet
+        val incidencePairs: Set[(L, V)] = im1.map(entry =>
+          val (label, vertices) = entry
+          vertices.map(v => (label, v))
+        ).foldLeft(Set.empty)(_ ++ _)
+        incidencePairs
 
   // keep everything that is in this but not in other
-  def difference(other: Hypergraph[L, V]): Hypergraph[L, V] =
+  @targetName("difference")
+  def -(other: Hypergraph[L, V]): Hypergraph[L, V] =
     val thisPairs = this.toIncidencePairs
     val otherPairs = other.toIncidencePairs
     val result = thisPairs.diff(otherPairs)
@@ -158,7 +162,11 @@ object Hypergraph:
     Hyperedge(label, vertices.toSet)
 
   def fromIncidencePairs[L, V](input: Set[(L, V)]): Hypergraph[L, V] =
-    FullHypergraph(MultiDict.from(input).sets, MultiDict.from(input.map((l, v) => (v, l))).sets)
+    val incidenceMap = MultiDict.from(input).sets
+    if incidenceMap.size == 1 then
+      Hyperedge(incidenceMap.head._1, incidenceMap.head._2)
+    else
+      FullHypergraph(incidenceMap, MultiDict.from(input.map((l, v) => (v, l))).sets)
 
 @main def main(): Unit =
   val hypergraph = Hypergraph.vertices[String, Int](1)

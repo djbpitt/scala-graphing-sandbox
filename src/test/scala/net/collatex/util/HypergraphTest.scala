@@ -117,3 +117,20 @@ class HypergraphTest extends AnyFunSuite:
     assert(result.members("edge1") == Set(1))
     assert(result.members("edge2") == Set(1))
     assert(result.edges(1) == Set("edge1", "edge2"))
+
+  test("toIncidencePairs"):
+    val hg1 = Hypergraph.hyperedge("M1", "P4", "P5") +
+      Hypergraph.hyperedge("M2", "P5", "P6") +
+      Hypergraph.hyperedge("M4", "P1", "P2")
+    val result = hg1.toIncidencePairs
+    assert(result == Set(("M1","P4"), ("M4", "P2"), ("M1","P5"), ("M2","P5"), ("M2","P6"), ("M4","P1")))
+
+  test("subtraction; difference"):
+    val hg1 = Hypergraph.hyperedge("M1", "P4", "P5") +
+      Hypergraph.hyperedge("M2", "P5", "P6") +
+      Hypergraph.hyperedge("M4", "P1", "P2")
+    val hg2 = Hypergraph.hyperedge("M1", "P4", "P5") +
+      Hypergraph.hyperedge("M3", "P2", "P3", "P4") +
+      Hypergraph.hyperedge("M4", "P1", "P2", "P3")
+    val hg3 = hg1 - hg2
+    assert(hg3 == Hypergraph.hyperedge("M2", "P5", "P6"))
