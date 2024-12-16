@@ -44,6 +44,13 @@ enum Hypergraph[L, V]:
         im1.flatMap((label, vertices) =>
           vertices.map(v => (label, v))).toSet
 
+  // keep everything that is in this but not in other
+  def difference(other: Hypergraph[L, V]): Hypergraph[L, V] =
+    val thisPairs = this.toIncidencePairs
+    val otherPairs = other.toIncidencePairs
+    val result = thisPairs.diff(otherPairs)
+    Hypergraph.fromIncidencePairs(result)
+
   // Use hyperedges instead
   // returns the set of hyperedge labels present in this hypergraph
   @deprecated
