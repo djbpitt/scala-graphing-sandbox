@@ -7,6 +7,8 @@ import cats.kernel.Semigroup
 import cats.instances.set.*
 import net.collatex.util.Hypergraph.Hyperedge
 
+import scala.collection.immutable.MultiDict
+
 // Hypergraph
 // @author: Ronald Haentjens Dekker
 // Inspired by alga-graphs from Haskell
@@ -147,6 +149,9 @@ object Hypergraph:
 
   def hyperedge[L, V](label: L, vertices: V*): Hypergraph[L, V] =
     Hyperedge(label, vertices.toSet)
+
+  def fromIncidencePairs[L, V](input: Set[(L, V)]): Hypergraph[L, V] =
+    FullHypergraph(MultiDict.from(input).sets, MultiDict.from(input.map((l, v) => (v, l))).sets)
 
 @main def main(): Unit =
   val hypergraph = Hypergraph.vertices[String, Int](1)
