@@ -1,7 +1,7 @@
 package net.collatex.reptilian
 import net.collatex.reptilian.NodeType.Internal
 import net.collatex.reptilian.TokenEnum.Token
-import net.collatex.util.{Graph, Hypergraph, createHgTa}
+import net.collatex.util.{Graph, Hypergraph, createHgTa, splitTokenRange}
 
 import scala.collection.immutable.TreeMap
 import net.collatex.reptilian.returnSampleData
@@ -120,8 +120,11 @@ def remapBlockToGTa(block: FullDepthBlock, lTa: Vector[TokenEnum]) =
 
 def findInstanceInHypergraph(hg: Hypergraph[EdgeLabel, TokenRange], instance: Int) =
   // Find first hyperedge that contains instance; get() should never throw
-  val result = hg.hyperedges.find(e => e.vertices.exists(_.contains(instance))).get
-  result
+  // Find tokenRange in set of all tokenRanges (of all hyperedges)
+  // Find hyperedge that contains that tokenRange
+  val resultTr = hg.vertices.find(e => e.contains(instance)).get
+  val resultHe = hg.hyperedges.find(e => e.vertices.contains(resultTr)).get
+  (resultHe, resultTr)
 
 def splitAllHyperedges(
     bothHgs: Hypergraph[EdgeLabel, TokenRange],
@@ -140,13 +143,30 @@ def splitAllHyperedges(
     then (hgTmp, matches)
     else
       val currentBlock = blockQueue.head
+      val currentBlockRanges = currentBlock.instances.map(e => TokenRange(e, e + currentBlock.length))
       println(s"currentBlock: $currentBlock")
-      val heMatches = currentBlock.instances.map(e => findInstanceInHypergraph(hgTmp, e))
-      println(s"heMatches: $heMatches")
-      // Remove matching hyperedges from hypergraph
+      println(s"currentBlockRanges: $currentBlockRanges")
+      val hesToSplit = currentBlock.instances.map(e => findInstanceInHypergraph(hgTmp, e))
+      println(s"hesToSplit: $hesToSplit")
+      val outerAndInnerRanges: Vector[(TokenRange, TokenRange)] = hesToSplit.map(_._2).zip(currentBlockRanges)
+      // outerAndInnerRanges.foreach(e => println(s"outerAndInner: $e"))
+      val preAndPostMatch = outerAndInnerRanges.map((outer, inner) => splitTokenRange(outer, inner))
+      preAndPostMatch.foreach(e =>
+        // Resume here 2024-12-17
+        // We know the lengths and we have the relevant hyperedge stored above;
+        //   now create function to split entire hyperedge, returning three hyperedges
+        //   back for each one in (some may be empty)
+        // need only two of the three for slicing
+        val preLength = e._1.until - e._1.start
+        val blockLength = currentBlock.length
+        val postLength = e._2.until - e._2.start
+        println(s"preLength = $preLength; blockLength = $blockLength; postLength = $postLength")
+      )
+      // val initialSplitPrePosts = hesToSplit.map(e => splitTokenRange)
+      // √ Remove matching hyperedges from hypergraph
       // Split matching hyperedges
       // Add new split hyperedges to hypergraph
-      val newHgTmp = hgTmp
+      val newHgTmp = hgTmp // hesToSplit.foldLeft(hgTmp)(_ - _)
       val newMatches = matches // remove old matchs and add new split results
       processBlock(blockQueue.tail, newHgTmp, newMatches)
   processBlock(blocks.toVector, bothHgs, Set.empty[HyperedgeMatch])
