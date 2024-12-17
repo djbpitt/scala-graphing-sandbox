@@ -120,44 +120,45 @@ def remapBlockToGTa(block: FullDepthBlock, lTa: Vector[TokenEnum]) =
 
 def findInstanceInHypergraph(hg: Hypergraph[EdgeLabel, TokenRange], instance: Int) =
   // Find first hyperedge that contains instance; get() should never throw
-  hg.hyperedges.find(e => e.vertices.exists(_.contains(instance))).get
+  val result = hg.hyperedges.find(e => e.vertices.exists(_.contains(instance))).get
+  result
 
 def splitAllHyperedges(
-    hg1: Hypergraph[EdgeLabel, TokenRange],
-    hg2: Hypergraph[EdgeLabel, TokenRange],
+    bothHgs: Hypergraph[EdgeLabel, TokenRange],
     blocks: Iterable[FullDepthBlock] // gTa
 )(using
     gTa: Vector[Token]
-): (Hypergraph[EdgeLabel, TokenRange], Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
+): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
   // Find first instance value in hg1 and second in hg2
   @tailrec
   def processBlock(
       blockQueue: Vector[FullDepthBlock],
-      he1: Hypergraph[EdgeLabel, TokenRange],
-      he2: Hypergraph[EdgeLabel, TokenRange],
+      hgTmp: Hypergraph[EdgeLabel, TokenRange],
       matches: Set[HyperedgeMatch]
-  ): (Hypergraph[EdgeLabel, TokenRange], Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
+  ): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
     if blockQueue.isEmpty
-    then (he1, he2, matches)
+    then (hgTmp, matches)
     else
-      // Resume here 2024-12-14:
-      // Recreate new hg at each pass or store sets of he's?
-      // We can remove from a set; we don’t know how to remove a hyperedge from an hg
-      //   An hg allows nodes that are not part of he’s, but not in our domain
-      //   Similarly, an hg allows nodes to be part of multiple he’s, but not in our domain
-      val newHe1 = he1
-      val newHe2 = he2
-      val newMatches = matches
-      processBlock(blockQueue.tail, newHe1, newHe2, newMatches)
-  processBlock(blocks.toVector, hg1, hg2, Set.empty[HyperedgeMatch])
+      val currentBlock = blockQueue.head
+      println(s"currentBlock: $currentBlock")
+      val heMatches = currentBlock.instances.map(e => findInstanceInHypergraph(hgTmp, e))
+      println(s"heMatches: $heMatches")
+      // Remove matching hyperedges from hypergraph
+      // Split matching hyperedges
+      // Add new split hyperedges to hypergraph
+      val newHgTmp = hgTmp
+      val newMatches = matches // remove old matchs and add new split results
+      processBlock(blockQueue.tail, newHgTmp, newMatches)
+  processBlock(blocks.toVector, bothHgs, Set.empty[HyperedgeMatch])
 
 def realMainFunction(debug: Boolean): Unit =
   val (gTaInput, hg1, hg2) = returnSampleData()
   given gTa: Vector[Token] = gTaInput
-  val lTa: Vector[TokenEnum] = createHgTa(hg1 + hg2) // create local token array
+  val bothHgs = hg1 + hg2
+  val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
   val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
-  val allSplitHyperedges = splitAllHyperedges(hg1, hg2, blocksGTa)
+  val allSplitHyperedges = splitAllHyperedges(bothHgs, blocksGTa)
   // split hyperedges where needed before ordering and ranking
   //   Block contains info about one witness from each hyperedge
   //   Compute block hyperedge by projecting from block information onto hyperedges
