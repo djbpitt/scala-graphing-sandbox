@@ -126,6 +126,32 @@ def findInstanceInHypergraph(hg: Hypergraph[EdgeLabel, TokenRange], instance: In
   val resultHe = hg.hyperedges.find(e => e.vertices.contains(resultTr)).get
   (resultHe, resultTr)
 
+def splitSingleHyperedge(
+    he: Hyperedge[EdgeLabel, TokenRange],
+    preLength: Int,
+    blockLength: Int
+)(using gTa: Vector[Token]) =
+  // RESUME HERE 2024-12-19
+  // TODO: Add slice() method to TokenRange
+  // TODO: Use if/else to skip creating empty token ranges
+  val pres = he.vertices.map(e => TokenRange(e.start, e.start + preLength))
+  val presHe = Hyperedge(EdgeLabel(pres.head.start), pres)
+  val blocks = he.vertices.map(e => TokenRange(e.start + preLength, e.start + preLength + blockLength))
+  val blocksHe = Hyperedge(EdgeLabel(blocks.head.start), blocks)
+  val posts = he.vertices.map(e => TokenRange(e.start + preLength + blockLength, e.until))
+  val postsHe = Hyperedge(EdgeLabel(posts.head.start), posts)
+  val result = presHe + blocksHe + postsHe
+//  println(s"inputHe: $he")
+//  println(s"heText:")
+//  he.vertices.foreach(e => println(e.tString))
+//  println(s"blockText: ${blocks.head.tString}")
+//  println(s"preLength: $preLength")
+//  println(s"blockLength: $blockLength")
+//  println(s"presHe: $presHe")
+//  println(s"blocksHe: $blocksHe")
+//  println(s"postsHe: $postsHe")
+  result
+
 def splitAllHyperedges(
     bothHgs: Hypergraph[EdgeLabel, TokenRange],
     blocks: Iterable[FullDepthBlock] // gTa
@@ -144,25 +170,37 @@ def splitAllHyperedges(
     else
       val currentBlock = blockQueue.head
       val currentBlockRanges = currentBlock.instances.map(e => TokenRange(e, e + currentBlock.length))
-      println(s"currentBlock: $currentBlock")
-      println(s"currentBlockRanges: $currentBlockRanges")
+      // println(s"currentBlock: $currentBlock")
+      // println(s"currentBlockRanges: $currentBlockRanges")
       val hesToSplit = currentBlock.instances.map(e => findInstanceInHypergraph(hgTmp, e))
-      println(s"hesToSplit: $hesToSplit")
-      val outerAndInnerRanges: Vector[(TokenRange, TokenRange)] = hesToSplit.map(_._2).zip(currentBlockRanges)
+      // println(s"hesToSplit: $hesToSplit")
+      val outerAndInnerRanges: Vector[(TokenRange, TokenRange)] =
+        hesToSplit.map(_._2).zip(currentBlockRanges)
       // outerAndInnerRanges.foreach(e => println(s"outerAndInner: $e"))
-      val preAndPostMatch = outerAndInnerRanges.map((outer, inner) => splitTokenRange(outer, inner))
-      preAndPostMatch.foreach(e =>
-        // Resume here 2024-12-17
-        // We know the lengths and we have the relevant hyperedge stored above;
-        //   now create function to split entire hyperedge, returning three hyperedges
-        //   back for each one in (some may be empty)
-        // need only two of the three for slicing
-        val preLength = e._1.until - e._1.start
-        val blockLength = currentBlock.length
-        val postLength = e._2.until - e._2.start
-        println(s"preLength = $preLength; blockLength = $blockLength; postLength = $postLength")
-      )
-      // val initialSplitPrePosts = hesToSplit.map(e => splitTokenRange)
+      val preAndPostMatch: Vector[(TokenRange, TokenRange)] =
+        outerAndInnerRanges.map((outer, inner) => splitTokenRange(outer, inner))
+//      preAndPostMatch.foreach(e =>
+//        val preLength = e._1.until - e._1.start
+//        val blockLength = currentBlock.length
+//        val postLength = e._2.until - e._2.start
+//        println(s"preLength = $preLength; blockLength = $blockLength; postLength = $postLength")
+//      )
+      val hes = hesToSplit.map(_._1).zip(preAndPostMatch)
+//      hes.foreach(e =>
+//        println(s"block: $currentBlock")
+//        println(s"hyperedge: ${e._1}")
+//        println(s"preLength: ${e._2._1.until - e._2._1.start}")
+//        println(s"blockLength: ${currentBlock.length}")
+//        println(s"postLength: ${e._2._2.until - e._2._2.start}")
+//      )
+      val splitHes = hes
+        .map(e =>
+          splitSingleHyperedge(
+            e._1, // hyperedge to split
+            e._2._1.until - e._2._1.start, // preLength
+            currentBlock.length // blockLength
+          )
+        )
       // √ Remove matching hyperedges from hypergraph
       // Split matching hyperedges
       // Add new split hyperedges to hypergraph
