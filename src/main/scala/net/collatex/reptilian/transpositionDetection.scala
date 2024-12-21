@@ -132,7 +132,7 @@ def splitSingleHyperedge(
     blockLength: Int,
     postLength: Int
 )(using gTa: Vector[Token]) =
-  // RESUME HERE 2024-12-19
+  // RESUME HERE 2024-12-19 (to be replaced by new hyperedge split method)
   // TODO: Use if/else to skip creating empty token ranges
   val pres = he.vertices.map(e => TokenRange(e.start, e.start + preLength))
   val presHe = Hyperedge(EdgeLabel(pres.head.start), pres)

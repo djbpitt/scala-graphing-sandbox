@@ -15,7 +15,8 @@ class AlignmentHyperedgeTest extends AnyFunSuite:
     */
 
   // Setup
-  val tokenrangesForHe: Set[TokenRange] = Set(TokenRange(0, 10), TokenRange(10, 20), TokenRange(20, 30))
+  val tokenrangesForHe: Set[TokenRange] = // 0–9 (until 10)
+    Set(TokenRange(0, 10), TokenRange(10, 20), TokenRange(20, 30))
   val he: Hyperedge[EdgeLabel, TokenRange] = Hyperedge(EdgeLabel(0), tokenrangesForHe)
 
   test("Split hyperedge that is coextensive with block"):
@@ -79,4 +80,28 @@ class AlignmentHyperedgeTest extends AnyFunSuite:
       )
     )
     val result = he.split(3, 4, 3)
+    assert(result == expected)
+
+  test("Bad data"):
+    // RESUME HERE 2024-12-21: last range should not be possible 
+    val expected = FullHypergraph(
+      Map(
+        EdgeLabel(0) -> Set(LegalTokenRange(0, 3), LegalTokenRange(10, 13), LegalTokenRange(20, 23)),
+        EdgeLabel(3) -> Set(LegalTokenRange(3, 8), LegalTokenRange(13, 18), LegalTokenRange(23, 28)),
+        EdgeLabel(8) -> Set(LegalTokenRange(8, 11), LegalTokenRange(18, 21), LegalTokenRange(28, 31))
+      ),
+      Map(
+        LegalTokenRange(0, 3) -> Set(EdgeLabel(0)),
+        LegalTokenRange(10, 13) -> Set(EdgeLabel(0)),
+        LegalTokenRange(20, 23) -> Set(EdgeLabel(0)),
+        LegalTokenRange(3, 8) -> Set(EdgeLabel(3)),
+        LegalTokenRange(13, 18) -> Set(EdgeLabel(3)),
+        LegalTokenRange(23, 28) -> Set(EdgeLabel(3)),
+        LegalTokenRange(8, 11) -> Set(EdgeLabel(8)),
+        LegalTokenRange(18, 21) -> Set(EdgeLabel(8)),
+        LegalTokenRange(28, 31) -> Set(EdgeLabel(8)) // until 31 should not be possible
+      )
+    )
+
+    val result = he.split(3, 5, 3) // values should sum to 10
     assert(result == expected)
