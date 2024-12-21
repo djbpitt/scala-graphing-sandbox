@@ -133,7 +133,6 @@ def splitSingleHyperedge(
     postLength: Int
 )(using gTa: Vector[Token]) =
   // RESUME HERE 2024-12-19
-  // TODO: Add slice() method to TokenRange
   // TODO: Use if/else to skip creating empty token ranges
   val pres = he.vertices.map(e => TokenRange(e.start, e.start + preLength))
   val presHe = Hyperedge(EdgeLabel(pres.head.start), pres)
