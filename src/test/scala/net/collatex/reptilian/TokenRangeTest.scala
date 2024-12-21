@@ -110,3 +110,52 @@ class TokenRangeTest extends AnyFunSuite:
     val result = TokenRange(4, 2).splitTokenRangeOnPosition(3)
     assert(result == expected)
 
+  test("Slice illegal token range (should fail)"):
+    val expected = Left(SliceTokenRangeError())
+    val result = TokenRange(4, 2).slice(2, 4)
+    assert(result.getClass == expected.getClass)
+
+  test("Slice empty token range (should fail)"):
+    val expected = Left(SliceTokenRangeError())
+    val result = TokenRange(2, 2).slice(0, 0)
+    assert(result.getClass == expected.getClass)
+
+  test("Slice token range with start < 0 (should fail)"):
+    val expected = Left(SliceTokenRangeError())
+    val result = TokenRange(2, 4).slice(-1, 2)
+    assert(result.getClass == expected.getClass)
+
+  test("Slice token range with until < start (should fail)"):
+    val expected = Left(SliceTokenRangeError())
+    val result = TokenRange(2, 4).slice(4, 3)
+    assert(result.getClass == expected.getClass)
+
+  test ("Slice token range with start beyond end (should fail)"):
+    val expected = Left(SliceTokenRangeError())
+    val result = TokenRange(2, 4).slice(3, 4)
+    assert(result.getClass == expected.getClass)
+
+  test("Slice token range with until beyond end (should fail)"):
+    val expected = Left(SliceTokenRangeError())
+    val result = TokenRange(2, 4).slice(0,4)
+    assert(result.getClass == expected.getClass)
+
+  test("Slice inside token range"):
+    val expected = Right(TokenRange(3, 4))
+    val result = TokenRange(2, 6).slice(1,2)
+    assert(result == expected)
+
+  test("Slice coextensive with token range"):
+    val expected = Right(TokenRange(2, 6))
+    val result = TokenRange(2, 6).slice(0, 4)
+    assert(result == expected)
+
+  test("Slice at beginning of token range"):
+    val expected = Right(TokenRange(1, 4))
+    val result = TokenRange(1, 7).slice(0, 3)
+    assert(result == expected)
+
+  test("Slice at end of token range"):
+    val expected = Right(TokenRange(4, 7))
+    val result = TokenRange(1, 7).slice(3, 6)
+    assert(result == expected)
