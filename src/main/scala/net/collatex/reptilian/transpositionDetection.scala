@@ -129,7 +129,8 @@ def findInstanceInHypergraph(hg: Hypergraph[EdgeLabel, TokenRange], instance: In
 def splitSingleHyperedge(
     he: Hyperedge[EdgeLabel, TokenRange],
     preLength: Int,
-    blockLength: Int
+    blockLength: Int,
+    postLength: Int
 )(using gTa: Vector[Token]) =
   // RESUME HERE 2024-12-19
   // TODO: Add slice() method to TokenRange
@@ -180,25 +181,26 @@ def splitAllHyperedges(
       val preAndPostMatch: Vector[(TokenRange, TokenRange)] =
         outerAndInnerRanges.map((outer, inner) => outer.splitTokenRange(inner))
 //      preAndPostMatch.foreach(e =>
-//        val preLength = e._1.until - e._1.start
+//        val preLength = e._1.length
 //        val blockLength = currentBlock.length
-//        val postLength = e._2.until - e._2.start
+//        val postLength = e._2.length
 //        println(s"preLength = $preLength; blockLength = $blockLength; postLength = $postLength")
 //      )
       val hes = hesToSplit.map(_._1).zip(preAndPostMatch)
 //      hes.foreach(e =>
 //        println(s"block: $currentBlock")
 //        println(s"hyperedge: ${e._1}")
-//        println(s"preLength: ${e._2._1.until - e._2._1.start}")
+//        println(s"preLength: ${e._2._1.length}")
 //        println(s"blockLength: ${currentBlock.length}")
-//        println(s"postLength: ${e._2._2.until - e._2._2.start}")
+//        println(s"postLength: ${e._2._2.length}")
 //      )
       val splitHes = hes
         .map(e =>
           splitSingleHyperedge(
             e._1, // hyperedge to split
-            e._2._1.until - e._2._1.start, // preLength
-            currentBlock.length // blockLength
+            e._2._1.length, // preLength
+            currentBlock.length, // blockLength
+            e._2._2.length // postLength
           )
         )
       // √ Remove matching hyperedges from hypergraph
