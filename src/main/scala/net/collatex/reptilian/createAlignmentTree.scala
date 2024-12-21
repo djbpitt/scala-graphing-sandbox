@@ -5,7 +5,6 @@ import scala.collection.{immutable, mutable}
 import scala.collection.mutable.{ListBuffer, Map}
 import TokenRange.*
 import SplitTokenRangeResult.*
-import net.collatex.reptilian.SplitTokenRangeError.*
 import net.collatex.reptilian.TokenEnum.Token
 
 // This method transform an alignment on the global level of the fullest depth blocks
@@ -15,21 +14,6 @@ import net.collatex.reptilian.TokenEnum.Token
 // it would be better if this method get supplied a reading with a single range for each witness that has
 // yet to be aligned and that it then calls the suffix array, traversal graph code itself
 // Basically an inverse of the current control flow.
-
-def splitTokenRange(tr: TokenRange, positionToSplit: Int): Either[SplitTokenRangeError, SplitTokenRangeResult] =
-  tr match
-    case _: EmptyTokenRange   => Left(EmptyTokenRangeError) // no split position can fall within an empty range
-    case _: IllegalTokenRange => Left(IllegalTokenRangeError) // illegal range is always an error
-    case x: LegalTokenRange if positionToSplit == x.start =>
-      Right(SecondOnlyPopulated(EmptyTokenRange(x.start, x.start), x))
-    case x: LegalTokenRange if positionToSplit == x.until =>
-      Right(FirstOnlyPopulated(x, EmptyTokenRange(x.until, x.until)))
-    case x: LegalTokenRange if positionToSplit < x.start || positionToSplit > x.until =>
-      Left(IllegalSplitValueError(x.start, x.until, positionToSplit))
-    case x: LegalTokenRange =>
-      val range1: LegalTokenRange = LegalTokenRange(x.start, positionToSplit)
-      val range2: LegalTokenRange = LegalTokenRange(positionToSplit, x.until)
-      Right(BothPopulated(range1, range2))
 
 /** splitWitnessGroup()
   *
@@ -52,7 +36,7 @@ def splitWitnessGroup(
 ) =
   val splits =
     wg.collect { case (e: Siglum, f: LegalTokenRange) =>
-      e -> splitTokenRange(f, positionsToSplit(e))
+      e -> f.splitTokenRangeOnPosition(positionsToSplit(e))
     }
   // TODO: Can we combine all rights with one another and all lefts with one another?
   // What happens, with lefts, if we hit a SecondOnlyPopulated? Currently we do nothing;

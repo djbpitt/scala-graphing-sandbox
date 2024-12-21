@@ -2,7 +2,7 @@ package net.collatex.util
 
 import net.collatex.reptilian.SplitTokenRangeResult.*
 import net.collatex.reptilian.TokenRange.*
-import net.collatex.reptilian.{AlignmentPoint, EdgeLabel, FullDepthBlock, Siglum, SplitTokenRangeError, SplitTokenRangeResult, TokenEnum, TokenJSON, TokenRange, WitnessReadings, createAlignedBlocks, splitTokenRange}
+import net.collatex.reptilian.{EdgeLabel, FullDepthBlock, SplitTokenRangeResult, TokenEnum, TokenJSON, TokenRange, createAlignedBlocks}
 import net.collatex.reptilian.TokenEnum.*
 import upickle.default.*
 import smile.clustering.hclust

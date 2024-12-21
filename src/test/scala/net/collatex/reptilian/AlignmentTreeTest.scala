@@ -8,36 +8,6 @@ import net.collatex.reptilian.TokenEnum.Token
 import org.scalatest.funsuite.AnyFunSuite
 
 class AlignmentTreeTest extends AnyFunSuite:
-    /** Tests for splitTokenRange
-    */
-  test("Split token range into legal / legal"):
-    val expected = Right(BothPopulated(
-      LegalTokenRange(1, 3),
-      LegalTokenRange(3, 4)
-    ))
-    val result = splitTokenRange(TokenRange(1, 4), 3)
-    assert(result == expected)
-  test("Split token range with first part empty"):
-    val expected = Right(SecondOnlyPopulated(EmptyTokenRange(1, 1), LegalTokenRange(1, 4)))
-    val result = splitTokenRange(TokenRange(1, 4), 1)
-    assert(result == expected)
-  test("Split token range with second part empty"):
-    val expected = Right(FirstOnlyPopulated(LegalTokenRange(1, 4), EmptyTokenRange(4, 4)))
-    val result = splitTokenRange(TokenRange(1, 4), 4)
-    assert(result == expected)
-  test("Split token range with illegal split value"):
-    val expected = Left(IllegalSplitValueError(1, 4, 5))
-    val result = splitTokenRange(TokenRange(1, 4), 5)
-    assert(result == expected)
-  test("Split empty token range (should fail)"):
-    val expected = Left(EmptyTokenRangeError)
-    val result = splitTokenRange(TokenRange(1,1), 1)
-    assert(result == expected)
-  test("Split illegal token range (should fail)"):
-    val expected = Left(IllegalTokenRangeError)
-    val result = splitTokenRange(TokenRange(4,2), 3)
-    assert(result == expected)
-
   /** Tests for splitWitnessGroup()
     */
   test("Split witness group with two splittable witnesses and extra split position"):

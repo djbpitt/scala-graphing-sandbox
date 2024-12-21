@@ -18,20 +18,6 @@ object Siglum:
 given CanEqual[Siglum, Siglum] = CanEqual.derived
 
 
-enum SplitTokenRangeResult:
-  case BothPopulated(range1: LegalTokenRange, range2: LegalTokenRange) extends SplitTokenRangeResult
-  case FirstOnlyPopulated(range1: LegalTokenRange, range2: EmptyTokenRange) extends SplitTokenRangeResult
-  case SecondOnlyPopulated(range1: EmptyTokenRange, range2: LegalTokenRange) extends SplitTokenRangeResult
-  def range1: TokenRange
-  def range2: TokenRange
-import SplitTokenRangeResult.*
-
-enum SplitTokenRangeError:
-  case IllegalSplitValueError(start: Int, until: Int, splitPos: Int)
-  case EmptyTokenRangeError
-  case IllegalTokenRangeError
-import SplitTokenRangeError.*
-
 type WitnessReadings = Map[Siglum, TokenRange] // type alias
 
 sealed trait AlignmentUnit // supertype ExpandedNode (with children) and AlignmentPoint (with groups)

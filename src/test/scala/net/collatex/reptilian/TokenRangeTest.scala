@@ -1,5 +1,7 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.SplitTokenRangeError.{EmptyTokenRangeError, IllegalSplitValueError, IllegalTokenRangeError}
+import net.collatex.reptilian.SplitTokenRangeResult.{BothPopulated, FirstOnlyPopulated, SecondOnlyPopulated}
 import net.collatex.reptilian.TokenEnum.Token
 import net.collatex.reptilian.TokenRange.*
 import org.scalatest.funsuite.AnyFunSuite
@@ -23,6 +25,7 @@ class TokenRangeTest extends AnyFunSuite:
     val result = TokenRange(2, 1)
     assert(result == expected)
 
+  // test for tString representation of a TokenRange
   test("Test for TokenRange.tString"):
     implicit val gTa: Vector[TokenEnum] = Vector(
       Token("Hi ", "hi", 0, 0),
@@ -71,4 +74,39 @@ class TokenRangeTest extends AnyFunSuite:
   test("test splitTokenRange() with empty singleton token range"):
     val caught = intercept[RuntimeException](TokenRange(2, 4).splitTokenRange(TokenRange(3, 3)))
     assert(caught.getMessage == "cannot split on empty block range: EmptyTokenRange(3,3)")
+
+  /** Tests for splitTokenRangeOnPosition
+   */
+  test("Split token range into legal / legal"):
+    val expected = Right(BothPopulated(
+      LegalTokenRange(1, 3),
+      LegalTokenRange(3, 4)
+    ))
+    val result = TokenRange(1, 4).splitTokenRangeOnPosition(3)
+    assert(result == expected)
+  
+  test("Split token range with first part empty"):
+    val expected = Right(SecondOnlyPopulated(EmptyTokenRange(1, 1), LegalTokenRange(1, 4)))
+    val result = TokenRange(1, 4).splitTokenRangeOnPosition(1)
+    assert(result == expected)
+  
+  test("Split token range with second part empty"):
+    val expected = Right(FirstOnlyPopulated(LegalTokenRange(1, 4), EmptyTokenRange(4, 4)))
+    val result = TokenRange(1, 4).splitTokenRangeOnPosition(4)
+    assert(result == expected)
+  
+  test("Split token range with illegal split value"):
+    val expected = Left(IllegalSplitValueError(1, 4, 5))
+    val result = TokenRange(1, 4).splitTokenRangeOnPosition(5)
+    assert(result == expected)
+  
+  test("Split empty token range (should fail)"):
+    val expected = Left(EmptyTokenRangeError)
+    val result = TokenRange(1, 1).splitTokenRangeOnPosition(1)
+    assert(result == expected)
+  
+  test("Split illegal token range (should fail)"):
+    val expected = Left(IllegalTokenRangeError)
+    val result = TokenRange(4, 2).splitTokenRangeOnPosition(3)
+    assert(result == expected)
 
