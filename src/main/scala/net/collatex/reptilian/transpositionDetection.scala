@@ -1,7 +1,7 @@
 package net.collatex.reptilian
 import net.collatex.reptilian.NodeType.Internal
 import net.collatex.reptilian.TokenEnum.Token
-import net.collatex.util.{Graph, Hypergraph, createHgTa, splitTokenRange}
+import net.collatex.util.{Graph, Hypergraph, createHgTa}
 
 import scala.collection.immutable.TreeMap
 import net.collatex.reptilian.returnSampleData
@@ -178,7 +178,7 @@ def splitAllHyperedges(
         hesToSplit.map(_._2).zip(currentBlockRanges)
       // outerAndInnerRanges.foreach(e => println(s"outerAndInner: $e"))
       val preAndPostMatch: Vector[(TokenRange, TokenRange)] =
-        outerAndInnerRanges.map((outer, inner) => splitTokenRange(outer, inner))
+        outerAndInnerRanges.map((outer, inner) => outer.splitTokenRange(inner))
 //      preAndPostMatch.foreach(e =>
 //        val preLength = e._1.until - e._1.start
 //        val blockLength = currentBlock.length

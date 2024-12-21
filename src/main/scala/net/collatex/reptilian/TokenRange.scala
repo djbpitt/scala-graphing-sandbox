@@ -16,7 +16,26 @@ enum TokenRange:
 
   def contains(pos: Int): Boolean = // position in gTa
     this.start <= pos && this.until > pos
+
+  def splitTokenRange(rangeToSplitAround: TokenRange): (TokenRange, TokenRange) =
+    // Split token range into preblock, block, postblock; ignore block because we already know it
+    // Assume resulting ranges are legal or empty; if illegal, the issue is in our block identification
+    // TODO: Return Either and let caller manage exceptions
+    if rangeToSplitAround.getClass.getSimpleName == "EmptyTokenRange" then
+      throw RuntimeException(s"cannot split on empty block range: $rangeToSplitAround")
     
+    val rangeToSplit = this
+    val pre = TokenRange(rangeToSplit.start, rangeToSplitAround.start)
+    val post = TokenRange(rangeToSplitAround.until, rangeToSplit.until)
+    
+    if pre.getClass.getSimpleName == "IllegalTokenRange" && post.getClass.getSimpleName == "IllegalTokenRange" then
+      throw RuntimeException(s"both pre ($pre) and post($post) are illegal")
+    if pre.getClass.getSimpleName == "IllegalTokenRange" then throw RuntimeException(s"pre value $pre is illegal")
+    if post.getClass.getSimpleName == "IllegalTokenRange" then throw RuntimeException(s"post value $post is illegal")
+    
+    (pre, post)
+
+
 object TokenRange:
   def apply(start: Int, until: Int): TokenRange =
     Ordering.Int.compare(start, until) match
