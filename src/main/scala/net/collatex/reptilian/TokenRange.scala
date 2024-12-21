@@ -17,6 +17,11 @@ enum TokenRange:
   def contains(pos: Int): Boolean = // position in gTa
     this.start <= pos && this.until > pos
 
+  def length: Int =
+    (this: @unchecked) match
+      case _: EmptyTokenRange => 0
+      case x: LegalTokenRange => x.until - x.start
+
   def splitTokenRange(rangeToSplitAround: TokenRange): (TokenRange, TokenRange) =
     // Split token range into preblock, block, postblock; ignore block because we already know it
     // Assume resulting ranges are legal or empty; if illegal, the issue is in our block identification
