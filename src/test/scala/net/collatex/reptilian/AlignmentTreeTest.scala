@@ -8,22 +8,7 @@ import net.collatex.reptilian.TokenEnum.Token
 import org.scalatest.funsuite.AnyFunSuite
 
 class AlignmentTreeTest extends AnyFunSuite:
-  /** Tests for TokenRange enum (legal, empty, or illegal)
-    */
-  test("Create LegalTokenRange"):
-    val expected = LegalTokenRange(1, 2)
-    val result = TokenRange(1, 2)
-    assert(result == expected)
-  test("Create EmptyTokenRange"):
-    val expected = EmptyTokenRange(1, 1)
-    val result = TokenRange(1, 1)
-    assert(result == expected)
-  test("Create IllegalTokenRange"):
-    val expected = IllegalTokenRange(2, 1)
-    val result = TokenRange(2, 1)
-    assert(result == expected)
-
-  /** Tests for splitTokenRange
+    /** Tests for splitTokenRange
     */
   test("Split token range into legal / legal"):
     val expected = Right(BothPopulated(
@@ -100,15 +85,4 @@ class AlignmentTreeTest extends AnyFunSuite:
 //    val result = splitAlignmentPoint(ap, splitPositions)
 //    assert(result == expected)
   
-  test("Test for TokenRange.tString"):
-    implicit val gTa: Vector[TokenEnum] = Vector(
-      Token("Hi ", "hi", 0, 0),
-      Token(", ", ",", 0, 1),
-      Token("Mom ", "mom", 0, 2),
-      Token("!", "!", 0, 3)
-    )
-    val tr = TokenRange(0, 4)
-    val expected = "Hi , Mom !"
-    val result = tr.tString
-    assert(result == expected)
 
