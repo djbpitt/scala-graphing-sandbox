@@ -1,20 +1,20 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.TokenRange.IllegalTokenRange
 import net.collatex.util.Hypergraph
 import net.collatex.util.Hypergraph.Hyperedge
 
 /*
-  Extend hyperedge to add slice() method
+ * Extend hyperedge to add slice and split methods
  */
-
 extension (he: Hyperedge[EdgeLabel, TokenRange])
   def slice(startOffset: Int, untilOffset: Int): Hypergraph[EdgeLabel, TokenRange] =
-    // TODO: Are we content with creating a bogus TokenRange on error?
     if startOffset == untilOffset then Hypergraph.empty
     else
       Hyperedge(EdgeLabel(he.vertices.head.start + startOffset),
-        he.vertices.map(_.slice(startOffset, untilOffset)
-          .getOrElse(TokenRange(-1, -1)))
+        he.vertices.map(t => t.slice(startOffset, untilOffset)
+          .getOrElse(IllegalTokenRange(t.start +
+            startOffset, t.start + untilOffset)))
       )
 
   def split(

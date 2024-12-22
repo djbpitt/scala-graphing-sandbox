@@ -83,12 +83,11 @@ class AlignmentHyperedgeTest extends AnyFunSuite:
     assert(result == expected)
 
   test("Bad data"):
-    // RESUME HERE 2024-12-21: last range should not be possible 
     val expected = FullHypergraph(
       Map(
         EdgeLabel(0) -> Set(LegalTokenRange(0, 3), LegalTokenRange(10, 13), LegalTokenRange(20, 23)),
         EdgeLabel(3) -> Set(LegalTokenRange(3, 8), LegalTokenRange(13, 18), LegalTokenRange(23, 28)),
-        EdgeLabel(8) -> Set(LegalTokenRange(8, 11), LegalTokenRange(18, 21), LegalTokenRange(28, 31))
+        EdgeLabel(8) -> Set(IllegalTokenRange(8, 11), IllegalTokenRange(18, 21), IllegalTokenRange(28, 31))
       ),
       Map(
         LegalTokenRange(0, 3) -> Set(EdgeLabel(0)),
@@ -97,9 +96,9 @@ class AlignmentHyperedgeTest extends AnyFunSuite:
         LegalTokenRange(3, 8) -> Set(EdgeLabel(3)),
         LegalTokenRange(13, 18) -> Set(EdgeLabel(3)),
         LegalTokenRange(23, 28) -> Set(EdgeLabel(3)),
-        LegalTokenRange(8, 11) -> Set(EdgeLabel(8)),
-        LegalTokenRange(18, 21) -> Set(EdgeLabel(8)),
-        LegalTokenRange(28, 31) -> Set(EdgeLabel(8)) // until 31 should not be possible
+        IllegalTokenRange(8, 11) -> Set(EdgeLabel(8)),
+        IllegalTokenRange(18, 21) -> Set(EdgeLabel(8)),
+        IllegalTokenRange(28, 31) -> Set(EdgeLabel(8))
       )
     )
 

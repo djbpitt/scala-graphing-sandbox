@@ -110,6 +110,7 @@ class TokenRangeTest extends AnyFunSuite:
     val result = TokenRange(4, 2).splitTokenRangeOnPosition(3)
     assert(result == expected)
 
+  // token range slice tests
   test("Slice illegal token range (should fail)"):
     val expected = Left(SliceTokenRangeError())
     val result = TokenRange(4, 2).slice(2, 4)
@@ -137,7 +138,7 @@ class TokenRangeTest extends AnyFunSuite:
 
   test("Slice token range with until beyond end (should fail)"):
     val expected = Left(SliceTokenRangeError())
-    val result = TokenRange(2, 4).slice(0,4)
+    val result = TokenRange(2, 4).slice(0, 3)
     assert(result.getClass == expected.getClass)
 
   test("Slice inside token range"):
