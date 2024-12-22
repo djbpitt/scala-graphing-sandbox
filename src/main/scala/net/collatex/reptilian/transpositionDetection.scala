@@ -166,10 +166,16 @@ def splitAllHyperedges(
         hesToSplit.map(_._1).zip(preAndPostMatch) // token range lengths are pre, post
       // Remove original hyperedges that will be replaced by their split results
       val newHgTmp = hesToSplit.map(_._1).foldLeft(hgTmp)(_ - _)
-      // Do splitting and merge into updated hgTmp
-      val newHg = hes
+      // Do splitting
+      val newHes: Vector[Hypergraph[EdgeLabel, TokenRange]] = hes
         .map(e => e._1.split(e._2._1.length, currentBlock.length, e._2._2.length))
-       .foldLeft(newHgTmp)(_ + _)
+      // Merge new hyperedges into old hyperedges that didn’t undergo splitting
+      val newHg: Hypergraph[EdgeLabel, TokenRange] = newHes.foldLeft(newHgTmp)(_ + _)
+      val tmp = newHg.hyperedges.find(_.vertices.intersect(currentBlockRanges.toSet).nonEmpty)
+      println(s"blockRanges: $currentBlockRanges")
+      println(s"newHg.hyperedges:")
+      newHg.hyperedges.foreach(e => println(s"  $e"))
+      println(s"match: $tmp")
       val newMatches = matches // remove old matchs and add new split results
       processBlock(blockQueue.tail, newHg, newMatches)
   processBlock(blocks.toVector, bothHgs, Set.empty[HyperedgeMatch])

@@ -6,52 +6,67 @@ import net.collatex.util.Hypergraph.{FullHypergraph, Hyperedge}
 import org.scalatest.funsuite.AnyFunSuite
 
 class TranspositionDetectionTest extends AnyFunSuite:
-
+  // RESUME 2024-12-22 Error in recursion?
   test("Test splitAllHyperedges"):
     val hg: Hypergraph[EdgeLabel, TokenRange] =
-      Hyperedge( // Matches first block, pre (1), block (3), post (1)
-        EdgeLabel(4),
-        Set(TokenRange(4, 9), TokenRange(27, 32))
+      // Token ranges in hyperedge are from different witnesses; must be same length
+      // HE1 < W1 = TokenRange(0, 100), W2 = TokenRange(100, 200),
+      // HE2 < W3 = TokenRange(200, 300), W4 = TokenRange(300, 400)
+      Hyperedge( // W1, W2
+        EdgeLabel(30),
+        Set(TokenRange(30, 70), TokenRange(130, 170))
       ) +
-        Hyperedge( // Matches second block, pre (0), block (2), post (4)
-          EdgeLabel(9),
-          Set(TokenRange(9, 15), TokenRange(33, 39))
+        Hyperedge( // W3, W4
+          EdgeLabel(250),
+          Set(TokenRange(250, 260), TokenRange(350, 360))
         ) +
-        Hyperedge( // Matches no blocks
-          EdgeLabel(40),
-          Set(TokenRange(40, 42), TokenRange(50, 52))
+        Hyperedge( // W1, W2
+          EdgeLabel(10),
+          Set(TokenRange(10, 20), TokenRange(110, 120))
         )
-    val blocks = Iterable(
-      FullDepthBlock(Vector(5, 28), 3),
-      FullDepthBlock(Vector(9, 33), 2)
+    val blocks = Iterable( // block coordinate match different hyperedges
+      FullDepthBlock(Vector(40, 352), 6), // W1, W4
+      FullDepthBlock(Vector(160, 252), 3) // W2, W3
     )
     val expected = (
       FullHypergraph(
         Map(
-          EdgeLabel(4) -> Set(LegalTokenRange(4, 5), LegalTokenRange(27, 28)), // pre, block 1
-          EdgeLabel(5) -> Set(LegalTokenRange(5, 8), LegalTokenRange(28, 31)), // block, block 1
-          EdgeLabel(8) -> Set(LegalTokenRange(8, 9), LegalTokenRange(31, 32)), // post, block 1
-          // no pre, block 2
-          EdgeLabel(33) -> Set(LegalTokenRange(9, 11), LegalTokenRange(33, 35)), // block, block 2
-          EdgeLabel(35) -> Set(LegalTokenRange(11, 15), LegalTokenRange(35, 39)), // post, block 2
-          EdgeLabel(40) -> Set(LegalTokenRange(40, 42), LegalTokenRange(50, 52)) // unchanged, no block
+          EdgeLabel(10) -> Set(LegalTokenRange(10, 20), LegalTokenRange(110, 120)), // no block
+          EdgeLabel(30) -> Set(LegalTokenRange(30, 40), LegalTokenRange(130, 140)), // pre block 1
+          EdgeLabel(40) -> Set(LegalTokenRange(40, 46), LegalTokenRange(140, 146)), // block W1 (also W2)
+          EdgeLabel(46) -> Set(LegalTokenRange(46, 60), LegalTokenRange(146, 160)), // post block 1
+          EdgeLabel(60) -> Set(LegalTokenRange(60, 63), LegalTokenRange(160, 163)),
+          EdgeLabel(63) -> Set(LegalTokenRange(63, 70), LegalTokenRange(163, 170)),
+          EdgeLabel(250) -> Set(LegalTokenRange(250, 252), LegalTokenRange(350, 352)),
+          EdgeLabel(252) -> Set(LegalTokenRange(252, 255), LegalTokenRange(352, 355)),
+          EdgeLabel(255) -> Set(LegalTokenRange(255, 258), LegalTokenRange(355, 358)),
+          EdgeLabel(258) -> Set(LegalTokenRange(258, 260), LegalTokenRange(358, 360))
         ),
         Map(
-          LegalTokenRange(4, 5) -> Set(EdgeLabel(4)),
-          LegalTokenRange(27, 28) -> Set(EdgeLabel(4)),
-          LegalTokenRange(5, 8) -> Set(EdgeLabel(5)),
-          LegalTokenRange(28, 31) -> Set(EdgeLabel(5)),
-          LegalTokenRange(8, 9) -> Set(EdgeLabel(8)),
-          LegalTokenRange(31, 32) -> Set(EdgeLabel(8)),
-          LegalTokenRange(9, 11) -> Set(EdgeLabel(33)),
-          LegalTokenRange(33, 35) -> Set(EdgeLabel(33)),
-          LegalTokenRange(11, 15) -> Set(EdgeLabel(35)),
-          LegalTokenRange(35, 39) -> Set(EdgeLabel(35)),
-          LegalTokenRange(40, 42) -> Set(EdgeLabel(40)),
-          LegalTokenRange(50, 52) -> Set(EdgeLabel(40))
+          LegalTokenRange(130, 140) -> Set(EdgeLabel(30)),
+          LegalTokenRange(146, 160) -> Set(EdgeLabel(46)),
+          LegalTokenRange(358, 360) -> Set(EdgeLabel(258)),
+          LegalTokenRange(10, 20) -> Set(EdgeLabel(10)),
+          LegalTokenRange(352, 355) -> Set(EdgeLabel(252)),
+          LegalTokenRange(40, 46) -> Set(EdgeLabel(40)),
+          LegalTokenRange(258, 260) -> Set(EdgeLabel(258)),
+          LegalTokenRange(350, 352) -> Set(EdgeLabel(250)),
+          LegalTokenRange(60, 63) -> Set(EdgeLabel(60)),
+          LegalTokenRange(255, 258) -> Set(EdgeLabel(255)),
+          LegalTokenRange(63, 70) -> Set(EdgeLabel(63)),
+          LegalTokenRange(252, 255) -> Set(EdgeLabel(252)),
+          LegalTokenRange(46, 60) -> Set(EdgeLabel(46)),
+          LegalTokenRange(355, 358) -> Set(EdgeLabel(255)),
+          LegalTokenRange(30, 40) -> Set(EdgeLabel(30)),
+          LegalTokenRange(110, 120) -> Set(EdgeLabel(10)),
+          LegalTokenRange(163, 170) -> Set(EdgeLabel(63)),
+          LegalTokenRange(160, 163) -> Set(EdgeLabel(60)),
+          LegalTokenRange(250, 252) -> Set(EdgeLabel(250)),
+          LegalTokenRange(140, 146) -> Set(EdgeLabel(40))
         )
       ),
       Set()
     )
+
     val result = splitAllHyperedges(hg, blocks)
     assert(result == expected)
