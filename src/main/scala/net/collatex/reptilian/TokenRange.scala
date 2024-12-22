@@ -58,15 +58,15 @@ enum TokenRange:
         val range2: LegalTokenRange = LegalTokenRange(positionToSplit, x.until)
         Right(BothPopulated(range1, range2))
 
-  def slice(startOffset: Int, untilOffset: Int): Either[SliceTokenRangeError, TokenRange] =
+  def slice(startOffset: Int, untilOffset: Int): Either[SliceTokenRangeError.type, TokenRange] =
     this match
-      case _: (IllegalTokenRange | EmptyTokenRange) => Left(SliceTokenRangeError())
+      case _: (IllegalTokenRange | EmptyTokenRange) => Left(SliceTokenRangeError)
       case _ =>
         if startOffset < 0
            || untilOffset < startOffset // covers prohibiting until < 0
            || startOffset > this.length
            || untilOffset > this.length
-        then Left(SliceTokenRangeError())
+        then Left(SliceTokenRangeError)
         else
           Right(TokenRange(this.start + startOffset, this.start + untilOffset))
 
@@ -90,4 +90,4 @@ enum SplitTokenRangeError:
   case EmptyTokenRangeError
   case IllegalTokenRangeError
 
-class SliceTokenRangeError
+object SliceTokenRangeError
