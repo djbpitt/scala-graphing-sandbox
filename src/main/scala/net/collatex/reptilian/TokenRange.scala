@@ -63,12 +63,11 @@ enum TokenRange:
       case _: (IllegalTokenRange | EmptyTokenRange) => Left(SliceTokenRangeError)
       case _ =>
         if startOffset < 0
-           || untilOffset < startOffset // covers prohibiting until < 0
-           || startOffset > this.length
-           || untilOffset > this.length
+          || untilOffset < startOffset // covers prohibiting until < 0
+          || startOffset > this.length
+          || untilOffset > this.length
         then Left(SliceTokenRangeError)
-        else
-          Right(TokenRange(this.start + startOffset, this.start + untilOffset))
+        else Right(TokenRange(this.start + startOffset, this.start + untilOffset))
 
 object TokenRange:
   def apply(start: Int, until: Int): TokenRange =
@@ -78,7 +77,7 @@ object TokenRange:
       case 1  => IllegalTokenRange(start, until) // Shouldn’t happen
 
 enum SplitTokenRangeResult:
-  case BothPopulated(preTokenRange: LegalTokenRange, postTokenRange: LegalTokenRange) 
+  case BothPopulated(preTokenRange: LegalTokenRange, postTokenRange: LegalTokenRange)
   case FirstOnlyPopulated(preTokenRange: LegalTokenRange, postTokenRange: EmptyTokenRange)
   case SecondOnlyPopulated(preTokenRange: EmptyTokenRange, postTokenRange: LegalTokenRange)
 
