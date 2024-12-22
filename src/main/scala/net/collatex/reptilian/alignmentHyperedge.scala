@@ -26,4 +26,4 @@ extension (he: Hyperedge[EdgeLabel, TokenRange])
     else
       he.slice(0, preLength) +
         he.slice(preLength, preLength + blockLength) +
-          he.slice(preLength + blockLength, preLength + blockLength + postLength)
+        he.slice(preLength + blockLength, preLength + blockLength + postLength)
