@@ -78,15 +78,12 @@ object TokenRange:
       case 1  => IllegalTokenRange(start, until) // Shouldn’t happen
 
 enum SplitTokenRangeResult:
-  //TODO: remove extends SplitRokenRangeResult
-  case BothPopulated(range1: LegalTokenRange, range2: LegalTokenRange) extends SplitTokenRangeResult
-  case FirstOnlyPopulated(range1: LegalTokenRange, range2: EmptyTokenRange) extends SplitTokenRangeResult
-  case SecondOnlyPopulated(range1: EmptyTokenRange, range2: LegalTokenRange) extends SplitTokenRangeResult
+  case BothPopulated(preTokenRange: LegalTokenRange, postTokenRange: LegalTokenRange) 
+  case FirstOnlyPopulated(preTokenRange: LegalTokenRange, postTokenRange: EmptyTokenRange)
+  case SecondOnlyPopulated(preTokenRange: EmptyTokenRange, postTokenRange: LegalTokenRange)
 
-  //TODO: rename range1 to pre1
-  //TODO: rename range2 to pre2
-  def range1: TokenRange
-  def range2: TokenRange
+  def preTokenRange: TokenRange
+  def postTokenRange: TokenRange
 
 enum SplitTokenRangeError:
   case IllegalSplitValueError(start: Int, until: Int, splitPos: Int)

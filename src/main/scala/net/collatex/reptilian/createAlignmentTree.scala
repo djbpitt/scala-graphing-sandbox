@@ -46,15 +46,15 @@ def splitWitnessGroup(
   //   into visualization?
   val lefts = splits.foldLeft(immutable.Map.empty[Siglum, TokenRange])((acc, kv) =>
     kv match {
-      case (e: Siglum, Right(f: BothPopulated))      => acc + (e -> f.range1)
-      case (e: Siglum, Right(f: FirstOnlyPopulated)) => acc + (e -> f.range1)
+      case (e: Siglum, Right(f: BothPopulated))      => acc + (e -> f.preTokenRange)
+      case (e: Siglum, Right(f: FirstOnlyPopulated)) => acc + (e -> f.preTokenRange)
       case _                                         => acc
     }
   )
   val rights = splits.foldLeft(immutable.Map.empty[Siglum, TokenRange])((acc, kv) =>
     kv match {
-      case (e: Siglum, Right(f: BothPopulated))       => acc + (e -> f.range2)
-      case (e: Siglum, Right(f: SecondOnlyPopulated)) => acc + (e -> f.range2)
+      case (e: Siglum, Right(f: BothPopulated))       => acc + (e -> f.postTokenRange)
+      case (e: Siglum, Right(f: SecondOnlyPopulated)) => acc + (e -> f.postTokenRange)
       case _                                          => acc
     }
   )
