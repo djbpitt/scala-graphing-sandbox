@@ -16,7 +16,7 @@ enum TokenRange:
   def tString(using gTa: Vector[TokenEnum]): String =
     gTa.slice(this.start, this.until).map(_.t).mkString // concatenate t values
 
-  def decreaseStart(): TokenRange = TokenRange(this.start - 1, this.until)
+  def decreaseStart: TokenRange = TokenRange(this.start - 1, this.until)
 
   def contains(pos: Int): Boolean = // position in gTa
     this.start <= pos && this.until > pos
@@ -78,10 +78,13 @@ object TokenRange:
       case 1  => IllegalTokenRange(start, until) // Shouldn’t happen
 
 enum SplitTokenRangeResult:
+  //TODO: remove extends SplitRokenRangeResult
   case BothPopulated(range1: LegalTokenRange, range2: LegalTokenRange) extends SplitTokenRangeResult
   case FirstOnlyPopulated(range1: LegalTokenRange, range2: EmptyTokenRange) extends SplitTokenRangeResult
   case SecondOnlyPopulated(range1: EmptyTokenRange, range2: LegalTokenRange) extends SplitTokenRangeResult
 
+  //TODO: rename range1 to pre1
+  //TODO: rename range2 to pre2
   def range1: TokenRange
   def range2: TokenRange
 

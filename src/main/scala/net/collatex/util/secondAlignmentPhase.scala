@@ -196,16 +196,16 @@ def compactEditSteps(
         val newOpenCompoundStep = openCompoundStep match
           case x: CompoundStepMatch =>
             CompoundStepMatch(
-              x.tr1.decreaseStart(),
-              x.tr2.decreaseStart()
+              x.tr1.decreaseStart,
+              x.tr2.decreaseStart
             )
           case x: CompoundStepNonMatch =>
             CompoundStepNonMatch(
-              x.tr1.decreaseStart(),
-              x.tr2.decreaseStart()
+              x.tr1.decreaseStart,
+              x.tr2.decreaseStart
             )
-          case x: CompoundStepInsert => CompoundStepInsert(x.tr.decreaseStart())
-          case x: CompoundStepDelete => CompoundStepDelete(x.tr.decreaseStart())
+          case x: CompoundStepInsert => CompoundStepInsert(x.tr.decreaseStart)
+          case x: CompoundStepDelete => CompoundStepDelete(x.tr.decreaseStart)
         nextStep(t, completedCompoundSteps, newOpenCompoundStep)
       case h #:: t => nextStep(t, completedCompoundSteps :+ openCompoundStep, h)
     }
