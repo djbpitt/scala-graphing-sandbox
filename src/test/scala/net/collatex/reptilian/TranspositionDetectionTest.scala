@@ -35,12 +35,12 @@ class TranspositionDetectionTest extends AnyFunSuite:
           EdgeLabel(30) -> Set(LegalTokenRange(30, 40), LegalTokenRange(130, 140)), // pre block 1
           EdgeLabel(40) -> Set(LegalTokenRange(40, 46), LegalTokenRange(140, 146)), // block W1 (also W2)
           EdgeLabel(46) -> Set(LegalTokenRange(46, 60), LegalTokenRange(146, 160)), // post block 1
-          EdgeLabel(60) -> Set(LegalTokenRange(60, 63), LegalTokenRange(160, 163)),
-          EdgeLabel(63) -> Set(LegalTokenRange(63, 70), LegalTokenRange(163, 170)),
-          EdgeLabel(250) -> Set(LegalTokenRange(250, 252), LegalTokenRange(350, 352)),
-          EdgeLabel(252) -> Set(LegalTokenRange(252, 255), LegalTokenRange(352, 355)),
-          EdgeLabel(255) -> Set(LegalTokenRange(255, 258), LegalTokenRange(355, 358)),
-          EdgeLabel(258) -> Set(LegalTokenRange(258, 260), LegalTokenRange(358, 360))
+          EdgeLabel(60) -> Set(LegalTokenRange(60, 63), LegalTokenRange(160, 163)), // block for match 2
+          EdgeLabel(63) -> Set(LegalTokenRange(63, 70), LegalTokenRange(163, 170)), // [pst block 2
+          EdgeLabel(250) -> Set(LegalTokenRange(250, 252), LegalTokenRange(350, 352)), // pre block 2
+          EdgeLabel(252) -> Set(LegalTokenRange(252, 255), LegalTokenRange(352, 355)), // block for match 2
+          EdgeLabel(255) -> Set(LegalTokenRange(255, 258), LegalTokenRange(355, 358)), // post block 2, but interrupted; see below
+          EdgeLabel(258) -> Set(LegalTokenRange(258, 260), LegalTokenRange(358, 360)) // block and block 2 cross? Wrong data!
         ),
         Map(
           LegalTokenRange(130, 140) -> Set(EdgeLabel(30)),
