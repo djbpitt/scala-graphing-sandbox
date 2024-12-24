@@ -33,7 +33,7 @@ class TranspositionDetectionTest extends AnyFunSuite:
       FullHypergraph(
         Map(
           EdgeLabel(10) -> Set(LegalTokenRange(10, 20), LegalTokenRange(110, 120)), // No block
-          EdgeLabel(30) -> Set(LegalTokenRange(30, 40), LegalTokenRange(130, 140)), // Pre 1
+          EdgeLabel(30) -> Set(LegalTokenRange(30, 40), LegalTokenRange(130, 140)),
           EdgeLabel(40) -> Set(LegalTokenRange(40, 43), LegalTokenRange(140, 143)), // Block 1
           EdgeLabel(43) -> Set(LegalTokenRange(43, 60), LegalTokenRange(143, 160)),
           EdgeLabel(60) -> Set(LegalTokenRange(60, 63), LegalTokenRange(160, 163)), // Block 2
@@ -69,7 +69,42 @@ class TranspositionDetectionTest extends AnyFunSuite:
           LegalTokenRange(359, 360) -> Set(EdgeLabel(259))
         )
       ),
-      Set()
+      Set(
+        HyperedgeMatch(
+          Hyperedge(
+            EdgeLabel(256),
+            Set(
+              LegalTokenRange(256, 259),
+              LegalTokenRange(356, 359)
+            )
+          ),
+          Hyperedge(
+            EdgeLabel(40),
+            Set(
+              LegalTokenRange(40, 43),
+              LegalTokenRange(140, 143)
+            )
+          )
+        ),
+        HyperedgeMatch(
+          Hyperedge(
+            EdgeLabel(252),
+            Set(
+              LegalTokenRange(252, 255),
+              LegalTokenRange(352, 355)
+            )
+          ),
+          Hyperedge(
+            EdgeLabel(60),
+            Set(
+              LegalTokenRange(60, 63),
+              LegalTokenRange(160, 163)
+            )
+          )
+        )
+      )
     )
+
     val result = splitAllHyperedges(hg, blocks)
-    assert(result == expected)
+    assert(result._1 == expected._1)
+    assert(result._2 == expected._2)
