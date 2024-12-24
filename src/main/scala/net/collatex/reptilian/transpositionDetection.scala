@@ -175,12 +175,12 @@ def splitAllHyperedges(
         .map(e => e._1.split(e._2._1.length, currentBlock.length, e._2._2.length))
       // Merge new hyperedges into old hyperedges that didn’t undergo splitting
       val newHg: Hypergraph[EdgeLabel, TokenRange] = newHes.foldLeft(newHgTmp)(_ + _)
-      val tmp = newHg.hyperedges.find(_.vertices.intersect(currentBlockRanges.toSet).nonEmpty)
+      val tmp = newHg.hyperedges.filter(_.vertices.intersect(currentBlockRanges.toSet).nonEmpty)
       // println(s"blockRanges: $currentBlockRanges")
       // println(s"newHg.hyperedges:")
       // newHg.hyperedges.foreach(e => println(s"  $e"))
       // println(s"match: $tmp")
-      val newMatches = matches // remove old matchs and add new split results
+      val newMatches: Set[HyperedgeMatch] = matches + HyperedgeMatch(tmp) // remove old matchs and add new split results
       processBlock(blockQueue.tail, newHg, newMatches)
   processBlock(blocks.toVector, bothHgs, Set.empty[HyperedgeMatch])
 
@@ -279,3 +279,6 @@ case class HyperedgeMatch(
     he1: Hyperedge[EdgeLabel, TokenRange],
     he2: Hyperedge[EdgeLabel, TokenRange]
 )
+object HyperedgeMatch:
+  def apply(set: Set[Hyperedge[EdgeLabel, TokenRange]]) =
+    new HyperedgeMatch(set.head, set.last)
