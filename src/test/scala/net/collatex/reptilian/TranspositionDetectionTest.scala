@@ -6,7 +6,6 @@ import net.collatex.util.Hypergraph.{FullHypergraph, Hyperedge}
 import org.scalatest.funsuite.AnyFunSuite
 
 class TranspositionDetectionTest extends AnyFunSuite:
-  // RESUME 2024-12-22 Error in recursion?
   test("Test splitAllHyperedges"):
     val hg: Hypergraph[EdgeLabel, TokenRange] =
       // Token ranges in hyperedge are from different witnesses; must be same length

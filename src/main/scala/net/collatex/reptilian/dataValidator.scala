@@ -3,7 +3,10 @@ package net.collatex.reptilian
 import net.collatex.util.Hypergraph
 import net.collatex.util.Hypergraph.Hyperedge
 
-def convertMatch(hypergraph: Hypergraph[EdgeLabel, TokenRange], block: FullDepthBlock): Unit =
+def convertMatch(
+    hypergraph: Hypergraph[EdgeLabel, TokenRange],
+    block: FullDepthBlock
+): Vector[Hypergraph[EdgeLabel, TokenRange]] =
   // convert match into two TokenRanges
   val matchTokenRanges = toTokenRanges(block)
   // each match has a vector with token ranges associated with it
@@ -24,14 +27,18 @@ def convertMatch(hypergraph: Hypergraph[EdgeLabel, TokenRange], block: FullDepth
   // Slice hyperedge to only keep the area of the match
   val result4: Vector[Hypergraph[EdgeLabel, TokenRange]] = result3
     .map(e => e._1.slice(e._2._1.length, e._2._1.length + block.length))
-
-  println(result4)
+  result4
 
 def validateData(hypergraph: Hypergraph[EdgeLabel, TokenRange], matches: Iterable[FullDepthBlock]): Unit =
-  // call a single function for each block.
-  // for each block we perform multiple steps
-  matches.foreach(convertMatch(hypergraph, _))
-
-
-
-
+  // call a single function to perform multiple steps for each block.
+  val allResults = matches.map(convertMatch(hypergraph, _))
+  val hesAsSets = allResults
+    .map(e => e
+      .flatMap(_.vertices)
+      .flatMap(f => Range(f.start, f.until))
+      .toSet
+    )
+  val intersection = hesAsSets.head.intersect(hesAsSets.last).toSeq.sorted
+  allResults.foreach(println)
+  hesAsSets.foreach(println)
+  println(intersection)
