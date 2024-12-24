@@ -1,11 +1,11 @@
 package net.collatex.reptilian
 import net.collatex.reptilian.NodeType.Internal
 import net.collatex.reptilian.TokenEnum.Token
-import net.collatex.util.{Graph, Hypergraph, createHgTa}
+import net.collatex.util.{Graph, Hypergraph, createHgTa, hypergraphToReadings}
 
 import scala.collection.immutable.TreeMap
 import net.collatex.reptilian.returnSampleData
-import net.collatex.util.Hypergraph.Hyperedge
+import net.collatex.util.Hypergraph.{Hyperedge, hyperedge}
 
 import scala.annotation.tailrec
 import scala.math.Ordering
@@ -176,10 +176,10 @@ def splitAllHyperedges(
       // Merge new hyperedges into old hyperedges that didn’t undergo splitting
       val newHg: Hypergraph[EdgeLabel, TokenRange] = newHes.foldLeft(newHgTmp)(_ + _)
       val tmp = newHg.hyperedges.find(_.vertices.intersect(currentBlockRanges.toSet).nonEmpty)
-      println(s"blockRanges: $currentBlockRanges")
-      println(s"newHg.hyperedges:")
-      newHg.hyperedges.foreach(e => println(s"  $e"))
-      println(s"match: $tmp")
+      // println(s"blockRanges: $currentBlockRanges")
+      // println(s"newHg.hyperedges:")
+      // newHg.hyperedges.foreach(e => println(s"  $e"))
+      // println(s"match: $tmp")
       val newMatches = matches // remove old matchs and add new split results
       processBlock(blockQueue.tail, newHg, newMatches)
   processBlock(blocks.toVector, bothHgs, Set.empty[HyperedgeMatch])
@@ -192,6 +192,8 @@ def realMainFunction(debug: Boolean): Unit =
   val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
   val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
   val allSplitHyperedges = splitAllHyperedges(bothHgs, blocksGTa)
+  val hypergraphStrings: String = hypergraphToReadings(allSplitHyperedges._1)
+  println(hypergraphStrings)
   // split hyperedges where needed before ordering and ranking
   //   Block contains info about one witness from each hyperedge
   //   Compute block hyperedge by projecting from block information onto hyperedges
