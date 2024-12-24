@@ -126,6 +126,10 @@ def findInstanceInHypergraph(hg: Hypergraph[EdgeLabel, TokenRange], instance: In
   val resultHe = hg.hyperedges.find(e => e.vertices.contains(resultTr)).get
   (resultHe, resultTr)
 
+// converts a block into n number of token ranges, where n is the number of instances
+def toTokenRanges(currentBlock: FullDepthBlock) =
+  currentBlock.instances.map(e => TokenRange(e, e + currentBlock.length))
+
 def splitAllHyperedges(
     bothHgs: Hypergraph[EdgeLabel, TokenRange],
     blocks: Iterable[FullDepthBlock] // gTa
@@ -150,7 +154,7 @@ def splitAllHyperedges(
        */
       val currentBlock = blockQueue.head
       // Convert block instances to token ranges
-      val currentBlockRanges = currentBlock.instances.map(e => TokenRange(e, e + currentBlock.length))
+      val currentBlockRanges = toTokenRanges(currentBlock)
       // Find hyperedges to split and token ranges used to perform splitting
       val hesToSplit: Vector[(Hyperedge[EdgeLabel, TokenRange], TokenRange)] =
         currentBlock.instances.map(e => findInstanceInHypergraph(hgTmp, e))
