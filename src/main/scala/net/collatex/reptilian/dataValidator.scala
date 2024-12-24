@@ -46,11 +46,7 @@ def validateData(
   val unionAndIntersection = hesAsSets
     // (UnionValues, IntersectValues)
     .foldLeft((Set[Int](), Set[Int]()))((y, x) => (y._1 ++ x, y._2 ++ y._1.intersect(x)))
-  allResults.foreach(println)
-  hesAsSets.foreach(println)
-  // println(s"union: ${unionAndIntersection._1.toSeq.sorted}")
-  // println(s"intersection: ${unionAndIntersection._2.toSeq.sorted}")
-  val result = if (unionAndIntersection._2.isEmpty) then ValidationResult.Valid else ValidationResult.Invalid(unionAndIntersection._2)
+  val result = if unionAndIntersection._2.isEmpty then ValidationResult.Valid else ValidationResult.Invalid(unionAndIntersection._2)
   result
 
 enum ValidationResult:
