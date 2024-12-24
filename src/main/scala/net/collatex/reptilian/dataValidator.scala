@@ -4,11 +4,13 @@ import net.collatex.util.Hypergraph
 
 def convertMatch(hypergraph: Hypergraph[EdgeLabel, TokenRange], block: FullDepthBlock): Unit =
   // convert match into two TokenRanges
-  val result = toTokenRanges(block)
+  val matchTokenRanges = toTokenRanges(block)
 
-  // each match has two vectors with token ranges associated with it
+  // each match has a vector with token ranges associated with it
   // for each token range find the associated hyperedge in the graph
-  val result2 = result.map(e => findInstanceInHypergraph(hypergraph, e.start))
+  // don't know why the find method returns the hyperedge as well as the token range
+  // for now only take the hyperedge (first item)
+  val result2 = matchTokenRanges.map(e => findInstanceInHypergraph(hypergraph, e.start)._1)
   // for each block we now have a vector of hyperedges
   // now we split the hyperedges according to the token ranges of the matches.
 
