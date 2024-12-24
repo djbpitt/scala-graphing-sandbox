@@ -27,7 +27,8 @@ class TranspositionDetectionTest extends AnyFunSuite:
       FullDepthBlock(Vector(40, 352), 6), // W1, W4
       FullDepthBlock(Vector(160, 252), 3) // W2, W3
     )
-    validateData(hg, blocks)
+    val outcome = validateData(hg, blocks)
+    println(s"Validation result: $outcome")
     
     
 //    val expected = (

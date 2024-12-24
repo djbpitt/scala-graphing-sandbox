@@ -1,5 +1,6 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.ValidationResult.Invalid
 import net.collatex.util.Hypergraph
 import net.collatex.util.Hypergraph.Hyperedge
 
@@ -29,16 +30,33 @@ def convertMatch(
     .map(e => e._1.slice(e._2._1.length, e._2._1.length + block.length))
   result4
 
-def validateData(hypergraph: Hypergraph[EdgeLabel, TokenRange], matches: Iterable[FullDepthBlock]): Unit =
+def validateData(
+    hypergraph: Hypergraph[EdgeLabel, TokenRange],
+    matches: Iterable[FullDepthBlock]
+): ValidationResult =
   // call a single function to perform multiple steps for each block.
   val allResults = matches.map(convertMatch(hypergraph, _))
   val hesAsSets = allResults
-    .map(e => e
-      .flatMap(_.vertices)
-      .flatMap(f => Range(f.start, f.until))
-      .toSet
+    .map(e =>
+      e
+        .flatMap(_.vertices)
+        .flatMap(f => Range(f.start, f.until))
+        .toSet
     )
-  val intersection = hesAsSets.head.intersect(hesAsSets.last).toSeq.sorted
+  val unionAndIntersection = hesAsSets
+    // (UnionValues, IntersectValues)
+    .foldLeft((Set[Int](), Set[Int]()))((y, x) => (y._1 ++ x, y._2 ++ y._1.intersect(x)))
   allResults.foreach(println)
   hesAsSets.foreach(println)
-  println(intersection)
+  // println(s"union: ${unionAndIntersection._1.toSeq.sorted}")
+  // println(s"intersection: ${unionAndIntersection._2.toSeq.sorted}")
+  val result = if (unionAndIntersection._2.isEmpty) then ValidationResult.Valid else ValidationResult.Invalid(unionAndIntersection._2)
+  result
+
+enum ValidationResult:
+  case Valid
+  case Invalid(data: Set[Int])
+
+  override def toString: String = this match
+    case ValidationResult.Valid => "Valid"
+    case ValidationResult.Invalid(data) => "Invalid: " + data.toSeq.sorted.mkString(", ")
