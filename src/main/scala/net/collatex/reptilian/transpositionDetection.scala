@@ -192,17 +192,20 @@ def realMainFunction(debug: Boolean): Unit =
   val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
   val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
   val allSplitHyperedges = splitAllHyperedges(bothHgs, blocksGTa)
-  val hypergraphStrings: String = hypergraphToReadings(allSplitHyperedges._1)
-  println(hypergraphStrings)
-  // split hyperedges where needed before ordering and ranking
-  //   Block contains info about one witness from each hyperedge
-  //   Compute block hyperedge by projecting from block information onto hyperedges
-  //   Compute to-be-processed (= pre and post, but not distinguished) information
-  //     from combination of block and hyperedge information
-  //   Retire block (no further processing needed), cycle to-be-processed into
-  //     inventory of hyperedges to be checked for blocks / splitting
-  val rankings = Vector(hg1, hg2).map(rankHg(_, debug)) // perform topological sort and rank
-  // rankings.foreach(e => println(s"rankings: $e"))
+  val matches = allSplitHyperedges._2
+  val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
+    matches.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.he1 + x.he2)
+  val ranking: Map[NodeType, Int] = rankHg(matchesAsHg, debug)
+  val matchesSortedam1 = matches.toSeq.sortBy(e => ranking(NodeType(e.he1.label)))
+  val matchesSortedam2 = matches.toSeq.sortBy(e => ranking(NodeType(e.he2.label)))
+  // TODO: Make decision where sorted results diverge; test below is temporary
+  val transpositionBool = matchesSortedam1 != matchesSortedam2
+  println(s"Transposition?: $transpositionBool")
+  // For debug: Print string values of hyperedges with witness counts
+  // val hypergraphStrings: String = hypergraphToReadings(allSplitHyperedges._1)
+  // println(hypergraphStrings)
+
+
 
 @main def runWithSampleData(): Unit = // no files saved to disk
   realMainFunction(false)
