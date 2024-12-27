@@ -198,15 +198,26 @@ def realMainFunction(debug: Boolean): Unit =
   val ranking: Map[NodeType, Int] = rankHg(matchesAsHg, debug)
   val matchesSortedam1 = matches.toSeq.sortBy(e => ranking(NodeType(e.he1.label)))
   val matchesSortedam2 = matches.toSeq.sortBy(e => ranking(NodeType(e.he2.label)))
-  // TODO: Make decision where sorted results diverge; test below is temporary
+  // TODO: Make decision where sorted results diverge; test and assert/escape below is temporary
   val transpositionBool = matchesSortedam1 != matchesSortedam2
-  println(s"Transposition?: $transpositionBool")
+  assert(!transpositionBool, "We don’t yet handle transposition") // Temporarily bail out if transposition
   // For debug: Print string values of hyperedges with witness counts
   // val hypergraphStrings: String = hypergraphToReadings(allSplitHyperedges._1)
   // println(hypergraphStrings)
-
-
-
+  // If no transposition (temporarily):
+  //  Merge hyperedges on matches into single hyperedge
+  //  This replaces those separate hyperedges in full inventory of hyperedges
+  // RESUME HERE 2024-12-27: Use set difference (set1.diff(set2)) instead of
+  //   algebraic subtraction to remove original hyperedges that have been merged
+  //   before incorporating merge result
+  val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matches
+    .map(e => Hyperedge(e._1.label, e._1.vertices ++ e._2.vertices)) // NB: new hyperedge
+    .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
+  val hgWithMergeResults = matches
+    .map(e => e.he1 + e.he2) // convert match instances to hyperedges
+    .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _) // fold into single hypergraph
+    .hyperedges.foldLeft(allSplitHyperedges._1)(_ - _) // remove originals that have been merged
+    + newMatchHg // fold in merge results
 @main def runWithSampleData(): Unit = // no files saved to disk
   realMainFunction(false)
 
