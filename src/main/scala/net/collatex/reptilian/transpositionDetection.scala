@@ -184,10 +184,14 @@ def splitAllHyperedges(
       processBlock(blockQueue.tail, newHg, newMatches)
   processBlock(blocks.toVector, bothHgs, Set.empty[HyperedgeMatch])
 
-def detectTransposition(debug: Boolean, matches: Set[HyperedgeMatch], matchesAsHg: Hypergraph[EdgeLabel, TokenRange])(using gTa: Vector[Token]): Unit = {
+def detectTransposition(
+    matchesAsSet: Set[HyperedgeMatch],
+    matchesAsHg: Hypergraph[EdgeLabel, TokenRange],
+    debug: Boolean
+)(using gTa: Vector[Token]): Unit = {
   val ranking: Map[NodeType, Int] = rankHg(matchesAsHg, debug)
-  val matchesSortedam1 = matches.toSeq.sortBy(e => ranking(NodeType(e.he1.label)))
-  val matchesSortedam2 = matches.toSeq.sortBy(e => ranking(NodeType(e.he2.label)))
+  val matchesSortedam1 = matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.he1.label)))
+  val matchesSortedam2 = matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.he2.label)))
   // TODO: Make decision where sorted results diverge; test and assert/escape below is temporary
   val transpositionBool = matchesSortedam1 != matchesSortedam2
   assert(!transpositionBool, "We don’t yet handle transposition") // Temporarily bail out if transposition
@@ -201,14 +205,14 @@ def realMainFunction(debug: Boolean): Unit =
   val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
   val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
   val allSplitHyperedges = splitAllHyperedges(bothHgs, blocksGTa)
-  val matches = allSplitHyperedges._2
+  val matchesAsSet = allSplitHyperedges._2
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
-    matches.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.he1 + x.he2)
-  detectTransposition(debug, matches, matchesAsHg) // currently raises error if transposition
+    matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.he1 + x.he2)
+  detectTransposition(matchesAsSet, matchesAsHg, debug) // currently raises error if transposition
   // If no transposition (temporarily):
   //  Merge hyperedges on matches into single hyperedge
   //  This replaces those separate hyperedges in full inventory of hyperedges
-  val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matches
+  val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
     .map(e => Hyperedge(e._1.label, e._1.vertices ++ e._2.vertices)) // NB: new hyperedge
     .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
   val hgWithMergeResults = allSplitHyperedges._1 // Original full hypergraph
