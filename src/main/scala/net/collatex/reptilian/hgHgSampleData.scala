@@ -280,7 +280,7 @@ val gTa: Vector[Token] = Vector(
   Token("more ", "more", 5, 270),
   Token("species ", "species", 5, 271)
 )
-val hg1: Hypergraph[EdgeLabel, TokenRange] = FullHypergraph(
+val hg1Sample: Hypergraph[EdgeLabel, TokenRange] = FullHypergraph(
   Map(
     EdgeLabel(173) -> Set(TokenRange(173, 174)),
     EdgeLabel(254) -> Set(TokenRange(254, 255)),
@@ -296,7 +296,7 @@ val hg1: Hypergraph[EdgeLabel, TokenRange] = FullHypergraph(
     TokenRange(255, 272) -> Set(EdgeLabel(255))
   )
 )
-val hg2: Hypergraph[EdgeLabel, TokenRange] = FullHypergraph(
+val hg2Sample: Hypergraph[EdgeLabel, TokenRange] = FullHypergraph(
   Map(
     EdgeLabel(22) -> Set(TokenRange(22, 43), TokenRange(0, 21), TokenRange(44, 65), TokenRange(66, 87)),
     EdgeLabel(87) -> Set(TokenRange(87, 110))
@@ -315,4 +315,4 @@ def returnSampleData(): (
     Hypergraph[EdgeLabel, TokenRange],
     Hypergraph[EdgeLabel, TokenRange]
 ) =
-  (gTa, hg1, hg2)
+  (gTa, hg1Sample, hg2Sample)

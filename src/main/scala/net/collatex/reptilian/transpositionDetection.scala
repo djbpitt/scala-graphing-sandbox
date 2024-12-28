@@ -77,6 +77,7 @@ def createDependencyGraph(
       .map((tr, l) => tr.start -> l.head)
       .to(TreeMap)
     result
+
   val tm = createTreeMap(Hypergraph.hyperedge(EdgeLabel("ends"), egTa.ends: _*) + hg)
   def computeEdgeData(tokr: TokenRange, he: EdgeLabel): EdgeData =
     val witness = he match {
@@ -88,13 +89,14 @@ def createDependencyGraph(
     val tmp = tmTarget.get._2
     val edge = EdgeEndpoints(NodeType(he), NodeType(tmp))
     EdgeData(he, witness, tokr, source, tmTarget, edge)
-  def computeRowDatas(hes: Set[EdgeLabel]): Seq[Seq[EdgeData]] = {
+
+  def computeRowDatas(hes: Set[EdgeLabel]): Seq[Seq[EdgeData]] =
     val sortedHes = hes.toSeq.sorted
     val rds: Seq[Seq[EdgeData]] = for he <- sortedHes yield
       val tokrs = startsWithHg.members(he).toSeq.sortBy(e => e.start) // gTa is already ordered
       tokrs.map(e => computeEdgeData(e, he))
     rds
-  }
+
   // Used to create html table and again to computes edges for graph and GraphViz
   val rowDatas: Seq[Seq[EdgeData]] = computeRowDatas(startsWithHg.hyperedgeLabels)
   val depGraph = rowDatas
@@ -188,19 +190,15 @@ def detectTransposition(
     matchesAsSet: Set[HyperedgeMatch],
     matchesAsHg: Hypergraph[EdgeLabel, TokenRange],
     debug: Boolean
-)(using gTa: Vector[Token]): Unit = {
+)(using gTa: Vector[Token]): Unit =
   val ranking: Map[NodeType, Int] = rankHg(matchesAsHg, debug)
   val matchesSortedam1 = matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.he1.label)))
   val matchesSortedam2 = matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.he2.label)))
   // TODO: Make decision where sorted results diverge; test and assert/escape below is temporary
   val transpositionBool = matchesSortedam1 != matchesSortedam2
   assert(!transpositionBool, "We don’t yet handle transposition") // Temporarily bail out if transposition
-}
 
-def realMainFunction(debug: Boolean): Unit =
-  val (gTaInput, hg1, hg2) = returnSampleData()
-  given gTa: Vector[Token] = gTaInput
-  val bothHgs = hg1 + hg2
+def mergeHgHg(bothHgs: Hypergraph[EdgeLabel, TokenRange], debug: Boolean)(using gTaInput: Vector[Token]) =
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
   val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
@@ -218,7 +216,14 @@ def realMainFunction(debug: Boolean): Unit =
   val hgWithMergeResults = allSplitHyperedges._1 // Original full hypergraph
     - matchesAsHg // Remove hyperedges that will be merged
     + newMatchHg // Add the merged hyperedges in place of those removed
-  println(hypergraphToReadings(hgWithMergeResults))
+  hgWithMergeResults
+
+def realMainFunction(debug: Boolean): Unit =
+  val (gTaInput, hg1, hg2) = returnSampleData() // don’t use (global) names of hgs because real data isn’t global
+  given gTa: Vector[Token] = gTaInput
+  val hgWithMergeResults: Hypergraph[EdgeLabel, TokenRange] = mergeHgHg(hg1 + hg2, debug)
+  val result = hypergraphToReadings(hgWithMergeResults)
+  println(result)
 
 @main def runWithSampleData(): Unit = // no files saved to disk
   realMainFunction(false)
