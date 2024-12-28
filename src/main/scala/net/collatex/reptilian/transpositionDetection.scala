@@ -1,7 +1,7 @@
 package net.collatex.reptilian
 import net.collatex.reptilian.NodeType.Internal
 import net.collatex.reptilian.TokenEnum.Token
-import net.collatex.util.{Graph, Hypergraph, createHgTa, hypergraphToReadings}
+import net.collatex.util.{Graph, Hypergraph, hypergraphToReadings}
 
 import scala.collection.immutable.TreeMap
 import net.collatex.reptilian.returnSampleData

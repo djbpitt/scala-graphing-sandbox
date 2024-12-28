@@ -1,14 +1,14 @@
-package net.collatex.util
+package net.collatex.reptilian
 
-import net.collatex.reptilian.SplitTokenRangeResult.*
-import net.collatex.reptilian.TokenRange.*
-import net.collatex.reptilian.{EdgeLabel, FullDepthBlock, SplitTokenRangeResult, TokenEnum, TokenJSON, TokenRange, createAlignedBlocks}
 import net.collatex.reptilian.TokenEnum.*
-import upickle.default.*
+import net.collatex.reptilian.TokenRange.*
+import net.collatex.reptilian.createAlignedBlocks
+import net.collatex.util.{Hypergraph, hypergraphToDot}
 import smile.clustering.hclust
 import smile.data.DataFrame
 import smile.feature.transform.WinsorScaler
 import smile.nlp.vectorize
+import upickle.default.*
 
 import scala.annotation.tailrec
 
@@ -319,7 +319,7 @@ def mergeSingletonHG(
 }
 // Complication #1: Multiple blocks require transposition detection
 // Complication #2: Multiple hyperedges require selecting the correct one
-// Complication #3: A singletom may match parts of different hyperedges, requiring hypergraph and singleton splitting
+// Complication #3: A singleton may match parts of different hyperedges, requiring hypergraph and singleton splitting
 
 def identifyHGTokenRanges(y: Hypergraph[EdgeLabel, TokenRange])(using
     gTa: Vector[TokenEnum]
