@@ -201,23 +201,17 @@ def realMainFunction(debug: Boolean): Unit =
   // TODO: Make decision where sorted results diverge; test and assert/escape below is temporary
   val transpositionBool = matchesSortedam1 != matchesSortedam2
   assert(!transpositionBool, "We don’t yet handle transposition") // Temporarily bail out if transposition
-  // For debug: Print string values of hyperedges with witness counts
-  // val hypergraphStrings: String = hypergraphToReadings(allSplitHyperedges._1)
-  // println(hypergraphStrings)
   // If no transposition (temporarily):
   //  Merge hyperedges on matches into single hyperedge
   //  This replaces those separate hyperedges in full inventory of hyperedges
-  // RESUME HERE 2024-12-27: Use set difference (set1.diff(set2)) instead of
-  //   algebraic subtraction to remove original hyperedges that have been merged
-  //   before incorporating merge result
   val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matches
     .map(e => Hyperedge(e._1.label, e._1.vertices ++ e._2.vertices)) // NB: new hyperedge
     .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
-  val hgWithMergeResults = matches
-    .map(e => e.he1 + e.he2) // convert match instances to hyperedges
-    .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _) // fold into single hypergraph
-    .hyperedges.foldLeft(allSplitHyperedges._1)(_ - _) // remove originals that have been merged
-    + newMatchHg // fold in merge results
+  val hgWithMergeResults = allSplitHyperedges._1 // Original full hypergraph
+    - matchesAsHg // Remove hyperedges that will be merged
+    + newMatchHg // Add the merged hyperedges in place of those removed
+  println(hypergraphToReadings(hgWithMergeResults))
+
 @main def runWithSampleData(): Unit = // no files saved to disk
   realMainFunction(false)
 
