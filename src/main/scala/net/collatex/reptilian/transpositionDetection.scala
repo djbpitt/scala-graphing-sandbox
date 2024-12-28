@@ -112,9 +112,11 @@ def createDependencyGraph(
 def rankHg(
     hg: Hypergraph[EdgeLabel, TokenRange],
     debug: Boolean = false
-)(using gTa: Vector[Token]): Map[NodeType, Int] =
+)(using gTa: Vector[TokenEnum]): Map[NodeType, Int] =
   given egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
-  val ranks = createDependencyGraph(hg, debug).longestPath
+  val dependencyGraph = createDependencyGraph(hg, debug)
+  println(s"Dependency graph: $dependencyGraph")
+  val ranks = dependencyGraph.longestPath
   ranks
 
 def remapBlockToGTa(block: FullDepthBlock, lTa: Vector[TokenEnum]) =
@@ -190,15 +192,18 @@ def detectTransposition(
     matchesAsSet: Set[HyperedgeMatch],
     matchesAsHg: Hypergraph[EdgeLabel, TokenRange],
     debug: Boolean
-)(using gTa: Vector[Token]): Unit =
+)(using gTa: Vector[TokenEnum]): Unit =
   val ranking: Map[NodeType, Int] = rankHg(matchesAsHg, debug)
+  println(s"Ranking: $ranking")
   val matchesSortedam1 = matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.he1.label)))
   val matchesSortedam2 = matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.he2.label)))
   // TODO: Make decision where sorted results diverge; test and assert/escape below is temporary
   val transpositionBool = matchesSortedam1 != matchesSortedam2
   assert(!transpositionBool, "We don’t yet handle transposition") // Temporarily bail out if transposition
 
-def mergeHgHg(bothHgs: Hypergraph[EdgeLabel, TokenRange], debug: Boolean)(using gTaInput: Vector[Token]) =
+def mergeHgHg(bothHgs: Hypergraph[EdgeLabel, TokenRange], debug: Boolean)(using
+    gTaInput: Vector[TokenEnum]
+): Hypergraph[EdgeLabel, TokenRange] =
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
   val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
@@ -206,6 +211,8 @@ def mergeHgHg(bothHgs: Hypergraph[EdgeLabel, TokenRange], debug: Boolean)(using 
   val matchesAsSet = allSplitHyperedges._2
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
     matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.he1 + x.he2)
+  println("Matches as hypergraph:")
+  matchesAsHg.hyperedges.foreach(e => println(s"  $e"))
   detectTransposition(matchesAsSet, matchesAsHg, debug) // currently raises error if transposition
   // If no transposition (temporarily):
   //  Merge hyperedges on matches into single hyperedge
@@ -281,12 +288,12 @@ object EdgeLabel:
     (a: EdgeLabel, b: EdgeLabel) => EdgeLabelToInt(a).compare(EdgeLabelToInt(b))
 
 case class TokenArrayWithStartsAndEnds(
-    tokens: Vector[Token],
+    tokens: Vector[TokenEnum],
     starts: Vector[TokenRange],
     ends: Vector[TokenRange]
 )
 object TokenArrayWithStartsAndEnds:
-  def apply(tokens: Vector[Token]): TokenArrayWithStartsAndEnds =
+  def apply(tokens: Vector[TokenEnum]): TokenArrayWithStartsAndEnds =
     val seps = tokens.filter(_.t matches """Sep\d+""")
     def computeStarts(): Vector[TokenRange] =
       (Token("Sep-1", "Sep-1", -1, -1) +: seps)

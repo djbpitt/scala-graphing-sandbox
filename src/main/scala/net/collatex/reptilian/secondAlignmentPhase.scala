@@ -338,45 +338,46 @@ def insertSeparators(HGTokens: Vector[Vector[TokenEnum]]): Vector[TokenEnum] =
 
 def createHgTa(using gTa: Vector[TokenEnum]) = insertSeparators compose identifyHGTokenRanges
 
-def mergeHgHg(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeLabel, TokenRange])(using
-    gTa: Vector[TokenEnum]
-): Vector[TokenEnum] =
-  val both = hg1 + hg2
-  val lTa = createHgTa(both)
-  val (_, _, fdb) =
-    createAlignedBlocks(lTa, -1, false) // List(FullDepthBlock(Vector(0, 125),5), FullDepthBlock(Vector(6, 28),17))
-  //
-  // Experimenting with full-depth (and—later—transposition) checking
-  val witnessesInMerge = both // compute set of all witness identifiers
-    .vertices
-    .map(e => gTa(e.start).w)
-  println(s"witnesses in merge: $witnessesInMerge")
-  fdb
-    .map(_.instances)
-    .map(_.map(e => lTa(e).asInstanceOf[TokenHG].he))
-    .map(_.flatMap(e => both.members(e)))
-    .foreach(println) // all three token ranges for each of the two blocks
-  // End of experimentation
-  //
-  val firstBlock = fdb.head
-  val firstBlockInstances = firstBlock.instances
-  val stuff = firstBlockInstances.map(e =>
-    val blockRange = TokenRange(lTa(e).g, lTa(e).g + firstBlock.length)
-    val blockHyperedge = lTa(e).asInstanceOf[TokenHG].he
-    val (hePre: TokenRange, hePost: TokenRange) =
-      both.members(blockHyperedge).filter(e => gTa(e.start).w == gTa(blockRange.start).w).head.
-      splitTokenRange(blockRange)
-    val preTokenRanges = computePreTokenRanges(both.members(blockHyperedge), hePre.length)
-    val allPres = computesPresOrPosts(preTokenRanges)
-    val postTokenRanges = computePostTokenRanges(both.members(blockHyperedge), hePost.length)
-    val allPosts = computesPresOrPosts(postTokenRanges)
-    val blockTokenRanges = preTokenRanges.zip(postTokenRanges).map((pre, post) => TokenRange(pre.until, post.start))
-    val allBlock = computesPresOrPosts(blockTokenRanges)
-    val everything = allPres + allPosts + allBlock
-    everything
-  ).fold(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
-  // println(stuff)
-  lTa
+//def mergeHgHg(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeLabel, TokenRange])(using
+//    gTa: Vector[TokenEnum]
+//): Vector[TokenEnum] =
+//  val both = hg1 + hg2
+//  val lTa = createHgTa(both)
+//  val (_, _, fdb) =
+//    createAlignedBlocks(lTa, -1, false) // List(FullDepthBlock(Vector(0, 125),5), FullDepthBlock(Vector(6, 28),17))
+//  //
+//  // Experimenting with full-depth (and—later—transposition) checking
+//  val witnessesInMerge = both // compute set of all witness identifiers
+//    .vertices
+//    .map(e => gTa(e.start).w)
+//  println(s"witnesses in merge: $witnessesInMerge")
+//  fdb
+//    .map(_.instances)
+//    .map(_.map(e => lTa(e).asInstanceOf[TokenHG].he))
+//    .map(_.flatMap(e => both.members(e)))
+//    .foreach(println) // all three token ranges for each of the two blocks
+//  // End of experimentation
+//  //
+//  val firstBlock = fdb.head
+//  val firstBlockInstances = firstBlock.instances
+//  val stuff = firstBlockInstances.map(e =>
+//    val blockRange = TokenRange(lTa(e).g, lTa(e).g + firstBlock.length)
+//    val blockHyperedge = lTa(e).asInstanceOf[TokenHG].he
+//    val (hePre: TokenRange, hePost: TokenRange) =
+//      both.members(blockHyperedge).filter(e => gTa(e.start).w == gTa(blockRange.start).w).head.
+//      splitTokenRange(blockRange)
+//    val preTokenRanges = computePreTokenRanges(both.members(blockHyperedge), hePre.length)
+//    val allPres = computesPresOrPosts(preTokenRanges)
+//    val postTokenRanges = computePostTokenRanges(both.members(blockHyperedge), hePost.length)
+//    val allPosts = computesPresOrPosts(postTokenRanges)
+//    val blockTokenRanges = preTokenRanges.zip(postTokenRanges).map((pre, post) => TokenRange(pre.until, post.start))
+//    val allBlock = computesPresOrPosts(blockTokenRanges)
+//    val everything = allPres + allPosts + allBlock
+//    everything
+//  ).fold(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
+//  println("Stuff:")
+//  stuff.hyperedges.foreach(println)
+//  lTa
 
 // darwinReadings is only singletons
 // darwinHGs is only hypergraphs
@@ -386,9 +387,11 @@ def mergeHgHg(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeLabel,
     darwinReadings.head.toVector ++ darwinReadings.tail.zipWithIndex
       .flatMap((e, index) => List(Token(index.toString, index.toString, index, -1)) ++ e)
       .toVector
-  val nodeToClusters =
+  val nodesToCluster =
     (vectorizeReadings andThen clusterReadings)(darwinReadings) // list of tuples
-  val hg: Map[Int, Hypergraph[EdgeLabel, TokenRange]] = nodeToClusters.zipWithIndex
+  println("Nodes to cluster")
+  nodesToCluster.foreach(println)
+  val hg: Map[Int, Hypergraph[EdgeLabel, TokenRange]] = nodesToCluster.zipWithIndex
     .foldLeft(Map.empty[Int, Hypergraph[EdgeLabel, TokenRange]])((y, x) => {
       // TODO: If height == 0 witnesses are identical (or possibly transposed!); can we take a shortcut?
       x match
@@ -407,8 +410,15 @@ def mergeHgHg(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeLabel,
           val hypergraph = mergeSingletonHG(singletonTokens, hg)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (HGHG(item1, item2, height), i: Int) =>
-          val hypergraph = mergeHgHg(y(item1), y(item2)) // currently just lTA
-          y + ((i + darwinReadings.size) -> Hypergraph.empty[EdgeLabel, TokenRange])
+          println("Current state of y:")
+          y.foreach(e =>
+            println(s"Label: ${e._1}; hyperedge count: ${e._2.hyperedges.size}")
+            e._2.hyperedges.foreach(f => println(s"  $f"))
+          )
+          val hypergraph = mergeHgHg(y(item1) + y(item2), false)
+          y + ((i + darwinReadings.size) -> hypergraph)
+//          val hypergraph = mergeHgHg(y(item1), y(item2)) // currently just lTA
+//          y + ((i + darwinReadings.size) -> Hypergraph.empty[EdgeLabel, TokenRange])
     })
   // hypergraphToText(hg) // NB: Token range may be incorrect (eek!)
   val dot = hypergraphToDot(hg)

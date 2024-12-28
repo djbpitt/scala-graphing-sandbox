@@ -152,6 +152,7 @@ enum Graph[N]:
                 .incomingEdges(target)
             )
             .filter(_.subsetOf(handledEdgesNew)) // new incoming edges of target node
+        // RESUME HERE 2024-12-28 Topological sort fails to add all nodes
         val todoNew = incomingEdgesOfTargetNodes.flatMap(_.map(_._2)) ++ todo.tail
         addToSort(
           sortedNew,
@@ -165,6 +166,7 @@ enum Graph[N]:
    * */
   def longestPath: Map[N, Int] =
     val topSort = this.topologicalSort
+    println(s"Topological sort: $topSort")
     topSort.tail // handle root separately
       .foldLeft(Map[N, Int](topSort.head -> 0))((acc, e) => // initialize root as 0
         val highestParentRank =
