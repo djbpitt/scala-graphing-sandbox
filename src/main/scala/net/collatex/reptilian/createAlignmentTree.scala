@@ -181,8 +181,6 @@ def createAlignmentTree(sigla: List[Siglum])(using gTa: Vector[TokenEnum]): Expa
   // mutable map is local to the function, to convert to immutable before return
   val witnessReadings = witnessRanges.toMap
 
-  // 2024-08-17 RESUME HERE: scrutinize names and types (esp. globalUnalignedZone
-  // and fulldepthAlignmentPoints; gTa should not need to be passed explicitly
   val globalUnalignedZone = UnalignedZone(witnessReadings)
   // Start recursion
   val fulldepthAlignmentPoints: List[AlignmentPoint] = // not yet handling intervening unaligned zones
