@@ -184,6 +184,15 @@ def splitAllHyperedges(
       processBlock(blockQueue.tail, newHg, newMatches)
   processBlock(blocks.toVector, bothHgs, Set.empty[HyperedgeMatch])
 
+def detectTransposition(debug: Boolean, matches: Set[HyperedgeMatch], matchesAsHg: Hypergraph[EdgeLabel, TokenRange])(using gTa: Vector[Token]): Unit = {
+  val ranking: Map[NodeType, Int] = rankHg(matchesAsHg, debug)
+  val matchesSortedam1 = matches.toSeq.sortBy(e => ranking(NodeType(e.he1.label)))
+  val matchesSortedam2 = matches.toSeq.sortBy(e => ranking(NodeType(e.he2.label)))
+  // TODO: Make decision where sorted results diverge; test and assert/escape below is temporary
+  val transpositionBool = matchesSortedam1 != matchesSortedam2
+  assert(!transpositionBool, "We don’t yet handle transposition") // Temporarily bail out if transposition
+}
+
 def realMainFunction(debug: Boolean): Unit =
   val (gTaInput, hg1, hg2) = returnSampleData()
   given gTa: Vector[Token] = gTaInput
@@ -195,12 +204,7 @@ def realMainFunction(debug: Boolean): Unit =
   val matches = allSplitHyperedges._2
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
     matches.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.he1 + x.he2)
-  val ranking: Map[NodeType, Int] = rankHg(matchesAsHg, debug)
-  val matchesSortedam1 = matches.toSeq.sortBy(e => ranking(NodeType(e.he1.label)))
-  val matchesSortedam2 = matches.toSeq.sortBy(e => ranking(NodeType(e.he2.label)))
-  // TODO: Make decision where sorted results diverge; test and assert/escape below is temporary
-  val transpositionBool = matchesSortedam1 != matchesSortedam2
-  assert(!transpositionBool, "We don’t yet handle transposition") // Temporarily bail out if transposition
+  detectTransposition(debug, matches, matchesAsHg) // currently raises error if transposition
   // If no transposition (temporarily):
   //  Merge hyperedges on matches into single hyperedge
   //  This replaces those separate hyperedges in full inventory of hyperedges
