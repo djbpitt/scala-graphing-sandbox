@@ -5,7 +5,7 @@ import net.collatex.util.Hypergraph
 import net.collatex.util.Hypergraph.{FullHypergraph, Hyperedge}
 import org.scalatest.funsuite.AnyFunSuite
 
-class TranspositionDetectionTest extends AnyFunSuite:
+class transpositionDetectionTest extends AnyFunSuite:
   test("Test splitAllHyperedges"):
     val hg: Hypergraph[EdgeLabel, TokenRange] =
       // Token ranges in hyperedge are from different witnesses; must be same length

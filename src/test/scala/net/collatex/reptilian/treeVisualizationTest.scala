@@ -5,7 +5,7 @@ import org.scalatest.*
 import org.scalatest.funsuite.AnyFunSuite
 
 
-class TreeVisualizationTest extends AnyFunSuite:
+class treeVisualizationTest extends AnyFunSuite:
   private val string1 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas at tortor blandit, porttitor sapien eu, pharetra erat. Nulla luctus est non efficitur posuere. Vestibulum placerat magna a pretium vehicula. Nullam congue condimentum auctor. Sed eu ligula turpis. Fusce ut felis condimentum, lobortis lectus non, ultrices enim. Praesent faucibus luctus mauris, at suscipit diam scelerisque at. Nunc pretium ornare sapien. Donec in leo at odio viverra efficitur iaculis porttitor elit."
 
   test(testName = "Wrap string to specified length") {

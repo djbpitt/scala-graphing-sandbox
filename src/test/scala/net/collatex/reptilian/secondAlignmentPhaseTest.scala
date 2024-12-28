@@ -19,7 +19,7 @@ import net.collatex.util.Hypergraph
 import net.collatex.util.Hypergraph.{FullHypergraph, Hyperedge}
 import org.scalatest.funsuite.AnyFunSuite
 
-class SecondAlignmentPhaseTest extends AnyFunSuite:
+class secondAlignmentPhaseTest extends AnyFunSuite:
   test("test identical singletons"):
     val tokenArray: Vector[TokenEnum] =
       Vector(
