@@ -1,6 +1,6 @@
 package net.collatex.reptilian
 import net.collatex.reptilian.NodeType.Internal
-import net.collatex.reptilian.TokenEnum.Token
+import net.collatex.reptilian.TokenEnum.{Token, TokenSep}
 import net.collatex.util.{Graph, Hypergraph, hypergraphToReadings}
 
 import scala.collection.immutable.TreeMap
@@ -73,8 +73,8 @@ def createDependencyGraph(
   val startsWithHg = Hypergraph.hyperedge(EdgeLabel("starts"), egTa.starts: _*) + hg
   // Sorted map (treemap) from start of token range (Int) to hyperedge label (String)
   def createTreeMap(hg: Hypergraph[EdgeLabel, TokenRange]): TreeMap[Int, EdgeLabel] =
-    val result = hg.toMap._2
-      .map((tr, l) => tr.start -> l.head)
+    val result = hg.toMap._2 // map from vertices (token ranges) to labels
+      .map((tr, l) => tr.start -> l.head) // head because set, even though set of 1
       .to(TreeMap)
     println(s"Tree map: $result")
     result
@@ -296,13 +296,16 @@ case class TokenArrayWithStartsAndEnds(
     ends: Vector[TokenRange]
 )
 object TokenArrayWithStartsAndEnds:
+  // Eventually a single global TokenArray will
+  // include separators when created, making the 
+  // enhancements here unnecessary
   def apply(tokens: Vector[TokenEnum]): TokenArrayWithStartsAndEnds =
-    val seps = tokens.filter(_.t matches """Sep\d+""")
+    val seps = tokens.filter(_.getClass.getSimpleName == "TokenSep")
     def computeStarts(): Vector[TokenRange] =
-      (Token("Sep-1", "Sep-1", -1, -1) +: seps)
+      (TokenSep("Sep-1", "Sep-1", -1, -1) +: seps)
         .map(e => TokenRange(e.g, e.g))
     def computeEnds(): Vector[TokenRange] =
-      (seps :+ Token("Sep" + tokens.size.toString, "", tokens.last.w + 1, tokens.size))
+      (seps :+ TokenSep("Sep" + tokens.size.toString, "", tokens.last.w + 1, tokens.size))
         .map(e => TokenRange(e.g, e.g))
     new TokenArrayWithStartsAndEnds(tokens, computeStarts(), computeEnds())
 

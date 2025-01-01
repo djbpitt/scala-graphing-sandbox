@@ -383,9 +383,14 @@ def createHgTa(using gTa: Vector[TokenEnum]) = insertSeparators compose identify
 // darwinHGs is only hypergraphs
 @main def secondAlignmentPhase(): Unit =
   val darwinReadings: List[List[Token]] = readJsonData // we know there's only one
+  // RESUME 2025-01-01 Create tokenArray with TokenSep instances, including
+  //   at beginning and end; must have real TokenArray offsets as g properties
+  //   for TreeMap purposes
+  // TODO: Remove g properties from pretokenized JSON because we can generate them
+  // TODO:   as we parse the input to insert separators
   given tokenArray: Vector[TokenEnum] =
     darwinReadings.head.toVector ++ darwinReadings.tail.zipWithIndex
-      .flatMap((e, index) => List(Token(index.toString, index.toString, index, -1)) ++ e)
+      .flatMap((e, index) => List(TokenSep(index.toString, index.toString, index, -1)) ++ e)
       .toVector
   val nodesToCluster =
     (vectorizeReadings andThen clusterReadings)(darwinReadings) // list of tuples

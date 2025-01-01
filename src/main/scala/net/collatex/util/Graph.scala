@@ -156,7 +156,6 @@ enum Graph[N]:
                 .incomingEdges(target)
             )
             .filter(_.subsetOf(handledEdgesNew)) // new incoming edges of target node
-        // RESUME HERE 2024-12-28 Topological sort fails to add all nodes
         val todoNew = incomingEdgesOfTargetNodes.flatMap(_.map(_._2)) ++ todo.tail
         addToSort(
           sortedNew,
