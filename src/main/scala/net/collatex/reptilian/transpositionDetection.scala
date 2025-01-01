@@ -76,6 +76,7 @@ def createDependencyGraph(
     val result = hg.toMap._2
       .map((tr, l) => tr.start -> l.head)
       .to(TreeMap)
+    println(s"Tree map: $result")
     result
 
   val tm = createTreeMap(Hypergraph.hyperedge(EdgeLabel("ends"), egTa.ends: _*) + hg)

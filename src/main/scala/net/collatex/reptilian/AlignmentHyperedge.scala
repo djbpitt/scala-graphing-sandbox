@@ -11,7 +11,7 @@ extension (he: Hyperedge[EdgeLabel, TokenRange])
   def slice(startOffset: Int, untilOffset: Int): Hypergraph[EdgeLabel, TokenRange] =
     if startOffset == untilOffset then Hypergraph.empty
     else
-      Hyperedge(EdgeLabel(he.vertices.head.start + startOffset),
+      Hyperedge(EdgeLabel(he.vertices.map(_.start).min + startOffset),
         he.vertices.map(t => t.slice(startOffset, untilOffset)
           .getOrElse(IllegalTokenRange(t.start +
             startOffset, t.start + untilOffset)))

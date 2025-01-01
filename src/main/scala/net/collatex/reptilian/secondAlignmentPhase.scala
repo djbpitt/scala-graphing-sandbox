@@ -214,14 +214,14 @@ def compactEditSteps(
 def mergeSingletonSingleton(compactedEditSteps: Vector[CompoundEditStep]) = {
   val hyperedges: Vector[Hypergraph[EdgeLabel, TokenRange]] = compactedEditSteps map {
     case x: CompoundEditStep.CompoundStepMatch =>
-      Hypergraph.hyperedge(EdgeLabel(x.tr1.start.toString), x.tr1, x.tr2)
+      Hypergraph.hyperedge(EdgeLabel(x.tr1.start min x.tr2.start), x.tr1, x.tr2)
     case x: CompoundEditStep.CompoundStepNonMatch =>
-      Hypergraph.hyperedge(EdgeLabel(x.tr1.start.toString), x.tr1) +
-        Hypergraph.hyperedge(EdgeLabel(x.tr2.start.toString), x.tr2)
+      Hypergraph.hyperedge(EdgeLabel(x.tr1.start), x.tr1) +
+        Hypergraph.hyperedge(EdgeLabel(x.tr2.start), x.tr2)
     case x: CompoundEditStep.CompoundStepInsert =>
-      Hypergraph.hyperedge(EdgeLabel(x.tr.toString), x.tr)
+      Hypergraph.hyperedge(EdgeLabel(x.tr.start), x.tr)
     case x: CompoundEditStep.CompoundStepDelete =>
-      Hypergraph.hyperedge(EdgeLabel(x.tr.toString), x.tr)
+      Hypergraph.hyperedge(EdgeLabel(x.tr.start), x.tr)
   }
   val hypergraph = hyperedges.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((x, y) => y + x)
   hypergraph
@@ -260,7 +260,7 @@ def computePostTokenRanges(heForBlock: Set[TokenRange], hePostLength: Int) = {
 def computesPresOrPosts(preTokenRanges: Seq[TokenRange]): Hypergraph[EdgeLabel, TokenRange] = {
   preTokenRanges.head match
     case _: EmptyTokenRange => Hypergraph.empty[EdgeLabel, TokenRange]
-    case _: TokenRange      => Hypergraph.hyperedge(EdgeLabel(preTokenRanges.head.start.toString), preTokenRanges: _*)
+    case _: TokenRange      => Hypergraph.hyperedge(EdgeLabel(preTokenRanges.map(_.start).min), preTokenRanges: _*)
 }
 
 def mergeSingletonHG(
@@ -298,7 +298,7 @@ def mergeSingletonHG(
       val allHeBlockTRs: Seq[TokenRange] =
         heForBlock.map(e => TokenRange(e.start + hePreLength, e.until - hePostLength)).toSeq
       val allHgBlockHe: Hypergraph[EdgeLabel, TokenRange] =
-        Hypergraph.hyperedge(EdgeLabel(allHeBlockTRs.head.start.toString), allHeBlockTRs: _*)
+        Hypergraph.hyperedge(EdgeLabel(allHeBlockTRs.map(_.start).min), allHeBlockTRs: _*)
       val blockSingletonTokenRange =
         TokenRange(lTA(firstBlock.instances.head).g, lTA(firstBlock.instances.head + firstBlock.length - 1).g + 1)
       val blockHyperedge = Hypergraph.vertices(blockSingletonTokenRange) * allHgBlockHe
@@ -415,7 +415,7 @@ def createHgTa(using gTa: Vector[TokenEnum]) = insertSeparators compose identify
             println(s"Label: ${e._1}; hyperedge count: ${e._2.hyperedges.size}")
             e._2.hyperedges.foreach(f => println(s"  $f"))
           )
-          val hypergraph = mergeHgHg(y(item1) + y(item2), false)
+          val hypergraph = mergeHgHg(y(item1) + y(item2), true) // true creates xhtml table
           y + ((i + darwinReadings.size) -> hypergraph)
 //          val hypergraph = mergeHgHg(y(item1), y(item2)) // currently just lTA
 //          y + ((i + darwinReadings.size) -> Hypergraph.empty[EdgeLabel, TokenRange])
