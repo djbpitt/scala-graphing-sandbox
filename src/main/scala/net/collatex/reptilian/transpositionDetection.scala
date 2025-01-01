@@ -115,7 +115,9 @@ def rankHg(
 )(using gTa: Vector[TokenEnum]): Map[NodeType, Int] =
   given egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
   val dependencyGraph = createDependencyGraph(hg, debug)
-  println(s"Dependency graph: $dependencyGraph")
+  println(s"Dependency graph:")
+  dependencyGraphToDot(dependencyGraph, hg)
+  dependencyGraph.toMap.foreach((k, v) => println(s"  $k: $v"))
   val ranks = dependencyGraph.longestPath
   ranks
 

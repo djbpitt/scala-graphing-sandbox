@@ -137,7 +137,11 @@ enum Graph[N]:
     // Kahn’s algorithm
     @tailrec
     def addToSort(sorted: Vector[N], todo: Set[N], handledEdges: Set[(N, N)]): Vector[N] =
-      if todo.isEmpty then sorted
+      if todo.isEmpty then
+        assert(
+          sorted.size == this.nodeSize,
+          s"Cycle detected: ${sorted.size} nodes in sort but ${this.nodeSize} nodes in graph")
+        sorted
       else
         val current = todo.head
         val sortedNew = sorted :+ current

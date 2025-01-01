@@ -1,0 +1,14 @@
+digraph G {
+	255 -> 249;
+	255 -> ends;
+	249 -> 255;
+	93 -> 249;
+	87 -> 93;
+	starts -> 87;
+	255[label="255: difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species "];
+	249[label="249: . character of domestic varieties "];
+	93[label="93: difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species "];
+	ends[label=ends];
+	87[label="87: . character of domestic varieties "];
+	starts[label=starts]
+}
