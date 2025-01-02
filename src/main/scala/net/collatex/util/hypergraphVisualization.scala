@@ -34,7 +34,7 @@ def hypergraphToReadings(h: Hypergraph[EdgeLabel, TokenRange])(using gTa: Vector
   * @param h:
   *   Hypergraph
   */
-def hypergraphToDot(h: Map[Int, Hypergraph[EdgeLabel, TokenRange]])(using tokenArray: Vector[TokenEnum]): String =
+def hypergraphMapToDot(h: Map[Int, Hypergraph[EdgeLabel, TokenRange]])(using tokenArray: Vector[TokenEnum]): String =
   val first = "graph MyGraph {\nrankdir = LR"
   val last = "}"
   val middle = (h flatMap ((i: Int, x: Hypergraph[EdgeLabel, TokenRange]) =>

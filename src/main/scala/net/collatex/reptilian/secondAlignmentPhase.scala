@@ -3,7 +3,7 @@ package net.collatex.reptilian
 import net.collatex.reptilian.TokenEnum.*
 import net.collatex.reptilian.TokenRange.*
 import net.collatex.reptilian.createAlignedBlocks
-import net.collatex.util.{Hypergraph, hypergraphToDot}
+import net.collatex.util.{Hypergraph, hypergraphMapToDot}
 import smile.clustering.hclust
 import smile.data.DataFrame
 import smile.feature.transform.WinsorScaler
@@ -386,11 +386,9 @@ def createHgTa(using gTa: Vector[TokenEnum]) = insertSeparators compose identify
   // Calculate the g position for each of the separators.
   // Return type is complex type of List of Tuple(global position, List of witness tokens)
   val initialTuple = (darwinReadings.head.size, List.empty[(Int, List[Token])])
-  val separatorsGlobalPositions = darwinReadings.tail.foldLeft(initialTuple)
-    ((accumulator, witnessTokens) =>
-      (accumulator._1 + witnessTokens.size + 1,
-        accumulator._2.appended((accumulator._1, witnessTokens))
-      )
+  val separatorsGlobalPositions = darwinReadings.tail
+    .foldLeft(initialTuple)((accumulator, witnessTokens) =>
+      (accumulator._1 + witnessTokens.size + 1, accumulator._2.appended((accumulator._1, witnessTokens)))
     )
     ._2
 //  separatorsGlobalPositions.foreach(
@@ -398,19 +396,18 @@ def createHgTa(using gTa: Vector[TokenEnum]) = insertSeparators compose identify
 //  )
   given tokenArray: Vector[TokenEnum] =
     darwinReadings.head.toVector ++
-      separatorsGlobalPositions
-        .zipWithIndex
-        .flatMap(
-          (e, index) =>
-            TokenSep(index.toString, index.toString, index, e._1)
-              :: e._2
-        ).toVector
+      separatorsGlobalPositions.zipWithIndex
+        .flatMap((e, index) =>
+          TokenSep(index.toString, index.toString, index, e._1)
+            :: e._2
+        )
+        .toVector
 //  tokenArray.foreach(println)
   val nodesToCluster =
     (vectorizeReadings andThen clusterReadings)(darwinReadings) // list of tuples
   println("Nodes to cluster")
   nodesToCluster.foreach(println)
-  val hg: Map[Int, Hypergraph[EdgeLabel, TokenRange]] = nodesToCluster.zipWithIndex
+  val hgMap: Map[Int, Hypergraph[EdgeLabel, TokenRange]] = nodesToCluster.zipWithIndex
     .foldLeft(Map.empty[Int, Hypergraph[EdgeLabel, TokenRange]])((y, x) => {
       // TODO: If height == 0 witnesses are identical (or possibly transposed!); can we take a shortcut?
       x match
@@ -440,7 +437,54 @@ def createHgTa(using gTa: Vector[TokenEnum]) = insertSeparators compose identify
 //          y + ((i + darwinReadings.size) -> Hypergraph.empty[EdgeLabel, TokenRange])
     })
   // hypergraphToText(hg) // NB: Token range may be incorrect (eek!)
-  val dot = hypergraphToDot(hg)
+  val dot = hypergraphMapToDot(hgMap)
   val dotPath =
     os.pwd / "src" / "main" / "outputs" / "hypergraph.dot"
   os.write.over(dotPath, dot)
+  val hg = hgMap(hgMap.keySet.max)
+  println(s"hg: $hg")
+  given tAStartsEnds: TokenArrayWithStartsAndEnds =
+    TokenArrayWithStartsAndEnds(tokenArray)
+  val hgDg = createDependencyGraph(hg, true)
+  val fullHgRanking = rankHg(hg) // FIXME: creates yet another dependency graph internally
+  println(s"hypergraph dependency graph: $hgDg")
+  val edges = hgDg.toMap map ((k, v) => k -> v._2)
+  println(s"edges")
+  edges.foreach(e => println(e))
+  println(s"fullHgRanking: $fullHgRanking")
+  val allWitnesses = Range(0, 6).toSet // FIXME: Look it up
+  def createEdgeLabels(source: NodeType, targets: Set[NodeType]): Vector[Set[Int]] =
+    val sortedTargets = targets.toSeq.sortBy(e => fullHgRanking(e))
+    val witnessesOnSource =
+      source match
+        case x if Set(NodeType("starts"), NodeType("ends")).contains(x) => allWitnesses
+        case x =>
+          hg(EdgeLabel(source)).get.vertices
+          .map(_.start)
+          .map(e => tokenArray(e).w)
+    @tailrec
+    def processEdge(
+        targets: Seq[NodeType],
+        edgesforSource: Vector[Set[Int]],
+        witnessesSeen: Set[Int]
+    ): Vector[Set[Int]] =
+      if targets.isEmpty then edgesforSource
+      else // update witnesses, not including those already seen
+        val witnessesOnTarget = // FIXME: Ugly duplicate code
+          targets.head match
+            case x if Set(NodeType("starts"), NodeType("ends")).contains(x) => allWitnesses
+            case _ =>
+              hg(EdgeLabel(targets.head)).get.vertices
+              .map(_.start)
+              .map(e => tokenArray(e).w)
+        val newEdgesForSource = edgesforSource :+ (witnessesOnSource intersect
+          witnessesOnTarget diff
+          witnessesSeen)
+        val newWitnessesSeen = witnessesSeen ++ witnessesOnTarget
+        processEdge(targets.tail, newEdgesForSource, newWitnessesSeen)
+    processEdge(sortedTargets, Vector(), Set())
+  val allLabels = edges.toSeq.map((source, targets) =>
+    val sortedTargets = targets.toSeq.sortBy(e => fullHgRanking(e)) // TODO: Remove; just for debug
+    (source, sortedTargets, createEdgeLabels(source, targets)))
+  println(s"edgeLabels")
+  allLabels.foreach(println)
