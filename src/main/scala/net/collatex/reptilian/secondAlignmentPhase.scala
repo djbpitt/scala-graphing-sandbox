@@ -392,6 +392,21 @@ def createHgTa(using gTa: Vector[TokenEnum]) = insertSeparators compose identify
     darwinReadings.head.toVector ++ darwinReadings.tail.zipWithIndex
       .flatMap((e, index) => List(TokenSep(index.toString, index.toString, index, -1)) ++ e)
       .toVector
+
+  // Calculate the g position for each of the separators.
+  // Return type is complex type of Tuple(global position, list of witness tokens)
+  val initialTuple = (darwinReadings.head.size, List.empty[(Int, List[Token])])
+  val separatorsGlobalPositions = darwinReadings.tail.foldLeft(initialTuple)
+    ((accumulator, witnessTokens) =>
+      (accumulator._1 + witnessTokens.size + 1,
+        accumulator._2.appended((accumulator._1, witnessTokens))
+      )
+    )
+    ._2
+  separatorsGlobalPositions.foreach(
+    (globalPosition, tokens) => println((globalPosition, tokens))
+  )
+
   val nodesToCluster =
     (vectorizeReadings andThen clusterReadings)(darwinReadings) // list of tuples
   println("Nodes to cluster")
