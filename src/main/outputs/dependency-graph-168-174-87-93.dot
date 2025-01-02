@@ -1,10 +1,11 @@
 digraph G {
 	168 -> 174;
-	174 -> 168;
 	174 -> ends;
-	93 -> 168;
+	93 -> ends;
 	87 -> 93;
+	starts -> ends;
 	starts -> 87;
+	starts -> 168;
 	168[label="168: . character of domestic varieties "];
 	174[label="174: difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species "];
 	93[label="93: difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species "];

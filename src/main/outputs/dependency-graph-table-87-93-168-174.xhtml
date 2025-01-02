@@ -61,7 +61,7 @@ tr:not(:first-child) &gt; td:nth-child(3) {
       </tr>
     </thead><tbody>
         <tr>
-          <th>
+          <th rowspan="6">
             starts
           </th><th>
               0
@@ -70,11 +70,86 @@ tr:not(:first-child) &gt; td:nth-child(3) {
               </td><td>
               -1
             </td><td>
+              ends
+            </td><td>
+              starts → ends
+            </td>
+        </tr><tr>
+            <th>
+              1
+            </th>
+            <td>
+              EmptyTokenRange(21,21)
+            </td>
+            <td>
+              21
+            </td>
+            <td>
+              ends
+            </td><td class="old">
+              starts → ends
+            </td>
+          </tr><tr>
+            <th>
+              2
+            </th>
+            <td>
+              EmptyTokenRange(43,43)
+            </td>
+            <td>
+              43
+            </td>
+            <td>
+              ends
+            </td><td class="old">
+              starts → ends
+            </td>
+          </tr><tr>
+            <th>
+              3
+            </th>
+            <td>
+              EmptyTokenRange(65,65)
+            </td>
+            <td>
+              65
+            </td>
+            <td>
               87
             </td><td>
-              starts → 87
+            starts → 87
+          </td>
+          </tr><tr>
+            <th>
+              4
+            </th>
+            <td>
+              EmptyTokenRange(110,110)
             </td>
-        </tr>
+            <td>
+              110
+            </td>
+            <td>
+              168
+            </td><td>
+            starts → 168
+          </td>
+          </tr><tr>
+            <th>
+              5
+            </th>
+            <td>
+              EmptyTokenRange(191,191)
+            </td>
+            <td>
+              191
+            </td>
+            <td>
+              168
+            </td><td class="old">
+              starts → 168
+            </td>
+          </tr>
       </tbody><tbody>
         <tr>
           <th>
@@ -102,9 +177,9 @@ tr:not(:first-child) &gt; td:nth-child(3) {
               </td><td>
               93
             </td><td>
-              168
+              ends
             </td><td>
-              93 → 168
+              93 → ends
             </td>
         </tr>
       </tbody><tbody>
@@ -149,9 +224,9 @@ tr:not(:first-child) &gt; td:nth-child(3) {
               </td><td>
               174
             </td><td>
-              168
+              ends
             </td><td>
-              174 → 168
+              174 → ends
             </td>
         </tr><tr>
             <th>
@@ -165,9 +240,9 @@ tr:not(:first-child) &gt; td:nth-child(3) {
             </td>
             <td>
               ends
-            </td><td>
-            174 → ends
-          </td>
+            </td><td class="old">
+              174 → ends
+            </td>
           </tr>
       </tbody>
         </table>

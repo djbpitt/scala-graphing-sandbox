@@ -383,18 +383,8 @@ def createHgTa(using gTa: Vector[TokenEnum]) = insertSeparators compose identify
 // darwinHGs is only hypergraphs
 @main def secondAlignmentPhase(): Unit =
   val darwinReadings: List[List[Token]] = readJsonData // we know there's only one
-  // RESUME 2025-01-01 Create tokenArray with TokenSep instances, including
-  //   at beginning and end; must have real TokenArray offsets as g properties
-  //   for TreeMap purposes
-  // TODO: Remove g properties from pretokenized JSON because we can generate them
-  // TODO:   as we parse the input to insert separators
-  given tokenArray: Vector[TokenEnum] =
-    darwinReadings.head.toVector ++ darwinReadings.tail.zipWithIndex
-      .flatMap((e, index) => List(TokenSep(index.toString, index.toString, index, -1)) ++ e)
-      .toVector
-
   // Calculate the g position for each of the separators.
-  // Return type is complex type of Tuple(global position, list of witness tokens)
+  // Return type is complex type of List of Tuple(global position, List of witness tokens)
   val initialTuple = (darwinReadings.head.size, List.empty[(Int, List[Token])])
   val separatorsGlobalPositions = darwinReadings.tail.foldLeft(initialTuple)
     ((accumulator, witnessTokens) =>
@@ -403,10 +393,19 @@ def createHgTa(using gTa: Vector[TokenEnum]) = insertSeparators compose identify
       )
     )
     ._2
-  separatorsGlobalPositions.foreach(
-    (globalPosition, tokens) => println((globalPosition, tokens))
-  )
-
+//  separatorsGlobalPositions.foreach(
+//    (globalPosition, tokens) => println((globalPosition, tokens))
+//  )
+  given tokenArray: Vector[TokenEnum] =
+    darwinReadings.head.toVector ++
+      separatorsGlobalPositions
+        .zipWithIndex
+        .flatMap(
+          (e, index) =>
+            TokenSep(index.toString, index.toString, index, e._1)
+              :: e._2
+        ).toVector
+//  tokenArray.foreach(println)
   val nodesToCluster =
     (vectorizeReadings andThen clusterReadings)(darwinReadings) // list of tuples
   println("Nodes to cluster")
