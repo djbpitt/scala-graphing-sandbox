@@ -47,7 +47,7 @@ def readData(pathToData: Path): List[(String, String)] =
 
   /** Create alignment ribbon
     */
-  val root: ExpandedNode = createAlignment(sigla)
+  val root: AlignmentRibbon = createAlignment(sigla)
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html")
   val horizontalRibbons = createHorizontalRibbons(root, allSigla)
   val horizontalRibbonsPath =

@@ -158,7 +158,7 @@ def alignTokenArray(
     sortedReadingNodes
 }
 
-def createAlignmentRibbon(sigla: List[Siglum])(using gTa: Vector[TokenEnum]): ExpandedNode = {
+def createAlignmentRibbon(sigla: List[Siglum])(using gTa: Vector[TokenEnum]): AlignmentRibbon = {
   // NB: We are embarrassed by the mutable map (and by other things, such has having to scan token array)
   // Housekeeping; TODO: Think about witness-set metadata
   val witnessRanges: mutable.Map[Siglum, TokenRange] = mutable.Map.empty
@@ -227,7 +227,7 @@ def recursiveBuildAlignment(
     unalignedZone: UnalignedZone,
     remainingAlignment: List[AlignmentPoint],
     sigla: List[Siglum]
-)(using gTa: Vector[TokenEnum]): ExpandedNode = {
+)(using gTa: Vector[TokenEnum]): AlignmentRibbon = {
   // On first run, unalignedZone contains full token ranges and remainingAlignment contains all sortedReadingNodes
   // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
   val firstReadingNode =
@@ -279,7 +279,7 @@ def recursiveBuildAlignment(
     // The alignment results are all processed,so we check for trailing non-aligned content and then until the recursion.
     // This repeats the treatment as unaligned leading content
     if tempSplit._2.witnessReadings.nonEmpty then result += setupNodeExpansion(sigla, tempSplit._2)
-    val rootNode = ExpandedNode(
+    val rootNode = AlignmentRibbon(
       children = result
     )
     rootNode

@@ -201,8 +201,8 @@ def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   * @return
   *   <html> element in HTML namespace, with embedded SVG
   */
-def createHorizontalRibbons(root: ExpandedNode, sigla: Set[Siglum])(using
-    tokenArray: Vector[TokenEnum]
+def createHorizontalRibbons(root: AlignmentRibbon, sigla: Set[Siglum])(using
+                                                                       tokenArray: Vector[TokenEnum]
 ): scala.xml.Node =
   /** Constants */
   val ribbonWidth = 18

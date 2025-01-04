@@ -20,7 +20,7 @@ given CanEqual[Siglum, Siglum] = CanEqual.derived
 
 type WitnessReadings = Map[Siglum, TokenRange] // type alias
 
-sealed trait AlignmentUnit // supertype ExpandedNode (with children) and AlignmentPoint (with groups)
+sealed trait AlignmentUnit // supertype AlignmentRibbon (with children) and AlignmentPoint (with groups)
 
 final case class AlignmentPoint(witnessGroups: Set[WitnessReadings]) extends AlignmentUnit:
   def combineWitnessGroups: WitnessReadings = // create single WitnessGroups for instance
@@ -58,14 +58,14 @@ object UnalignedZone {
     UnalignedZone(wr)
 }
 
-/** ExpandedNode
+/** AlignmentRibbon
   *
-  * Include root node, which is no longer a separate subtype
+  * Container for all alignment units
   *
   * @param children
-  *   ListBuffer of alignment-tree nodes
+  *   ListBuffer of AlignmentUnit (AlignmentPoint | UnalignedZone)
   */
-final case class ExpandedNode(
+final case class AlignmentRibbon(
     children: ListBuffer[AlignmentUnit] = ListBuffer.empty
 ) extends AlignmentUnit
 

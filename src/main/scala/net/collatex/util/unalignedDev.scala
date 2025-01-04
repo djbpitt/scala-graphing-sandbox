@@ -4,7 +4,7 @@
 //import net.collatex.reptilian.{
 //  AlignmentPoint,
 //  AlignmentUnit,
-//  ExpandedNode,
+//  AlignmentRibbon,
 //  FullDepthBlock,
 //  Siglum,
 //  Token,
@@ -334,7 +334,7 @@
 //def pathStepsToAlignmentTreeNode(in: Vector[AlignmentPoint]): AlignmentUnit =
 //  in.size match {
 //    case 1 => in.head
-//    case _ => ExpandedNode(ListBuffer.from(in))
+//    case _ => AlignmentRibbon(ListBuffer.from(in))
 //  }
 //
 //val matrixToAlignmentTree =
@@ -354,7 +354,7 @@
 //): AlignmentUnit =
 //  def createWrapperIfNeeded(wr: List[AlignmentPoint]): AlignmentUnit =
 //    if wr.size == 1 then wr.head
-//    else ExpandedNode(wr.to(ListBuffer))
+//    else AlignmentRibbon(wr.to(ListBuffer))
 //  val newTree = tree flatMap {
 //    case e if blockRange._1 >= e.witnessReadings.head._2.start && blockRange._2 <= e.witnessReadings.head._2.until =>
 //      val delta1: Int = blockRange._1 - e.witnessReadings.head._2.start
@@ -386,7 +386,7 @@
 //    var sep = -1
 //    val nodeListToProcess: List[AlignmentPoint] =
 //      t match {
-//        case e: ExpandedNode => e.children.map(_.asInstanceOf[AlignmentPoint]).toList
+//        case e: AlignmentRibbon => e.children.map(_.asInstanceOf[AlignmentPoint]).toList
 //        case e               => List(e.asInstanceOf[AlignmentPoint])
 //      }
 //    val tTokens = nodeListToProcess map (e =>
@@ -410,7 +410,7 @@
 //
 //  def getNodeListToProcess(t: AlignmentUnit): List[AlignmentPoint] =
 //    t match {
-//      case e: ExpandedNode => e.children.map(_.asInstanceOf[AlignmentPoint]).toList
+//      case e: AlignmentRibbon => e.children.map(_.asInstanceOf[AlignmentPoint]).toList
 //      case e               => List(e.asInstanceOf[AlignmentPoint])
 //    }
 //
@@ -502,7 +502,7 @@
 //              else
 //                val trailingTokenNode =
 //                  AlignmentPoint(singletonSiglum -> TokenRange(singletonEndInAgreementNode, singletonTokens.last.g + 1))
-//                ExpandedNode(ListBuffer(updatedAgreementNode, trailingTokenNode))
+//                AlignmentRibbon(ListBuffer(updatedAgreementNode, trailingTokenNode))
 //            else AlignmentPoint()
 //          acc(i + darwin.head.readings.size) = newAtn
 //          acc
@@ -565,8 +565,8 @@
 //                val newTree1 = splitTree(tree1Nodes, ttTokenToAlignmentTreeNodeMapping, globalBlockRanges.head)
 //                val newTree2 = splitTree(tree2Nodes, ttTokenToAlignmentTreeNodeMapping, globalBlockRanges.last)
 //
-////                val newTree1AsDot = dot(newTree1.asInstanceOf[ExpandedNode], tokenArray.toVector)
-////                val newTree2AsDot = dot(newTree2.asInstanceOf[ExpandedNode], tokenArray.toVector)
+////                val newTree1AsDot = dot(newTree1.asInstanceOf[AlignmentRibbon], tokenArray.toVector)
+////                val newTree2AsDot = dot(newTree2.asInstanceOf[AlignmentRibbon], tokenArray.toVector)
 ////                val alignmentGraphOutputPath1 = os.pwd / "src" / "main" / "outputs" / "t1.dot"
 ////                val alignmentGraphOutputPath2 = os.pwd / "src" / "main" / "outputs" / "t2.dot"
 ////                os.write.over(alignmentGraphOutputPath1, newTree1AsDot)
@@ -595,14 +595,14 @@
 //            val globalBlockBeginningsFlat = globalBlockBeginnings.flatten.toSet
 //            println(s"globalBlockBeginningsFlat: $globalBlockBeginningsFlat")
 //            val tree1FirstBlockNode = resultOfTreeSplitting.t1
-//              .asInstanceOf[ExpandedNode]
+//              .asInstanceOf[AlignmentRibbon]
 //              .children
 //              .map(e => e.asInstanceOf[AlignmentPoint].witnessReadings.values)
 //              .map(_.map(_.start).toSet)
 //              .zipWithIndex
 //              .filter(f => f._1.intersect(globalBlockBeginningsFlat).nonEmpty)
 //            val tree2FirstBlockNode = resultOfTreeSplitting.t2
-//              .asInstanceOf[ExpandedNode]
+//              .asInstanceOf[AlignmentRibbon]
 //              .children
 //              .map(e => e.asInstanceOf[AlignmentPoint].witnessReadings.values)
 //              .map(_.map(_.start).toSet)
@@ -639,7 +639,7 @@
 ////                  val newMap1 = e.witnessReadings.map((k, v) => k -> (v._1 + delta1))
 //
 //          val mergeResult = mergeSplitTrees(resultOfTreeSplitting)
-//          acc(i + darwin.head.readings.size) = ExpandedNode()
+//          acc(i + darwin.head.readings.size) = AlignmentRibbon()
 //          acc
 //    }
 //  println("Results:")

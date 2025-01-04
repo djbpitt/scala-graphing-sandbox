@@ -61,12 +61,12 @@ def wrapTextToWidth(
   * interferes with subsequent pattern matching)
   *
   * @param root
-  *   ExpandedNode at root of alignment tree
+  *   AlignmentRibbon at root of alignment tree
   * @return
   *   vector of NumberedNode instances, which combine the alignment-tree node with its unique id number
   */
 def flattenNodeSeq(
-    root: ExpandedNode
+    root: AlignmentRibbon
 ): Vector[NumberedNode] =
   /* Depth-first traversal to produce flat sequence of leaf nodes: reading, indel, variation*/
   var id = 0
@@ -85,7 +85,7 @@ def flattenNodeSeq(
         currentNode match
           case (nodeNo, node: AlignmentPoint) =>
             nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
-          case (_, node: ExpandedNode) =>
+          case (_, node: AlignmentRibbon) =>
             val newNodesToProcess: List[(Int, AlignmentUnit)] =
               node.children.map { i =>
                 id += 1
