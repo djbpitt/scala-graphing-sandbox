@@ -2,8 +2,10 @@ package net.collatex.reptilian
 
 import scala.annotation.tailrec
 
-def alignWitnesses(w1: List[TokenEnum], // rows
-                   w2: List[TokenEnum]) = 
+def alignWitnesses(
+    w1: List[TokenEnum], // rows
+    w2: List[TokenEnum]
+) =
   compactEditSteps(tokensToEditSteps(w1, w2))
 
 def substitutionCost[A](a: A, b: A): Double =
@@ -46,6 +48,7 @@ enum CompoundEditStep:
   case CompoundStepDelete(tr: TokenRange)
 export CompoundEditStep._
 
+// NB: IntelliJ only incorrectly thinks MatrixStep isn’t used; it is
 enum MatrixStep extends Ordered[MatrixStep]:
   def distance: Double
   def row: Int
@@ -60,9 +63,9 @@ enum MatrixStep extends Ordered[MatrixStep]:
   case Up(distance: Double, row: Int, col: Int)
 
 def tokensToEditSteps(
-                       w1: List[TokenEnum], // rows
-                       w2: List[TokenEnum] // cols
-                     ): LazyList[CompoundEditStep] =
+    w1: List[TokenEnum], // rows
+    w2: List[TokenEnum] // cols
+): LazyList[CompoundEditStep] =
   val matrix = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
   // not tailrec, but doesn’t matter because LazyList
   def nextStep(row: Int, col: Int): LazyList[CompoundEditStep] =
@@ -93,14 +96,14 @@ def tokensToEditSteps(
   nextStep(row = matrix.length - 1, col = matrix.head.length - 1) // Start recursion in lower right corner
 
 def compactEditSteps(
-                      allSingleSteps: LazyList[CompoundEditStep]
-                    ): Vector[CompoundEditStep] =
+    allSingleSteps: LazyList[CompoundEditStep]
+): Vector[CompoundEditStep] =
   @tailrec
   def nextStep(
-                allSingleSteps: LazyList[CompoundEditStep],
-                completedCompoundSteps: Vector[CompoundEditStep],
-                openCompoundStep: CompoundEditStep
-              ): Vector[CompoundEditStep] =
+      allSingleSteps: LazyList[CompoundEditStep],
+      completedCompoundSteps: Vector[CompoundEditStep],
+      openCompoundStep: CompoundEditStep
+  ): Vector[CompoundEditStep] =
     allSingleSteps match {
       case LazyList() => completedCompoundSteps :+ openCompoundStep
       case h #:: t if h.getClass == openCompoundStep.getClass =>
@@ -121,4 +124,3 @@ def compactEditSteps(
       case h #:: t => nextStep(t, completedCompoundSteps :+ openCompoundStep, h)
     }
   nextStep(allSingleSteps.tail, Vector[CompoundEditStep](), allSingleSteps.head)
-
