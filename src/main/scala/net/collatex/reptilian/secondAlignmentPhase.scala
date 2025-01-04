@@ -113,6 +113,30 @@ def readJsonData: List[List[Token]] =
   val darwin: List[List[Token]] = darwinJSON.map(_.map(e => Token(e.t, e.n, e.w, e.g)))
   darwin
 
+def createGlobalTokenArray(darwinReadings: List[List[Token]]) =
+  // Calculate the g position for each of the separators.
+  // Return type is complex type of List of Tuple(global position, List of witness tokens)
+  val initialTuple = (darwinReadings.head.size, List.empty[(Int, List[Token])])
+  val separatorsGlobalPositions = darwinReadings.tail
+    .foldLeft(initialTuple)((accumulator, witnessTokens) =>
+      (accumulator._1 + witnessTokens.size + 1, accumulator._2.appended((accumulator._1, witnessTokens)))
+    )
+    ._2
+
+  //  separatorsGlobalPositions.foreach(
+  //    (globalPosition, tokens) => println((globalPosition, tokens))
+  //  )
+  val tokenArray: Vector[TokenEnum] =
+  darwinReadings.head.toVector ++
+    separatorsGlobalPositions.zipWithIndex
+      .flatMap((e, index) =>
+        TokenSep(index.toString, index.toString, index, e._1)
+          :: e._2
+      )
+      .toVector
+  //  tokenArray.foreach(println)
+  tokenArray
+  
 def createLocalTA(singletonTokens: Vector[TokenEnum], hg: Hypergraph[EdgeLabel, TokenRange])(using
     gTa: Vector[TokenEnum]
 ): Vector[TokenEnum] = {
@@ -219,26 +243,7 @@ def splitAllHyperedges(
 // darwinHGs is only hypergraphs
 @main def secondAlignmentPhase(): Unit =
   val darwinReadings: List[List[Token]] = readJsonData // we know there's only one
-  // Calculate the g position for each of the separators.
-  // Return type is complex type of List of Tuple(global position, List of witness tokens)
-  val initialTuple = (darwinReadings.head.size, List.empty[(Int, List[Token])])
-  val separatorsGlobalPositions = darwinReadings.tail
-    .foldLeft(initialTuple)((accumulator, witnessTokens) =>
-      (accumulator._1 + witnessTokens.size + 1, accumulator._2.appended((accumulator._1, witnessTokens)))
-    )
-    ._2
-//  separatorsGlobalPositions.foreach(
-//    (globalPosition, tokens) => println((globalPosition, tokens))
-//  )
-  given tokenArray: Vector[TokenEnum] =
-    darwinReadings.head.toVector ++
-      separatorsGlobalPositions.zipWithIndex
-        .flatMap((e, index) =>
-          TokenSep(index.toString, index.toString, index, e._1)
-            :: e._2
-        )
-        .toVector
-//  tokenArray.foreach(println)
+  given tokenArray: Vector[TokenEnum] = createGlobalTokenArray(darwinReadings)
   val nodesToCluster = clusterWitnesses(darwinReadings) // list of tuples
   println("Nodes to cluster")
   nodesToCluster.foreach(println)
