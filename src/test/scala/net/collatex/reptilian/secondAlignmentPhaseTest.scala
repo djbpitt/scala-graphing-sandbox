@@ -12,7 +12,6 @@ import net.collatex.reptilian.{
   identifyHGTokenRanges,
   mergeSingletonHG,
   mergeSingletonSingleton,
-  splitHyperedge,
   tokensToEditSteps
 }
 import net.collatex.util.Hypergraph
@@ -287,17 +286,6 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
       )
     )
     val result = mergeSingletonHG(singletonTokens, hg)
-    assert(result == expected)
-  test("test splitHyperedge()"):
-    val he: Set[TokenRange] = Set(TokenRange(6, 10), TokenRange(0, 5))
-    val block: FullDepthBlock = FullDepthBlock(Vector(2, 8), 2)
-    val expected = Set(
-      TokenRange(0, 2),
-      TokenRange(4, 5),
-      TokenRange(6, 8),
-      TokenRange(10, 10)
-    )
-    val result = splitHyperedge(he, block)
     assert(result == expected)
   test("test mergeSingletonHG() that requires hypergraph (only) splitting with pre and post"):
     given gTA: Vector[Token] = Vector[Token](

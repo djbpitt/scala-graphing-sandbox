@@ -240,16 +240,6 @@ def createLocalTA(singletonTokens: Vector[TokenEnum], hg: Hypergraph[EdgeLabel, 
   result.flatten
 }
 
-def splitHyperedge(he: Set[TokenRange], block: FullDepthBlock) =
-  // FIXME: We have a Hyperedge case class that we don’t use
-  // FIXME: Here our hyperedge is a set of token ranges
-  // TODO: Should we exclude the singleton block start here or in the caller?
-  // TODO: For now we do it in the caller
-  val blockRanges = block.instances.sorted.map(e => TokenRange(e, e + block.length))
-  val splitCandidates = he.toSeq.sortBy(_.start).zip(blockRanges)
-  val result: Set[TokenRange] = splitCandidates.map((e, f) => e.splitTokenRange(f).toList).flatten.toSet
-  result // set of all pre and post token ranges for hyperedge
-
 def computePreTokenRanges(heForBlock: Set[TokenRange], hePreLength: Int) = {
   heForBlock.map(e => TokenRange(e.start, e.start + hePreLength)).toSeq
 }
