@@ -36,7 +36,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     val w2 = tokenArray.filter(e => e.w == 1 && e.g != -1).toList
     val result = mergeSingletonSingleton(w1, w2)
     val expected = Hyperedge(
-      EdgeLabel("0"), Set(TokenRange(5, 9), TokenRange(0, 4))
+      EdgeLabel(0), Set(TokenRange(5, 9), TokenRange(0, 4))
     )
     assert(result == expected)
   test("test different singletons"):
@@ -236,16 +236,16 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
   test("test mergeSingletonHG() with one block and singleton splitting (pre and post)"):
     val expected = FullHypergraph[EdgeLabel, TokenRange](
       Map(
-        EdgeLabel("12") -> Set(TokenRange(12, 15)),
-        EdgeLabel("8") -> Set(TokenRange(8, 9)),
-        EdgeLabel("0") -> Set(TokenRange(0, 3), TokenRange(4, 7), TokenRange(9, 12))
+        EdgeLabel(12) -> Set(TokenRange(12, 15)),
+        EdgeLabel(8) -> Set(TokenRange(8, 9)),
+        EdgeLabel(0) -> Set(TokenRange(0, 3), TokenRange(4, 7), TokenRange(9, 12))
       ),
       Map(
-        TokenRange(12, 15) -> Set(EdgeLabel("12")),
-        TokenRange(9, 12) -> Set(EdgeLabel("0")),
-        TokenRange(4, 7) -> Set(EdgeLabel("0")),
-        TokenRange(0, 3) -> Set(EdgeLabel("0")),
-        TokenRange(8, 9) -> Set(EdgeLabel("8"))
+        TokenRange(12, 15) -> Set(EdgeLabel(12)),
+        TokenRange(9, 12) -> Set(EdgeLabel(0)),
+        TokenRange(4, 7) -> Set(EdgeLabel(0)),
+        TokenRange(0, 3) -> Set(EdgeLabel(0)),
+        TokenRange(8, 9) -> Set(EdgeLabel(8))
       )
     )
     given gTA: Vector[Token] = Vector(
@@ -276,11 +276,11 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     )
     val hg = FullHypergraph(
       Map(
-        EdgeLabel("0") -> Set(TokenRange(0, 3), TokenRange(4, 7))
+        EdgeLabel(0) -> Set(TokenRange(0, 3), TokenRange(4, 7))
       ),
       Map(
-        TokenRange(0, 3) -> Set(EdgeLabel("0")),
-        TokenRange(4, 7) -> Set(EdgeLabel("0"))
+        TokenRange(0, 3) -> Set(EdgeLabel(0)),
+        TokenRange(4, 7) -> Set(EdgeLabel(0))
       )
     )
     val result = mergeSingletonHG(singletonTokens, hg)

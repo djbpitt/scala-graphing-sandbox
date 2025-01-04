@@ -28,7 +28,7 @@ def mergeSingletonSingleton(w1: List[TokenEnum], // rows
 def mergeSingletonHG(
                       singletonTokens: Vector[Token],
                       hg: Hypergraph[EdgeLabel, TokenRange]
-                    )(using gTA: Vector[TokenEnum]): Hypergraph[EdgeLabel, TokenRange] = 
+                    )(using gTA: Vector[TokenEnum]): Hypergraph[EdgeLabel, TokenRange] =
   // TODO: Currently find all blocks, assume there is only one
   // TODO: Check for transpositions and determine block order
   val lTA: Vector[TokenEnum] =
@@ -69,12 +69,12 @@ def mergeSingletonHG(
       val singletonPreHyperedge = sgPre match
         case _: EmptyTokenRange => Hypergraph.empty[EdgeLabel, TokenRange]
         case _ =>
-          val hyperedgeId = EdgeLabel(sgPre.start.toString)
+          val hyperedgeId = EdgeLabel(sgPre.start)
           Hypergraph.hyperedge(hyperedgeId, sgPre)
       val singletonPostHyperedge = sgPost match
         case _: EmptyTokenRange => Hypergraph.empty[EdgeLabel, TokenRange]
         case _ =>
-          val hyperedgeId = EdgeLabel(sgPost.start.toString)
+          val hyperedgeId = EdgeLabel(sgPost.start)
           Hypergraph.hyperedge(hyperedgeId, sgPost)
       singletonPreHyperedge + singletonPostHyperedge + blockHyperedge + allHePres + allHePosts
   result
@@ -136,7 +136,7 @@ def createGlobalTokenArray(darwinReadings: List[List[Token]]) =
       .toVector
   //  tokenArray.foreach(println)
   tokenArray
-  
+
 def createLocalTA(singletonTokens: Vector[TokenEnum], hg: Hypergraph[EdgeLabel, TokenRange])(using
     gTa: Vector[TokenEnum]
 ): Vector[TokenEnum] = {
