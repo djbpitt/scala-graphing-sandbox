@@ -134,14 +134,14 @@
 <!-- Cluster_9_87_reading -->
 <g id="node13" class="node">
 <title>Cluster_9_87_reading</title>
-<polygon fill="none" stroke="black" points="1494.26,-306 803.26,-306 803.26,-270 1494.26,-270 1494.26,-306"/>
-<text text-anchor="middle" x="1148.76" y="-282.95" font-family="Times,serif" font-size="14.00">natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved </text>
+<polygon fill="none" stroke="black" points="1559.13,-306 738.38,-306 738.38,-270 1559.13,-270 1559.13,-306"/>
+<text text-anchor="middle" x="1148.76" y="-282.95" font-family="Times,serif" font-size="14.00">. character of domestic varieties ; difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species </text>
 </g>
 <!-- Cluster_9_0_reading -->
 <g id="node14" class="node">
 <title>Cluster_9_0_reading</title>
-<polygon fill="none" stroke="black" points="1559.13,-360 738.38,-360 738.38,-324 1559.13,-324 1559.13,-360"/>
-<text text-anchor="middle" x="1148.76" y="-336.95" font-family="Times,serif" font-size="14.00">. character of domestic varieties ; difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species </text>
+<polygon fill="none" stroke="black" points="1494.26,-360 803.26,-360 803.26,-324 1494.26,-324 1494.26,-360"/>
+<text text-anchor="middle" x="1148.76" y="-336.95" font-family="Times,serif" font-size="14.00">natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved </text>
 </g>
 <!-- Cluster_9_0 -->
 <g id="node15" class="node">
@@ -152,7 +152,7 @@
 <!-- Cluster_9_0&#45;&#45;Cluster_9_0_reading -->
 <g id="edge12" class="edge">
 <title>Cluster_9_0&#45;&#45;Cluster_9_0_reading</title>
-<path fill="none" stroke="black" d="M231.37,-342C319.78,-342 537.19,-342 738.07,-342"/>
+<path fill="none" stroke="black" d="M231.37,-342C329.41,-342 586.11,-342 802.97,-342"/>
 </g>
 <!-- Cluster_9_87 -->
 <g id="node16" class="node">
@@ -163,7 +163,7 @@
 <!-- Cluster_9_87&#45;&#45;Cluster_9_87_reading -->
 <g id="edge11" class="edge">
 <title>Cluster_9_87&#45;&#45;Cluster_9_87_reading</title>
-<path fill="none" stroke="black" d="M236.07,-288C337.4,-288 589.5,-288 802.97,-288"/>
+<path fill="none" stroke="black" d="M236.07,-288C327.28,-288 540.63,-288 738.02,-288"/>
 </g>
 <!-- Cluster_9 -->
 <g id="node17" class="node">

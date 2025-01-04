@@ -17,16 +17,18 @@ def hypergraphToText(h: Map[Int, Hypergraph[String, TokenRange]]): Unit =
   )
   output.foreach(println)
 
-/**
- * Stringified sample readings from each hyperedge, alphabetized
- * @param h: Hypergraph[EdgeLabel, TokenRange]
- * @param gTa: Global token array (TokenEnum.Token)
- * @return String
- */
+/** Stringified sample readings from each hyperedge, alphabetized
+  * @param h:
+  *   Hypergraph[EdgeLabel, TokenRange]
+  * @param gTa:
+  *   Global token array (TokenEnum.Token)
+  * @return
+  *   String
+  */
 def hypergraphToReadings(h: Hypergraph[EdgeLabel, TokenRange])(using gTa: Vector[Token]): String =
-  val result = h.hyperedges.toSeq.sortBy(_.vertices.head.tString).map(e =>
-    s" (${e.vertices.size.toString}) " + s"${e.vertices.head.tString}"
-  )
+  val result = h.hyperedges.toSeq
+    .sortBy(_.vertices.head.tString)
+    .map(e => s" (${e.vertices.size.toString}) " + s"${e.vertices.head.tString}")
   result.mkString("\n")
 
 /** Create Graphviz dot representation of domain-specific graph
@@ -34,7 +36,9 @@ def hypergraphToReadings(h: Hypergraph[EdgeLabel, TokenRange])(using gTa: Vector
   * @param h:
   *   Hypergraph
   */
-def hypergraphMapToDot(h: Map[Int, Hypergraph[EdgeLabel, TokenRange]])(using tokenArray: Vector[TokenEnum]): String =
+def hypergraphMapToDot(
+    h: Map[Int, Hypergraph[EdgeLabel, TokenRange]]
+)(using tokenArray: Vector[TokenEnum]): Unit =
   val first = "graph MyGraph {\nrankdir = LR"
   val last = "}"
   val middle = (h flatMap ((i: Int, x: Hypergraph[EdgeLabel, TokenRange]) =>
@@ -50,8 +54,7 @@ def hypergraphMapToDot(h: Map[Int, Hypergraph[EdgeLabel, TokenRange]])(using tok
     val group_reading_ids = group_ids
       .map(e => e + "_reading")
       .sorted
-    val group_readings = x.hyperedgeLabels.toSeq
-      .sorted
+    val group_readings = x.hyperedgeLabels.toSeq.sorted
       .map(e =>
         val tr = x.members(e).head // representative TokenRange
         s"\"${tokenArray.slice(tr.start, tr.until).map(_.t).mkString}\""
@@ -77,4 +80,8 @@ def hypergraphMapToDot(h: Map[Int, Hypergraph[EdgeLabel, TokenRange]])(using tok
       group_nodes ++
       reading_nodes
   )).toSeq.reverse
-  List(first, middle.mkString("\n"), last).mkString("\n")
+  val dot: String = List(first, middle.mkString("\n"), last).mkString("\n")
+  val dotPath =
+    os.pwd / "src" / "main" / "outputs" / "hypergraph.dot"
+  os.write.over(dotPath, dot)
+

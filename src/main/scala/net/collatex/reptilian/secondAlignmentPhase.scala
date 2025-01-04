@@ -9,8 +9,10 @@ import upickle.default.*
 
 import scala.annotation.tailrec
 
-def mergeSingletonSingleton(w1: List[TokenEnum], // rows
-                            w2: List[TokenEnum]) =
+def mergeSingletonSingleton(
+    w1: List[TokenEnum], // rows
+    w2: List[TokenEnum]
+) =
   val hyperedges: Vector[Hypergraph[EdgeLabel, TokenRange]] = alignWitnesses(w1, w2) map {
     case x: CompoundEditStep.CompoundStepMatch =>
       Hypergraph.hyperedge(EdgeLabel(x.tr1.start min x.tr2.start), x.tr1, x.tr2)
@@ -25,12 +27,15 @@ def mergeSingletonSingleton(w1: List[TokenEnum], // rows
   val hypergraph = hyperedges.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((x, y) => y + x)
   hypergraph
 
-def mergeSingletonHG(
-                      singletonTokens: Vector[Token],
-                      hg: Hypergraph[EdgeLabel, TokenRange]
-                    )(using gTA: Vector[TokenEnum]): Hypergraph[EdgeLabel, TokenRange] =
-  // TODO: Currently find all blocks, assume there is only one
-  // TODO: Check for transpositions and determine block order
+def mergeSingletonHG( // “This one is horrible”
+    singletonTokens: Vector[Token],
+    hg: Hypergraph[EdgeLabel, TokenRange]
+)(using gTA: Vector[TokenEnum]): Hypergraph[EdgeLabel, TokenRange] =
+  // FIXME: Currently find all blocks, assume there is only one
+  // FIXME: Check for transpositions and determine block order
+  // FIXME: Uses deprecated Hypergraph.members() method
+  // FIXME: Inline convenience variables to improve legibility
+  // TODO: Replace by handling SingletonHG as HGHG
   val lTA: Vector[TokenEnum] =
     createLocalTA(singletonTokens, hg)
   val (_, _, fdb) = createAlignedBlocks(lTA, -1, false) // full-depth blocks
@@ -80,7 +85,7 @@ def mergeSingletonHG(
   result
 
 def mergeHgHg(bothHgs: Hypergraph[EdgeLabel, TokenRange], debug: Boolean)(using
-                                                                          gTaInput: Vector[TokenEnum]
+    gTaInput: Vector[TokenEnum] // TODO: Does transposition detection, but doesn’t yet handle
 ): Hypergraph[EdgeLabel, TokenRange] =
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
@@ -102,7 +107,6 @@ def mergeHgHg(bothHgs: Hypergraph[EdgeLabel, TokenRange], debug: Boolean)(using
     - matchesAsHg // Remove hyperedges that will be merged
     + newMatchHg // Add the merged hyperedges in place of those removed
   hgWithMergeResults
-
 
 def readJsonData: List[List[Token]] =
   val datafilePath =
@@ -127,13 +131,13 @@ def createGlobalTokenArray(darwinReadings: List[List[Token]]) =
   //    (globalPosition, tokens) => println((globalPosition, tokens))
   //  )
   val tokenArray: Vector[TokenEnum] =
-  darwinReadings.head.toVector ++
-    separatorsGlobalPositions.zipWithIndex
-      .flatMap((e, index) =>
-        TokenSep(index.toString, index.toString, index, e._1)
-          :: e._2
-      )
-      .toVector
+    darwinReadings.head.toVector ++
+      separatorsGlobalPositions.zipWithIndex
+        .flatMap((e, index) =>
+          TokenSep(index.toString, index.toString, index, e._1)
+            :: e._2
+        )
+        .toVector
   //  tokenArray.foreach(println)
   tokenArray
 
@@ -163,10 +167,6 @@ def computesPresOrPosts(preTokenRanges: Seq[TokenRange]): Hypergraph[EdgeLabel, 
     case _: TokenRange      => Hypergraph.hyperedge(EdgeLabel(preTokenRanges.map(_.start).min), preTokenRanges: _*)
 }
 
-// Complication #1: Multiple blocks require transposition detection
-// Complication #2: Multiple hyperedges require selecting the correct one
-// Complication #3: A singleton may match parts of different hyperedges, requiring hypergraph and singleton splitting
-
 def identifyHGTokenRanges(y: Hypergraph[EdgeLabel, TokenRange])(using
     gTa: Vector[TokenEnum]
 ): Vector[Vector[TokenHG]] =
@@ -185,15 +185,15 @@ def insertSeparators(HGTokens: Vector[Vector[TokenEnum]]): Vector[TokenEnum] =
 def createHgTa(using gTa: Vector[TokenEnum]) = insertSeparators compose identifyHGTokenRanges
 
 def splitAllHyperedges(
-                        bothHgs: Hypergraph[EdgeLabel, TokenRange],
-                        blocks: Iterable[FullDepthBlock] // gTa
-                      ): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
+    bothHgs: Hypergraph[EdgeLabel, TokenRange],
+    blocks: Iterable[FullDepthBlock] // gTa
+): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
   @tailrec
   def processBlock(
-                    blockQueue: Vector[FullDepthBlock],
-                    hgTmp: Hypergraph[EdgeLabel, TokenRange],
-                    matches: Set[HyperedgeMatch]
-                  ): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
+      blockQueue: Vector[FullDepthBlock],
+      hgTmp: Hypergraph[EdgeLabel, TokenRange],
+      matches: Set[HyperedgeMatch]
+  ): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
     if blockQueue.isEmpty
     then (hgTmp, matches)
     else
@@ -245,11 +245,11 @@ def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange])(using
 
   val hgDg = createDependencyGraph(hg, true)
   val fullHgRanking = rankHg(hg) // FIXME: creates yet another dependency graph internally
-  println(s"hypergraph dependency graph: $hgDg")
+  // println(s"hypergraph dependency graph: $hgDg")
   val edges = hgDg.toMap map ((k, v) => k -> v._2)
-  println(s"edges")
+  // println(s"edges")
   edges.foreach(e => println(e))
-  println(s"fullHgRanking: $fullHgRanking")
+  // println(s"fullHgRanking: $fullHgRanking")
   val allWitnesses = Range(0, 6).toSet // FIXME: Look it up
 
   def createEdgeLabels(source: NodeType, targets: Set[NodeType]): Vector[Set[Int]] =
@@ -261,13 +261,12 @@ def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange])(using
           hg(EdgeLabel(source)).get.vertices
             .map(_.start)
             .map(e => tokenArray(e).w)
-
     @tailrec
     def processEdge(
-                     targets: Seq[NodeType],
-                     edgesforSource: Vector[Set[Int]],
-                     witnessesSeen: Set[Int]
-                   ): Vector[Set[Int]] =
+        targets: Seq[NodeType],
+        edgesforSource: Vector[Set[Int]],
+        witnessesSeen: Set[Int]
+    ): Vector[Set[Int]] =
       if targets.isEmpty then edgesforSource
       else // update witnesses, not including those already seen
         val witnessesOnTarget = // FIXME: Ugly duplicate code
@@ -287,18 +286,15 @@ def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange])(using
 
   val allLabels = edges.toSeq.map((source, targets) =>
     val sortedTargets = targets.toSeq.sortBy(e => fullHgRanking(e)) // TODO: Remove; just for debug
-    (source, sortedTargets, createEdgeLabels(source, targets)))
+    (source, sortedTargets, createEdgeLabels(source, targets))
+  )
   println(s"edgeLabels")
   allLabels.foreach(println)
 
-// darwinReadings is only singletons
-// darwinHGs is only hypergraphs
-@main def secondAlignmentPhase(): Unit =
-  val darwinReadings: List[List[Token]] = readJsonData // we know there's only one
-  given tokenArray: Vector[TokenEnum] = createGlobalTokenArray(darwinReadings)
-  val nodesToCluster = clusterWitnesses(darwinReadings) // list of tuples
-  println("Nodes to cluster")
-  nodesToCluster.foreach(println)
+def mergeClustersIntoHG(
+    nodesToCluster: List[ClusterInfo],
+    darwinReadings: List[List[Token]]
+)(using gTa: Vector[TokenEnum]): Hypergraph[EdgeLabel, TokenRange] =
   val hgMap: Map[Int, Hypergraph[EdgeLabel, TokenRange]] = nodesToCluster.zipWithIndex
     .foldLeft(Map.empty[Int, Hypergraph[EdgeLabel, TokenRange]])((y, x) => {
       // TODO: If height == 0 witnesses are identical (or possibly transposed!); can we take a shortcut?
@@ -324,14 +320,18 @@ def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange])(using
           )
           val hypergraph = mergeHgHg(y(item1) + y(item2), true) // true creates xhtml table
           y + ((i + darwinReadings.size) -> hypergraph)
-//          val hypergraph = mergeHgHg(y(item1), y(item2)) // currently just lTA
-//          y + ((i + darwinReadings.size) -> Hypergraph.empty[EdgeLabel, TokenRange])
+      //          val hypergraph = mergeHgHg(y(item1), y(item2)) // currently just lTA
+      //          y + ((i + darwinReadings.size) -> Hypergraph.empty[EdgeLabel, TokenRange])
     })
-  // hypergraphToText(hg) // NB: Token range may be incorrect (eek!)
-  val dot = hypergraphMapToDot(hgMap)
-  val dotPath =
-    os.pwd / "src" / "main" / "outputs" / "hypergraph.dot"
-  os.write.over(dotPath, dot)
+
+  // hypergraphMapToDot(hgMap) /// Writes all intermediate hypergraphs as dot to disk (for debug)
   val hg = hgMap(hgMap.keySet.max)
+  hg
+
+@main def secondAlignmentPhase(): Unit =
+  val darwinReadings: List[List[Token]] = readJsonData
+  given tokenArray: Vector[TokenEnum] = createGlobalTokenArray(darwinReadings)
+  val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
+  val hg: Hypergraph[EdgeLabel, TokenRange] = mergeClustersIntoHG(nodesToCluster, darwinReadings)
   println(s"hg: $hg")
   createDependencyGraphEdgeLabels(hg)
