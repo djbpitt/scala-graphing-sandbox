@@ -3,6 +3,7 @@ package net.collatex.reptilian
 import net.collatex.reptilian.TokenEnum.*
 import net.collatex.reptilian.TokenRange.*
 import net.collatex.reptilian.createAlignedBlocks
+import net.collatex.util.Hypergraph.Hyperedge
 import net.collatex.util.{Hypergraph, hypergraphMapToDot}
 import smile.clustering.hclust
 import smile.data.DataFrame
@@ -337,6 +338,62 @@ def insertSeparators(HGTokens: Vector[Vector[TokenEnum]]): Vector[TokenEnum] =
   result
 
 def createHgTa(using gTa: Vector[TokenEnum]) = insertSeparators compose identifyHGTokenRanges
+
+def splitAllHyperedges(
+                        bothHgs: Hypergraph[EdgeLabel, TokenRange],
+                        blocks: Iterable[FullDepthBlock] // gTa
+                      ): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
+  @tailrec
+  def processBlock(
+                    blockQueue: Vector[FullDepthBlock],
+                    hgTmp: Hypergraph[EdgeLabel, TokenRange],
+                    matches: Set[HyperedgeMatch]
+                  ): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
+    if blockQueue.isEmpty
+    then (hgTmp, matches)
+    else
+      /*
+      Recur over blocks, updating hypergraph and inventory of matches
+      For each block
+        1. Identify hyperedges to split and split them
+           (map over selected hyperedges)
+        2. Remove original hyperedges that have been split and
+           replace them with the results of the split to create
+           updated hypergraph
+       */
+      val currentBlock = blockQueue.head
+      // Convert block instances to token ranges
+      val currentBlockRanges = toTokenRanges(currentBlock)
+      // Find hyperedges to split and token ranges used to perform splitting
+      val hesToSplit: Vector[(Hyperedge[EdgeLabel, TokenRange], TokenRange)] =
+        currentBlock.instances.map(e => findInstanceInHypergraph(hgTmp, e))
+      // Zip token ranges to be split with block ranges to use for splitting,
+      // used to compute preLength and postLength
+      val outerAndInnerRanges: Vector[(TokenRange, TokenRange)] =
+        hesToSplit.map(_._2).zip(currentBlockRanges)
+      // Use preceding to obtain vector of tuples of pre and post token ranges
+      val preAndPostMatch: Vector[(TokenRange, TokenRange)] =
+        outerAndInnerRanges.map((outer, inner) => outer.splitTokenRange(inner))
+      // Pair up each hyperedge to be split with pre and post token ranges
+      val hes: Vector[(Hyperedge[EdgeLabel, TokenRange], (TokenRange, TokenRange))] =
+        hesToSplit.map(_._1).zip(preAndPostMatch) // token range lengths are pre, post
+      // Remove original hyperedges that will be replaced by their split results
+      val newHgTmp = hesToSplit.map(_._1).foldLeft(hgTmp)(_ - _)
+      // Do splitting
+      val newHes: Vector[Hypergraph[EdgeLabel, TokenRange]] = hes
+        .map(e => e._1.split(e._2._1.length, currentBlock.length, e._2._2.length))
+      // Merge new hyperedges into old hyperedges that didn’t undergo splitting
+      val newHg: Hypergraph[EdgeLabel, TokenRange] = newHes.foldLeft(newHgTmp)(_ + _)
+      val tmp = newHg.hyperedges.filter(_.vertices.intersect(currentBlockRanges.toSet).nonEmpty)
+      // println(s"blockRanges: $currentBlockRanges")
+      // println(s"newHg.hyperedges:")
+      // newHg.hyperedges.foreach(e => println(s"  $e"))
+      // println(s"match: $tmp")
+      val newMatches: Set[HyperedgeMatch] = matches + HyperedgeMatch(tmp) // remove old matchs and add new split results
+      processBlock(blockQueue.tail, newHg, newMatches)
+
+  processBlock(blocks.toVector, bothHgs, Set.empty[HyperedgeMatch])
+
 
 //def mergeHgHg(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeLabel, TokenRange])(using
 //    gTa: Vector[TokenEnum]
