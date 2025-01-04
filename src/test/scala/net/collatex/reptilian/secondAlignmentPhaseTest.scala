@@ -34,8 +34,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
       )
     val w1 = tokenArray.filter(e => e.w == 0 && e.g != -1).toList
     val w2 = tokenArray.filter(e => e.w == 1 && e.g != -1).toList
-    val compactedEditSteps = compactEditSteps(tokensToEditSteps(w1, w2))
-    val result = mergeSingletonSingleton(compactedEditSteps)
+    val result = mergeSingletonSingleton(w1, w2)
     val expected = Hyperedge(
       EdgeLabel("5"), Set(TokenRange(5, 9), TokenRange(0, 4))
     )
@@ -55,8 +54,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
       )
     val w1 = tokenArray.filter(e => e.w == 0 && e.g != -1).toList
     val w2 = tokenArray.filter(e => e.w == 1 && e.g != -1).toList
-    val compactedEditSteps = compactEditSteps(tokensToEditSteps(w1, w2))
-    val result = mergeSingletonSingleton(compactedEditSteps)
+    val result = mergeSingletonSingleton(w1, w2)
     val expected = FullHypergraph(
       Map(
         EdgeLabel("2") -> Set(TokenRange(2, 3)),
