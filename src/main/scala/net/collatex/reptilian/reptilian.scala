@@ -45,10 +45,10 @@ def readData(pathToData: Path): List[(String, String)] =
   val sigla: List[Siglum] = witnessInputInfo.map(_._1).map(Siglum(_))
   given gTa:Vector[TokenEnum] = tokenize(tokenizer)(witnessStrings) // global token array
 
-  /** Create alignment tree
+  /** Create alignment ribbon
     */
   val root: ExpandedNode = createAlignment(sigla)
-  val doctypeHtml: scala.xml.dtd.DocType = DocType("html") // used for single-column and mixed output
+  val doctypeHtml: scala.xml.dtd.DocType = DocType("html")
   val horizontalRibbons = createHorizontalRibbons(root, allSigla)
   val horizontalRibbonsPath =
     os.pwd / "src" / "main" / "outputs" / "horizontal-ribbons-full.xhtml" // "horizontal-ribbons.xhtml"

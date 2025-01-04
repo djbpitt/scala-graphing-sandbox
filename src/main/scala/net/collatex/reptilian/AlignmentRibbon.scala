@@ -45,9 +45,10 @@ object AlignmentPoint {
     AlignmentPoint(wg)
 }
 
-/** Zone not yet processed
+/** Zone to be processed in phase two
   *
-  * Same input as AlignmentPoint (varargs of (Siglum, TokenRange)), but create only WitnessReadings and no WitnessGroups
+  * Same input as AlignmentPoint (varargs of (Siglum, TokenRange))
+  *   but create only WitnessReadings and no WitnessGroups
   */
 final case class UnalignedZone(witnessReadings: WitnessReadings) extends AlignmentUnit
 

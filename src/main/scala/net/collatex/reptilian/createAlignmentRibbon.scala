@@ -158,7 +158,7 @@ def alignTokenArray(
     sortedReadingNodes
 }
 
-def createAlignmentTree(sigla: List[Siglum])(using gTa: Vector[TokenEnum]): ExpandedNode = {
+def createAlignmentRibbon(sigla: List[Siglum])(using gTa: Vector[TokenEnum]): ExpandedNode = {
   // NB: We are embarrassed by the mutable map (and by other things, such has having to scan token array)
   // Housekeeping; TODO: Think about witness-set metadata
   val witnessRanges: mutable.Map[Siglum, TokenRange] = mutable.Map.empty

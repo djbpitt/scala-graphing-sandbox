@@ -7,7 +7,7 @@ import net.collatex.reptilian.TokenEnum.Token
 //import net.collatex.util.splitAlignmentPoint
 import org.scalatest.funsuite.AnyFunSuite
 
-class AlignmentTreeTest extends AnyFunSuite:
+class AlignmentRibbonTest extends AnyFunSuite:
   /** Tests for splitWitnessGroup()
     */
   test("Split witness group with two splittable witnesses and extra split position"):
