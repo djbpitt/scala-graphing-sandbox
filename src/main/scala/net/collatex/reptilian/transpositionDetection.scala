@@ -7,7 +7,6 @@ import scala.collection.immutable.TreeMap
 import net.collatex.reptilian.returnSampleData
 import net.collatex.util.Hypergraph.{Hyperedge, hyperedge}
 
-import scala.annotation.tailrec
 import scala.math.Ordering
 
 /* Method
@@ -150,29 +149,6 @@ def detectTransposition(
   val transpositionBool = matchesSortedam1 != matchesSortedam2
   assert(!transpositionBool, "We don’t yet handle transposition") // Temporarily bail out if transposition
 
-def mergeHgHg(bothHgs: Hypergraph[EdgeLabel, TokenRange], debug: Boolean)(using
-    gTaInput: Vector[TokenEnum]
-): Hypergraph[EdgeLabel, TokenRange] =
-  val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
-  val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
-  val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
-  val allSplitHyperedges = splitAllHyperedges(bothHgs, blocksGTa)
-  val matchesAsSet = allSplitHyperedges._2
-  val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
-    matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.he1 + x.he2)
-  println("Matches as hypergraph:")
-  matchesAsHg.hyperedges.foreach(e => println(s"  $e"))
-  detectTransposition(matchesAsSet, matchesAsHg, debug) // currently raises error if transposition
-  // If no transposition (temporarily):
-  //  Merge hyperedges on matches into single hyperedge
-  //  This replaces those separate hyperedges in full inventory of hyperedges
-  val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
-    .map(e => Hyperedge(e._1.label, e._1.vertices ++ e._2.vertices)) // NB: new hyperedge
-    .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
-  val hgWithMergeResults = allSplitHyperedges._1 // Original full hypergraph
-    - matchesAsHg // Remove hyperedges that will be merged
-    + newMatchHg // Add the merged hyperedges in place of those removed
-  hgWithMergeResults
 
 def realMainFunction(debug: Boolean): Unit =
   val (gTaInput, hg1, hg2) = returnSampleData() // don’t use (global) names of hgs because real data isn’t global
