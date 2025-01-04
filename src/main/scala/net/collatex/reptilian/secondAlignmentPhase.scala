@@ -18,7 +18,9 @@ def readJsonData: List[List[Token]] =
   val darwin: List[List[Token]] = darwinJSON.map(_.map(e => Token(e.t, e.n, e.w, e.g)))
   darwin
 
-def mergeSingletonSingleton(compactedEditSteps: Vector[CompoundEditStep]) = {
+def mergeSingletonSingleton(w1: List[TokenEnum], // rows
+                            w2: List[TokenEnum]) = 
+  val compactedEditSteps = alignWitnesses(w1, w2)
   val hyperedges: Vector[Hypergraph[EdgeLabel, TokenRange]] = compactedEditSteps map {
     case x: CompoundEditStep.CompoundStepMatch =>
       Hypergraph.hyperedge(EdgeLabel(x.tr1.start min x.tr2.start), x.tr1, x.tr2)
@@ -32,7 +34,6 @@ def mergeSingletonSingleton(compactedEditSteps: Vector[CompoundEditStep]) = {
   }
   val hypergraph = hyperedges.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((x, y) => y + x)
   hypergraph
-}
 
 def createLocalTA(singletonTokens: Vector[TokenEnum], hg: Hypergraph[EdgeLabel, TokenRange])(using
     gTa: Vector[TokenEnum]
@@ -250,9 +251,8 @@ def mergeHgHg(bothHgs: Hypergraph[EdgeLabel, TokenRange], debug: Boolean)(using
           // prepare arguments
           val w1: List[Token] = darwinReadings(item1)
           val w2: List[Token] = darwinReadings(item2)
-          val compactedEditSteps = compactEditSteps(tokensToEditSteps(w1, w2))
           // process
-          val hypergraph: Hypergraph[EdgeLabel, TokenRange] = mergeSingletonSingleton(compactedEditSteps)
+          val hypergraph: Hypergraph[EdgeLabel, TokenRange] = mergeSingletonSingleton(w1, w2)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (SingletonHG(item1, item2, height), i: Int) =>
           // prepare arguments, tokens for singleton and Hypergraph instance (!) for hypergraph

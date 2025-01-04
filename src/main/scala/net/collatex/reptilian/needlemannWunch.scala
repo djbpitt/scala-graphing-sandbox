@@ -2,6 +2,10 @@ package net.collatex.reptilian
 
 import scala.annotation.tailrec
 
+def alignWitnesses(w1: List[TokenEnum], // rows
+                   w2: List[TokenEnum]) = 
+  compactEditSteps(tokensToEditSteps(w1, w2))
+
 def substitutionCost[A](a: A, b: A): Double =
   if (a == b) 0.0d else 1.0d
 
