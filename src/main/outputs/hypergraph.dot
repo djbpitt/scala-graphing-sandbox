@@ -20,8 +20,8 @@ Cluster_8 -- "Cluster_8_111"
 "Cluster_7_0" [label="Group 0"]
 "Cluster_7_0" -- "Cluster_7_0_reading"
 Cluster_7 -- "Cluster_7_0"
-"Cluster_9_87_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved "]
-"Cluster_9_0_reading" [shape=box label=". character of domestic varieties ; difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species "]
+"Cluster_9_87_reading" [shape=box label=". character of domestic varieties ; difficulty of distinguishing between varieties and species ; origin of domestic varieties from one or more species "]
+"Cluster_9_0_reading" [shape=box label="natural selection , as will hereafter be explained , will determine how far the new characters thus arising shall be preserved "]
 "Cluster_9_0" [label="Group 0"]
 "Cluster_9_87" [label="Group 87"]
 "Cluster_9_87" -- "Cluster_9_87_reading"

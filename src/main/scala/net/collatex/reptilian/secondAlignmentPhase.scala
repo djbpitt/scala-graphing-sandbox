@@ -239,6 +239,58 @@ def splitAllHyperedges(
 
   processBlock(blocks.toVector, bothHgs, Set.empty[HyperedgeMatch])
 
+def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange])(using tokenArray: Vector[TokenEnum]): Unit =
+  given tAStartsEnds: TokenArrayWithStartsAndEnds =
+    TokenArrayWithStartsAndEnds(tokenArray)
+
+  val hgDg = createDependencyGraph(hg, true)
+  val fullHgRanking = rankHg(hg) // FIXME: creates yet another dependency graph internally
+  println(s"hypergraph dependency graph: $hgDg")
+  val edges = hgDg.toMap map ((k, v) => k -> v._2)
+  println(s"edges")
+  edges.foreach(e => println(e))
+  println(s"fullHgRanking: $fullHgRanking")
+  val allWitnesses = Range(0, 6).toSet // FIXME: Look it up
+
+  def createEdgeLabels(source: NodeType, targets: Set[NodeType]): Vector[Set[Int]] =
+    val sortedTargets = targets.toSeq.sortBy(e => fullHgRanking(e))
+    val witnessesOnSource =
+      source match
+        case x if Set(NodeType("starts"), NodeType("ends")).contains(x) => allWitnesses
+        case x =>
+          hg(EdgeLabel(source)).get.vertices
+            .map(_.start)
+            .map(e => tokenArray(e).w)
+
+    @tailrec
+    def processEdge(
+                     targets: Seq[NodeType],
+                     edgesforSource: Vector[Set[Int]],
+                     witnessesSeen: Set[Int]
+                   ): Vector[Set[Int]] =
+      if targets.isEmpty then edgesforSource
+      else // update witnesses, not including those already seen
+        val witnessesOnTarget = // FIXME: Ugly duplicate code
+          targets.head match
+            case x if Set(NodeType("starts"), NodeType("ends")).contains(x) => allWitnesses
+            case _ =>
+              hg(EdgeLabel(targets.head)).get.vertices
+                .map(_.start)
+                .map(e => tokenArray(e).w)
+        val newEdgesForSource = edgesforSource :+ (witnessesOnSource intersect
+          witnessesOnTarget diff
+          witnessesSeen)
+        val newWitnessesSeen = witnessesSeen ++ witnessesOnTarget
+        processEdge(targets.tail, newEdgesForSource, newWitnessesSeen)
+
+    processEdge(sortedTargets, Vector(), Set())
+
+  val allLabels = edges.toSeq.map((source, targets) =>
+    val sortedTargets = targets.toSeq.sortBy(e => fullHgRanking(e)) // TODO: Remove; just for debug
+    (source, sortedTargets, createEdgeLabels(source, targets)))
+  println(s"edgeLabels")
+  allLabels.foreach(println)
+
 // darwinReadings is only singletons
 // darwinHGs is only hypergraphs
 @main def secondAlignmentPhase(): Unit =
@@ -282,48 +334,4 @@ def splitAllHyperedges(
   os.write.over(dotPath, dot)
   val hg = hgMap(hgMap.keySet.max)
   println(s"hg: $hg")
-  given tAStartsEnds: TokenArrayWithStartsAndEnds =
-    TokenArrayWithStartsAndEnds(tokenArray)
-  val hgDg = createDependencyGraph(hg, true)
-  val fullHgRanking = rankHg(hg) // FIXME: creates yet another dependency graph internally
-  println(s"hypergraph dependency graph: $hgDg")
-  val edges = hgDg.toMap map ((k, v) => k -> v._2)
-  println(s"edges")
-  edges.foreach(e => println(e))
-  println(s"fullHgRanking: $fullHgRanking")
-  val allWitnesses = Range(0, 6).toSet // FIXME: Look it up
-  def createEdgeLabels(source: NodeType, targets: Set[NodeType]): Vector[Set[Int]] =
-    val sortedTargets = targets.toSeq.sortBy(e => fullHgRanking(e))
-    val witnessesOnSource =
-      source match
-        case x if Set(NodeType("starts"), NodeType("ends")).contains(x) => allWitnesses
-        case x =>
-          hg(EdgeLabel(source)).get.vertices
-          .map(_.start)
-          .map(e => tokenArray(e).w)
-    @tailrec
-    def processEdge(
-        targets: Seq[NodeType],
-        edgesforSource: Vector[Set[Int]],
-        witnessesSeen: Set[Int]
-    ): Vector[Set[Int]] =
-      if targets.isEmpty then edgesforSource
-      else // update witnesses, not including those already seen
-        val witnessesOnTarget = // FIXME: Ugly duplicate code
-          targets.head match
-            case x if Set(NodeType("starts"), NodeType("ends")).contains(x) => allWitnesses
-            case _ =>
-              hg(EdgeLabel(targets.head)).get.vertices
-              .map(_.start)
-              .map(e => tokenArray(e).w)
-        val newEdgesForSource = edgesforSource :+ (witnessesOnSource intersect
-          witnessesOnTarget diff
-          witnessesSeen)
-        val newWitnessesSeen = witnessesSeen ++ witnessesOnTarget
-        processEdge(targets.tail, newEdgesForSource, newWitnessesSeen)
-    processEdge(sortedTargets, Vector(), Set())
-  val allLabels = edges.toSeq.map((source, targets) =>
-    val sortedTargets = targets.toSeq.sortBy(e => fullHgRanking(e)) // TODO: Remove; just for debug
-    (source, sortedTargets, createEdgeLabels(source, targets)))
-  println(s"edgeLabels")
-  allLabels.foreach(println)
+  createDependencyGraphEdgeLabels(hg)
