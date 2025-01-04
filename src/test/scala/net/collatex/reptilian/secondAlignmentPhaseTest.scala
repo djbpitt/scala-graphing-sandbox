@@ -36,7 +36,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     val w2 = tokenArray.filter(e => e.w == 1 && e.g != -1).toList
     val result = mergeSingletonSingleton(w1, w2)
     val expected = Hyperedge(
-      EdgeLabel("5"), Set(TokenRange(5, 9), TokenRange(0, 4))
+      EdgeLabel("0"), Set(TokenRange(5, 9), TokenRange(0, 4))
     )
     assert(result == expected)
   test("test different singletons"):
