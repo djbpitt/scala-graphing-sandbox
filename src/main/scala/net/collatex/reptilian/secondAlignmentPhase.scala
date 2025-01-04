@@ -94,8 +94,8 @@ def mergeHgHg(bothHgs: Hypergraph[EdgeLabel, TokenRange], debug: Boolean)(using
   val matchesAsSet = allSplitHyperedges._2
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
     matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.he1 + x.he2)
-  println("Matches as hypergraph:")
-  matchesAsHg.hyperedges.foreach(e => println(s"  $e"))
+  // println("Matches as hypergraph:")
+  // matchesAsHg.hyperedges.foreach(e => println(s"  $e"))
   detectTransposition(matchesAsSet, matchesAsHg, debug) // currently raises error if transposition
   // If no transposition (temporarily):
   //  Merge hyperedges on matches into single hyperedge
@@ -248,7 +248,7 @@ def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange])(using
   // println(s"hypergraph dependency graph: $hgDg")
   val edges = hgDg.toMap map ((k, v) => k -> v._2)
   // println(s"edges")
-  edges.foreach(e => println(e))
+  // edges.foreach(e => println(e))
   // println(s"fullHgRanking: $fullHgRanking")
   val allWitnesses = Range(0, 6).toSet // FIXME: Look it up
 
@@ -288,8 +288,8 @@ def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange])(using
     val sortedTargets = targets.toSeq.sortBy(e => fullHgRanking(e)) // TODO: Remove; just for debug
     (source, sortedTargets, createEdgeLabels(source, targets))
   )
-  println(s"edgeLabels")
-  allLabels.foreach(println)
+  // println(s"edgeLabels")
+  // allLabels.foreach(println)
 
 def mergeClustersIntoHG(
     nodesToCluster: List[ClusterInfo],
@@ -313,11 +313,11 @@ def mergeClustersIntoHG(
           val hypergraph = mergeSingletonHG(singletonTokens, hg)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (HGHG(item1, item2, height), i: Int) =>
-          println("Current state of y:")
-          y.foreach(e =>
-            println(s"Label: ${e._1}; hyperedge count: ${e._2.hyperedges.size}")
-            e._2.hyperedges.foreach(f => println(s"  $f"))
-          )
+          // println("Current state of y:")
+          // y.foreach(e =>
+            // println(s"Label: ${e._1}; hyperedge count: ${e._2.hyperedges.size}")
+            // e._2.hyperedges.foreach(f => println(s"  $f"))
+          // )
           val hypergraph = mergeHgHg(y(item1) + y(item2), true) // true creates xhtml table
           y + ((i + darwinReadings.size) -> hypergraph)
       //          val hypergraph = mergeHgHg(y(item1), y(item2)) // currently just lTA
@@ -333,5 +333,8 @@ def mergeClustersIntoHG(
   given tokenArray: Vector[TokenEnum] = createGlobalTokenArray(darwinReadings)
   val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
   val hg: Hypergraph[EdgeLabel, TokenRange] = mergeClustersIntoHG(nodesToCluster, darwinReadings)
-  println(s"hg: $hg")
+  // println(s"hg: $hg")
   createDependencyGraphEdgeLabels(hg)
+  // Transform hypergraph to alignment ribbon and visualize
+  val ar = createSecondAlignmentPhaseVisualization(hg)
+  println(s"ar: $ar")

@@ -75,7 +75,7 @@ def createDependencyGraph(
     val result = hg.toMap._2 // map from vertices (token ranges) to labels
       .map((tr, l) => tr.start -> l.head) // head because set, even though set of 1
       .to(TreeMap)
-    println(s"Tree map: $result")
+    // println(s"Tree map: $result")
     result
 
   val tm = createTreeMap(Hypergraph.hyperedge(EdgeLabel("ends"), egTa.ends: _*) + hg)
@@ -115,9 +115,9 @@ def rankHg(
 )(using gTa: Vector[TokenEnum]): Map[NodeType, Int] =
   given egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
   val dependencyGraph = createDependencyGraph(hg, debug)
-  println(s"Dependency graph:")
+  // println(s"Dependency graph:")
   dependencyGraphToDot(dependencyGraph, hg)
-  dependencyGraph.toMap.foreach((k, v) => println(s"  $k: $v"))
+  // dependencyGraph.toMap.foreach((k, v) => println(s"  $k: $v"))
   val ranks = dependencyGraph.longestPath
   ranks
 
@@ -142,7 +142,7 @@ def detectTransposition(
     debug: Boolean
 )(using gTa: Vector[TokenEnum]): Unit =
   val ranking: Map[NodeType, Int] = rankHg(matchesAsHg, debug)
-  println(s"Ranking: $ranking")
+  // println(s"Ranking: $ranking")
   val matchesSortedam1 = matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.he1.label)))
   val matchesSortedam2 = matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.he2.label)))
   // TODO: Make decision where sorted results diverge; test and assert/escape below is temporary

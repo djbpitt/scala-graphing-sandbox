@@ -7,13 +7,20 @@ import scala.xml.{Elem, Node, NodeSeq}
 import math.Ordered.orderingToOrdered
 
 /* Constants */
+// FIXME: Hard-coded witness identifiers!
 val witnessToColor: Map[Siglum, String] = Map(
   Siglum("darwin1859.txt") -> "peru",
   Siglum("darwin1860.txt") -> "orange",
   Siglum("darwin1861.txt") -> "yellow",
   Siglum("darwin1866.txt") -> "limegreen",
   Siglum("darwin1869.txt") -> "dodgerblue",
-  Siglum("darwin1872.txt") -> "violet"
+  Siglum("darwin1872.txt") -> "violet",
+  Siglum("0") -> "peru",
+  Siglum("1") -> "orange",
+  Siglum("2") -> "yellow",
+  Siglum("3") -> "limegreen",
+  Siglum("4") -> "dodgerblue",
+  Siglum("5") -> "violet"
 )
 val allSigla: Set[Siglum] =
   witnessToColor.keySet // TODO: Derive from nodes, but AlignmentUnit doesn't have a witnessReadings property
@@ -259,13 +266,20 @@ def createHorizontalRibbons(root: AlignmentRibbon, sigla: Set[Siglum])(using
   /* End of computing optimal witness order */
   val totalHeight = ribbonWidth * (witnessCount * 3) - ribbonWidth / 2
 
+  // FIXME: Get rid of hard-coded sigla values
   val witnessToGradient: Map[Siglum, String] = Map(
     Siglum("darwin1859.txt") -> "url(#peruGradient)",
     Siglum("darwin1860.txt") -> "url(#orangeGradient)",
     Siglum("darwin1861.txt") -> "url(#yellowGradient)",
     Siglum("darwin1866.txt") -> "url(#limegreenGradient)",
     Siglum("darwin1869.txt") -> "url(#dodgerblueGradient)",
-    Siglum("darwin1872.txt") -> "url(#violetGradient)"
+    Siglum("darwin1872.txt") -> "url(#violetGradient)",
+    Siglum("0") -> "url(#peruGradient)",
+    Siglum("1") -> "url(#orangeGradient)",
+    Siglum("2") -> "url(#yellowGradient)",
+    Siglum("3") -> "url(#limegreenGradient)",
+    Siglum("4") -> "url(#dodgerblueGradient)",
+    Siglum("5") -> "url(#violetGradient)"
   )
 
   def formatSiglum(siglum: Siglum): String = siglum.value.slice(8, 10).mkString

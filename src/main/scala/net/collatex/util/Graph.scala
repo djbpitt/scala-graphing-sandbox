@@ -169,7 +169,7 @@ enum Graph[N]:
    * */
   def longestPath: Map[N, Int] =
     val topSort = this.topologicalSort
-    println(s"Topological sort: $topSort")
+    // println(s"Topological sort: $topSort")
     topSort.tail // handle root separately
       .foldLeft(Map[N, Int](topSort.head -> 0))((acc, e) => // initialize root as 0
         val highestParentRank =
