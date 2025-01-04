@@ -9,19 +9,9 @@ import upickle.default.*
 
 import scala.annotation.tailrec
 
-def readJsonData: List[List[Token]] =
-  val datafilePath =
-    os.pwd / "src" / "main" / "data" / "unaligned_data_node_296_tokenized.json"
-  val fileContents = os.read(datafilePath)
-  // To avoid reading directly into enum subtype, read into TokenJSON and then remap
-  val darwinJSON = read[List[List[TokenJSON]]](fileContents)
-  val darwin: List[List[Token]] = darwinJSON.map(_.map(e => Token(e.t, e.n, e.w, e.g)))
-  darwin
-
 def mergeSingletonSingleton(w1: List[TokenEnum], // rows
-                            w2: List[TokenEnum]) = 
-  val compactedEditSteps = alignWitnesses(w1, w2)
-  val hyperedges: Vector[Hypergraph[EdgeLabel, TokenRange]] = compactedEditSteps map {
+                            w2: List[TokenEnum]) =
+  val hyperedges: Vector[Hypergraph[EdgeLabel, TokenRange]] = alignWitnesses(w1, w2) map {
     case x: CompoundEditStep.CompoundStepMatch =>
       Hypergraph.hyperedge(EdgeLabel(x.tr1.start min x.tr2.start), x.tr1, x.tr2)
     case x: CompoundEditStep.CompoundStepNonMatch =>
@@ -35,36 +25,10 @@ def mergeSingletonSingleton(w1: List[TokenEnum], // rows
   val hypergraph = hyperedges.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((x, y) => y + x)
   hypergraph
 
-def createLocalTA(singletonTokens: Vector[TokenEnum], hg: Hypergraph[EdgeLabel, TokenRange])(using
-    gTa: Vector[TokenEnum]
-): Vector[TokenEnum] = {
-  val HGTokens: Vector[Vector[TokenHG]] = identifyHGTokenRanges(hg) // needed for local TA
-  val result: Vector[Vector[TokenEnum]] =
-    singletonTokens.map(e => TokenSg(e.t, e.n, e.w, e.g))
-      +:
-        HGTokens.zipWithIndex
-          .map((innerVector, index) => Vector(TokenSep(index.toString, index.toString, index, -1)) ++ innerVector)
-  result.flatten
-}
-
-def computePreTokenRanges(heForBlock: Set[TokenRange], hePreLength: Int) = {
-  heForBlock.map(e => TokenRange(e.start, e.start + hePreLength)).toSeq
-}
-
-def computePostTokenRanges(heForBlock: Set[TokenRange], hePostLength: Int) = {
-  heForBlock.map(e => TokenRange(e.until - hePostLength, e.until)).toSeq
-}
-
-def computesPresOrPosts(preTokenRanges: Seq[TokenRange]): Hypergraph[EdgeLabel, TokenRange] = {
-  preTokenRanges.head match
-    case _: EmptyTokenRange => Hypergraph.empty[EdgeLabel, TokenRange]
-    case _: TokenRange      => Hypergraph.hyperedge(EdgeLabel(preTokenRanges.map(_.start).min), preTokenRanges: _*)
-}
-
 def mergeSingletonHG(
-    singletonTokens: Vector[Token],
-    hg: Hypergraph[EdgeLabel, TokenRange]
-)(using gTA: Vector[TokenEnum]): Hypergraph[EdgeLabel, TokenRange] = {
+                      singletonTokens: Vector[Token],
+                      hg: Hypergraph[EdgeLabel, TokenRange]
+                    )(using gTA: Vector[TokenEnum]): Hypergraph[EdgeLabel, TokenRange] = 
   // TODO: Currently find all blocks, assume there is only one
   // TODO: Check for transpositions and determine block order
   val lTA: Vector[TokenEnum] =
@@ -114,7 +78,67 @@ def mergeSingletonHG(
           Hypergraph.hyperedge(hyperedgeId, sgPost)
       singletonPreHyperedge + singletonPostHyperedge + blockHyperedge + allHePres + allHePosts
   result
+
+def mergeHgHg(bothHgs: Hypergraph[EdgeLabel, TokenRange], debug: Boolean)(using
+                                                                          gTaInput: Vector[TokenEnum]
+): Hypergraph[EdgeLabel, TokenRange] =
+  val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
+  val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
+  val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
+  val allSplitHyperedges = splitAllHyperedges(bothHgs, blocksGTa)
+  val matchesAsSet = allSplitHyperedges._2
+  val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
+    matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.he1 + x.he2)
+  println("Matches as hypergraph:")
+  matchesAsHg.hyperedges.foreach(e => println(s"  $e"))
+  detectTransposition(matchesAsSet, matchesAsHg, debug) // currently raises error if transposition
+  // If no transposition (temporarily):
+  //  Merge hyperedges on matches into single hyperedge
+  //  This replaces those separate hyperedges in full inventory of hyperedges
+  val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
+    .map(e => Hyperedge(e._1.label, e._1.vertices ++ e._2.vertices)) // NB: new hyperedge
+    .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
+  val hgWithMergeResults = allSplitHyperedges._1 // Original full hypergraph
+    - matchesAsHg // Remove hyperedges that will be merged
+    + newMatchHg // Add the merged hyperedges in place of those removed
+  hgWithMergeResults
+
+
+def readJsonData: List[List[Token]] =
+  val datafilePath =
+    os.pwd / "src" / "main" / "data" / "unaligned_data_node_296_tokenized.json"
+  val fileContents = os.read(datafilePath)
+  // To avoid reading directly into enum subtype, read into TokenJSON and then remap
+  val darwinJSON = read[List[List[TokenJSON]]](fileContents)
+  val darwin: List[List[Token]] = darwinJSON.map(_.map(e => Token(e.t, e.n, e.w, e.g)))
+  darwin
+
+def createLocalTA(singletonTokens: Vector[TokenEnum], hg: Hypergraph[EdgeLabel, TokenRange])(using
+    gTa: Vector[TokenEnum]
+): Vector[TokenEnum] = {
+  val HGTokens: Vector[Vector[TokenHG]] = identifyHGTokenRanges(hg) // needed for local TA
+  val result: Vector[Vector[TokenEnum]] =
+    singletonTokens.map(e => TokenSg(e.t, e.n, e.w, e.g))
+      +:
+        HGTokens.zipWithIndex
+          .map((innerVector, index) => Vector(TokenSep(index.toString, index.toString, index, -1)) ++ innerVector)
+  result.flatten
 }
+
+def computePreTokenRanges(heForBlock: Set[TokenRange], hePreLength: Int) = {
+  heForBlock.map(e => TokenRange(e.start, e.start + hePreLength)).toSeq
+}
+
+def computePostTokenRanges(heForBlock: Set[TokenRange], hePostLength: Int) = {
+  heForBlock.map(e => TokenRange(e.until - hePostLength, e.until)).toSeq
+}
+
+def computesPresOrPosts(preTokenRanges: Seq[TokenRange]): Hypergraph[EdgeLabel, TokenRange] = {
+  preTokenRanges.head match
+    case _: EmptyTokenRange => Hypergraph.empty[EdgeLabel, TokenRange]
+    case _: TokenRange      => Hypergraph.hyperedge(EdgeLabel(preTokenRanges.map(_.start).min), preTokenRanges: _*)
+}
+
 // Complication #1: Multiple blocks require transposition detection
 // Complication #2: Multiple hyperedges require selecting the correct one
 // Complication #3: A singleton may match parts of different hyperedges, requiring hypergraph and singleton splitting
@@ -190,31 +214,6 @@ def splitAllHyperedges(
       processBlock(blockQueue.tail, newHg, newMatches)
 
   processBlock(blocks.toVector, bothHgs, Set.empty[HyperedgeMatch])
-
-def mergeHgHg(bothHgs: Hypergraph[EdgeLabel, TokenRange], debug: Boolean)(using
-                                                                          gTaInput: Vector[TokenEnum]
-): Hypergraph[EdgeLabel, TokenRange] =
-  val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
-  val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
-  val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
-  val allSplitHyperedges = splitAllHyperedges(bothHgs, blocksGTa)
-  val matchesAsSet = allSplitHyperedges._2
-  val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
-    matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.he1 + x.he2)
-  println("Matches as hypergraph:")
-  matchesAsHg.hyperedges.foreach(e => println(s"  $e"))
-  detectTransposition(matchesAsSet, matchesAsHg, debug) // currently raises error if transposition
-  // If no transposition (temporarily):
-  //  Merge hyperedges on matches into single hyperedge
-  //  This replaces those separate hyperedges in full inventory of hyperedges
-  val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
-    .map(e => Hyperedge(e._1.label, e._1.vertices ++ e._2.vertices)) // NB: new hyperedge
-    .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
-  val hgWithMergeResults = allSplitHyperedges._1 // Original full hypergraph
-    - matchesAsHg // Remove hyperedges that will be merged
-    + newMatchHg // Add the merged hyperedges in place of those removed
-  hgWithMergeResults
-
 
 // darwinReadings is only singletons
 // darwinHGs is only hypergraphs
