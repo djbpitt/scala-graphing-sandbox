@@ -283,6 +283,7 @@ def createHorizontalRibbons(root: AlignmentRibbon, sigla: Set[Siglum])(using
   )
 
   // FIXME: Hard-coded for darwin18xx.txt or single-character sigla
+  // FIXME: IntelliJ things that casting with toString is redundant, but removing it raises an error
   def formatSiglum(siglum: Siglum): String =
     if siglum.toString.length == 1 then siglum.toString else siglum.value.slice(8, 10).mkString
 
