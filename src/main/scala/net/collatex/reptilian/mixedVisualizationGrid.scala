@@ -209,7 +209,7 @@ def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   *   <html> element in HTML namespace, with embedded SVG
   */
 def createHorizontalRibbons(root: AlignmentRibbon, sigla: Set[Siglum])(using
-                                                                       tokenArray: Vector[TokenEnum]
+    tokenArray: Vector[TokenEnum]
 ): scala.xml.Node =
   /** Constants */
   val ribbonWidth = 18
@@ -282,7 +282,9 @@ def createHorizontalRibbons(root: AlignmentRibbon, sigla: Set[Siglum])(using
     Siglum("5") -> "url(#violetGradient)"
   )
 
-  def formatSiglum(siglum: Siglum): String = siglum.value.slice(8, 10).mkString
+  // FIXME: Hard-coded for darwin18xx.txt or single-character sigla
+  def formatSiglum(siglum: Siglum): String =
+    if siglum.toString.length == 1 then siglum.toString else siglum.value.slice(8, 10).mkString
 
   def plotRect(vOffset: Double, node: HorizNodeData, fillColor: String, top: Double) =
     <rect x="0"
