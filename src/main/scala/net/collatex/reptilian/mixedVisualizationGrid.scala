@@ -213,7 +213,8 @@ def createHorizontalRibbons(root: AlignmentRibbon, sigla: Set[Siglum])(using
 ): scala.xml.Node =
   /** Constants */
   val ribbonWidth = 18
-  val missingTop = allSigla.size * ribbonWidth * 2 + ribbonWidth / 2
+  // val missingTop = allSigla.size * ribbonWidth * 2 + ribbonWidth / 2
+  val missingTop = sigla.size * ribbonWidth * 2 + ribbonWidth / 2
   val witnessCount = sigla.size
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val horizNodes = createHorizNodeData(nodeSequence, sigla)
