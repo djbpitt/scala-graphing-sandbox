@@ -49,11 +49,14 @@ def readData(pathToData: Path): List[(String, String)] =
     */
   val root: AlignmentRibbon = createAlignment(sigla)
   // Temporary code to isolate phase-two candidates
-  val phaseTwoCandidates = flattenNodeSeq(root).filter(_._1.witnessGroups.size > 1)
-  phaseTwoCandidates.foreach(e =>
-    println(e._1.witnessGroups.size)
-    e._1.witnessGroups.map(_.head).map((k, v) => println(s"  ${v.tString}"))
-  )
+  val phaseTwoCandidates =
+    flattenNodeSeq(root)
+      .filter(_._1.witnessGroups.size > 1)
+      .map(_._1.combineWitnessGroups)
+  phaseTwoCandidates.foreach(println)
+  // RESUME 2025-01-09: We already have gTa and alignment-point information
+  // We need to create List[List[Token]] to hook into secondAlignmentPhase
+  // processing
   // End of temporary code
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html")
   val horizontalRibbons = createHorizontalRibbons(root, sigla.toSet)
