@@ -48,8 +48,13 @@ def readData(pathToData: Path): List[(String, String)] =
   /** Create alignment ribbon
     */
   val root: AlignmentRibbon = createAlignment(sigla)
-  val tmp = root.children.slice(0, 5)
-  tmp.foreach(println)
+  // Temporary code to isolate phase-two candidates
+  val phaseTwoCandidates = flattenNodeSeq(root).filter(_._1.witnessGroups.size > 1)
+  phaseTwoCandidates.foreach(e =>
+    println(e._1.witnessGroups.size)
+    e._1.witnessGroups.map(_.head).map((k, v) => println(s"  ${v.tString}"))
+  )
+  // End of temporary code
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html")
   val horizontalRibbons = createHorizontalRibbons(root, sigla.toSet)
   val horizontalRibbonsPath =
