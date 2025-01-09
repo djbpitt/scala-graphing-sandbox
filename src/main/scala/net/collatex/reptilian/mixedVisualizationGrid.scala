@@ -284,9 +284,8 @@ def createHorizontalRibbons(root: AlignmentRibbon, sigla: Set[Siglum])(using
   )
 
   // FIXME: Hard-coded for darwin18xx.txt or single-character sigla
-  // FIXME: IntelliJ things that casting with toString is redundant, but removing it raises an error
   def formatSiglum(siglum: Siglum): String =
-    if siglum.toString.length == 1 then siglum.toString else siglum.value.slice(8, 10).mkString
+    if siglum.value.length == 1 then siglum.value else siglum.value.slice(8, 10)
 
   def plotRect(vOffset: Double, node: HorizNodeData, fillColor: String, top: Double) =
     <rect x="0"
@@ -425,7 +424,7 @@ def createHorizontalRibbons(root: AlignmentRibbon, sigla: Set[Siglum])(using
             plotGroupNodeWrappers(e.head)
           )
         }</div>
-      ) ++ <div>{
+      ) ++ <div class="group" data-maxwidth={nodes.last.alignmentWidth.toString}>{
       Vector(
         plotOneAlignmentPoint(nodes.last),
         plotGroupNodeWrappers(nodes.last)
