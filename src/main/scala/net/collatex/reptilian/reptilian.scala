@@ -43,13 +43,15 @@ def readData(pathToData: Path): List[(String, String)] =
   ) // One string per witness
   val witnessStrings: List[String] = witnessInputInfo.map(_._2)
   val sigla: List[Siglum] = witnessInputInfo.map(_._1).map(Siglum(_))
-  given gTa:Vector[TokenEnum] = tokenize(tokenizer)(witnessStrings) // global token array
+  given gTa: Vector[TokenEnum] = tokenize(tokenizer)(witnessStrings) // global token array
 
   /** Create alignment ribbon
     */
   val root: AlignmentRibbon = createAlignment(sigla)
+  val tmp = root.children.slice(0, 5)
+  tmp.foreach(println)
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html")
-  val horizontalRibbons = createHorizontalRibbons(root, allSigla)
+  val horizontalRibbons = createHorizontalRibbons(root, sigla.toSet)
   val horizontalRibbonsPath =
     os.pwd / "src" / "main" / "outputs" / "horizontal-ribbons-full.xhtml" // "horizontal-ribbons.xhtml"
   scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true, doctypeHtml)
