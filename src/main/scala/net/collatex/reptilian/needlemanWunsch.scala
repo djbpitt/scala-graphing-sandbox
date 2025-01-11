@@ -1,5 +1,7 @@
 package net.collatex.reptilian
 
+import smile.data.DataFrame
+
 import scala.annotation.tailrec
 
 def alignWitnesses(
@@ -67,11 +69,14 @@ def tokensToEditSteps(
     w2: List[TokenEnum] // cols
 ): LazyList[CompoundEditStep] =
   val matrix = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
+  val dfm = DataFrame.of(matrix)
+  println(dfm.toString(dfm.size))
   // not tailrec, but doesn’t matter because LazyList
   def nextStep(row: Int, col: Int): LazyList[CompoundEditStep] =
     val scoreLeft = MatrixStep.Left(matrix(row - 1)(col), row - 1, col)
     val scoreDiag = MatrixStep.Diag(matrix(row - 1)(col - 1), row - 1, col - 1)
     val scoreUp = MatrixStep.Up(matrix(row)(col - 1), row, col - 1)
+    println(s"Scores for left, diag, and up: $scoreLeft, $scoreDiag, $scoreUp")
     val bestScore: MatrixStep = Vector(scoreDiag, scoreLeft, scoreUp).min
     val nextMove: CompoundEditStep = bestScore match {
       case x: MatrixStep.Left =>
