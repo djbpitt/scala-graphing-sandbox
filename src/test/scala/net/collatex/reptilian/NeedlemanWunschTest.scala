@@ -1,6 +1,7 @@
 package net.collatex.reptilian
 
 import net.collatex.reptilian.TokenEnum.Token
+import net.collatex.reptilian.TokenRange.LegalTokenRange
 import org.scalatest.funsuite.AnyFunSuite
 
 class NeedlemanWunschTest extends AnyFunSuite:
@@ -58,7 +59,7 @@ class NeedlemanWunschTest extends AnyFunSuite:
     val resultSingleStepsCompacted = compactEditSteps(resultSingleSteps)
     assert(resultSingleSteps == singleStepsExpected)
     assert(resultSingleStepsCompacted == compactedStepsExpected)
-  test("Oops"):
+  test("Does Needleman Wunsch exclude moves off the edge of the earth?"):
     val w1: List[TokenEnum] = List(Token("much ", "much", 0, 37))
     val w2: List[TokenEnum] =
       List(
@@ -66,7 +67,13 @@ class NeedlemanWunschTest extends AnyFunSuite:
         Token("each ", "each", 4, 52335),
         Token("other ", "other", 4, 52336)
       )
-    val expected = Vector[CompoundEditStep]()
+    val expected = Vector(
+      CompoundStepNonMatch(
+        LegalTokenRange(52336, 52337),
+        LegalTokenRange(37, 38)
+      ), CompoundStepDelete(
+        LegalTokenRange(52334, 52336))
+    )
     val result = alignWitnesses(w1, w2)
     assert(result == expected)
 
