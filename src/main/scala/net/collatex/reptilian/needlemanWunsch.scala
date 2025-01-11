@@ -74,16 +74,15 @@ def tokensToEditSteps(
   // println(dfm.toString(dfm.size))
   // not tailrec, but doesn’t matter because LazyList
   def nextStep(row: Int, col: Int): LazyList[CompoundEditStep] =
-    // FIXME: we confuse row/col and left/up
     var possibleMoves: Vector[MatrixStep] = Vector.empty // TODO: This isn’t pretty
-    if row > 0 then possibleMoves :+= MatrixStep.Left(matrix(row - 1)(col), row - 1, col)
-    if col > 0 then possibleMoves :+= MatrixStep.Up(matrix(row)(col - 1), row, col - 1)
+    if row > 0 then possibleMoves :+= MatrixStep.Up(matrix(row - 1)(col), row - 1, col)
+    if col > 0 then possibleMoves :+= MatrixStep.Left(matrix(row)(col - 1), row, col - 1)
     if row > 0 && col > 0 then possibleMoves :+= MatrixStep.Diag(matrix(row - 1)(col - 1), row - 1, col - 1)
     val bestScore: MatrixStep = possibleMoves.min
     val nextMove: CompoundEditStep = bestScore match {
-      case x: MatrixStep.Left =>
-        CompoundStepInsert(TokenRange(w1(x.row).g, w1(x.row).g + 1))
       case x: MatrixStep.Up =>
+        CompoundStepInsert(TokenRange(w1(x.row).g, w1(x.row).g + 1))
+      case x: MatrixStep.Left =>
         CompoundStepDelete(TokenRange(w2(x.col).g, w2(x.col).g + 1))
       case x: MatrixStep.Diag if x.distance == matrix(row)(col) =>
         CompoundStepMatch(
