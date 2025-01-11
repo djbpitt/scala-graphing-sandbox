@@ -1,6 +1,7 @@
 package net.collatex.reptilian
 
 import net.collatex.reptilian.TokenEnum.Token
+import net.collatex.util.Hypergraph
 import os.Path
 
 //import scala.collection.mutable.ListBuffer
@@ -48,16 +49,38 @@ def readData(pathToData: Path): List[(String, String)] =
   /** Create alignment ribbon
     */
   val root: AlignmentRibbon = createAlignment(sigla)
+  // ===
   // Temporary code to isolate phase-two candidates
-  val phaseTwoCandidates =
+  // ===
+  val phaseTwoCandidates: Vector[WitnessReadings] =
     flattenNodeSeq(root)
       .filter(_._1.witnessGroups.size > 1)
       .map(_._1.combineWitnessGroups)
-  phaseTwoCandidates.foreach(println)
-  // RESUME 2025-01-09: We already have gTa and alignment-point information
-  // We need to create List[List[Token]] to hook into secondAlignmentPhase
-  // processing
+  // phaseTwoCandidates.foreach(println)
+  val phaseTwoCandidateGroups: Map[Boolean, Vector[WitnessReadings]] = phaseTwoCandidates
+    .groupBy(e => e.values.forall(f => f.getClass.getSimpleName == "LegalTokenRange"))
+  // phaseTwoCandidateGroups(false).foreach(println) // Cannot be rendered with current code
+  val validPhaseTwoCandidates = phaseTwoCandidateGroups(true) // 318 items
+  val phaseTwoCandidateTokens: Vector[List[List[Token]]] =
+    validPhaseTwoCandidates // NB: Valid groups only
+      .map(e =>
+        e.values.map(f => gTa.slice(f.start, f.until).asInstanceOf[Vector[Token]].toList).toList.sortBy(_.head.w)
+      )
+  def processUnalignedZone(tokens: List[List[Token]]): Hypergraph[EdgeLabel, TokenRange] =
+    val nodesToCluster: List[ClusterInfo] = clusterWitnesses(tokens)
+    val hg: Hypergraph[EdgeLabel, TokenRange] =
+      mergeClustersIntoHG(nodesToCluster, tokens)
+    hg
+  val phaseTwoAlignmentHypergraphs =
+    phaseTwoCandidateTokens.map(e =>
+      println(e)
+      processUnalignedZone(e)
+    )
+  phaseTwoAlignmentHypergraphs.foreach(println)
+
+  // ===
   // End of temporary code
+  // ===
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html")
   val horizontalRibbons = createHorizontalRibbons(root, sigla.toSet)
   val horizontalRibbonsPath =
