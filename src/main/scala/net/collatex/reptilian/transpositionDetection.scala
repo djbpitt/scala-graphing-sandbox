@@ -81,6 +81,8 @@ def createDependencyGraph(
   val tm = createTreeMap(Hypergraph.hyperedge(EdgeLabel("ends"), egTa.ends: _*) + hg)
   def computeEdgeData(tokr: TokenRange, he: EdgeLabel): EdgeData =
     val witness = he match {
+      // TODO: RESUME 2025-01-11
+      // FIXME: gTa references data from one of the tests (!)
       case _: EdgeLabel.Terminal => gTa(tokr.start + 1).w
       case _: EdgeLabel.Internal => gTa(tokr.start).w
     }
@@ -93,7 +95,7 @@ def createDependencyGraph(
   def computeRowDatas(hes: Set[EdgeLabel]): Seq[Seq[EdgeData]] =
     val sortedHes = hes.toSeq.sorted
     val rds: Seq[Seq[EdgeData]] = for he <- sortedHes yield
-      val tokrs = startsWithHg.members(he).toSeq.sortBy(e => e.start) // gTa is already ordered
+      val tokrs = startsWithHg.members(he).toSeq.sortBy(e => e.start) // egTa is already ordered
       tokrs.map(e => computeEdgeData(e, he))
     rds
 
