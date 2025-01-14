@@ -87,6 +87,8 @@ def mergeSingletonHG( // “This one is horrible”
 def mergeHgHg(bothHgs: Hypergraph[EdgeLabel, TokenRange], debug: Boolean)(using
     gTaInput: Vector[TokenEnum] // TODO: Does transposition detection, but doesn’t yet handle
 ): Hypergraph[EdgeLabel, TokenRange] =
+  println(bothHgs)
+  println(gTaInput(13973))
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
   val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
