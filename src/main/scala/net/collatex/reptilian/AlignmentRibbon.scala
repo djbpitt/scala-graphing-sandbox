@@ -89,7 +89,8 @@ def fullDepthBlockToAlignmentPoint(
         start = tokenArray(e).g,
         until = tokenArray(
           e
-        ).g + block.length
+        ).g + block.length,
+        ta = tokenArray
       )
     )
     .toMap

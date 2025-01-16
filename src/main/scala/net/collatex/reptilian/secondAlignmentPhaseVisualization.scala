@@ -6,8 +6,8 @@ import scala.collection.mutable.ListBuffer
 import scala.xml.dtd.DocType
 
 def createSecondAlignmentPhaseVisualization(
-    hg: Hypergraph[EdgeLabel, TokenRange]
-)(using gTa: Vector[TokenEnum]): Unit =
+    hg: Hypergraph[EdgeLabel, TokenRange]): Unit =
+  val gTa = hg.vertices.head.ta
   println(s"hypergraph: $hg")
   val ranking: Map[NodeType, Int] = rankHg(hg, true)
   val hyperedgesByRank = hg.hyperedges.groupBy(e => ranking(NodeType(e.label))) // unsorted

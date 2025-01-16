@@ -25,7 +25,7 @@ def hypergraphToText(h: Map[Int, Hypergraph[String, TokenRange]]): Unit =
   * @return
   *   String
   */
-def hypergraphToReadings(h: Hypergraph[EdgeLabel, TokenRange])(using gTa: Vector[Token]): String =
+def hypergraphToReadings(h: Hypergraph[EdgeLabel, TokenRange]): String =
   val result = h.hyperedges.toSeq
     .sortBy(_.vertices.head.tString)
     .map(e => s" (${e.vertices.size.toString}) " + s"${e.vertices.head.tString}")

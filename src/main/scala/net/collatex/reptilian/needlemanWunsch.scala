@@ -7,9 +7,10 @@ import scala.collection.mutable
 
 def alignWitnesses(
     w1: List[TokenEnum], // rows
-    w2: List[TokenEnum]
+    w2: List[TokenEnum],
+    tokenArray: Vector[TokenEnum]
 ) =
-  compactEditSteps(tokensToEditSteps(w1, w2))
+  compactEditSteps(tokensToEditSteps(w1, w2, tokenArray))
 
 def substitutionCost[A](a: A, b: A): Double =
   if (a == b) 0.0d else 1.0d
@@ -67,7 +68,8 @@ enum MatrixStep extends Ordered[MatrixStep]:
 
 def tokensToEditSteps(
     w1: List[TokenEnum], // rows
-    w2: List[TokenEnum] // cols
+    w2: List[TokenEnum], // cols
+    tokenArray: Vector[TokenEnum]
 ): LazyList[CompoundEditStep] =
   val matrix = nwCreateMatrix(w1.map(_.n), w2.map(_.n))
   // val dfm = DataFrame.of(matrix)
@@ -81,18 +83,18 @@ def tokensToEditSteps(
     val bestScore: MatrixStep = possibleMoves.min
     val nextMove: CompoundEditStep = bestScore match {
       case x: MatrixStep.Up =>
-        CompoundStepInsert(TokenRange(w1(x.row).g, w1(x.row).g + 1))
+        CompoundStepInsert(TokenRange(w1(x.row).g, w1(x.row).g + 1, tokenArray))
       case x: MatrixStep.Left =>
-        CompoundStepDelete(TokenRange(w2(x.col).g, w2(x.col).g + 1))
+        CompoundStepDelete(TokenRange(w2(x.col).g, w2(x.col).g + 1, tokenArray))
       case x: MatrixStep.Diag if x.distance == matrix(row)(col) =>
         CompoundStepMatch(
-          TokenRange(w2(x.col).g, w2(x.col).g + 1),
-          TokenRange(w1(x.row).g, w1(x.row).g + 1)
+          TokenRange(w2(x.col).g, w2(x.col).g + 1, tokenArray),
+          TokenRange(w1(x.row).g, w1(x.row).g + 1, tokenArray)
         )
       case x: MatrixStep.Diag =>
         CompoundStepNonMatch(
-          TokenRange(w2(x.col).g, w2(x.col).g + 1),
-          TokenRange(w1(x.row).g, w1(x.row).g + 1)
+          TokenRange(w2(x.col).g, w2(x.col).g + 1, tokenArray),
+          TokenRange(w1(x.row).g, w1(x.row).g + 1, tokenArray)
         )
     }
     if bestScore.row == 0 && bestScore.col == 0

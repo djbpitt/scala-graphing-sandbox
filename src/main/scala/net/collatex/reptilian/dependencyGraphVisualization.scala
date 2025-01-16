@@ -144,7 +144,8 @@ def createHtmlTable(rds: Seq[Seq[EdgeData]]): Unit = // inner sequences are tbod
 def dependencyGraphToDot(
     depGraph: Graph[NodeType],
     hg: Hypergraph[EdgeLabel, TokenRange]
-)(using copyOfGTa: Vector[TokenEnum]): Unit =
+): Unit =
+  val gTa = hg.vertices.head.ta
   val hgId = hg.hyperedgeLabels.map(_.toString).toSeq.sorted.mkString("-")
   val prologue = "digraph G {\n\t"
   val epilogue = "\n}"

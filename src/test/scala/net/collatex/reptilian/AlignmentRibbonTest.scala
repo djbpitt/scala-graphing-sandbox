@@ -10,29 +10,30 @@ import org.scalatest.funsuite.AnyFunSuite
 class AlignmentRibbonTest extends AnyFunSuite:
   /** Tests for splitWitnessGroup()
     */
+  val fakeGTa: Vector[TokenEnum] = Vector() 
   test("Split witness group with two splittable witnesses and extra split position"):
-    val left = Map(Siglum("a") -> TokenRange(1, 3), Siglum("b") -> TokenRange(5, 7))
-    val right = Map(Siglum("a") -> TokenRange(3, 4), Siglum("b") -> TokenRange(7, 8))
+    val left = Map(Siglum("a") -> TokenRange(1, 3, fakeGTa), Siglum("b") -> TokenRange(5, 7, fakeGTa))
+    val right = Map(Siglum("a") -> TokenRange(3, 4, fakeGTa), Siglum("b") -> TokenRange(7, 8, fakeGTa))
     val expected = (left, right)
-    val wg = Map(Siglum("a") -> TokenRange(1, 4), Siglum("b") -> TokenRange(5, 8)) // witness group to split
+    val wg = Map(Siglum("a") -> TokenRange(1, 4, fakeGTa), Siglum("b") -> TokenRange(5, 8, fakeGTa)) // witness group to split
     val splitPositions =
       Map(Siglum("a") -> 3, Siglum("b") -> 7, Siglum("c") -> 100) // Split positions for all witnesses (with extra)
     val result = splitWitnessGroup(wg, splitPositions)
     assert(result == expected)
   test("Split witness group with one splittable witness and one with split position at start"):
-    val left = Map(Siglum("a") -> TokenRange(1, 3))
-    val right = Map(Siglum("a") -> TokenRange(3, 4), Siglum("b") -> TokenRange(5, 8))
+    val left = Map(Siglum("a") -> TokenRange(1, 3, fakeGTa))
+    val right = Map(Siglum("a") -> TokenRange(3, 4, fakeGTa), Siglum("b") -> TokenRange(5, 8, fakeGTa))
     val expected = (left, right)
-    val wg = Map(Siglum("a") -> TokenRange(1, 4), Siglum("b") -> TokenRange(5, 8)) // witness group to split
+    val wg = Map(Siglum("a") -> TokenRange(1, 4, fakeGTa), Siglum("b") -> TokenRange(5, 8, fakeGTa)) // witness group to split
     val splitPositions =
       Map(Siglum("a") -> 3, Siglum("b") -> 5) // Split positions for all witnesses (with extra)
     val result = splitWitnessGroup(wg, splitPositions)
     assert(result == expected)
   test("Split witness group with two splittable witnesses and one with split position at end"):
-    val left = Map(Siglum("b") -> TokenRange(5, 7))
-    val right = Map(Siglum("a") -> TokenRange(1, 4), Siglum("b") -> TokenRange(7, 8))
+    val left = Map(Siglum("b") -> TokenRange(5, 7, fakeGTa))
+    val right = Map(Siglum("a") -> TokenRange(1, 4, fakeGTa), Siglum("b") -> TokenRange(7, 8, fakeGTa))
     val expected = (left, right)
-    val wg = Map(Siglum("a") -> TokenRange(1, 4), Siglum("b") -> TokenRange(5, 8)) // witness group to split
+    val wg = Map(Siglum("a") -> TokenRange(1, 4, fakeGTa), Siglum("b") -> TokenRange(5, 8, fakeGTa)) // witness group to split
     val splitPositions =
       Map(Siglum("a") -> 1, Siglum("b") -> 7) // Split positions for all witnesses (with extra)
     val result = splitWitnessGroup(wg, splitPositions)

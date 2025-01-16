@@ -123,13 +123,14 @@ def computeAlignmentNodeRenderingWidth(n: AlignmentPoint, gTa: Vector[TokenEnum]
 def createHorizNodeData(
     nodeSequence: Vector[NumberedNode],
     sigla: Set[Siglum]
-)(using tokenArray: Vector[TokenEnum]): Vector[HorizNodeData] =
+): Vector[HorizNodeData] =
+  val gTa = nodeSequence.head.node.witnessGroups.head.values.head.ta
   @tailrec
   def nextNode(nodes: Vector[NumberedNode], pos: Int, acc: Vector[HorizNodeData]): Vector[HorizNodeData] =
     if nodes.isEmpty then acc
     else
       val nodeType = nodes.head.node.getClass.getSimpleName
-      val alignmentWidth = computeAlignmentNodeRenderingWidth(nodes.head.node, tokenArray)
+      val alignmentWidth = computeAlignmentNodeRenderingWidth(nodes.head.node, gTa)
       val xOffset = acc.lastOption match {
         case Some(e) => e.xOffset + e.alignmentWidth + flowLength
         case None    => 0d
@@ -208,9 +209,10 @@ def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   * @return
   *   <html> element in HTML namespace, with embedded SVG
   */
-def createHorizontalRibbons(root: AlignmentRibbon, sigla: Set[Siglum])(using
-    tokenArray: Vector[TokenEnum]
-): scala.xml.Node =
+def createHorizontalRibbons(root: AlignmentRibbon, sigla: Set[Siglum]): scala.xml.Node =
+  val gTa: Vector[TokenEnum] = root.children.head match
+    case x:AlignmentPoint => x.witnessGroups.head.values.head.ta
+    case x:UnalignedZone => x.witnessReadings.values.head.ta
   /** Constants */
   val ribbonWidth = 18
   // val missingTop = allSigla.size * ribbonWidth * 2 + ribbonWidth / 2

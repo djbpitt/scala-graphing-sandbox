@@ -14,7 +14,7 @@ extension (he: Hyperedge[EdgeLabel, TokenRange])
       Hyperedge(EdgeLabel(he.vertices.map(_.start).min + startOffset),
         he.vertices.map(t => t.slice(startOffset, untilOffset)
           .getOrElse(IllegalTokenRange(t.start +
-            startOffset, t.start + untilOffset)))
+            startOffset, t.start + untilOffset, t.ta)))
       )
 
   def split(

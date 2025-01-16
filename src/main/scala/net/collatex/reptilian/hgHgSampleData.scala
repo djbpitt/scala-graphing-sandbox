@@ -282,31 +282,31 @@ val gTa: Vector[Token] = Vector(
 )
 val hg1Sample: Hypergraph[EdgeLabel, TokenRange] = FullHypergraph(
   Map(
-    EdgeLabel(173) -> Set(TokenRange(173, 174)),
-    EdgeLabel(254) -> Set(TokenRange(254, 255)),
-    EdgeLabel(255) -> Set(TokenRange(255, 272), TokenRange(174, 191)),
-    EdgeLabel(192) -> Set(TokenRange(192, 254), TokenRange(111, 173))
+    EdgeLabel(173) -> Set(TokenRange(173, 174, gTa)),
+    EdgeLabel(254) -> Set(TokenRange(254, 255, gTa)),
+    EdgeLabel(255) -> Set(TokenRange(255, 272, gTa), TokenRange(174, 191, gTa)),
+    EdgeLabel(192) -> Set(TokenRange(192, 254, gTa), TokenRange(111, 173, gTa))
   ),
   Map(
-    TokenRange(254, 255) -> Set(EdgeLabel(254)),
-    TokenRange(174, 191) -> Set(EdgeLabel(255)),
-    TokenRange(173, 174) -> Set(EdgeLabel(173)),
-    TokenRange(192, 254) -> Set(EdgeLabel(192)),
-    TokenRange(111, 173) -> Set(EdgeLabel(192)),
-    TokenRange(255, 272) -> Set(EdgeLabel(255))
+    TokenRange(254, 255, gTa) -> Set(EdgeLabel(254)),
+    TokenRange(174, 191, gTa) -> Set(EdgeLabel(255)),
+    TokenRange(173, 174, gTa) -> Set(EdgeLabel(173)),
+    TokenRange(192, 254, gTa) -> Set(EdgeLabel(192)),
+    TokenRange(111, 173, gTa) -> Set(EdgeLabel(192)),
+    TokenRange(255, 272, gTa) -> Set(EdgeLabel(255))
   )
 )
 val hg2Sample: Hypergraph[EdgeLabel, TokenRange] = FullHypergraph(
   Map(
-    EdgeLabel(22) -> Set(TokenRange(22, 43), TokenRange(0, 21), TokenRange(44, 65), TokenRange(66, 87)),
-    EdgeLabel(87) -> Set(TokenRange(87, 110))
+    EdgeLabel(22) -> Set(TokenRange(22, 43, gTa), TokenRange(0, 21, gTa), TokenRange(44, 65, gTa), TokenRange(66, 87, gTa)),
+    EdgeLabel(87) -> Set(TokenRange(87, 110, gTa))
   ),
   Map(
-    TokenRange(44, 65) -> Set(EdgeLabel(22)),
-    TokenRange(87, 110) -> Set(EdgeLabel(87)),
-    TokenRange(66, 87) -> Set(EdgeLabel(22)),
-    TokenRange(0, 21) -> Set(EdgeLabel(22)),
-    TokenRange(22, 43) -> Set(EdgeLabel(22))
+    TokenRange(44, 65, gTa) -> Set(EdgeLabel(22)),
+    TokenRange(87, 110, gTa) -> Set(EdgeLabel(87)),
+    TokenRange(66, 87, gTa) -> Set(EdgeLabel(22)),
+    TokenRange(0, 21, gTa) -> Set(EdgeLabel(22)),
+    TokenRange(22, 43, gTa) -> Set(EdgeLabel(22))
   )
 )
 

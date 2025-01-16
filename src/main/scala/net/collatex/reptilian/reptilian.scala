@@ -44,11 +44,11 @@ def readData(pathToData: Path): List[(String, String)] =
   ) // One string per witness
   val witnessStrings: List[String] = witnessInputInfo.map(_._2)
   val sigla: List[Siglum] = witnessInputInfo.map(_._1).map(Siglum(_))
-  given gTa: Vector[TokenEnum] = tokenize(tokenizer)(witnessStrings) // global token array
+  val gTa: Vector[TokenEnum] = tokenize(tokenizer)(witnessStrings) // global token array
 
   /** Create alignment ribbon
     */
-  val root: AlignmentRibbon = createAlignment(sigla)
+  val root: AlignmentRibbon = createAlignment(sigla, gTa)
   // ===
   // Temporary code to isolate phase-two candidates
   // ===
@@ -69,7 +69,7 @@ def readData(pathToData: Path): List[(String, String)] =
   def processUnalignedZone(tokens: List[List[Token]]): Hypergraph[EdgeLabel, TokenRange] =
     val nodesToCluster: List[ClusterInfo] = clusterWitnesses(tokens)
     val hg: Hypergraph[EdgeLabel, TokenRange] =
-      mergeClustersIntoHG(nodesToCluster, tokens)
+      mergeClustersIntoHG(nodesToCluster, tokens, gTa)
     hg
   val phaseTwoAlignmentHypergraphs =
     phaseTwoCandidateTokens.map(e =>

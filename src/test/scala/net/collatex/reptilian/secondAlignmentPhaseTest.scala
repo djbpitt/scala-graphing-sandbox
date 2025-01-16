@@ -10,7 +10,7 @@ import scala.util.matching.Regex
 
 class secondAlignmentPhaseTest extends AnyFunSuite:
   test("test identical singletons"):
-    val tokenArray: Vector[TokenEnum] =
+    val gTa: Vector[TokenEnum] =
       Vector(
         Token("Hi", "Hi", 0, 0),
         Token(", ", ", ", 0, 1),
@@ -22,15 +22,15 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
         Token("Mom", "Mom", 1, 7),
         Token("!", "!", 1, 8)
       )
-    val w1 = tokenArray.filter(e => e.w == 0 && e.g != -1).toList
-    val w2 = tokenArray.filter(e => e.w == 1 && e.g != -1).toList
-    val result = mergeSingletonSingleton(w1, w2)
+    val w1 = gTa.filter(e => e.w == 0 && e.g != -1).toList
+    val w2 = gTa.filter(e => e.w == 1 && e.g != -1).toList
+    val result = mergeSingletonSingleton(w1, w2, gTa)
     val expected = Hyperedge(
-      EdgeLabel(0), Set(TokenRange(5, 9), TokenRange(0, 4))
+      EdgeLabel(0), Set(TokenRange(5, 9, gTa), TokenRange(0, 4, gTa))
     )
     assert(result == expected)
   test("test different singletons"):
-    val tokenArray =
+    val gTa =
       Vector(
         Token("Hi", "Hi", 0, 0),
         Token(", ", ", ", 0, 1),
@@ -42,28 +42,28 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
         Token("Dad", "Dad", 1, 7),
         Token("!", "!", 1, 8)
       )
-    val w1 = tokenArray.filter(e => e.w == 0 && e.g != -1).toList
-    val w2 = tokenArray.filter(e => e.w == 1 && e.g != -1).toList
-    val result = mergeSingletonSingleton(w1, w2)
+    val w1 = gTa.filter(e => e.w == 0 && e.g != -1).toList
+    val w2 = gTa.filter(e => e.w == 1 && e.g != -1).toList
+    val result = mergeSingletonSingleton(w1, w2, gTa)
     val expected = FullHypergraph(
       Map(
-        EdgeLabel("2") -> Set(TokenRange(2, 3)),
-        EdgeLabel("7") -> Set(TokenRange(7, 8)),
-        EdgeLabel("8") -> Set(TokenRange(8, 9), TokenRange(3, 4)),
-        EdgeLabel("5") -> Set(TokenRange(5, 7), TokenRange(0, 2))
+        EdgeLabel("2") -> Set(TokenRange(2, 3, gTa)),
+        EdgeLabel("7") -> Set(TokenRange(7, 8, gTa)),
+        EdgeLabel("8") -> Set(TokenRange(8, 9, gTa), TokenRange(3, 4, gTa)),
+        EdgeLabel("5") -> Set(TokenRange(5, 7, gTa), TokenRange(0, 2, gTa))
       ),
       Map(
-        TokenRange(5, 7) -> Set(EdgeLabel("5")),
-        TokenRange(3, 4) -> Set(EdgeLabel("8")),
-        TokenRange(7, 8) -> Set(EdgeLabel("7")),
-        TokenRange(2, 3) -> Set(EdgeLabel("2")),
-        TokenRange(8, 9) -> Set(EdgeLabel("8")),
-        TokenRange(0, 2) -> Set(EdgeLabel("5"))
+        TokenRange(5, 7, gTa) -> Set(EdgeLabel("5")),
+        TokenRange(3, 4, gTa) -> Set(EdgeLabel("8")),
+        TokenRange(7, 8, gTa) -> Set(EdgeLabel("7")),
+        TokenRange(2, 3, gTa) -> Set(EdgeLabel("2")),
+        TokenRange(8, 9, gTa) -> Set(EdgeLabel("8")),
+        TokenRange(0, 2, gTa) -> Set(EdgeLabel("5"))
       )
     )
     assert(result.hyperedgeLabels.map(e => result.members(e)) == expected.hyperedgeLabels.map(e => expected.members(e)))
   test("test identifyHGTokenRanges()"):
-    given gTA: Vector[Token] = Vector(
+    val gTa: Vector[Token] = Vector(
       Token("Hi", "Hi", 0, 0),
       Token(", ", ", ", 0, 1),
       Token("Mom", "Mom", 0, 2),
@@ -81,18 +81,18 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     )
     val hg = FullHypergraph(
       Map(
-        EdgeLabel("1b") -> Set(TokenRange(2, 3)),
-        EdgeLabel("1a") -> Set(TokenRange(7, 8)),
-        EdgeLabel("0") -> Set(TokenRange(8, 9), TokenRange(3, 4)),
-        EdgeLabel("2") -> Set(TokenRange(5, 7), TokenRange(0, 2))
+        EdgeLabel("1b") -> Set(TokenRange(2, 3, gTa)),
+        EdgeLabel("1a") -> Set(TokenRange(7, 8, gTa)),
+        EdgeLabel("0") -> Set(TokenRange(8, 9, gTa), TokenRange(3, 4, gTa)),
+        EdgeLabel("2") -> Set(TokenRange(5, 7, gTa), TokenRange(0, 2, gTa))
       ),
       Map(
-        TokenRange(5, 7) -> Set(EdgeLabel("2")),
-        TokenRange(3, 4) -> Set(EdgeLabel("0")),
-        TokenRange(7, 8) -> Set(EdgeLabel("1a")),
-        TokenRange(2, 3) -> Set(EdgeLabel("1b")),
-        TokenRange(8, 9) -> Set(EdgeLabel("0")),
-        TokenRange(0, 2) -> Set(EdgeLabel("2"))
+        TokenRange(5, 7, gTa) -> Set(EdgeLabel("2")),
+        TokenRange(3, 4, gTa) -> Set(EdgeLabel("0")),
+        TokenRange(7, 8, gTa) -> Set(EdgeLabel("1a")),
+        TokenRange(2, 3, gTa) -> Set(EdgeLabel("1b")),
+        TokenRange(8, 9, gTa) -> Set(EdgeLabel("0")),
+        TokenRange(0, 2, gTa) -> Set(EdgeLabel("2"))
       )
     )
     val expected = Vector(
@@ -104,7 +104,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     val result = identifyHGTokenRanges(hg)
     assert(result == expected)
   test("test createLocalTA()"):
-    given gTA: Vector[Token] = Vector(
+    val gTa: Vector[Token] = Vector(
       Token("Hi", "Hi", 0, 0),
       Token(", ", ", ", 0, 1),
       Token("Mom", "Mom", 0, 2),
@@ -128,18 +128,18 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     )
     val hg = FullHypergraph[EdgeLabel, TokenRange](
       Map(
-        EdgeLabel("0") -> Set(TokenRange(0, 2), TokenRange(5, 7)),
-        EdgeLabel("2") -> Set(TokenRange(2, 3)),
-        EdgeLabel("6") -> Set(TokenRange(6, 7)),
-        EdgeLabel("3") -> Set(TokenRange(3, 4), TokenRange(7, 8))
+        EdgeLabel("0") -> Set(TokenRange(0, 2, gTa), TokenRange(5, 7, gTa)),
+        EdgeLabel("2") -> Set(TokenRange(2, 3, gTa)),
+        EdgeLabel("6") -> Set(TokenRange(6, 7, gTa)),
+        EdgeLabel("3") -> Set(TokenRange(3, 4, gTa), TokenRange(7, 8, gTa))
       ),
       Map(
-        TokenRange(0, 2) -> Set(EdgeLabel("0")),
-        TokenRange(5, 7) -> Set(EdgeLabel("0")),
-        TokenRange(2, 3) -> Set(EdgeLabel("2")),
-        TokenRange(6, 7) -> Set(EdgeLabel("6")),
-        TokenRange(3, 4) -> Set(EdgeLabel("3")),
-        TokenRange(7, 8) -> Set(EdgeLabel("3"))
+        TokenRange(0, 2, gTa) -> Set(EdgeLabel("0")),
+        TokenRange(5, 7, gTa) -> Set(EdgeLabel("0")),
+        TokenRange(2, 3, gTa) -> Set(EdgeLabel("2")),
+        TokenRange(6, 7, gTa) -> Set(EdgeLabel("6")),
+        TokenRange(3, 4, gTa) -> Set(EdgeLabel("3")),
+        TokenRange(7, 8, gTa) -> Set(EdgeLabel("3"))
       )
     )
     val expected = Vector(
@@ -157,28 +157,28 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
       TokenSep("3", "3", 3, -1),
       TokenHG("!", "!", 0, 3, EdgeLabel("3"))
     )
-    val result = createLocalTA(singletonTokens, hg)(using gTA: Vector[Token])
+    val result = createLocalTA(singletonTokens, hg)
     assert(result == expected)
   test("test mergeSingletonHG() with zero blocks"):
     val expected = FullHypergraph[EdgeLabel, TokenRange](
       Map(
-        EdgeLabel("8") -> Set(TokenRange(8, 9), TokenRange(3, 4)),
-        EdgeLabel("15") -> Set(TokenRange(15, 19)),
-        EdgeLabel("5") -> Set(TokenRange(5, 7), TokenRange(0, 2)),
-        EdgeLabel("2") -> Set(TokenRange(2, 3)),
-        EdgeLabel("7") -> Set(TokenRange(7, 8))
+        EdgeLabel("8") -> Set(TokenRange(8, 9, gTa), TokenRange(3, 4, gTa)),
+        EdgeLabel("15") -> Set(TokenRange(15, 19, gTa)),
+        EdgeLabel("5") -> Set(TokenRange(5, 7, gTa), TokenRange(0, 2, gTa)),
+        EdgeLabel("2") -> Set(TokenRange(2, 3, gTa)),
+        EdgeLabel("7") -> Set(TokenRange(7, 8, gTa))
       ),
       Map(
-        TokenRange(5, 7) -> Set(EdgeLabel("5")),
-        TokenRange(3, 4) -> Set(EdgeLabel("8")),
-        TokenRange(7, 8) -> Set(EdgeLabel("7")),
-        TokenRange(2, 3) -> Set(EdgeLabel("2")),
-        TokenRange(8, 9) -> Set(EdgeLabel("8")),
-        TokenRange(15, 19) -> Set(EdgeLabel("15")),
-        TokenRange(0, 2) -> Set(EdgeLabel("5"))
+        TokenRange(5, 7, gTa) -> Set(EdgeLabel("5")),
+        TokenRange(3, 4, gTa) -> Set(EdgeLabel("8")),
+        TokenRange(7, 8, gTa) -> Set(EdgeLabel("7")),
+        TokenRange(2, 3, gTa) -> Set(EdgeLabel("2")),
+        TokenRange(8, 9, gTa) -> Set(EdgeLabel("8")),
+        TokenRange(15, 19, gTa) -> Set(EdgeLabel("15")),
+        TokenRange(0, 2, gTa) -> Set(EdgeLabel("5"))
       )
     )
-    given gTA: Vector[Token] = Vector(
+    val gTA: Vector[Token] = Vector(
       Token("Hi", "Hi", 0, 0),
       Token(", ", ", ", 0, 1),
       Token("Mom", "Mom", 0, 2),
@@ -207,18 +207,18 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     )
     val hg = FullHypergraph(
       Map(
-        EdgeLabel("2") -> Set(TokenRange(2, 3)),
-        EdgeLabel("7") -> Set(TokenRange(7, 8)),
-        EdgeLabel("8") -> Set(TokenRange(8, 9), TokenRange(3, 4)),
-        EdgeLabel("5") -> Set(TokenRange(5, 7), TokenRange(0, 2))
+        EdgeLabel("2") -> Set(TokenRange(2, 3, gTa)),
+        EdgeLabel("7") -> Set(TokenRange(7, 8, gTa)),
+        EdgeLabel("8") -> Set(TokenRange(8, 9, gTa), TokenRange(3, 4, gTa)),
+        EdgeLabel("5") -> Set(TokenRange(5, 7, gTa), TokenRange(0, 2, gTa))
       ),
       Map(
-        TokenRange(5, 7) -> Set(EdgeLabel("5")),
-        TokenRange(3, 4) -> Set(EdgeLabel("8")),
-        TokenRange(7, 8) -> Set(EdgeLabel("7")),
-        TokenRange(2, 3) -> Set(EdgeLabel("2")),
-        TokenRange(8, 9) -> Set(EdgeLabel("8")),
-        TokenRange(0, 2) -> Set(EdgeLabel("5"))
+        TokenRange(5, 7, gTa) -> Set(EdgeLabel("5")),
+        TokenRange(3, 4, gTa) -> Set(EdgeLabel("8")),
+        TokenRange(7, 8, gTa) -> Set(EdgeLabel("7")),
+        TokenRange(2, 3, gTa) -> Set(EdgeLabel("2")),
+        TokenRange(8, 9, gTa) -> Set(EdgeLabel("8")),
+        TokenRange(0, 2, gTa) -> Set(EdgeLabel("5"))
       )
     )
     val result = mergeSingletonHG(singletonTokens, hg)
@@ -226,19 +226,19 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
   test("test mergeSingletonHG() with one block and singleton splitting (pre and post)"):
     val expected = FullHypergraph[EdgeLabel, TokenRange](
       Map(
-        EdgeLabel(12) -> Set(TokenRange(12, 15)),
-        EdgeLabel(8) -> Set(TokenRange(8, 9)),
-        EdgeLabel(0) -> Set(TokenRange(0, 3), TokenRange(4, 7), TokenRange(9, 12))
+        EdgeLabel(12) -> Set(TokenRange(12, 15, gTa)),
+        EdgeLabel(8) -> Set(TokenRange(8, 9, gTa)),
+        EdgeLabel(0) -> Set(TokenRange(0, 3, gTa), TokenRange(4, 7, gTa), TokenRange(9, 12, gTa))
       ),
       Map(
-        TokenRange(12, 15) -> Set(EdgeLabel(12)),
-        TokenRange(9, 12) -> Set(EdgeLabel(0)),
-        TokenRange(4, 7) -> Set(EdgeLabel(0)),
-        TokenRange(0, 3) -> Set(EdgeLabel(0)),
-        TokenRange(8, 9) -> Set(EdgeLabel(8))
+        TokenRange(12, 15, gTa) -> Set(EdgeLabel(12)),
+        TokenRange(9, 12, gTa) -> Set(EdgeLabel(0)),
+        TokenRange(4, 7, gTa) -> Set(EdgeLabel(0)),
+        TokenRange(0, 3, gTa) -> Set(EdgeLabel(0)),
+        TokenRange(8, 9, gTa) -> Set(EdgeLabel(8))
       )
     )
-    given gTA: Vector[Token] = Vector(
+    val gTA: Vector[Token] = Vector(
       Token("Hi ", "hi", 0, 0),
       Token(", ", ",", 0, 1),
       Token("Mom ", "mom", 0, 2),
@@ -266,17 +266,17 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     )
     val hg = FullHypergraph(
       Map(
-        EdgeLabel(0) -> Set(TokenRange(0, 3), TokenRange(4, 7))
+        EdgeLabel(0) -> Set(TokenRange(0, 3, gTa), TokenRange(4, 7, gTa))
       ),
       Map(
-        TokenRange(0, 3) -> Set(EdgeLabel(0)),
-        TokenRange(4, 7) -> Set(EdgeLabel(0))
+        TokenRange(0, 3, gTa) -> Set(EdgeLabel(0)),
+        TokenRange(4, 7, gTa) -> Set(EdgeLabel(0))
       )
     )
     val result = mergeSingletonHG(singletonTokens, hg)
     assert(result == expected)
   test("test mergeSingletonHG() that requires hypergraph (only) splitting with pre and post"):
-    given gTA: Vector[Token] = Vector[Token](
+    val gTA: Vector[Token] = Vector[Token](
       Token("a", "a", 0, 0),
       Token("b", "b", 0, 1),
       Token("Sep2", "Sep2", 0, 2),
@@ -295,23 +295,23 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
       Token("b", "b", 0, 1)
     )
     val hg = FullHypergraph[EdgeLabel, TokenRange](
-      Map(EdgeLabel("3") -> Set(TokenRange(3, 7), TokenRange(8, 12))),
-      Map(TokenRange(3, 7) -> Set(EdgeLabel("3")), TokenRange(8, 12) -> Set(EdgeLabel("3")))
+      Map(EdgeLabel("3") -> Set(TokenRange(3, 7, gTa), TokenRange(8, 12, gTa))),
+      Map(TokenRange(3, 7, gTa) -> Set(EdgeLabel("3")), TokenRange(8, 12, gTa) -> Set(EdgeLabel("3")))
     )
     val expected = FullHypergraph(
       Map(
-        EdgeLabel("0") -> Set(TokenRange(0, 2), TokenRange(4, 6), TokenRange(9, 11)), // two-token block
-        EdgeLabel("3") -> Set(TokenRange(3, 4), TokenRange(8, 9)), // hg pre
-        EdgeLabel("6") -> Set(TokenRange(6, 7), TokenRange(11, 12)) // hg post
+        EdgeLabel("0") -> Set(TokenRange(0, 2, gTa), TokenRange(4, 6, gTa), TokenRange(9, 11, gTa)), // two-token block
+        EdgeLabel("3") -> Set(TokenRange(3, 4, gTa), TokenRange(8, 9, gTa)), // hg pre
+        EdgeLabel("6") -> Set(TokenRange(6, 7, gTa), TokenRange(11, 12, gTa)) // hg post
       ),
       Map(
-        TokenRange(3, 4) -> Set(EdgeLabel("3")),
-        TokenRange(8, 9) -> Set(EdgeLabel("3")),
-        TokenRange(0, 2) -> Set(EdgeLabel("0")),
-        TokenRange(4, 6) -> Set(EdgeLabel("0")),
-        TokenRange(9, 11) -> Set(EdgeLabel("0")),
-        TokenRange(6, 7) -> Set(EdgeLabel("6")),
-        TokenRange(11, 12) -> Set(EdgeLabel("6"))
+        TokenRange(3, 4, gTa) -> Set(EdgeLabel("3")),
+        TokenRange(8, 9, gTa) -> Set(EdgeLabel("3")),
+        TokenRange(0, 2, gTa) -> Set(EdgeLabel("0")),
+        TokenRange(4, 6, gTa) -> Set(EdgeLabel("0")),
+        TokenRange(9, 11, gTa) -> Set(EdgeLabel("0")),
+        TokenRange(6, 7, gTa) -> Set(EdgeLabel("6")),
+        TokenRange(11, 12, gTa) -> Set(EdgeLabel("6"))
       )
     )
     val resultRanges =
@@ -321,7 +321,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
       expected.hyperedgeLabels.map(e => expected.members(e))
     assert(resultRanges == expectedRanges)
   test("test mergeSingletonHG() that requires splitting both singleton and hypergraph with pre and post for both"):
-    given gTA: Vector[Token] = Vector[Token](
+    val gTA: Vector[Token] = Vector[Token](
       Token("z", "z", 0, 0),
       Token("a", "a", 0, 1),
       Token("b", "b", 0, 2),
@@ -345,27 +345,27 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
         Token("zz", "zz", 0, 3)
       )
     val hg = FullHypergraph[EdgeLabel, TokenRange](
-      Map(EdgeLabel("5") -> Set(TokenRange(5, 9), TokenRange(10, 14))),
-      Map(TokenRange(5, 9) -> Set(EdgeLabel("5")), TokenRange(10, 14) -> Set(EdgeLabel("5")))
+      Map(EdgeLabel("5") -> Set(TokenRange(5, 9, gTa), TokenRange(10, 14, gTa))),
+      Map(TokenRange(5, 9, gTa) -> Set(EdgeLabel("5")), TokenRange(10, 14, gTa) -> Set(EdgeLabel("5")))
     )
     val expected = FullHypergraph(
       Map(
-        EdgeLabel("8") -> Set(TokenRange(8, 9), TokenRange(13, 14)),
-        EdgeLabel("5") -> Set(TokenRange(5, 6), TokenRange(10, 11)),
-        EdgeLabel("6") -> Set(TokenRange(6, 8), TokenRange(11, 13), TokenRange(1, 3)),
-        EdgeLabel("0") -> Set(TokenRange(0, 1)),
-        EdgeLabel("3") -> Set(TokenRange(3, 4))
+        EdgeLabel("8") -> Set(TokenRange(8, 9, gTa), TokenRange(13, 14, gTa)),
+        EdgeLabel("5") -> Set(TokenRange(5, 6, gTa), TokenRange(10, 11, gTa)),
+        EdgeLabel("6") -> Set(TokenRange(6, 8, gTa), TokenRange(11, 13, gTa), TokenRange(1, 3, gTa)),
+        EdgeLabel("0") -> Set(TokenRange(0, 1, gTa)),
+        EdgeLabel("3") -> Set(TokenRange(3, 4, gTa))
       ),
       Map(
-        TokenRange(1, 3) -> Set(EdgeLabel("6")),
-        TokenRange(0, 1) -> Set(EdgeLabel("0")),
-        TokenRange(8, 9) -> Set(EdgeLabel("8")),
-        TokenRange(11, 13) -> Set(EdgeLabel("6")),
-        TokenRange(6, 8) -> Set(EdgeLabel("6")),
-        TokenRange(13, 14) -> Set(EdgeLabel("8")),
-        TokenRange(10, 11) -> Set(EdgeLabel("5")),
-        TokenRange(5, 6) -> Set(EdgeLabel("5")),
-        TokenRange(3, 4) -> Set(EdgeLabel("3"))
+        TokenRange(1, 3, gTa) -> Set(EdgeLabel("6")),
+        TokenRange(0, 1, gTa) -> Set(EdgeLabel("0")),
+        TokenRange(8, 9, gTa) -> Set(EdgeLabel("8")),
+        TokenRange(11, 13, gTa) -> Set(EdgeLabel("6")),
+        TokenRange(6, 8, gTa) -> Set(EdgeLabel("6")),
+        TokenRange(13, 14, gTa) -> Set(EdgeLabel("8")),
+        TokenRange(10, 11, gTa) -> Set(EdgeLabel("5")),
+        TokenRange(5, 6, gTa) -> Set(EdgeLabel("5")),
+        TokenRange(3, 4, gTa) -> Set(EdgeLabel("3"))
       )
     )
     val resultRanges =
@@ -393,11 +393,11 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     )
     val hg1 = Hypergraph.hyperedge(
       EdgeLabel("0"),
-      TokenRange(0, 2),
-      TokenRange(3, 5)
+      TokenRange(0, 2, gTa),
+      TokenRange(3, 5, gTa)
     )
-    val hg2 = Hypergraph.hyperedge(EdgeLabel("6"), TokenRange(6, 8), TokenRange(9, 11)) +
-      Hypergraph.hyperedge(EdgeLabel("12"), TokenRange(12, 13))
+    val hg2 = Hypergraph.hyperedge(EdgeLabel("6"), TokenRange(6, 8, gTa), TokenRange(9, 11, gTa)) +
+      Hypergraph.hyperedge(EdgeLabel("12"), TokenRange(12, 13, gTa))
     val expected = Vector(
       TokenHG("!", "!", 3, 12, EdgeLabel("12")),
       TokenSep("Sep12", "Sep12", -1, -1),
@@ -667,6 +667,6 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
 
     val nodesToCluster = clusterWitnesses(mexicoData)
     // val expected = ???
-    val result = mergeClustersIntoHG(nodesToCluster, mexicoData)
+    val result = mergeClustersIntoHG(nodesToCluster, mexicoData, gTa)
     println(result)
     assert(result == result)

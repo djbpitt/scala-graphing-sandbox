@@ -67,8 +67,8 @@ import scala.math.Ordering
 //   174 in treemap, find next key sequentially, and return associated value.
 def createDependencyGraph(
     hg: Hypergraph[EdgeLabel, TokenRange],
-    debug: Boolean
-)(using egTa: TokenArrayWithStartsAndEnds) =
+    debug: Boolean,
+    egTa: TokenArrayWithStartsAndEnds) =
   val startsWithHg = Hypergraph.hyperedge(EdgeLabel("starts"), egTa.starts: _*) + hg
   // Sorted map (treemap) from start of token range (Int) to hyperedge label (String)
   def createTreeMap(hg: Hypergraph[EdgeLabel, TokenRange]): TreeMap[Int, EdgeLabel] =
@@ -113,10 +113,10 @@ def createDependencyGraph(
 
 def rankHg(
     hg: Hypergraph[EdgeLabel, TokenRange],
-    debug: Boolean = false
-)(using gTa: Vector[TokenEnum]): Map[NodeType, Int] =
-  given egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
-  val dependencyGraph = createDependencyGraph(hg, debug)
+    debug: Boolean = false): Map[NodeType, Int] =
+  val gTa = hg.vertices.head.ta
+  val egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
+  val dependencyGraph = createDependencyGraph(hg, debug, egTa)
   // println(s"Dependency graph:")
   dependencyGraphToDot(dependencyGraph, hg)
   // dependencyGraph.toMap.foreach((k, v) => println(s"  $k: $v"))
@@ -135,27 +135,25 @@ def findInstanceInHypergraph(hg: Hypergraph[EdgeLabel, TokenRange], instance: In
   (resultHe, resultTr)
 
 // converts a block into n number of token ranges, where n is the number of instances
-def toTokenRanges(currentBlock: FullDepthBlock) =
-  currentBlock.instances.map(e => TokenRange(e, e + currentBlock.length))
+def toTokenRanges(currentBlock: FullDepthBlock, gTa: Vector[TokenEnum]) =
+  currentBlock.instances.map(e => TokenRange(e, e + currentBlock.length, gTa))
 
 def detectTransposition(
     matchesAsSet: Set[HyperedgeMatch],
     matchesAsHg: Hypergraph[EdgeLabel, TokenRange],
     debug: Boolean
-)(using gTa: Vector[TokenEnum]): Unit =
+): Unit =
+  val gTa = matchesAsHg.vertices.head.ta
   val ranking: Map[NodeType, Int] = rankHg(matchesAsHg, debug)
-  // println(s"Ranking: $ranking")
   val matchesSortedam1 = matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.he1.label)))
   val matchesSortedam2 = matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.he2.label)))
   // TODO: Make decision where sorted results diverge; test and assert/escape below is temporary
   val transpositionBool = matchesSortedam1 != matchesSortedam2
   assert(!transpositionBool, "We don’t yet handle transposition") // Temporarily bail out if transposition
 
-
 def realMainFunction(debug: Boolean): Unit =
-  val (gTaInput, hg1, hg2) = returnSampleData() // don’t use (global) names of hgs because real data isn’t global
-  given gTa: Vector[Token] = gTaInput
-  val hgWithMergeResults: Hypergraph[EdgeLabel, TokenRange] = mergeHgHg(hg1 + hg2, debug)
+  val (gTa, hg1, hg2) = returnSampleData() // don’t use (global) names of hgs because real data isn’t global
+  val hgWithMergeResults: Hypergraph[EdgeLabel, TokenRange] = mergeHgHg(hg1 + hg2, debug, gTa)
   val result = hypergraphToReadings(hgWithMergeResults)
   println(result)
 
@@ -221,16 +219,16 @@ case class TokenArrayWithStartsAndEnds(
 )
 object TokenArrayWithStartsAndEnds:
   // Eventually a single global TokenArray will
-  // include separators when created, making the 
+  // include separators when created, making the
   // enhancements here unnecessary
   def apply(tokens: Vector[TokenEnum]): TokenArrayWithStartsAndEnds =
     val seps = tokens.filter(_.getClass.getSimpleName == "TokenSep")
     def computeStarts(): Vector[TokenRange] =
       (TokenSep("Sep-1", "Sep-1", -1, -1) +: seps)
-        .map(e => TokenRange(e.g, e.g))
+        .map(e => TokenRange(e.g, e.g, gTa))
     def computeEnds(): Vector[TokenRange] =
       (seps :+ TokenSep("Sep" + tokens.size.toString, "", tokens.last.w + 1, tokens.size))
-        .map(e => TokenRange(e.g, e.g))
+        .map(e => TokenRange(e.g, e.g, gTa))
     new TokenArrayWithStartsAndEnds(tokens, computeStarts(), computeEnds())
 
 case class HyperedgeMatch(
