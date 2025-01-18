@@ -7,6 +7,7 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class transpositionDetectionTest extends AnyFunSuite:
   test("Test splitAllHyperedges"):
+    val gTa = returnSampleData()._1
     val hg: Hypergraph[EdgeLabel, TokenRange] =
       // Token ranges in hyperedge are from different witnesses; must be same length
       // HE1 < W1 = TokenRange(0, 100), W2 = TokenRange(100, 200),

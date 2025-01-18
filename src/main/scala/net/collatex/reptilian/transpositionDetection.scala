@@ -81,10 +81,9 @@ def createDependencyGraph(
   val tm = createTreeMap(Hypergraph.hyperedge(EdgeLabel("ends"), egTa.ends: _*) + hg)
   def computeEdgeData(tokr: TokenRange, he: EdgeLabel): EdgeData =
     val witness = he match {
-      // TODO: RESUME 2025-01-11
-      // FIXME: gTa references data from one of the tests (!)
-      case _: EdgeLabel.Terminal => gTa(tokr.start + 1).w
-      case _: EdgeLabel.Internal => gTa(tokr.start).w
+      // FIXME: Appears to be broken for reasons we don’t yet understand
+      case _: EdgeLabel.Terminal => egTa.tokens(tokr.start + 1).w
+      case _: EdgeLabel.Internal => egTa.tokens(tokr.start).w
     }
     val source = NodeType(tokr.start)
     val tmTarget = tm.minAfter(tokr.start + 1)
@@ -107,7 +106,6 @@ def createDependencyGraph(
     .fold(Graph.empty)(_ + _)
   if debug then // create html tables and Graphviz dot only for debug
     createHtmlTable(rowDatas) // unit; writes html tables to disk
-    given copyOfGTa: Vector[TokenEnum] = gTa
     dependencyGraphToDot(depGraph, hg) // unit; writes Graphviz dot to disk
   depGraph
 
@@ -225,10 +223,10 @@ object TokenArrayWithStartsAndEnds:
     val seps = tokens.filter(_.getClass.getSimpleName == "TokenSep")
     def computeStarts(): Vector[TokenRange] =
       (TokenSep("Sep-1", "Sep-1", -1, -1) +: seps)
-        .map(e => TokenRange(e.g, e.g, gTa))
+        .map(e => TokenRange(e.g, e.g, tokens))
     def computeEnds(): Vector[TokenRange] =
       (seps :+ TokenSep("Sep" + tokens.size.toString, "", tokens.last.w + 1, tokens.size))
-        .map(e => TokenRange(e.g, e.g, gTa))
+        .map(e => TokenRange(e.g, e.g, tokens))
     new TokenArrayWithStartsAndEnds(tokens, computeStarts(), computeEnds())
 
 case class HyperedgeMatch(

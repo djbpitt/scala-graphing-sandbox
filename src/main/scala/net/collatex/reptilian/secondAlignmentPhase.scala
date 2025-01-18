@@ -38,9 +38,9 @@ def mergeSingletonHG( // “This one is horrible”
   // FIXME: Inline convenience variables to improve legibility
   // TODO: Replace by handling SingletonHG as HGHG
   val gTa = hg.vertices.head.ta
-  val lTA: Vector[TokenEnum] =
+  val lTa: Vector[TokenEnum] =
     createLocalTA(singletonTokens, hg)
-  val (_, _, fdb) = createAlignedBlocks(lTA, -1, false) // full-depth blocks
+  val (_, _, fdb) = createAlignedBlocks(lTa, -1, false) // full-depth blocks
   // TODO: Transposition detection and block filtering goes either here or inside createAlignedBlocks()
   val singletonTokenRange = TokenRange(singletonTokens.head.g, singletonTokens.last.g + 1, singletonTokens)
   val result =
@@ -50,11 +50,11 @@ def mergeSingletonHG( // “This one is horrible”
     else
       val firstBlock = fdb.head
       val blockStartInHe = firstBlock.instances.last
-      val heForBlock = hg.members(lTA(blockStartInHe).asInstanceOf[TokenHG].he)
+      val heForBlock = hg.members(lTa(blockStartInHe).asInstanceOf[TokenHG].he)
       val heTrInBlock: TokenRange = // TokenRange that contains block in hyperedge (to be split)
-        heForBlock.filter(e => gTa(e.start).w == lTA(blockStartInHe).w).head
+        heForBlock.filter(e => gTa(e.start).w == lTa(blockStartInHe).w).head
       val heBlockRange: TokenRange = // TokenRange of block (used to split heTrInBlock)
-        TokenRange(lTA(firstBlock.instances.last).g, lTA(firstBlock.instances.last + firstBlock.length - 1).g + 1, gTa)
+        TokenRange(lTa(firstBlock.instances.last).g, lTa(firstBlock.instances.last + firstBlock.length - 1).g + 1, gTa)
       val (hePre: TokenRange, hePost: TokenRange) = heTrInBlock.splitTokenRange(heBlockRange)
       val hePreLength = hePre.length
       val hePostLength = hePost.length
@@ -69,7 +69,7 @@ def mergeSingletonHG( // “This one is horrible”
       val allHgBlockHe: Hypergraph[EdgeLabel, TokenRange] =
         Hypergraph.hyperedge(EdgeLabel(allHeBlockTRs.map(_.start).min), allHeBlockTRs: _*)
       val blockSingletonTokenRange =
-        TokenRange(lTA(firstBlock.instances.head).g, lTA(firstBlock.instances.head + firstBlock.length - 1).g + 1, gTa)
+        TokenRange(lTa(firstBlock.instances.head).g, lTa(firstBlock.instances.head + firstBlock.length - 1).g + 1, gTa)
       val blockHyperedge = Hypergraph.vertices(blockSingletonTokenRange) * allHgBlockHe
       val (sgPre: TokenRange, sgPost: TokenRange) =
         singletonTokenRange.splitTokenRange(blockSingletonTokenRange)
@@ -149,7 +149,6 @@ def createLocalTA(
     singletonTokens: Vector[TokenEnum],
     hg: Hypergraph[EdgeLabel, TokenRange]
 ): Vector[TokenEnum] = {
-  val gTa = hg.vertices.head.ta
   val HGTokens: Vector[Vector[TokenHG]] = identifyHGTokenRanges(hg) // needed for local TA
   val result: Vector[Vector[TokenEnum]] =
     singletonTokens.map(e => TokenSg(e.t, e.n, e.w, e.g))

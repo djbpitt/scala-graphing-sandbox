@@ -1,7 +1,13 @@
 package net.collatex.reptilian
 
 import net.collatex.reptilian.TokenEnum.*
-import net.collatex.reptilian.{createHgTa, createLocalTA, identifyHGTokenRanges, mergeSingletonHG, mergeSingletonSingleton}
+import net.collatex.reptilian.{
+  createHgTa,
+  createLocalTA,
+  identifyHGTokenRanges,
+  mergeSingletonHG,
+  mergeSingletonSingleton
+}
 import net.collatex.util.Hypergraph
 import net.collatex.util.Hypergraph.{FullHypergraph, Hyperedge}
 import org.scalatest.funsuite.AnyFunSuite
@@ -26,7 +32,8 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     val w2 = gTa.filter(e => e.w == 1 && e.g != -1).toList
     val result = mergeSingletonSingleton(w1, w2, gTa)
     val expected = Hyperedge(
-      EdgeLabel(0), Set(TokenRange(5, 9, gTa), TokenRange(0, 4, gTa))
+      EdgeLabel(0),
+      Set(TokenRange(5, 9, gTa), TokenRange(0, 4, gTa))
     )
     assert(result == expected)
   test("test different singletons"):
@@ -160,25 +167,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     val result = createLocalTA(singletonTokens, hg)
     assert(result == expected)
   test("test mergeSingletonHG() with zero blocks"):
-    val expected = FullHypergraph[EdgeLabel, TokenRange](
-      Map(
-        EdgeLabel("8") -> Set(TokenRange(8, 9, gTa), TokenRange(3, 4, gTa)),
-        EdgeLabel("15") -> Set(TokenRange(15, 19, gTa)),
-        EdgeLabel("5") -> Set(TokenRange(5, 7, gTa), TokenRange(0, 2, gTa)),
-        EdgeLabel("2") -> Set(TokenRange(2, 3, gTa)),
-        EdgeLabel("7") -> Set(TokenRange(7, 8, gTa))
-      ),
-      Map(
-        TokenRange(5, 7, gTa) -> Set(EdgeLabel("5")),
-        TokenRange(3, 4, gTa) -> Set(EdgeLabel("8")),
-        TokenRange(7, 8, gTa) -> Set(EdgeLabel("7")),
-        TokenRange(2, 3, gTa) -> Set(EdgeLabel("2")),
-        TokenRange(8, 9, gTa) -> Set(EdgeLabel("8")),
-        TokenRange(15, 19, gTa) -> Set(EdgeLabel("15")),
-        TokenRange(0, 2, gTa) -> Set(EdgeLabel("5"))
-      )
-    )
-    val gTA: Vector[Token] = Vector(
+    val gTa: Vector[Token] = Vector(
       Token("Hi", "Hi", 0, 0),
       Token(", ", ", ", 0, 1),
       Token("Mom", "Mom", 0, 2),
@@ -199,6 +188,29 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
       Token("no ", "no", 3, 17),
       Token("blocks", "blocks", 3, 18)
     )
+    val expected = FullHypergraph[EdgeLabel, TokenRange](
+      Map(
+        EdgeLabel(8) -> Set(TokenRange(8, 9, gTa), TokenRange(3, 4, gTa), TokenRange(13, 14, gTa)),
+        EdgeLabel(15) -> Set(TokenRange(15, 19, gTa)),
+        EdgeLabel(5) -> Set(TokenRange(5, 7, gTa), TokenRange(0, 2, gTa), TokenRange(10, 12, gTa)),
+        EdgeLabel(2) -> Set(TokenRange(2, 3, gTa)),
+        EdgeLabel(7) -> Set(TokenRange(7, 8, gTa))
+      ),
+      Map(
+        TokenRange(5, 7, gTa) -> Set(EdgeLabel(5)),
+        TokenRange(3, 4, gTa) -> Set(EdgeLabel(8)),
+        TokenRange(7, 8, gTa) -> Set(EdgeLabel(7)),
+        TokenRange(2, 3, gTa) -> Set(EdgeLabel(2)),
+        TokenRange(8, 9, gTa) -> Set(EdgeLabel(8)),
+        TokenRange(15, 19, gTa) -> Set(EdgeLabel(15)),
+        TokenRange(0, 2, gTa) -> Set(EdgeLabel(5)),
+        TokenRange(10, 12, gTa) -> Set(EdgeLabel(5)),
+        TokenRange(13, 14, gTa) -> Set(EdgeLabel(8))
+      )
+    )
+    // RESUME 2024-01-18: gTa should be the same for all tokens, but the gTa attached
+    // to the tokens in the result is not consistent. The numerical values are correct;
+    // the test is failing because the gTa values on the token ranges don’t match
     val singletonTokens = Vector[Token](
       Token("There  ", "there", 3, 15),
       Token("are ", "are", 3, 16),
@@ -207,23 +219,36 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     )
     val hg = FullHypergraph(
       Map(
-        EdgeLabel("2") -> Set(TokenRange(2, 3, gTa)),
-        EdgeLabel("7") -> Set(TokenRange(7, 8, gTa)),
-        EdgeLabel("8") -> Set(TokenRange(8, 9, gTa), TokenRange(3, 4, gTa)),
-        EdgeLabel("5") -> Set(TokenRange(5, 7, gTa), TokenRange(0, 2, gTa))
+        EdgeLabel(2) -> Set(TokenRange(2, 3, gTa)), // Mom
+        EdgeLabel(7) -> Set(TokenRange(7, 8, gTa)), // Dad
+        EdgeLabel(8) -> Set(
+          TokenRange(8, 9, gTa),
+          TokenRange(3, 4, gTa),
+          TokenRange(13, 14, gTa)
+        ), // !
+        EdgeLabel(5) -> Set(
+          TokenRange(5, 7, gTa),
+          TokenRange(0, 2, gTa),
+          TokenRange(10, 12, gTa)
+        ) // Hi,
       ),
       Map(
-        TokenRange(5, 7, gTa) -> Set(EdgeLabel("5")),
-        TokenRange(3, 4, gTa) -> Set(EdgeLabel("8")),
-        TokenRange(7, 8, gTa) -> Set(EdgeLabel("7")),
-        TokenRange(2, 3, gTa) -> Set(EdgeLabel("2")),
-        TokenRange(8, 9, gTa) -> Set(EdgeLabel("8")),
-        TokenRange(0, 2, gTa) -> Set(EdgeLabel("5"))
+        TokenRange(5, 7, gTa) -> Set(EdgeLabel(5)),
+        TokenRange(3, 4, gTa) -> Set(EdgeLabel(8)),
+        TokenRange(7, 8, gTa) -> Set(EdgeLabel(7)),
+        TokenRange(2, 3, gTa) -> Set(EdgeLabel(2)),
+        TokenRange(8, 9, gTa) -> Set(EdgeLabel(8)),
+        TokenRange(0, 2, gTa) -> Set(EdgeLabel(5)),
+        TokenRange(13, 14, gTa) -> Set(EdgeLabel(8)),
+        TokenRange(10, 12, gTa) -> Set(EdgeLabel(5))
       )
     )
     val result = mergeSingletonHG(singletonTokens, hg)
+    println(s"gTa: $gTa")
+    println(s"result: $result")
     assert(result == expected)
   test("test mergeSingletonHG() with one block and singleton splitting (pre and post)"):
+    val gTa = returnSampleData()._1
     val expected = FullHypergraph[EdgeLabel, TokenRange](
       Map(
         EdgeLabel(12) -> Set(TokenRange(12, 15, gTa)),
@@ -276,7 +301,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     val result = mergeSingletonHG(singletonTokens, hg)
     assert(result == expected)
   test("test mergeSingletonHG() that requires hypergraph (only) splitting with pre and post"):
-    val gTA: Vector[Token] = Vector[Token](
+    val gTa: Vector[Token] = Vector[Token](
       Token("a", "a", 0, 0),
       Token("b", "b", 0, 1),
       Token("Sep2", "Sep2", 0, 2),
@@ -321,7 +346,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
       expected.hyperedgeLabels.map(e => expected.members(e))
     assert(resultRanges == expectedRanges)
   test("test mergeSingletonHG() that requires splitting both singleton and hypergraph with pre and post for both"):
-    val gTA: Vector[Token] = Vector[Token](
+    val gTa: Vector[Token] = Vector[Token](
       Token("z", "z", 0, 0),
       Token("a", "a", 0, 1),
       Token("b", "b", 0, 2),
@@ -376,7 +401,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     assert(resultRanges == expectedRanges)
   test("create local token array for HGHG merge"):
     // FIXME: mergeHgHg temporarily only creates token array; change test when this distribution of responsibilities changes
-    given Vector[TokenEnum] = Vector(
+    val gTa: Vector[TokenEnum] = Vector(
       Token("Hi ", "hi", 0, 0),
       Token("Mom ", "mom", 0, 1),
       Token("Sep2", "Sep2", 0, 2),
@@ -412,7 +437,11 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
   test("phase two mexico example"):
     val mexicoData: List[List[Token]] = List(
       List(Token("vegetable ", "vegetable", 0, 1124), Token("poisons", "poisons", 0, 1125), Token(". ", ".", 0, 1126)),
-      List(Token("vegetable ", "vegetable", 1, 13973), Token("poisons", "poisons", 1, 13974), Token(". ", ".", 1, 13975)),
+      List(
+        Token("vegetable ", "vegetable", 1, 13973),
+        Token("poisons", "poisons", 1, 13974),
+        Token(". ", ".", 1, 13975)
+      ),
       List(
         Token("vegetable ", "vegetable", 2, 26894),
         Token("poisons", "poisons", 2, 26895),
@@ -642,14 +671,13 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
         Token("\" ", "\"", 3, 40151)
       )
     )
-
     val pathToDarwin = os.pwd / "src" / "main" / "data" / "darwin"
 
     /** Prepare tokenizer
-     *
-     * Sequences of non-word characters (except spaces) are entire tokens Unlike in CollateX Python, punctuation
-     * characters are their own tokens
-     */
+      *
+      * Sequences of non-word characters (except spaces) are entire tokens Unlike in CollateX Python, punctuation
+      * characters are their own tokens
+      */
     val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
     val tokenizer = makeTokenizer(
       tokenPattern
@@ -661,12 +689,9 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     ) // One string per witness
     val witnessStrings: List[String] = witnessInputInfo.map(_._2)
     val sigla: List[Siglum] = witnessInputInfo.map(_._1).map(Siglum(_))
-
-    given gTa: Vector[TokenEnum] = tokenize(tokenizer)(witnessStrings) // global token array
-
-
+    val gTa: Vector[TokenEnum] = tokenize(tokenizer)(witnessStrings) // global token array
     val nodesToCluster = clusterWitnesses(mexicoData)
     // val expected = ???
     val result = mergeClustersIntoHG(nodesToCluster, mexicoData, gTa)
-    println(result)
+    // println(result)
     assert(result == result)

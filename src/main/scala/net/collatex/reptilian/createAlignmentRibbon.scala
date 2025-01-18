@@ -204,7 +204,7 @@ def setupNodeExpansion(
   val blocks = alignTokenArray(sigla, selection, gTa)
   if blocks.isEmpty
   then
-    val groups = selection.witnessReadings
+    val wg = selection.witnessReadings
       .groupBy((_, offsets) =>
         gTa
           .slice(offsets.start, offsets.until)
@@ -212,7 +212,7 @@ def setupNodeExpansion(
       ) // groups readings by shared text (n property)
       .values // we don't care about the shared text after we've used it for grouping
       .toSet
-    AlignmentPoint(groups)
+    AlignmentPoint(wg)
   else // blocks, so children are a sequence of one or more nodes of possibly different types
     val expansion = recursiveBuildAlignment(
       result = ListBuffer(),
