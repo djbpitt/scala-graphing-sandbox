@@ -18,7 +18,23 @@ class AlignmentHyperedgeTest extends AnyFunSuite:
   val fakeGTa: Vector[TokenEnum] = Vector()
   val tokenrangesForHe: Set[TokenRange] = // 0–9 (until 10)
     Set(TokenRange(0, 10, fakeGTa), TokenRange(10, 20, fakeGTa), TokenRange(20, 30, fakeGTa))
-  val he: Hyperedge[EdgeLabel, TokenRange] = Hyperedge(EdgeLabel(0), tokenrangesForHe)
+  val he: Hyperedge[EdgeLabel, TokenRange] = AlignmentHyperedge(tokenrangesForHe)
+
+  test("Use AlignmentHyperedge constructor without explicit EdgeLabel"):
+    val expected = Hyperedge(
+      EdgeLabel(0),
+      Set(
+        TokenRange(0, 2, Vector()),
+        TokenRange(3, 5, Vector())
+      )
+    )
+    val result = AlignmentHyperedge(
+      Set(
+        TokenRange(3, 5, Vector[TokenEnum]()),
+        TokenRange(0, 2, Vector[TokenEnum]())
+      )
+    )
+    assert(result == result)
 
   test("Split hyperedge that is coextensive with block"):
     val expected = he
@@ -28,8 +44,16 @@ class AlignmentHyperedgeTest extends AnyFunSuite:
   test("Split hyperedge with pre but not post"):
     val expected = FullHypergraph(
       Map(
-        EdgeLabel(0) -> Set(LegalTokenRange(0, 3, fakeGTa), LegalTokenRange(10, 13, fakeGTa), LegalTokenRange(20, 23, fakeGTa)),
-        EdgeLabel(3) -> Set(LegalTokenRange(3, 10, fakeGTa), LegalTokenRange(13, 20, fakeGTa), LegalTokenRange(23, 30, fakeGTa))
+        EdgeLabel(0) -> Set(
+          LegalTokenRange(0, 3, fakeGTa),
+          LegalTokenRange(10, 13, fakeGTa),
+          LegalTokenRange(20, 23, fakeGTa)
+        ),
+        EdgeLabel(3) -> Set(
+          LegalTokenRange(3, 10, fakeGTa),
+          LegalTokenRange(13, 20, fakeGTa),
+          LegalTokenRange(23, 30, fakeGTa)
+        )
       ),
       Map(
         LegalTokenRange(0, 3, fakeGTa) -> Set(EdgeLabel(0)),
@@ -46,8 +70,16 @@ class AlignmentHyperedgeTest extends AnyFunSuite:
   test("Split hyperedge with post but not pre"):
     val expected = FullHypergraph(
       Map(
-        EdgeLabel(0) -> Set(LegalTokenRange(0, 7, fakeGTa), LegalTokenRange(10, 17, fakeGTa), LegalTokenRange(20, 27, fakeGTa)),
-        EdgeLabel(7) -> Set(LegalTokenRange(7, 10, fakeGTa), LegalTokenRange(17, 20, fakeGTa), LegalTokenRange(27, 30, fakeGTa))
+        EdgeLabel(0) -> Set(
+          LegalTokenRange(0, 7, fakeGTa),
+          LegalTokenRange(10, 17, fakeGTa),
+          LegalTokenRange(20, 27, fakeGTa)
+        ),
+        EdgeLabel(7) -> Set(
+          LegalTokenRange(7, 10, fakeGTa),
+          LegalTokenRange(17, 20, fakeGTa),
+          LegalTokenRange(27, 30, fakeGTa)
+        )
       ),
       Map(
         LegalTokenRange(0, 7, fakeGTa) -> Set(EdgeLabel(0)),
@@ -64,9 +96,21 @@ class AlignmentHyperedgeTest extends AnyFunSuite:
   test("Split hyperedge with pre and post"):
     val expected = FullHypergraph(
       Map(
-        EdgeLabel(0) -> Set(LegalTokenRange(0, 3, fakeGTa), LegalTokenRange(10, 13, fakeGTa), LegalTokenRange(20, 23, fakeGTa)),
-        EdgeLabel(3) -> Set(LegalTokenRange(3, 7, fakeGTa), LegalTokenRange(13, 17, fakeGTa), LegalTokenRange(23, 27, fakeGTa)),
-        EdgeLabel(7) -> Set(LegalTokenRange(7, 10, fakeGTa), LegalTokenRange(17, 20, fakeGTa), LegalTokenRange(27, 30, fakeGTa))
+        EdgeLabel(0) -> Set(
+          LegalTokenRange(0, 3, fakeGTa),
+          LegalTokenRange(10, 13, fakeGTa),
+          LegalTokenRange(20, 23, fakeGTa)
+        ),
+        EdgeLabel(3) -> Set(
+          LegalTokenRange(3, 7, fakeGTa),
+          LegalTokenRange(13, 17, fakeGTa),
+          LegalTokenRange(23, 27, fakeGTa)
+        ),
+        EdgeLabel(7) -> Set(
+          LegalTokenRange(7, 10, fakeGTa),
+          LegalTokenRange(17, 20, fakeGTa),
+          LegalTokenRange(27, 30, fakeGTa)
+        )
       ),
       Map(
         LegalTokenRange(0, 3, fakeGTa) -> Set(EdgeLabel(0)),
@@ -86,9 +130,21 @@ class AlignmentHyperedgeTest extends AnyFunSuite:
   test("Bad data"):
     val expected = FullHypergraph(
       Map(
-        EdgeLabel(0) -> Set(LegalTokenRange(0, 3, fakeGTa), LegalTokenRange(10, 13, fakeGTa), LegalTokenRange(20, 23, fakeGTa)),
-        EdgeLabel(3) -> Set(LegalTokenRange(3, 8, fakeGTa), LegalTokenRange(13, 18, fakeGTa), LegalTokenRange(23, 28, fakeGTa)),
-        EdgeLabel(8) -> Set(IllegalTokenRange(8, 11, fakeGTa), IllegalTokenRange(18, 21, fakeGTa), IllegalTokenRange(28, 31, fakeGTa))
+        EdgeLabel(0) -> Set(
+          LegalTokenRange(0, 3, fakeGTa),
+          LegalTokenRange(10, 13, fakeGTa),
+          LegalTokenRange(20, 23, fakeGTa)
+        ),
+        EdgeLabel(3) -> Set(
+          LegalTokenRange(3, 8, fakeGTa),
+          LegalTokenRange(13, 18, fakeGTa),
+          LegalTokenRange(23, 28, fakeGTa)
+        ),
+        EdgeLabel(8) -> Set(
+          IllegalTokenRange(8, 11, fakeGTa),
+          IllegalTokenRange(18, 21, fakeGTa),
+          IllegalTokenRange(28, 31, fakeGTa)
+        )
       ),
       Map(
         LegalTokenRange(0, 3, fakeGTa) -> Set(EdgeLabel(0)),

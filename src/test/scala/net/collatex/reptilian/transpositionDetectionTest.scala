@@ -12,16 +12,13 @@ class transpositionDetectionTest extends AnyFunSuite:
       // Token ranges in hyperedge are from different witnesses; must be same length
       // HE1 < W1 = TokenRange(0, 100), W2 = TokenRange(100, 200),
       // HE2 < W3 = TokenRange(200, 300), W4 = TokenRange(300, 400)
-      Hyperedge( // W1, W2
-        EdgeLabel(30),
+      AlignmentHyperedge( // W1, W2
         Set(TokenRange(30, 70, gTa), TokenRange(130, 170, gTa))
       ) +
-        Hyperedge( // W3, W4
-          EdgeLabel(250),
+        AlignmentHyperedge( // W3, W4
           Set(TokenRange(250, 260, gTa), TokenRange(350, 360, gTa))
         ) +
-        Hyperedge( // W1, W2
-          EdgeLabel(10),
+        AlignmentHyperedge( // W1, W2
           Set(TokenRange(10, 20, gTa), TokenRange(110, 120, gTa))
         )
     val blocks = Iterable( // block coordinate match different hyperedges

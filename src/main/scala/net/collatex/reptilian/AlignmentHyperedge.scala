@@ -4,6 +4,11 @@ import net.collatex.reptilian.TokenRange.IllegalTokenRange
 import net.collatex.util.Hypergraph
 import net.collatex.util.Hypergraph.Hyperedge
 
+object AlignmentHyperedge:
+  def apply(tokenRanges: Set[TokenRange]): Hyperedge[EdgeLabel, TokenRange] =
+    val edgeLabel = EdgeLabel(tokenRanges.map(_.start).min)
+    Hyperedge[EdgeLabel, TokenRange](edgeLabel, tokenRanges)
+
 /*
  * Extend hyperedge to add slice and split methods
  */
@@ -11,10 +16,19 @@ extension (he: Hyperedge[EdgeLabel, TokenRange])
   def slice(startOffset: Int, untilOffset: Int): Hypergraph[EdgeLabel, TokenRange] =
     if startOffset == untilOffset then Hypergraph.empty
     else
-      Hyperedge(EdgeLabel(he.vertices.map(_.start).min + startOffset),
-        he.vertices.map(t => t.slice(startOffset, untilOffset)
-          .getOrElse(IllegalTokenRange(t.start +
-            startOffset, t.start + untilOffset, t.ta)))
+      Hyperedge(
+        EdgeLabel(he.vertices.map(_.start).min + startOffset),
+        he.vertices.map(t =>
+          t.slice(startOffset, untilOffset)
+            .getOrElse(
+              IllegalTokenRange(
+                t.start +
+                  startOffset,
+                t.start + untilOffset,
+                t.ta
+              )
+            )
+        )
       )
 
   def split(

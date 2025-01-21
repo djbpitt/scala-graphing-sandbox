@@ -243,12 +243,494 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
         TokenRange(10, 12, gTa) -> Set(EdgeLabel(5))
       )
     )
-    val result = mergeSingletonHG(singletonTokens, hg)
-    println(s"gTa: $gTa")
+    val result = mergeSingletonHG(singletonTokens, hg, true)
+    val returned = FullHypergraph(
+      Map(
+        5 -> Set(
+          TokenRange(
+            10,
+            12,
+            Vector(
+              Token("Hi", "Hi", 0, 0),
+              Token(", ", ", ", 0, 1),
+              Token("Mom", "Mom", 0, 2),
+              Token("!", "!", 0, 3),
+              Token("Sep4", "Sep4", 0, 4),
+              Token("Hi", "Hi", 1, 5),
+              Token(", ", ", ", 1, 6),
+              Token("Dad", "Dad", 1, 7),
+              Token("!", "!", 1, 8),
+              Token("Sep9", "Sep9", 1, 9),
+              Token("Hi", "Hi", 2, 10),
+              Token(", ", ", ", 2, 11),
+              Token("parents", "parents", 2, 12),
+              Token("!", "!", 2, 13),
+              Token("Sep14", "Sep14", 2, 14),
+              Token("There ", "there", 3, 15),
+              Token("are ", "are", 3, 16),
+              Token("no ", "no", 3, 17),
+              Token("blocks", "blocks", 3, 18)
+            )
+          ),
+          TokenRange(
+            5,
+            7,
+            Vector(
+              Token("Hi", "Hi", 0, 0),
+              Token(", ", ", ", 0, 1),
+              Token("Mom", "Mom", 0, 2),
+              Token("!", "!", 0, 3),
+              Token("Sep4", "Sep4", 0, 4),
+              Token("Hi", "Hi", 1, 5),
+              Token(", ", ", ", 1, 6),
+              Token("Dad", "Dad", 1, 7),
+              Token("!", "!", 1, 8),
+              Token("Sep9", "Sep9", 1, 9),
+              Token("Hi", "Hi", 2, 10),
+              Token(", ", ", ", 2, 11),
+              Token("parents", "parents", 2, 12),
+              Token("!", "!", 2, 13),
+              Token("Sep14", "Sep14", 2, 14),
+              Token("There ", "there", 3, 15),
+              Token("are ", "are", 3, 16),
+              Token("no ", "no", 3, 17),
+              Token("blocks", "blocks", 3, 18)
+            )
+          ),
+          TokenRange(
+            0,
+            2,
+            Vector(
+              Token("Hi", "Hi", 0, 0),
+              Token(", ", ", ", 0, 1),
+              Token("Mom", "Mom", 0, 2),
+              Token("!", "!", 0, 3),
+              Token("Sep4", "Sep4", 0, 4),
+              Token("Hi", "Hi", 1, 5),
+              Token(", ", ", ", 1, 6),
+              Token("Dad", "Dad", 1, 7),
+              Token("!", "!", 1, 8),
+              Token("Sep9", "Sep9", 1, 9),
+              Token("Hi", "Hi", 2, 10),
+              Token(", ", ", ", 2, 11),
+              Token("parents", "parents", 2, 12),
+              Token("!", "!", 2, 13),
+              Token("Sep14", "Sep14", 2, 14),
+              Token("There ", "there", 3, 15),
+              Token("are ", "are", 3, 16),
+              Token("no ", "no", 3, 17),
+              Token("blocks", "blocks", 3, 18)
+            )
+          )
+        ),
+        8 -> Set(
+          TokenRange(
+            13,
+            14,
+            Vector(
+              Token("Hi", "Hi", 0, 0),
+              Token(", ", ", ", 0, 1),
+              Token("Mom", "Mom", 0, 2),
+              Token("!", "!", 0, 3),
+              Token("Sep4", "Sep4", 0, 4),
+              Token("Hi", "Hi", 1, 5),
+              Token(", ", ", ", 1, 6),
+              Token("Dad", "Dad", 1, 7),
+              Token("!", "!", 1, 8),
+              Token("Sep9", "Sep9", 1, 9),
+              Token("Hi", "Hi", 2, 10),
+              Token(", ", ", ", 2, 11),
+              Token("parents", "parents", 2, 12),
+              Token("!", "!", 2, 13),
+              Token("Sep14", "Sep14", 2, 14),
+              Token("There ", "there", 3, 15),
+              Token("are ", "are", 3, 16),
+              Token("no ", "no", 3, 17),
+              Token("blocks", "blocks", 3, 18)
+            )
+          ),
+          TokenRange(
+            8,
+            9,
+            Vector(
+              Token("Hi", "Hi", 0, 0),
+              Token(", ", ", ", 0, 1),
+              Token("Mom", "Mom", 0, 2),
+              Token("!", "!", 0, 3),
+              Token("Sep4", "Sep4", 0, 4),
+              Token("Hi", "Hi", 1, 5),
+              Token(", ", ", ", 1, 6),
+              Token("Dad", "Dad", 1, 7),
+              Token("!", "!", 1, 8),
+              Token("Sep9", "Sep9", 1, 9),
+              Token("Hi", "Hi", 2, 10),
+              Token(", ", ", ", 2, 11),
+              Token("parents", "parents", 2, 12),
+              Token("!", "!", 2, 13),
+              Token("Sep14", "Sep14", 2, 14),
+              Token("There ", "there", 3, 15),
+              Token("are ", "are", 3, 16),
+              Token("no ", "no", 3, 17),
+              Token("blocks", "blocks", 3, 18)
+            )
+          ),
+          TokenRange(
+            3,
+            4,
+            Vector(
+              Token("Hi", "Hi", 0, 0),
+              Token(", ", ", ", 0, 1),
+              Token("Mom", "Mom", 0, 2),
+              Token("!", "!", 0, 3),
+              Token("Sep4", "Sep4", 0, 4),
+              Token("Hi", "Hi", 1, 5),
+              Token(", ", ", ", 1, 6),
+              Token("Dad", "Dad", 1, 7),
+              Token("!", "!", 1, 8),
+              Token("Sep9", "Sep9", 1, 9),
+              Token("Hi", "Hi", 2, 10),
+              Token(", ", ", ", 2, 11),
+              Token("parents", "parents", 2, 12),
+              Token("!", "!", 2, 13),
+              Token("Sep14", "Sep14", 2, 14),
+              Token("There ", "there", 3, 15),
+              Token("are ", "are", 3, 16),
+              Token("no ", "no", 3, 17),
+              Token("blocks", "blocks", 3, 18)
+            )
+          )
+        ),
+        7 -> Set(
+          TokenRange(
+            7,
+            8,
+            Vector(
+              Token("Hi", "Hi", 0, 0),
+              Token(", ", ", ", 0, 1),
+              Token("Mom", "Mom", 0, 2),
+              Token("!", "!", 0, 3),
+              Token("Sep4", "Sep4", 0, 4),
+              Token("Hi", "Hi", 1, 5),
+              Token(", ", ", ", 1, 6),
+              Token("Dad", "Dad", 1, 7),
+              Token("!", "!", 1, 8),
+              Token("Sep9", "Sep9", 1, 9),
+              Token("Hi", "Hi", 2, 10),
+              Token(", ", ", ", 2, 11),
+              Token("parents", "parents", 2, 12),
+              Token("!", "!", 2, 13),
+              Token("Sep14", "Sep14", 2, 14),
+              Token("There ", "there", 3, 15),
+              Token("are ", "are", 3, 16),
+              Token("no ", "no", 3, 17),
+              Token("blocks", "blocks", 3, 18)
+            )
+          )
+        ),
+        0 -> Set(
+          TokenRange(
+            15,
+            19,
+            Vector(
+              Token("Hi", "Hi", 0, 0),
+              Token(", ", ", ", 0, 1),
+              Token("Mom", "Mom", 0, 2),
+              Token("!", "!", 0, 3),
+              Token("Sep4", "Sep4", 0, 4),
+              Token("Hi", "Hi", 1, 5),
+              Token(", ", ", ", 1, 6),
+              Token("Dad", "Dad", 1, 7),
+              Token("!", "!", 1, 8),
+              Token("Sep9", "Sep9", 1, 9),
+              Token("Hi", "Hi", 2, 10),
+              Token(", ", ", ", 2, 11),
+              Token("parents", "parents", 2, 12),
+              Token("!", "!", 2, 13),
+              Token("Sep14", "Sep14", 2, 14),
+              Token("There ", "there", 3, 15),
+              Token("are ", "are", 3, 16),
+              Token("no ", "no", 3, 17),
+              Token("blocks", "blocks", 3, 18)
+            )
+          )
+        ),
+        2 -> Set(
+          TokenRange(
+            2,
+            3,
+            Vector(
+              Token("Hi", "Hi", 0, 0),
+              Token(", ", ", ", 0, 1),
+              Token("Mom", "Mom", 0, 2),
+              Token("!", "!", 0, 3),
+              Token("Sep4", "Sep4", 0, 4),
+              Token("Hi", "Hi", 1, 5),
+              Token(", ", ", ", 1, 6),
+              Token("Dad", "Dad", 1, 7),
+              Token("!", "!", 1, 8),
+              Token("Sep9", "Sep9", 1, 9),
+              Token("Hi", "Hi", 2, 10),
+              Token(", ", ", ", 2, 11),
+              Token("parents", "parents", 2, 12),
+              Token("!", "!", 2, 13),
+              Token("Sep14", "Sep14", 2, 14),
+              Token("There ", "there", 3, 15),
+              Token("are ", "are", 3, 16),
+              Token("no ", "no", 3, 17),
+              Token("blocks", "blocks", 3, 18)
+            )
+          )
+        )
+      ),
+      Map(
+        TokenRange(
+          15,
+          19,
+          Vector(
+            Token("Hi", "Hi", 0, 0),
+            Token(", ", ", ", 0, 1),
+            Token("Mom", "Mom", 0, 2),
+            Token("!", "!", 0, 3),
+            Token("Sep4", "Sep4", 0, 4),
+            Token("Hi", "Hi", 1, 5),
+            Token(", ", ", ", 1, 6),
+            Token("Dad", "Dad", 1, 7),
+            Token("!", "!", 1, 8),
+            Token("Sep9", "Sep9", 1, 9),
+            Token("Hi", "Hi", 2, 10),
+            Token(", ", ", ", 2, 11),
+            Token("parents", "parents", 2, 12),
+            Token("!", "!", 2, 13),
+            Token("Sep14", "Sep14", 2, 14),
+            Token("There ", "there", 3, 15),
+            Token("are ", "are", 3, 16),
+            Token("no ", "no", 3, 17),
+            Token("blocks", "blocks", 3, 18)
+          )
+        ) -> Set(0),
+        TokenRange(
+          13,
+          14,
+          Vector(
+            Token("Hi", "Hi", 0, 0),
+            Token(", ", ", ", 0, 1),
+            Token("Mom", "Mom", 0, 2),
+            Token("!", "!", 0, 3),
+            Token("Sep4", "Sep4", 0, 4),
+            Token("Hi", "Hi", 1, 5),
+            Token(", ", ", ", 1, 6),
+            Token("Dad", "Dad", 1, 7),
+            Token("!", "!", 1, 8),
+            Token("Sep9", "Sep9", 1, 9),
+            Token("Hi", "Hi", 2, 10),
+            Token(", ", ", ", 2, 11),
+            Token("parents", "parents", 2, 12),
+            Token("!", "!", 2, 13),
+            Token("Sep14", "Sep14", 2, 14),
+            Token("There ", "there", 3, 15),
+            Token("are ", "are", 3, 16),
+            Token("no ", "no", 3, 17),
+            Token("blocks", "blocks", 3, 18)
+          )
+        ) -> Set(8),
+        TokenRange(
+          5,
+          7,
+          Vector(
+            Token("Hi", "Hi", 0, 0),
+            Token(", ", ", ", 0, 1),
+            Token("Mom", "Mom", 0, 2),
+            Token("!", "!", 0, 3),
+            Token("Sep4", "Sep4", 0, 4),
+            Token("Hi", "Hi", 1, 5),
+            Token(", ", ", ", 1, 6),
+            Token("Dad", "Dad", 1, 7),
+            Token("!", "!", 1, 8),
+            Token("Sep9", "Sep9", 1, 9),
+            Token("Hi", "Hi", 2, 10),
+            Token(", ", ", ", 2, 11),
+            Token("parents", "parents", 2, 12),
+            Token("!", "!", 2, 13),
+            Token("Sep14", "Sep14", 2, 14),
+            Token("There ", "there", 3, 15),
+            Token("are ", "are", 3, 16),
+            Token("no ", "no", 3, 17),
+            Token("blocks", "blocks", 3, 18)
+          )
+        ) -> Set(5),
+        TokenRange(
+          3,
+          4,
+          Vector(
+            Token("Hi", "Hi", 0, 0),
+            Token(", ", ", ", 0, 1),
+            Token("Mom", "Mom", 0, 2),
+            Token("!", "!", 0, 3),
+            Token("Sep4", "Sep4", 0, 4),
+            Token("Hi", "Hi", 1, 5),
+            Token(", ", ", ", 1, 6),
+            Token("Dad", "Dad", 1, 7),
+            Token("!", "!", 1, 8),
+            Token("Sep9", "Sep9", 1, 9),
+            Token("Hi", "Hi", 2, 10),
+            Token(", ", ", ", 2, 11),
+            Token("parents", "parents", 2, 12),
+            Token("!", "!", 2, 13),
+            Token("Sep14", "Sep14", 2, 14),
+            Token("There ", "there", 3, 15),
+            Token("are ", "are", 3, 16),
+            Token("no ", "no", 3, 17),
+            Token("blocks", "blocks", 3, 18)
+          )
+        ) -> Set(8),
+        TokenRange(
+          10,
+          12,
+          Vector(
+            Token("Hi", "Hi", 0, 0),
+            Token(", ", ", ", 0, 1),
+            Token("Mom", "Mom", 0, 2),
+            Token("!", "!", 0, 3),
+            Token("Sep4", "Sep4", 0, 4),
+            Token("Hi", "Hi", 1, 5),
+            Token(", ", ", ", 1, 6),
+            Token("Dad", "Dad", 1, 7),
+            Token("!", "!", 1, 8),
+            Token("Sep9", "Sep9", 1, 9),
+            Token("Hi", "Hi", 2, 10),
+            Token(", ", ", ", 2, 11),
+            Token("parents", "parents", 2, 12),
+            Token("!", "!", 2, 13),
+            Token("Sep14", "Sep14", 2, 14),
+            Token("There ", "there", 3, 15),
+            Token("are ", "are", 3, 16),
+            Token("no ", "no", 3, 17),
+            Token("blocks", "blocks", 3, 18)
+          )
+        ) -> Set(5),
+        TokenRange(
+          7,
+          8,
+          Vector(
+            Token("Hi", "Hi", 0, 0),
+            Token(", ", ", ", 0, 1),
+            Token("Mom", "Mom", 0, 2),
+            Token("!", "!", 0, 3),
+            Token("Sep4", "Sep4", 0, 4),
+            Token("Hi", "Hi", 1, 5),
+            Token(", ", ", ", 1, 6),
+            Token("Dad", "Dad", 1, 7),
+            Token("!", "!", 1, 8),
+            Token("Sep9", "Sep9", 1, 9),
+            Token("Hi", "Hi", 2, 10),
+            Token(", ", ", ", 2, 11),
+            Token("parents", "parents", 2, 12),
+            Token("!", "!", 2, 13),
+            Token("Sep14", "Sep14", 2, 14),
+            Token("There ", "there", 3, 15),
+            Token("are ", "are", 3, 16),
+            Token("no ", "no", 3, 17),
+            Token("blocks", "blocks", 3, 18)
+          )
+        ) -> Set(7),
+        TokenRange(
+          8,
+          9,
+          Vector(
+            Token("Hi", "Hi", 0, 0),
+            Token(", ", ", ", 0, 1),
+            Token("Mom", "Mom", 0, 2),
+            Token("!", "!", 0, 3),
+            Token("Sep4", "Sep4", 0, 4),
+            Token("Hi", "Hi", 1, 5),
+            Token(", ", ", ", 1, 6),
+            Token("Dad", "Dad", 1, 7),
+            Token("!", "!", 1, 8),
+            Token("Sep9", "Sep9", 1, 9),
+            Token("Hi", "Hi", 2, 10),
+            Token(", ", ", ", 2, 11),
+            Token("parents", "parents", 2, 12),
+            Token("!", "!", 2, 13),
+            Token("Sep14", "Sep14", 2, 14),
+            Token("There ", "there", 3, 15),
+            Token("are ", "are", 3, 16),
+            Token("no ", "no", 3, 17),
+            Token("blocks", "blocks", 3, 18)
+          )
+        ) -> Set(8),
+        TokenRange(
+          2,
+          3,
+          Vector(
+            Token("Hi", "Hi", 0, 0),
+            Token(", ", ", ", 0, 1),
+            Token("Mom", "Mom", 0, 2),
+            Token("!", "!", 0, 3),
+            Token("Sep4", "Sep4", 0, 4),
+            Token("Hi", "Hi", 1, 5),
+            Token(", ", ", ", 1, 6),
+            Token("Dad", "Dad", 1, 7),
+            Token("!", "!", 1, 8),
+            Token("Sep9", "Sep9", 1, 9),
+            Token("Hi", "Hi", 2, 10),
+            Token(", ", ", ", 2, 11),
+            Token("parents", "parents", 2, 12),
+            Token("!", "!", 2, 13),
+            Token("Sep14", "Sep14", 2, 14),
+            Token("There ", "there", 3, 15),
+            Token("are ", "are", 3, 16),
+            Token("no ", "no", 3, 17),
+            Token("blocks", "blocks", 3, 18)
+          )
+        ) -> Set(2),
+        TokenRange(
+          0,
+          2,
+          Vector(
+            Token("Hi", "Hi", 0, 0),
+            Token(", ", ", ", 0, 1),
+            Token("Mom", "Mom", 0, 2),
+            Token("!", "!", 0, 3),
+            Token("Sep4", "Sep4", 0, 4),
+            Token("Hi", "Hi", 1, 5),
+            Token(", ", ", ", 1, 6),
+            Token("Dad", "Dad", 1, 7),
+            Token("!", "!", 1, 8),
+            Token("Sep9", "Sep9", 1, 9),
+            Token("Hi", "Hi", 2, 10),
+            Token(", ", ", ", 2, 11),
+            Token("parents", "parents", 2, 12),
+            Token("!", "!", 2, 13),
+            Token("Sep14", "Sep14", 2, 14),
+            Token("There ", "there", 3, 15),
+            Token("are ", "are", 3, 16),
+            Token("no ", "no", 3, 17),
+            Token("blocks", "blocks", 3, 18)
+          )
+        ) -> Set(5)
+      )
+    )
+
     println(s"result: $result")
     assert(result == expected)
   test("test mergeSingletonHG() with one block and singleton splitting (pre and post)"):
-    val gTa = returnSampleData()._1
+    val gTa: Vector[TokenEnum] = Vector(
+      Token("Hi ", "hi", 0, 0),
+      Token(", ", ",", 0, 1),
+      Token("Mom ", "mom", 0, 2),
+      TokenSep("Sep3", "Sep3", 0, 3),
+      Token("Hi ", "hi", 1, 4),
+      Token(", ", ",", 1, 5),
+      Token("Mom ", "mom", 1, 6),
+      TokenSep("Sep7", "Sep7", 1, 7),
+      Token("Oh ", "oh", 2, 8),
+      Token("Hi ", "hi", 2, 9),
+      Token(", ", ",", 2, 10),
+      Token("Mom ", "mom", 2, 11),
+      Token("of ", "of", 2, 12),
+      Token("mine", "mine", 2, 13),
+      Token("!", "!", 2, 14)
+    )
     val expected = FullHypergraph[EdgeLabel, TokenRange](
       Map(
         EdgeLabel(12) -> Set(TokenRange(12, 15, gTa)),
@@ -262,23 +744,6 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
         TokenRange(0, 3, gTa) -> Set(EdgeLabel(0)),
         TokenRange(8, 9, gTa) -> Set(EdgeLabel(8))
       )
-    )
-    val gTA: Vector[Token] = Vector(
-      Token("Hi ", "hi", 0, 0),
-      Token(", ", ",", 0, 1),
-      Token("Mom ", "mom", 0, 2),
-      Token("Sep3", "Sep3", 0, 3),
-      Token("Hi ", "hi", 1, 4),
-      Token(", ", ",", 1, 5),
-      Token("Mom ", "mom", 1, 6),
-      Token("Sep7", "Sep7", 1, 7),
-      Token("Oh ", "oh", 2, 8),
-      Token("Hi ", "hi", 2, 9),
-      Token(", ", ",", 2, 10),
-      Token("Mom ", "mom", 2, 11),
-      Token("of ", "of", 2, 12),
-      Token("mine", "mine", 2, 13),
-      Token("!", "!", 2, 14)
     )
     val singletonTokens = Vector[Token](
       Token("Oh ", "oh", 2, 8),
@@ -298,7 +763,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
         TokenRange(4, 7, gTa) -> Set(EdgeLabel(0))
       )
     )
-    val result = mergeSingletonHG(singletonTokens, hg)
+    val result = mergeSingletonHG(singletonTokens, hg, false)
     assert(result == expected)
   test("test mergeSingletonHG() that requires hypergraph (only) splitting with pre and post"):
     val gTa: Vector[Token] = Vector[Token](
@@ -340,7 +805,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
       )
     )
     val resultRanges =
-      val mergeResult = mergeSingletonHG(singletonTokens, hg)
+      val mergeResult = mergeSingletonHG(singletonTokens, hg, true)
       mergeResult.hyperedgeLabels.map(e => mergeResult.members(e))
     val expectedRanges =
       expected.hyperedgeLabels.map(e => expected.members(e))
@@ -394,7 +859,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
       )
     )
     val resultRanges =
-      val mergeResult = mergeSingletonHG(singletonTokens, hg)
+      val mergeResult = mergeSingletonHG(singletonTokens, hg, true)
       mergeResult.hyperedgeLabels.map(e => mergeResult.members(e))
     val expectedRanges =
       expected.hyperedgeLabels.map(e => expected.members(e))
@@ -416,13 +881,11 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
       Token("Sep11", "sep11", 3, 11),
       Token("!", "!", 3, 12)
     )
-    val hg1 = Hypergraph.hyperedge(
-      EdgeLabel("0"),
-      TokenRange(0, 2, gTa),
-      TokenRange(3, 5, gTa)
+    val hg1 = AlignmentHyperedge(
+      Set(TokenRange(0, 2, gTa), TokenRange(3, 5, gTa))
     )
-    val hg2 = Hypergraph.hyperedge(EdgeLabel("6"), TokenRange(6, 8, gTa), TokenRange(9, 11, gTa)) +
-      Hypergraph.hyperedge(EdgeLabel("12"), TokenRange(12, 13, gTa))
+    val hg2 = AlignmentHyperedge(Set(TokenRange(6, 8, gTa), TokenRange(9, 11, gTa))) +
+      AlignmentHyperedge(Set(TokenRange(12, 13, gTa)))
     val expected = Vector(
       TokenHG("!", "!", 3, 12, EdgeLabel("12")),
       TokenSep("Sep12", "Sep12", -1, -1),

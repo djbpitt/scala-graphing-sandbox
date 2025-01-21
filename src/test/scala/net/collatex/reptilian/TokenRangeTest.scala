@@ -31,13 +31,13 @@ class TokenRangeTest extends AnyFunSuite:
 
   // test for tString representation of a TokenRange
   test("Test for TokenRange.tString"):
-    implicit val gTa: Vector[TokenEnum] = Vector(
+    val gTa: Vector[TokenEnum] = Vector(
       Token("Hi ", "hi", 0, 0),
       Token(", ", ",", 0, 1),
       Token("Mom ", "mom", 0, 2),
       Token("!", "!", 0, 3)
     )
-    val tr = TokenRange(0, 4, fakeGTa)
+    val tr = TokenRange(0, 4, gTa)
     val expected = "Hi , Mom !"
     val result = tr.tString
     assert(result == expected)
@@ -65,19 +65,19 @@ class TokenRangeTest extends AnyFunSuite:
 
   test("test splitTokenRange() with illegal start"):
     val caught = intercept[RuntimeException](TokenRange(2, 5, fakeGTa).splitTokenRange(TokenRange(0, 5, fakeGTa)))
-    assert(caught.getMessage == "pre value IllegalTokenRange(2,0) is illegal")
+    assert(caught.getMessage == "pre value IllegalTokenRange(2,0,Vector()) is illegal")
 
   test("test splitTokenRange() with illegal end"):
     val caught = intercept[RuntimeException](TokenRange(0, 4, fakeGTa).splitTokenRange(TokenRange(3, 5, fakeGTa)))
-    assert(caught.getMessage == "post value IllegalTokenRange(5,4) is illegal")
+    assert(caught.getMessage == "post value IllegalTokenRange(5,4,Vector()) is illegal")
 
   test("test splitTokenRange() with illegal singleton token range"):
     val caught = intercept[RuntimeException](TokenRange(5, 1, fakeGTa).splitTokenRange(TokenRange(2, 3, fakeGTa)))
-    assert(caught.getMessage == "both pre (IllegalTokenRange(5,2)) and post(IllegalTokenRange(3,1)) are illegal")
+    assert(caught.getMessage == "both pre (IllegalTokenRange(5,2,Vector())) and post(IllegalTokenRange(3,1,Vector())) are illegal")
 
   test("test splitTokenRange() with empty singleton token range"):
     val caught = intercept[RuntimeException](TokenRange(2, 4, fakeGTa).splitTokenRange(TokenRange(3, 3, fakeGTa)))
-    assert(caught.getMessage == "cannot split on empty block range: EmptyTokenRange(3,3)")
+    assert(caught.getMessage == "cannot split on empty block range: EmptyTokenRange(3,3,Vector())")
 
   /** Tests for splitTokenRangeOnPosition
     */
