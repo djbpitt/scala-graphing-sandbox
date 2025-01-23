@@ -887,13 +887,13 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     val hg2 = AlignmentHyperedge(Set(TokenRange(6, 8, gTa), TokenRange(9, 11, gTa))) +
       AlignmentHyperedge(Set(TokenRange(12, 13, gTa)))
     val expected = Vector(
-      TokenHG("!", "!", 3, 12, EdgeLabel("12")),
+      TokenHG("!", "!", 3, 12, EdgeLabel(12)),
       TokenSep("Sep12", "Sep12", -1, -1),
-      TokenHG("Bye ", "bye", 2, 6, EdgeLabel("6")),
-      TokenHG("Dad ", "dad", 2, 7, EdgeLabel("6")),
+      TokenHG("Bye ", "bye", 2, 6, EdgeLabel(6)),
+      TokenHG("Dad ", "dad", 2, 7, EdgeLabel(6)),
       TokenSep("Sep6", "Sep6", -1, -1),
-      TokenHG("Hi ", "hi", 0, 0, EdgeLabel("0")),
-      TokenHG("Mom ", "mom", 0, 1, EdgeLabel("0"))
+      TokenHG("Hi ", "hi", 0, 0, EdgeLabel(0)),
+      TokenHG("Mom ", "mom", 0, 1, EdgeLabel(0))
     )
     val result = createHgTa(hg1 + hg2)
     assert(result == expected)

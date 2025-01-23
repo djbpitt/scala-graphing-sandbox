@@ -108,7 +108,7 @@ def mergeHgHg(
   val allSplitHyperedges = splitAllHyperedges(bothHgs, blocksGTa)
   val matchesAsSet = allSplitHyperedges._2
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
-    matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.he1 + x.he2)
+    matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
   // println("Matches as hypergraph:")
   // matchesAsHg.hyperedges.foreach(e => println(s"  $e"))
   detectTransposition(matchesAsSet, matchesAsHg, debug) // currently raises error if transposition
@@ -116,7 +116,7 @@ def mergeHgHg(
   //  Merge hyperedges on matches into single hyperedge
   //  This replaces those separate hyperedges in full inventory of hyperedges
   val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
-    .map(e => AlignmentHyperedge(e._1.vertices ++ e._2.vertices)) // NB: new hyperedge
+    .map(e => AlignmentHyperedge(e.head.vertices ++ e.last.vertices)) // NB: new hyperedge
     .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
   val hgWithMergeResults = allSplitHyperedges._1 // Original full hypergraph
     - matchesAsHg // Remove hyperedges that will be merged

@@ -1,7 +1,7 @@
 package net.collatex.reptilian
 import net.collatex.reptilian.NodeType.Internal
 import net.collatex.reptilian.TokenEnum.{Token, TokenSep}
-import net.collatex.util.{Graph, Hypergraph, hypergraphToReadings}
+import net.collatex.util.{Graph, Hypergraph, SetOf2, hypergraphToReadings}
 
 import scala.collection.immutable.TreeMap
 import net.collatex.reptilian.returnSampleData
@@ -136,17 +136,15 @@ def detectTransposition(
     matchesAsHg: Hypergraph[EdgeLabel, TokenRange],
     debug: Boolean
 ): Unit =
-  if matchesAsSet.size > 1 // nothing to transpose
+  if matchesAsSet.size > 1 // more than one block means possible transposition
   then
-    println(matchesAsSet)
-    println(matchesAsSet.size)
-    println(matchesAsHg.vertices)
-    val gTa = matchesAsHg.vertices.head.ta
     val ranking: Map[NodeType, Int] = rankHg(matchesAsHg, debug)
-    val matchesSortedam1 = matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.he1.label)))
-    val matchesSortedam2 = matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.he2.label)))
+    val matchesSortedHead =
+      matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.head.label)))
+    val matchesSortedLast =
+      matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.last.label)))
     // TODO: Make decision where sorted results diverge; test and assert/escape below is temporary
-    val transpositionBool = matchesSortedam1 != matchesSortedam2
+    val transpositionBool = matchesSortedHead != matchesSortedLast
     assert(!transpositionBool, "We don’t yet handle transposition") // Temporarily bail out if transposition
 
 def realMainFunction(debug: Boolean): Unit =
@@ -229,10 +227,11 @@ object TokenArrayWithStartsAndEnds:
         .map(e => TokenRange(e.g, e.g, tokens))
     new TokenArrayWithStartsAndEnds(tokens, computeStarts(), computeEnds())
 
-case class HyperedgeMatch(
-    he1: Hyperedge[EdgeLabel, TokenRange],
-    he2: Hyperedge[EdgeLabel, TokenRange]
-)
+type HyperedgeMatch = SetOf2[Hyperedge[EdgeLabel, TokenRange]]
+
 object HyperedgeMatch:
   def apply(set: Set[Hyperedge[EdgeLabel, TokenRange]]) =
     new HyperedgeMatch(set.head, set.last)
+  def apply(he1: Hyperedge[EdgeLabel, TokenRange], he2: Hyperedge[EdgeLabel, TokenRange]) =
+    new HyperedgeMatch(he1, he2)
+

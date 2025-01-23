@@ -1,6 +1,5 @@
 package net.collatex.reptilian
-import net.collatex.reptilian.TokenEnum.Token
-import net.collatex.reptilian.TokenRange
+import net.collatex.reptilian.TokenEnum.{Token, TokenSep}
 import net.collatex.util.Hypergraph
 import net.collatex.util.Hypergraph.FullHypergraph
 // Data
@@ -8,11 +7,11 @@ import net.collatex.util.Hypergraph.FullHypergraph
 // w = witness number of preceding witness and nn = global offset
 
 def returnSampleData(): (
-    Vector[Token],
+    Vector[TokenEnum],
     Hypergraph[EdgeLabel, TokenRange],
     Hypergraph[EdgeLabel, TokenRange]
 ) =
-  val gTa: Vector[Token] = Vector(
+  val gTa: Vector[TokenEnum] = Vector(
     Token("natural  ", "natural", 0, 0),
     Token("selection ", "selection", 0, 1),
     Token(", ", ",", 0, 2),
@@ -34,7 +33,7 @@ def returnSampleData(): (
     Token("shall ", "shall", 0, 18),
     Token("be ", "be", 0, 19),
     Token("preserved ", "preserved", 0, 20),
-    Token("Sep21", "Sep21", 0, 21),
+    TokenSep("Sep21", "Sep21", 0, 21),
     Token("natural ", "natural", 1, 22),
     Token("selection ", "selection", 1, 23),
     Token(", ", ",", 1, 24),
@@ -56,7 +55,7 @@ def returnSampleData(): (
     Token("shall ", "shall", 1, 40),
     Token("be ", "be", 1, 41),
     Token("preserved ", "preserved", 1, 42),
-    Token("Sep43", "Sep43", 1, 43),
+    TokenSep("Sep43", "Sep43", 1, 43),
     Token("natural ", "natural", 2, 44),
     Token("selection ", "selection", 2, 45),
     Token(", ", ",", 2, 46),
@@ -78,7 +77,7 @@ def returnSampleData(): (
     Token("shall ", "shall", 2, 62),
     Token("be ", "be", 2, 63),
     Token("preserved ", "preserved", 2, 64),
-    Token("Sep65", "Sep65", 2, 65),
+    TokenSep("Sep65", "Sep65", 2, 65),
     Token("natural ", "natural", 3, 66),
     Token("selection ", "selection", 3, 67),
     Token(", ", ",", 3, 68),
@@ -123,7 +122,7 @@ def returnSampleData(): (
     Token("or ", "or", 3, 107),
     Token("more ", "more", 3, 108),
     Token("species ", "species", 3, 109),
-    Token("Sep110", "Sep110", 3, 110),
+    TokenSep("Sep110", "Sep110", 3, 110),
     Token("there ", "there", 4, 111),
     Token("is ", "is", 4, 112),
     Token("not ", "not", 4, 113),
@@ -204,7 +203,7 @@ def returnSampleData(): (
     Token("or ", "or", 4, 188),
     Token("more ", "more", 4, 189),
     Token("species ", "species", 4, 190),
-    Token("Sep191", "Sep191", 4, 191),
+    TokenSep("Sep191", "Sep191", 4, 191),
     Token("there ", "there", 5, 192),
     Token("is ", "is", 5, 193),
     Token("not ", "not", 5, 194),
