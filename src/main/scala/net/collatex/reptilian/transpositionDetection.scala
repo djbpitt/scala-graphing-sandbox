@@ -136,8 +136,11 @@ def detectTransposition(
     matchesAsHg: Hypergraph[EdgeLabel, TokenRange],
     debug: Boolean
 ): Unit =
-  if matchesAsSet.size <= 1 // nothing to transpose
+  if matchesAsSet.size > 1 // nothing to transpose
   then
+    println(matchesAsSet)
+    println(matchesAsSet.size)
+    println(matchesAsHg.vertices)
     val gTa = matchesAsHg.vertices.head.ta
     val ranking: Map[NodeType, Int] = rankHg(matchesAsHg, debug)
     val matchesSortedam1 = matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.he1.label)))
