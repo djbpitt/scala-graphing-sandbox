@@ -52,17 +52,23 @@ def mergeHgHg(
     matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
   // println("Matches as hypergraph:")
   // matchesAsHg.hyperedges.foreach(e => println(s"  $e"))
-  detectTransposition(matchesAsSet, matchesAsHg, debug) // currently raises error if transposition
+  val transpositionBool =
+    detectTransposition(matchesAsSet, matchesAsHg, debug) // currently raises error if transposition
   // If no transposition (temporarily):
   //  Merge hyperedges on matches into single hyperedge
   //  This replaces those separate hyperedges in full inventory of hyperedges
-  val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
-    .map(e => AlignmentHyperedge(e.head.vertices ++ e.last.vertices)) // NB: new hyperedge
-    .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
-  val hgWithMergeResults = allSplitHyperedges._1 // Original full hypergraph
-    - matchesAsHg // Remove hyperedges that will be merged
-    + newMatchHg // Add the merged hyperedges in place of those removed
-  hgWithMergeResults
+  if transpositionBool
+  then
+    println("Found a transposition")
+    bothHgs
+  else
+    val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
+      .map(e => AlignmentHyperedge(e.head.vertices ++ e.last.vertices)) // NB: new hyperedge
+      .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
+    val hgWithMergeResults = allSplitHyperedges._1 // Original full hypergraph
+      - matchesAsHg // Remove hyperedges that will be merged
+      + newMatchHg // Add the merged hyperedges in place of those removed
+    hgWithMergeResults
 
 def readJsonData: List[List[Token]] =
   val datafilePath =
@@ -283,4 +289,3 @@ def mergeClustersIntoHG(
   createDependencyGraphEdgeLabels(hg)
   // Transform hypergraph to alignment ribbon and visualize
   createSecondAlignmentPhaseVisualization(hg)
-
