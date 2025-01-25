@@ -167,7 +167,7 @@ def dependencyGraphToDot(
         .mkString
     ).mkString(";\n\t")
   val dotNodes = ";\n\t" + readings
-    .map((k, v) => Vector(k, "[label=", v, "]").mkString)
+    .map((k, v) => Vector(k, "[label=", v.replace("\n", " "), "]").mkString)
     .mkString(";\n\t")
   val dotPath =
     os.pwd / "src" / "main" / "outputs" /
