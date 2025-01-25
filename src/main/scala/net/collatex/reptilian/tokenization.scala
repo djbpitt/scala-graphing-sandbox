@@ -101,5 +101,10 @@ def tokenize(tokenizer: String => List[String]) =
       .zip(createTokenWitnessMapping(e))
       .zipWithIndex
       .map { case ((a, b), i) => (a, b, i) }
-      .map((a, b, i) => Token(t = a, n = normalize(a), w = b, g = i))
+      .map((a, b, i) =>
+        if a.startsWith(" #") then // FIXME: Don’t rely on magic string value
+          TokenSep(t = a, n = normalize(a), w = b, g = i)
+        else
+          Token(t = a, n = normalize(a), w = b, g = i)
+      )
   )
