@@ -45,7 +45,10 @@ enum TokenRange:
     if pre.getClass.getSimpleName == "IllegalTokenRange" && post.getClass.getSimpleName == "IllegalTokenRange" then
       throw RuntimeException(s"both pre ($pre) and post($post) are illegal")
     if pre.getClass.getSimpleName == "IllegalTokenRange" then throw RuntimeException(s"pre value $pre is illegal")
-    if post.getClass.getSimpleName == "IllegalTokenRange" then throw RuntimeException(s"post value $post is illegal")
+    if post.getClass.getSimpleName == "IllegalTokenRange" then
+      println(s"rangeToSplit: $rangeToSplit")
+      println(s"rangeToSplitAround: $rangeToSplitAround")
+      throw RuntimeException(s"post value $post is illegal")
     (pre, post)
 
   def splitTokenRangeOnPosition(positionToSplit: Int): Either[SplitTokenRangeError, SplitTokenRangeResult] =

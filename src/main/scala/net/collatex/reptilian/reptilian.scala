@@ -73,10 +73,11 @@ def readData(pathToData: Path): List[(String, String)] =
     hg
   val phaseTwoAlignmentHypergraphs =
     phaseTwoCandidateTokens.map(e =>
-      println(e)
+      // println(e)
+      // println("New unaligned zone")
       processUnalignedZone(e)
     )
-  phaseTwoAlignmentHypergraphs.foreach(println)
+  // phaseTwoAlignmentHypergraphs.foreach(println)
 
   // ===
   // End of temporary code

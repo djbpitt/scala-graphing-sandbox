@@ -8,6 +8,7 @@ import net.collatex.util.Hypergraph
 import upickle.default.*
 
 import scala.annotation.tailrec
+import scala.collection.immutable.Vector
 
 def mergeSingletonSingleton(
     w1: List[TokenEnum], // rows
@@ -167,7 +168,19 @@ def splitAllHyperedges(
         hesToSplit.map(_._2).zip(currentBlockRanges)
       // Use preceding to obtain vector of tuples of pre and post token ranges
       val preAndPostMatch: Vector[(TokenRange, TokenRange)] =
-        outerAndInnerRanges.map((outer, inner) => outer.splitTokenRange(inner))
+        outerAndInnerRanges.map((outer, inner) =>
+          if !(outer.contains(inner.start) && outer.contains(inner.until - 1)) then
+            println("Cannot split; reading does not fully contain block")
+            println(s"Block: $currentBlock")
+            println(s"outer and inner: $outerAndInnerRanges")
+            println(s"outer text: ${outer.tString}")
+            println(s"inner text: ${inner.tString}")
+            println(s"hypergraph: $hgTmp")
+            hgTmp.hyperedges.foreach(e => println(e.toText))
+            (outer, inner)
+            // RESUME 2025-01-25 lTa may be wrong because it looks for block that doesn’t exist
+          else outer.splitTokenRange(inner)
+        )
       // Pair up each hyperedge to be split with pre and post token ranges
       val hes: Vector[(Hyperedge[EdgeLabel, TokenRange], (TokenRange, TokenRange))] =
         hesToSplit.map(_._1).zip(preAndPostMatch) // token range lengths are pre, post

@@ -41,3 +41,7 @@ extension (he: Hyperedge[EdgeLabel, TokenRange])
       he.slice(0, preLength) +
         he.slice(preLength, preLength + blockLength) +
         he.slice(preLength + blockLength, preLength + blockLength + postLength)
+
+  def toText: Set[String] =
+    val result = he.vertices.map(e => e.tString)
+    result
