@@ -47,6 +47,7 @@ def mergeHgHg(
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
   val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
+  println(s"blocksGTa: $blocksGTa")
   val allSplitHyperedges = splitAllHyperedges(bothHgs, blocksGTa)
   val matchesAsSet = allSplitHyperedges._2
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
@@ -104,6 +105,8 @@ def createGlobalTokenArray(darwinReadings: List[List[Token]]) =
   //  tokenArray.foreach(println)
   tokenArray
 
+// FIXME: Used only in text; we create lTa elsewhere in real code.
+// Remove this function and update the test to point to the real one
 def createLocalTA(
     singletonTokens: Vector[TokenEnum],
     hg: Hypergraph[EdgeLabel, TokenRange]
@@ -201,8 +204,8 @@ def splitAllHyperedges(
       // println(s"match: $tmp")
       val newMatches: Set[HyperedgeMatch] = matches + HyperedgeMatch(tmp) // remove old matchs and add new split results
       processBlock(blockQueue.tail, newHg, newMatches)
-
-  processBlock(blocks.toVector, bothHgs, Set.empty[HyperedgeMatch])
+  // Filter out blocks with more than two instances
+  processBlock(blocks.toVector.filter(e => e.instances.size != 2), bothHgs, Set.empty[HyperedgeMatch])
 
 def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange]): Unit =
   val gTa = hg.vertices.head.ta
