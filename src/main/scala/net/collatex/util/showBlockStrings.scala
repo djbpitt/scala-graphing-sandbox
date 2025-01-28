@@ -39,7 +39,7 @@ def showBlockStrings(blocks: List[FullDepthBlock], gTa: Vector[TokenEnum]): Unit
       block.instances
         .map(instance => TokenRange(instance, instance + block.length, gTa))
     )
-  val result = blockTokenRanges.map(btr => btr.map(tr => tr.tString))
+  val result = blockTokenRanges.map(btr => btr.map(tr => (gTa(tr.start).w, tr.tString)))
   result.foreach(println)
 
 @main
