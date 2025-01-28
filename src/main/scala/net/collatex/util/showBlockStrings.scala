@@ -1,23 +1,22 @@
 package net.collatex.util
 
 import net.collatex.reptilian.{FullDepthBlock, Siglum, TokenEnum, TokenRange, makeTokenizer, readData, tokenize}
-
 import scala.util.matching.Regex
 
 val sampleBlocks = // default (sample) blocks
   List(
-    FullDepthBlock(Vector(70893, 56567, 42406),1),
-    FullDepthBlock(Vector(42483, 70967),4),
-    FullDepthBlock(Vector(70855, 42367),36),
-    FullDepthBlock(Vector(70947, 42461),20),
-    FullDepthBlock(Vector(70936, 42448),9),
-    FullDepthBlock(Vector(56566, 42405),2),
-    FullDepthBlock(Vector(70945, 42458),2),
-    FullDepthBlock(Vector(70922, 42433),7),
-    FullDepthBlock(Vector(42491, 70977),5),
-    FullDepthBlock(Vector(70896, 42407),25),
-    FullDepthBlock(Vector(70929, 42441),6),
-    FullDepthBlock(Vector(42481, 56641),2)
+    FullDepthBlock(Vector(70893, 56567, 42406), 1),
+    FullDepthBlock(Vector(42483, 70967), 4),
+    FullDepthBlock(Vector(70855, 42367), 36),
+    FullDepthBlock(Vector(70947, 42461), 20),
+    FullDepthBlock(Vector(70936, 42448), 9),
+    FullDepthBlock(Vector(56566, 42405), 2),
+    FullDepthBlock(Vector(70945, 42458), 2),
+    FullDepthBlock(Vector(70922, 42433), 7),
+    FullDepthBlock(Vector(42491, 70977), 5),
+    FullDepthBlock(Vector(70896, 42407), 25),
+    FullDepthBlock(Vector(70929, 42441), 6),
+    FullDepthBlock(Vector(42481, 56641), 2)
   )
 
 val sampleGTa = // default (sample) gTa
@@ -34,16 +33,14 @@ val sampleGTa = // default (sample) gTa
   val gTa: Vector[TokenEnum] = tokenize(tokenizer)(witnessStrings) // global token array
   gTa
 
-def showBlocks(blocks: List[FullDepthBlock], gTa: Vector[TokenEnum]): Unit =
+def showBlockStrings(blocks: List[FullDepthBlock], gTa: Vector[TokenEnum]): Unit =
   val blockTokenRanges: List[Vector[TokenRange]] = blocks
-    .map(block => block
-      .instances
-      .map(instance => TokenRange(instance, instance + block.length, gTa))
+    .map(block =>
+      block.instances
+        .map(instance => TokenRange(instance, instance + block.length, gTa))
     )
-  val result = blockTokenRanges.map(
-      btr => btr.map(tr => tr.tString)
-    )
+  val result = blockTokenRanges.map(btr => btr.map(tr => tr.tString))
   result.foreach(println)
 
 @main
-def runWithSampleData(): Unit = showBlocks(sampleBlocks, sampleGTa)
+def runWithSampleData(): Unit = showBlockStrings(sampleBlocks, sampleGTa)
