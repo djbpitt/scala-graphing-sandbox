@@ -210,9 +210,15 @@ def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   *   <html> element in HTML namespace, with embedded SVG
   */
 def createHorizontalRibbons(root: AlignmentRibbon, sigla: Set[Siglum]): scala.xml.Node =
+  //2025-01-28 RESUME here
+  //FIXME: Update treatment of gTa in visualization to accommodate our retreat from implicits
   val gTa: Vector[TokenEnum] = root.children.head match
     case x:AlignmentPoint => x.witnessGroups.head.values.head.ta
     case x:UnalignedZone => x.witnessReadings.values.head.ta
+    case x =>
+      println(s"Invalid class: ${x.getClass}")
+      println(s"$x")
+      Vector()
   /** Constants */
   val ribbonWidth = 18
   // val missingTop = allSigla.size * ribbonWidth * 2 + ribbonWidth / 2
