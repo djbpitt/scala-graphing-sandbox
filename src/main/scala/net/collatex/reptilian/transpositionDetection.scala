@@ -227,12 +227,3 @@ object TokenArrayWithStartsAndEnds:
       (seps :+ TokenSep("Sep" + tokens.size.toString, "", tokens.last.w + 1, tokens.size))
         .map(e => TokenRange(e.g, e.g, tokens))
     new TokenArrayWithStartsAndEnds(tokens, computeStarts(), computeEnds())
-
-type HyperedgeMatch = SetOf2[Hyperedge[EdgeLabel, TokenRange]]
-
-object HyperedgeMatch:
-  def apply(set: Set[Hyperedge[EdgeLabel, TokenRange]]) =
-    new HyperedgeMatch(set.head, set.last)
-  def apply(he1: Hyperedge[EdgeLabel, TokenRange], he2: Hyperedge[EdgeLabel, TokenRange]) =
-    new HyperedgeMatch(he1, he2)
-

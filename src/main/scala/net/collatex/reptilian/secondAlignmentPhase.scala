@@ -4,7 +4,7 @@ import net.collatex.reptilian.TokenEnum.*
 import net.collatex.reptilian.TokenRange.*
 import net.collatex.reptilian.createAlignedBlocks
 import net.collatex.util.Hypergraph.Hyperedge
-import net.collatex.util.Hypergraph
+import net.collatex.util.{Hypergraph, SetOf2}
 import upickle.default.*
 
 import scala.annotation.tailrec
@@ -178,7 +178,10 @@ def splitAllHyperedges(
             println(s"hypergraph: $hgTmp")
             hgTmp.hyperedges.foreach(e => println(e.toText))
             (outer, inner)
-            // RESUME 2025-01-25 lTa may be wrong because it looks for block that doesn’t exist
+            // RESUME 2025-01-25
+            // lTa may be wrong because it looks for block that doesn’t exist
+            // Alternatively: pattern detection (unlikely; it's old code)
+            // Alternatively: filtering blocks
           else outer.splitTokenRange(inner)
         )
       // Pair up each hyperedge to be split with pre and post token ranges
@@ -302,3 +305,11 @@ def mergeClustersIntoHG(
   createDependencyGraphEdgeLabels(hg)
   // Transform hypergraph to alignment ribbon and visualize
   createSecondAlignmentPhaseVisualization(hg)
+
+type HyperedgeMatch = SetOf2[Hyperedge[EdgeLabel, TokenRange]]
+
+object HyperedgeMatch:
+  def apply(set: Set[Hyperedge[EdgeLabel, TokenRange]]) =
+    new HyperedgeMatch(set.head, set.last)
+  def apply(he1: Hyperedge[EdgeLabel, TokenRange], he2: Hyperedge[EdgeLabel, TokenRange]) =
+    new HyperedgeMatch(he1, he2)
