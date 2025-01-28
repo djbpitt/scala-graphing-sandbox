@@ -65,19 +65,19 @@ class TokenRangeTest extends AnyFunSuite:
 
   test("test splitTokenRange() with illegal start"):
     val caught = intercept[RuntimeException](TokenRange(2, 5, fakeGTa).splitTokenRange(TokenRange(0, 5, fakeGTa)))
-    assert(caught.getMessage == "pre value IllegalTokenRange(2,0,Vector()) is illegal")
+    assert(caught.getMessage == "pre value TokenRange(2,0, gTa) is illegal")
 
   test("test splitTokenRange() with illegal end"):
     val caught = intercept[RuntimeException](TokenRange(0, 4, fakeGTa).splitTokenRange(TokenRange(3, 5, fakeGTa)))
-    assert(caught.getMessage == "post value IllegalTokenRange(5,4,Vector()) is illegal")
+    assert(caught.getMessage == "post value TokenRange(5,4, gTa) is illegal")
 
   test("test splitTokenRange() with illegal singleton token range"):
     val caught = intercept[RuntimeException](TokenRange(5, 1, fakeGTa).splitTokenRange(TokenRange(2, 3, fakeGTa)))
-    assert(caught.getMessage == "both pre (IllegalTokenRange(5,2,Vector())) and post(IllegalTokenRange(3,1,Vector())) are illegal")
+    assert(caught.getMessage == "both pre (TokenRange(5,2, gTa)) and post(TokenRange(3,1, gTa)) are illegal")
 
   test("test splitTokenRange() with empty singleton token range"):
     val caught = intercept[RuntimeException](TokenRange(2, 4, fakeGTa).splitTokenRange(TokenRange(3, 3, fakeGTa)))
-    assert(caught.getMessage == "cannot split on empty block range: EmptyTokenRange(3,3,Vector())")
+    assert(caught.getMessage == "cannot split on empty block range: TokenRange(3,3, gTa)")
 
   /** Tests for splitTokenRangeOnPosition
     */
