@@ -32,7 +32,7 @@ final case class AlignmentPoint(witnessGroups: Set[WitnessReadings]) extends Ali
   * Input is a varargs of (Siglum, TokenRange). Will eventually create only WitnessGroups and no WitnessReadings
   */
 object AlignmentPoint {
-  def apply(gTa: Vector[Token], m: (Siglum, TokenRange)*): AlignmentPoint =
+  def apply(gTa: Vector[TokenEnum], m: (Siglum, TokenRange)*): AlignmentPoint =
     val wr = m.toMap
     val wg = wr
       .groupBy((_, offsets) =>

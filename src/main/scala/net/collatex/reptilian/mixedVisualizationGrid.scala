@@ -79,8 +79,8 @@ def computeTokenTextLength(in: String): Double =
   * @return
   *   All witness readings on node as map from siglum (String) to vector of tokens
   */
-def retrieveWitnessReadings(n: AlignmentPoint, gTa: Vector[TokenEnum]): Map[Siglum, Vector[TokenEnum]] =
-  val witnessReadings = n.combineWitnessGroups.map((k, v) => k -> gTa.slice(v.start, v.until))
+def retrieveWitnessReadings(n: AlignmentPoint): Map[Siglum, Vector[TokenEnum]] =
+  val witnessReadings = n.combineWitnessGroups.map((k, v) => k -> v.ta.slice(v.start, v.until))
   witnessReadings
 
 val memoizedComputeTokenTextLength = memoizeFnc(computeTokenTextLength)
@@ -112,11 +112,11 @@ def findMissingWitnesses(n: AlignmentPoint, sigla: Set[Siglum]): Vector[Siglum] 
   val missingWitnesses = sigla.diff(n.combineWitnessGroups.keySet).toVector.sorted
   missingWitnesses
 
-def computeAlignmentNodeRenderingWidth(n: AlignmentPoint, gTa: Vector[TokenEnum]): Double =
+def computeAlignmentNodeRenderingWidth(n: AlignmentPoint): Double =
   // FIXME: Temporarily add 28 to allow for two-character siglum plus colon plus space
   val maxAlignmentPointWidth = 1000000000000d // 160.0
   List(
-    retrieveWitnessReadings(n, gTa).values.map(computeReadingTextLength).max + 28,
+    retrieveWitnessReadings(n).values.map(computeReadingTextLength).max + 28,
     maxAlignmentPointWidth
   ).min
 
@@ -124,13 +124,12 @@ def createHorizNodeData(
     nodeSequence: Vector[NumberedNode],
     sigla: Set[Siglum]
 ): Vector[HorizNodeData] =
-  val gTa = nodeSequence.head.node.witnessGroups.head.values.head.ta
   @tailrec
   def nextNode(nodes: Vector[NumberedNode], pos: Int, acc: Vector[HorizNodeData]): Vector[HorizNodeData] =
     if nodes.isEmpty then acc
     else
       val nodeType = nodes.head.node.getClass.getSimpleName
-      val alignmentWidth = computeAlignmentNodeRenderingWidth(nodes.head.node, gTa)
+      val alignmentWidth = computeAlignmentNodeRenderingWidth(nodes.head.node)
       val xOffset = acc.lastOption match {
         case Some(e) => e.xOffset + e.alignmentWidth + flowLength
         case None    => 0d
@@ -209,16 +208,7 @@ def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   * @return
   *   <html> element in HTML namespace, with embedded SVG
   */
-def createHorizontalRibbons(root: AlignmentRibbon, sigla: Set[Siglum]): scala.xml.Node =
-  //2025-01-28 RESUME here
-  //FIXME: Update treatment of gTa in visualization to accommodate our retreat from implicits
-  val gTa: Vector[TokenEnum] = root.children.head match
-    case x:AlignmentPoint => x.witnessGroups.head.values.head.ta
-    case x:UnalignedZone => x.witnessReadings.values.head.ta
-    case x =>
-      println(s"Invalid class: ${x.getClass}")
-      println(s"$x")
-      Vector()
+def createHorizontalRibbons(root: AlignmentRibbon, sigla: Set[Siglum], gTa: Vector[TokenEnum]): scala.xml.Node =
   /** Constants */
   val ribbonWidth = 18
   // val missingTop = allSigla.size * ribbonWidth * 2 + ribbonWidth / 2

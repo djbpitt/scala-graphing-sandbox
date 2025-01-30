@@ -118,7 +118,7 @@ def alignTokenArray(
     val orderedWitnessReadings =
       for siglum <- selection.witnessReadings.keys.toSeq.sorted
       yield selection.witnessReadings(siglum)
-    for r <- orderedWitnessReadings yield gTa.slice(r.start, r.until)
+    for r <- orderedWitnessReadings yield r.ta.slice(r.start, r.until)
   }
   // Replacement that uses witnessGroups instead of witnessReadings
   val localTokenArray = localTokenArraybyWitness.head ++
