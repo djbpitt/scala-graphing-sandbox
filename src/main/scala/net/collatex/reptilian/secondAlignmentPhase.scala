@@ -47,7 +47,7 @@ def mergeHgHg(
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
   val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
-  println(s"blocksGTa: $blocksGTa")
+  // println(s"blocksGTa: $blocksGTa")
   val allSplitHyperedges = splitAllHyperedges(bothHgs, blocksGTa)
   val matchesAsSet = allSplitHyperedges._2
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
@@ -121,10 +121,9 @@ def createLocalTA(
 }
 
 def identifyHGTokenRanges(y: Hypergraph[EdgeLabel, TokenRange]): Vector[Vector[TokenHG]] =
-  val gTa = y.vertices.head.ta
   val HGTokenRange = y.hyperedgeLabels map (e => (e, y.members(e).head)) // one token range per hyperedge
   val HGTokens: Vector[Vector[TokenHG]] = HGTokenRange.toVector
-    .map((id, tr) => gTa.slice(tr.start, tr.until).map(f => TokenHG(f.t, f.n, f.w, f.g, id)))
+    .map((id, tr) => tr.tokens.map(f => TokenHG(f.t, f.n, f.w, f.g, id)))
   HGTokens
 
 def insertSeparators(HGTokens: Vector[Vector[TokenEnum]]): Vector[TokenEnum] =
@@ -181,8 +180,7 @@ def splitAllHyperedges(
             println(s"hypergraph: $hgTmp")
             hgTmp.hyperedges.foreach(e => println(e.toText))
             (outer, inner)
-            // RESUME 2025-01-25
-            // lTa may be wrong because it looks for block that doesn’t exist
+            // CHECK ME: lTa may be wrong because it looks for block that doesn’t exist
             // Alternatively: pattern detection (unlikely; it's old code)
             // Alternatively: filtering blocks
           else outer.splitTokenRange(inner)
@@ -202,10 +200,10 @@ def splitAllHyperedges(
       // println(s"newHg.hyperedges:")
       // newHg.hyperedges.foreach(e => println(s"  $e"))
       // println(s"match: $tmp")
-      val newMatches: Set[HyperedgeMatch] = matches + HyperedgeMatch(tmp) // remove old matchs and add new split results
+      val newMatches: Set[HyperedgeMatch] = matches + HyperedgeMatch(tmp) // remove old matches and add new split results
       processBlock(blockQueue.tail, newHg, newMatches)
-  // Filter out blocks with more than two instances
-  processBlock(blocks.toVector.filter(e => e.instances.size != 2), bothHgs, Set.empty[HyperedgeMatch])
+  // Filter to keep only blocks with exactly two instances
+  processBlock(blocks.toVector.filter(e => e.instances.size == 2), bothHgs, Set.empty[HyperedgeMatch])
 
 def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange]): Unit =
   val gTa = hg.vertices.head.ta
