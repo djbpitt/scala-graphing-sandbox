@@ -62,28 +62,33 @@ def readData(pathToData: Path): List[(String, String)] =
   // phaseTwoCandidateGroups(false).foreach(println) // Cannot be rendered with current code
   val validPhaseTwoCandidates = phaseTwoCandidateGroups(true) // 318 items
   val phaseTwoCandidateTokens: Vector[List[List[Token]]] =
-    validPhaseTwoCandidates // NB: Valid groups only
+    validPhaseTwoCandidates
       .map(e =>
-        e.values.map(f => gTa.slice(f.start, f.until).asInstanceOf[Vector[Token]].toList).toList.sortBy(_.head.w)
+        e.values
+          .map(f => f.tokens
+            .asInstanceOf[Vector[Token]]
+            .toList
+          )
+          .toList
+          .sortBy(_.head.w)
       )
   def processUnalignedZone(tokens: List[List[Token]]): Hypergraph[EdgeLabel, TokenRange] =
     val nodesToCluster: List[ClusterInfo] = clusterWitnesses(tokens)
     val hg: Hypergraph[EdgeLabel, TokenRange] =
       mergeClustersIntoHG(nodesToCluster, tokens, gTa)
     hg
+
   val phaseTwoAlignmentHypergraphs =
-    phaseTwoCandidateTokens.map(e =>
-      // println(e)
-      // println("New unaligned zone")
-      processUnalignedZone(e)
-    )
+    phaseTwoCandidateTokens
+      .slice(0, 10) // Limit range for debugging; need to process all IRL
+      .map(e => processUnalignedZone(e))
   // phaseTwoAlignmentHypergraphs.foreach(println)
 
   // ===
   // End of temporary code
   // ===
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html")
-  val horizontalRibbons = createHorizontalRibbons(root, sigla.toSet)
+  val horizontalRibbons = createHorizontalRibbons(root, sigla.toSet, gTa)
   val horizontalRibbonsPath =
     os.pwd / "src" / "main" / "outputs" / "horizontal-ribbons-full.xhtml" // "horizontal-ribbons.xhtml"
   scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true, doctypeHtml)

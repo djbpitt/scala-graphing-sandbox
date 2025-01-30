@@ -27,7 +27,7 @@ def createSecondAlignmentPhaseVisualization(
   val result = AlignmentRibbon(aps)
   aps.foreach(e => println(e))
   val localSigla  = (0 until 6).map(e => Siglum(e.toString)).toSet
-  val horizontalRibbons = createHorizontalRibbons(result, localSigla)
+  val horizontalRibbons = createHorizontalRibbons(result, localSigla, gTa)
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html")
   val horizontalRibbonsPath =
     os.pwd / "src" / "main" / "outputs" / "secondAlignmentPhase.xhtml" // "horizontal-ribbons.xhtml"

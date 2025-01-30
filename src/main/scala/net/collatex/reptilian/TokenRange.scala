@@ -15,13 +15,19 @@ enum TokenRange:
   def until: Int
   def ta: Vector[TokenEnum]
 
-  override def toString(): String = // For debugging
+  override def toString: String = // For debugging
     List("TokenRange(", this.start, ",", this.until, ", gTa)").mkString
   def tString: String =
-    val gTa = this.ta
-    gTa.slice(this.start, this.until).map(_.t).mkString // concatenate t values
+    this.tokens.map(_.t).mkString // concatenate t values
 
   def decreaseStart: TokenRange = TokenRange(this.start - 1, this.until, this.ta)
+
+  def tokens: Vector[TokenEnum] =
+    this match
+      // FIXME: Replace empty vectors for bad data with proper treatment
+      case x:IllegalTokenRange => Vector()
+      case x:EmptyTokenRange => Vector()
+      case _ => this.ta.slice(this.start, this.until)
 
   def contains(pos: Int): Boolean = // position in gTa
     this.start <= pos && this.until > pos
@@ -68,13 +74,17 @@ enum TokenRange:
 
   def slice(startOffset: Int, untilOffset: Int): Either[SliceTokenRangeError.type, TokenRange] =
     this match
-      case _: (IllegalTokenRange | EmptyTokenRange) => Left(SliceTokenRangeError)
+      case _: (IllegalTokenRange | EmptyTokenRange) =>
+        println("tokenRange.slice trying to split illegalTokenRange input")
+        Left(SliceTokenRangeError)
       case x: LegalTokenRange =>
         if startOffset < 0
           || untilOffset < startOffset // covers prohibiting until < 0
           || startOffset > x.length
           || untilOffset > x.length
-        then Left(SliceTokenRangeError)
+        then
+          println(s"tokenRange.slice error with input tr $this, startOffset $startOffset, and untilOffset $untilOffset")
+          Left(SliceTokenRangeError)
         else Right(TokenRange(x.start + startOffset, x.start + untilOffset, x.ta))
 
 object TokenRange:

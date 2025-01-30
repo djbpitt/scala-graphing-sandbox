@@ -1,7 +1,5 @@
 package net.collatex.reptilian
 
-import net.collatex.reptilian.TokenEnum.Token
-
 import scala.annotation.{tailrec, unused}
 import scala.xml.{Elem, Node, NodeSeq}
 import math.Ordered.orderingToOrdered
@@ -80,7 +78,8 @@ def computeTokenTextLength(in: String): Double =
   *   All witness readings on node as map from siglum (String) to vector of tokens
   */
 def retrieveWitnessReadings(n: AlignmentPoint): Map[Siglum, Vector[TokenEnum]] =
-  val witnessReadings = n.combineWitnessGroups.map((k, v) => k -> v.ta.slice(v.start, v.until))
+  val witnessReadings =
+    n.combineWitnessGroups.map((k, v) => k -> v.tokens)
   witnessReadings
 
 val memoizedComputeTokenTextLength = memoizeFnc(computeTokenTextLength)
@@ -203,7 +202,9 @@ def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   *
   * @param root
   *   Expanded node root of entire alignment tree
-  * @param tokenArray
+  * @param sigla
+  *   Set of Siglum instances
+  * @param gTa
   *   Global token array
   * @return
   *   <html> element in HTML namespace, with embedded SVG
