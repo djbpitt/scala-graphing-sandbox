@@ -766,15 +766,15 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     val result = mergeSingletonHG(singletonTokens, hg, false)
     assert(result == expected)
   test("test mergeSingletonHG() that requires hypergraph (only) splitting with pre and post"):
-    val gTa: Vector[Token] = Vector[Token](
+    val gTa: Vector[TokenEnum] = Vector[TokenEnum](
       Token("a", "a", 0, 0),
       Token("b", "b", 0, 1),
-      Token("Sep2", "Sep2", 0, 2),
+      TokenSep("Sep2", "Sep2", 0, 2),
       Token("x", "x", 1, 3),
       Token("a", "a", 1, 4),
       Token("b", "b", 1, 5),
       Token("y", "y", 1, 6),
-      Token("Sep7", "Sep7", 1, 7),
+      TokenSep("Sep7", "Sep7", 1, 7),
       Token("x", "x", 2, 8),
       Token("a", "a", 2, 9),
       Token("b", "b", 2, 10),
