@@ -6,7 +6,8 @@ import net.collatex.util.{Graph, Hypergraph}
 import scala.xml.dtd.DocType
 
 def createHtmlTable(rds: Seq[Seq[EdgeData]]): Unit = // inner sequences are tbody groups
-  val hgId = rds.flatMap(_.map(_.he).sorted.distinct).drop(1).mkString("-") // "starts" is always first
+  // Filename length cannot exceed 255 (APFS)
+  val hgId = rds.flatMap(_.map(_.he).sorted.distinct).drop(1).mkString("-").slice(0, 200) // "starts" is always first
   def edgeEndpointsToString(ep: EdgeEndpoints): String = // format edge for html table
     s"${ep.source} → ${ep.target}"
   val css: String =
@@ -146,7 +147,7 @@ def dependencyGraphToDot(
     hg: Hypergraph[EdgeLabel, TokenRange]
 ): Unit =
   val gTa = hg.vertices.head.ta
-  val hgId = hg.hyperedgeLabels.map(_.toString).toSeq.sorted.mkString("-")
+  val hgId = hg.hyperedgeLabels.map(_.toString).toSeq.sorted.mkString("-").slice(0, 200)
   val prologue = "digraph G {\n\t"
   val epilogue = "\n}"
   val edges = depGraph.toMap
