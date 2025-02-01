@@ -152,7 +152,7 @@ def realMainFunction(debug: Boolean): Unit =
   val (gTa, hg1, hg2) = returnSampleData() // don’t use (global) names of hgs because real data isn’t global
   val hgWithMergeResults: Hypergraph[EdgeLabel, TokenRange] = mergeHgHg(hg1 + hg2, debug)
   val result = hypergraphToReadings(hgWithMergeResults)
-  println(result)
+  // println(result)
 
 @main def runWithSampleData(): Unit = // no files saved to disk
   realMainFunction(false)

@@ -17,7 +17,6 @@ object Siglum:
     (a: Siglum, b: Siglum) => a.value.compare(b.value)
 given CanEqual[Siglum, Siglum] = CanEqual.derived
 
-
 type WitnessReadings = Map[Siglum, TokenRange] // type alias
 
 sealed trait AlignmentUnit // supertype AlignmentRibbon (with children) and AlignmentPoint (with groups)
@@ -47,8 +46,7 @@ object AlignmentPoint {
 
 /** Zone to be processed in phase two
   *
-  * Same input as AlignmentPoint (varargs of (Siglum, TokenRange))
-  *   but create only WitnessReadings and no WitnessGroups
+  * Same input as AlignmentPoint (varargs of (Siglum, TokenRange)) but create only WitnessReadings and no WitnessGroups
   */
 final case class UnalignedZone(witnessReadings: WitnessReadings) extends AlignmentUnit
 
@@ -69,28 +67,34 @@ final case class AlignmentRibbon(
     children: ListBuffer[AlignmentUnit] = ListBuffer.empty
 ) extends AlignmentUnit
 
+// RESUME 2025-02-01 This function needs the lTa to look up the
+// tokens and retrieve their global offsets, and it also needs the
+// gTa to create new TokenRange instances. We currently pass in the
+// lTa but expect the gTa; we can either pass both or rewrite the
+// block-instance offsets from local to global and then pass just the
+// global values.
 def blocksToNodes(
     blocks: Iterable[FullDepthBlock],
-    tokenArray: Vector[TokenEnum],
+    gTa: Vector[TokenEnum],
     sigla: List[Siglum]
 ): Iterable[AlignmentPoint] =
   blocks
-    .map(e => fullDepthBlockToAlignmentPoint(e, tokenArray, sigla))
+    .map(e => fullDepthBlockToAlignmentPoint(e, gTa, sigla))
 // Convert local alignment offsets to global token-array offsets for the reading node
 def fullDepthBlockToAlignmentPoint(
     block: FullDepthBlock,
-    tokenArray: Vector[TokenEnum],
+    lTa: Vector[TokenEnum], // local
     sigla: List[Siglum]
 ): AlignmentPoint =
 //  println(s"block: $block")
   val readings = block.instances
     .map(e =>
-      sigla(tokenArray(e).w) -> TokenRange(
-        start = tokenArray(e).g,
-        until = tokenArray(
+      sigla(lTa(e).w) -> TokenRange(
+        start = lTa(e).g,
+        until = lTa(
           e
         ).g + block.length,
-        ta = tokenArray
+        ta = lTa
       )
     )
     .toMap

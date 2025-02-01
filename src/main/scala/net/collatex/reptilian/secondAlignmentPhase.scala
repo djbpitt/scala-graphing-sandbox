@@ -61,7 +61,7 @@ def mergeHgHg(
   //  This replaces those separate hyperedges in full inventory of hyperedges
   if transpositionBool
   then
-    println("Found a transposition")
+    // println("Found a transposition")
     bothHgs
   else
     val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
@@ -102,7 +102,7 @@ def createGlobalTokenArray(darwinReadings: List[List[Token]]) =
             :: e._2
         )
         .toVector
-  //  tokenArray.foreach(println)
+  //  lTa.foreach(println)
   tokenArray
 
 // FIXME: Used only in text; we create lTa elsewhere in real code.
@@ -172,13 +172,13 @@ def splitAllHyperedges(
       val preAndPostMatch: Vector[(TokenRange, TokenRange)] =
         outerAndInnerRanges.map((outer, inner) =>
           if !(outer.contains(inner.start) && outer.contains(inner.until - 1)) then
-            println("Cannot split; reading does not fully contain block")
-            println(s"Block: $currentBlock")
-            println(s"outer and inner: $outerAndInnerRanges")
-            println(s"outer text: ${outer.tString}")
-            println(s"inner text: ${inner.tString}")
-            println(s"hypergraph: $hgTmp")
-            hgTmp.hyperedges.foreach(e => println(e.toText))
+//            println("Cannot split; reading does not fully contain block")
+//            println(s"Block: $currentBlock")
+//            println(s"outer and inner: $outerAndInnerRanges")
+//            println(s"outer text: ${outer.tString}")
+//            println(s"inner text: ${inner.tString}")
+//            println(s"hypergraph: $hgTmp")
+//            hgTmp.hyperedges.foreach(e => println(e.toText))
             (outer, inner)
             // CHECK ME: lTa may be wrong because it looks for block that doesn’t exist
             // Alternatively: pattern detection (unlikely; it's old code)

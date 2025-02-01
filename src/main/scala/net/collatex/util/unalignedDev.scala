@@ -371,11 +371,11 @@
 //@main def unalignedDev(): Unit =
 //  val darwin: List[UnalignedFragment] = readJsonData // we know there's only one
 //  val darwinReadings = darwin.head.readings
-//  given tokenArray: Vector[Token] =
+//  given lTa: Vector[Token] =
 //    darwinReadings.head.toVector ++ darwinReadings.tail.zipWithIndex
 //      .flatMap((e, index) => List(Token(index.toString, index.toString, index, -1)) ++ e)
 //      .toVector
-//  println(tokenArray)
+//  println(lTa)
 //  val nodeToClustersMap: Map[Int, List[ClusterInfo]] = darwin
 //    .map(node => node.nodeno -> (vectorizeReadings andThen clusterReadings)(node)) // list of tuples
 //    .toMap // map object (key -> value pairs)
@@ -470,7 +470,7 @@
 //        case (SingletonTree(item1: Int, item2: Int, height: Double), i: Int) =>
 //          val singletonTokens = darwinReadings(item1)
 //          val (stTokenArray: Vector[Token], alignmentRibbon: List[AlignmentPoint]) =
-//            createSingletonTreeTokenArray(acc(item2), singletonTokens, tokenArray)
+//            createSingletonTreeTokenArray(acc(item2), singletonTokens, lTa)
 ////          println(s"stTokenArray: $stTokenArray")
 ////          println(stTokenArray.map(_.t).mkString(" "))
 //
@@ -536,8 +536,8 @@
 //                ) // FIXME: Fake AgreementNode to fool compiler—temporarily, of course!
 //            }
 //
-//          val ttTokenArray = createTreeTreeTokenArray(acc(item1), acc(item2), tokenArray)
-//          val ttTokenToAlignmentTreeNodeMapping = getTTokenNodeMappings(acc(item1), acc(item2), tokenArray).toVector
+//          val ttTokenArray = createTreeTreeTokenArray(acc(item1), acc(item2), lTa)
+//          val ttTokenToAlignmentTreeNodeMapping = getTTokenNodeMappings(acc(item1), acc(item2), lTa).toVector
 //          val (_, _, blocks) =
 //            createAlignedBlocks(ttTokenArray, -1, false) // tuple of (all blocks, suffix array, full-depth blocks)
 //
@@ -565,15 +565,15 @@
 //                val newTree1 = splitTree(tree1Nodes, ttTokenToAlignmentTreeNodeMapping, globalBlockRanges.head)
 //                val newTree2 = splitTree(tree2Nodes, ttTokenToAlignmentTreeNodeMapping, globalBlockRanges.last)
 //
-////                val newTree1AsDot = dot(newTree1.asInstanceOf[AlignmentRibbon], tokenArray.toVector)
-////                val newTree2AsDot = dot(newTree2.asInstanceOf[AlignmentRibbon], tokenArray.toVector)
+////                val newTree1AsDot = dot(newTree1.asInstanceOf[AlignmentRibbon], lTa.toVector)
+////                val newTree2AsDot = dot(newTree2.asInstanceOf[AlignmentRibbon], lTa.toVector)
 ////                val alignmentGraphOutputPath1 = os.pwd / "src" / "main" / "outputs" / "t1.dot"
 ////                val alignmentGraphOutputPath2 = os.pwd / "src" / "main" / "outputs" / "t2.dot"
 ////                os.write.over(alignmentGraphOutputPath1, newTree1AsDot)
 ////                os.write.over(alignmentGraphOutputPath2, newTree2AsDot)
 //
 //                val newTtTokenToAlignmentTreeNodeMapping =
-//                  getTTokenNodeMappings(newTree1, newTree2, tokenArray).toVector
+//                  getTTokenNodeMappings(newTree1, newTree2, lTa).toVector
 //                val newTreeData = TreeTreeData(newTree1, newTree2, newTtTokenToAlignmentTreeNodeMapping, ttTokenArray)
 //                newTreeData
 //            )

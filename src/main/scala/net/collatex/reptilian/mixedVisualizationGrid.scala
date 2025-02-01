@@ -3,6 +3,7 @@ package net.collatex.reptilian
 import scala.annotation.{tailrec, unused}
 import scala.xml.{Elem, Node, NodeSeq}
 import math.Ordered.orderingToOrdered
+import scala.sys.exit
 
 /* Constants */
 // FIXME: Hard-coded witness identifiers!
@@ -134,7 +135,10 @@ def createHorizNodeData(
         case None    => 0d
       }
       val missing = findMissingWitnesses(nodes.head.node, sigla)
-      val newNode = HorizNodeData(
+      val newNode =
+        println(nodes.head.node.witnessGroups)
+        println(nodes.head.node.witnessGroups.head.map((k, v) => v.ta.size))
+        HorizNodeData(
         treeNumber = nodes.head.nodeNo,
         seqNumber = pos,
         nodeType = nodeType,
@@ -315,6 +319,8 @@ def createHorizontalRibbons(root: AlignmentRibbon, sigla: Set[Siglum], gTa: Vect
     */
   def plotOneAlignmentPoint(node: HorizNodeData): xml.Elem =
     def processGroups(groups: Vector[HorizNodeGroup]): Vector[Elem] =
+      println(groups)
+      exit
       @tailrec
       def nextGroup(groups: Vector[HorizNodeGroup], top: Double, acc: Vector[Elem]): Vector[Elem] =
         if groups.isEmpty then acc
@@ -325,7 +331,10 @@ def createHorizontalRibbons(root: AlignmentRibbon, sigla: Set[Siglum], gTa: Vect
               for e <- groups.head.members.zipWithIndex yield
                 val fillColor = witnessToColor(e._1.siglum)
                 val vOffset = e._2
-                Seq(plotRect(vOffset, node, fillColor, top), plotReading(vOffset, node, top, e))
+                Seq(
+                  plotRect(vOffset, node, fillColor, top),
+                  plotReading(vOffset, node, top, e)
+                )
             }</g>
           nextGroup(groups.tail, top + groupHeight, acc :+ newG)
       nextGroup(groups, 0, Vector.empty[Elem])

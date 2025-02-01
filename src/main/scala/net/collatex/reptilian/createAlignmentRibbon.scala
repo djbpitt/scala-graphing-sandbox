@@ -101,10 +101,7 @@ def splitUnalignedZone(
     (current.copy(witnessReadings = changedMap), current.copy(witnessReadings = changedMap2))
   result
 }
-def alignTokenArray(
-    sigla: List[Siglum],
-    selection: UnalignedZone,
-    gTa: Vector[TokenEnum]) = {
+def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[TokenEnum]) = {
   // find the full depth blocks for the alignment
   // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
   // ??: Modify createAlignedBlocks() not to return unused values
@@ -114,7 +111,7 @@ def alignTokenArray(
 
   // Create a local token array by filtering the global one
   // Selection comes in unsorted, so sort by siglum first
-  val localTokenArraybyWitness = {
+  val localTokenArraybyWitness: Seq[Vector[TokenEnum]] = {
     val orderedWitnessReadings =
       for siglum <- selection.witnessReadings.keys.toSeq.sorted
       yield selection.witnessReadings(siglum)
@@ -147,7 +144,7 @@ def alignTokenArray(
         alignmentBlocksSet,
         longestFullDepthNonRepeatingBlocks
       )
-    val alignmentPoints = blocksToNodes(alignmentBlocks, localTokenArray, sigla)
+    val alignmentPoints = blocksToNodes(alignmentBlocks, gTa, sigla)
     // We need to restore the sorting that we destroyed when we created the set
     // Called repeatedly, so there is always a w0, although not always the same one
     //   (tokens know their global witness membership, so we can recover original witness membership when needed)
@@ -197,10 +194,7 @@ def createAlignmentRibbon(sigla: List[Siglum], gTa: Vector[TokenEnum]): Alignmen
   rootNode
 }
 
-def setupNodeExpansion(
-    sigla: List[Siglum],
-    selection: UnalignedZone,
-    gTa: Vector[TokenEnum]) = {
+def setupNodeExpansion(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[TokenEnum]) = {
   val blocks = alignTokenArray(sigla, selection, gTa)
   if blocks.isEmpty
   then
@@ -249,14 +243,14 @@ def recursiveBuildAlignment(
       //   Second item contains optional stuff after the block, which will be the input into the recursion
       //   Recursion knows to until when remainingAlignment parameter is an empty list
       //  println(firstReadingNode)
-      //  println(tokenArray)
+      //  println(lTa)
   val tempSplit = splitUnalignedZone(
     unalignedZone,
     firstReadingNode.combineWitnessGroups.map((k, v) => k -> v.until),
     gTa
   )
-  println(s"unalignedZone: $unalignedZone")
-  unalignedZone.witnessReadings.foreach((siglum, tokenrange) => println(s"$siglum: ${tokenrange.tString}"))
+  // println(s"unalignedZone: $unalignedZone")
+  // unalignedZone.witnessReadings.foreach((siglum, tokenrange) => println(s"$siglum: ${tokenrange.tString}"))
   // split the first returned reading node again, now by the start position for each witness of the first
   // sorted reading node.
   val tempSplit2 = splitUnalignedZone(
@@ -270,8 +264,7 @@ def recursiveBuildAlignment(
   // TODO: Currently we just report the undecided part, but we need to process it.
   val undecidedPart = tempSplit2._1
   // NOTE: This segment could be optional, empty.
-  if undecidedPart.witnessReadings.nonEmpty then
-    result += setupNodeExpansion(sigla, undecidedPart, gTa)
+  if undecidedPart.witnessReadings.nonEmpty then result += setupNodeExpansion(sigla, undecidedPart, gTa)
   result += firstReadingNode
 
   // this part has to be split further recursively
@@ -288,8 +281,7 @@ def recursiveBuildAlignment(
   else
     // The alignment results are all processed,so we check for trailing non-aligned content and then until the recursion.
     // This repeats the treatment as unaligned leading content
-    if tempSplit._2.witnessReadings.nonEmpty then
-      result += setupNodeExpansion(sigla, tempSplit._2, gTa)
+    if tempSplit._2.witnessReadings.nonEmpty then result += setupNodeExpansion(sigla, tempSplit._2, gTa)
     val rootNode = AlignmentRibbon(
       children = result
     )
