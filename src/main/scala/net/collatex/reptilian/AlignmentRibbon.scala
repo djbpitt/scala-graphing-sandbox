@@ -67,14 +67,15 @@ final case class AlignmentRibbon(
     children: ListBuffer[AlignmentUnit] = ListBuffer.empty
 ) extends AlignmentUnit
 
-// RESUME 2025-02-01 This function needs the lTa to look up the
-// tokens and retrieve their global offsets, and it also needs the
-// gTa to create new TokenRange instances. We currently pass in the
-// lTa but expect the gTa; we can either pass both or rewrite the
-// block-instance offsets from local to global and then pass just the
-// global values.
+// RESUME 2025-02-04 We updated this to pass in lTa and gTa, but
+// the splitting is still broken (see current diagnostic output)
+// We think (false memory): Start with full space, which has
+// alternating blocks and unaligned zones, although we can’t know
+// which is first. Walk over blocks in left-to-right order,
+// splitting space.
 def blocksToNodes(
     blocks: Iterable[FullDepthBlock],
+    lTa: Vector[TokenEnum],
     gTa: Vector[TokenEnum],
     sigla: List[Siglum]
 ): Iterable[AlignmentPoint] =

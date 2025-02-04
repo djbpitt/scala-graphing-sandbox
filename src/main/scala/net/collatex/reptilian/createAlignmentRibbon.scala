@@ -67,7 +67,9 @@ def splitUnalignedZone(
 ): (UnalignedZone, UnalignedZone) = {
   // For witness ranges, last value is exclusive
   // We filter out all the witnesses that have an empty range after the split
-  //  // TODO: Simplify duplicate code
+  // TODO: Simplify duplicate code
+  println(s"current unaligned zone: $current")
+  println(s"position_to_split: $position_to_split")
   val changedMap = current.witnessReadings
     .map((k, v) =>
       val splitValue = position_to_split
@@ -118,7 +120,7 @@ def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[T
     for r <- orderedWitnessReadings yield r.tokens
   }
   // Replacement that uses witnessGroups instead of witnessReadings
-  val localTokenArray = localTokenArraybyWitness.head ++
+  val lTa = localTokenArraybyWitness.head ++
     localTokenArraybyWitness.tail.zipWithIndex
       .flatMap((e, index) =>
         Vector(
@@ -126,7 +128,7 @@ def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[T
         ) ++ e
       )
   val (_, _, longestFullDepthNonRepeatingBlocks) =
-    createAlignedBlocks(localTokenArray, witnessCount)
+    createAlignedBlocks(lTa, witnessCount)
   if longestFullDepthNonRepeatingBlocks.isEmpty
   then List()
   else
@@ -144,7 +146,7 @@ def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[T
         alignmentBlocksSet,
         longestFullDepthNonRepeatingBlocks
       )
-    val alignmentPoints = blocksToNodes(alignmentBlocks, gTa, sigla)
+    val alignmentPoints = blocksToNodes(alignmentBlocks, lTa, gTa, sigla)
     // We need to restore the sorting that we destroyed when we created the set
     // Called repeatedly, so there is always a w0, although not always the same one
     //   (tokens know their global witness membership, so we can recover original witness membership when needed)
@@ -244,7 +246,7 @@ def recursiveBuildAlignment(
       //   Recursion knows to until when remainingAlignment parameter is an empty list
       //  println(firstReadingNode)
       //  println(lTa)
-  val tempSplit = splitUnalignedZone(
+  val tempSplit: (UnalignedZone, UnalignedZone) = splitUnalignedZone(
     unalignedZone,
     firstReadingNode.combineWitnessGroups.map((k, v) => k -> v.until),
     gTa
@@ -253,7 +255,7 @@ def recursiveBuildAlignment(
   // unalignedZone.witnessReadings.foreach((siglum, tokenrange) => println(s"$siglum: ${tokenrange.tString}"))
   // split the first returned reading node again, now by the start position for each witness of the first
   // sorted reading node.
-  val tempSplit2 = splitUnalignedZone(
+  val tempSplit2: (UnalignedZone, UnalignedZone) = splitUnalignedZone(
     tempSplit._1,
     firstReadingNode.combineWitnessGroups.map((k, v) => k -> v.start),
     gTa
