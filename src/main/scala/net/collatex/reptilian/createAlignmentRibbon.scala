@@ -2,7 +2,7 @@ package net.collatex.reptilian
 
 import scala.annotation.tailrec
 import scala.collection.{immutable, mutable}
-import scala.collection.mutable.{ListBuffer, Map}
+import scala.collection.mutable.{ListBuffer}
 import TokenRange.*
 import SplitTokenRangeResult.*
 import net.collatex.reptilian.TokenEnum.Token
@@ -60,49 +60,25 @@ def splitWitnessGroup(
   )
   (lefts, rights)
 
+def removeEmptyTokenRanges(before: Map[Siglum, TokenRange]): Map[Siglum, TokenRange] =
+  before.filter((_, v) => v.isInstanceOf[LegalTokenRange])
+
 def splitUnalignedZone(
     current: UnalignedZone,
-    position_to_split: immutable.Map[Siglum, Int],
-    gTa: Vector[TokenEnum]
-): (UnalignedZone, UnalignedZone) = {
-  // For witness ranges, last value is exclusive
+    alignment_point_for_split: AlignmentPoint
+): (UnalignedZone, UnalignedZone) =
   // We filter out all the witnesses that have an empty range after the split
-  // TODO: Simplify duplicate code
-  println(s"current unaligned zone: $current")
-  println(s"position_to_split: $position_to_split")
-  val changedMap = current.witnessReadings
-    .map((k, v) =>
-      val splitValue = position_to_split
-        .getOrElse(
-          k,
-          throw new RuntimeException(
-            s"k = $k, current.witnessReadings = ${current.witnessReadings}, position_to_split = $position_to_split"
-          )
-        )
-      val ranges1 = k -> TokenRange(v.start, splitValue, gTa)
-      ranges1
-    )
-    .filter((_, v) => v.start != v.until)
+  val preAndPost = current.witnessReadings
+    .map((k, v) => k -> v.splitTokenRange(alignment_point_for_split.combineWitnessGroups(k)))
+  val pre = preAndPost
+    .map((k, v) => k -> v._1)
+    .filter((k, v) => v.isInstanceOf[LegalTokenRange])
+  val post: Map[Siglum, TokenRange] = removeEmptyTokenRanges(
+    preAndPost
+      .map((k, v) => k -> v._2)
+  )
+  (UnalignedZone(pre), UnalignedZone(post))
 
-  val changedMap2 = current.witnessReadings
-    .map((k, v) =>
-      val splitValue = position_to_split
-        .getOrElse(k, throw new RuntimeException(s"$position_to_split"))
-      // the splitValue should be >= v._1 (start value)
-      // the splitValue should be <= v._2 (until value)
-      val ranges2 = k -> TokenRange(splitValue, v.until, gTa)
-      ranges2
-    )
-    .filter((_, v) => v.start != v.until)
-
-  // TODO: if the whole map is empty we should return a special type, e.g., EmptyReadingNode
-  // TODO: Workaround to mimic copy() method on trait (https://groups.google.com/g/scala-internals/c/O1yrB1xetUA)
-  // TODO: Would like return type of (C, C) instead of (HasWitnessReadings, HasWitnessReadings)
-  // TODO: Might need to revise witnessGroups property, as well, since some ranges might be empty after split
-  val result: (UnalignedZone, UnalignedZone) =
-    (current.copy(witnessReadings = changedMap), current.copy(witnessReadings = changedMap2))
-  result
-}
 def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[TokenEnum]) = {
   // find the full depth blocks for the alignment
   // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
@@ -193,8 +169,7 @@ def createAlignmentRibbon(sigla: List[Siglum], gTa: Vector[TokenEnum]): Alignmen
     ListBuffer(),
     globalUnalignedZone,
     fulldepthAlignmentPoints,
-    sigla,
-    gTa
+    sigla
   )
   rootNode
 }
@@ -217,8 +192,7 @@ def setupNodeExpansion(sigla: List[Siglum], selection: UnalignedZone, gTa: Vecto
       result = ListBuffer(),
       unalignedZone = selection,
       remainingAlignment = blocks,
-      sigla = sigla,
-      gTa
+      sigla = sigla
     )
     expansion
 }
@@ -228,67 +202,34 @@ def recursiveBuildAlignment(
     result: ListBuffer[AlignmentUnit],
     unalignedZone: UnalignedZone,
     remainingAlignment: List[AlignmentPoint],
-    sigla: List[Siglum],
-    gTa: Vector[TokenEnum]
-): AlignmentRibbon = {
-  // On first run, unalignedZone contains full token ranges and remainingAlignment contains all sortedReadingNodes
-  // take the first reading node from the sorted reading nodes (= converted blocks from alignment)
-  val firstReadingNode =
-    remainingAlignment.head // used below to find both real alignment and optional leading "undecided part"
-      // println("Witness intervals of the first block of the alignment")
-      // println(firstReadingNode)
-
-      // split unalignedZone based on the until position for each witness of the first reading node of the alignment.
-      // That splits the root reading node into aligned block plus optional leading non-block tokens
-      // TODO: map() creates a new map; would a map view be better (we use the value only once)? Would using a
-      //   map view instead of a map require changing the signature of splitAlignmentPoint()?
-      // TODO: splitAlignmentPoint() returns a tuple, which we could unpack
-      // Splits on until of aligned block, so:
-      //   First item contains block (empty only at until) preceded by optional leading unaligned stuff
-      //   Second item contains optional stuff after the block, which will be the input into the recursion
-      //   Recursion knows to until when remainingAlignment parameter is an empty list
-      //  println(firstReadingNode)
-      //  println(lTa)
-  val tempSplit: (UnalignedZone, UnalignedZone) = splitUnalignedZone(
+    sigla: List[Siglum]
+): AlignmentRibbon =
+  // On first run, unalignedZone contains full token ranges (globalUnalignedZone) and
+  // remainingAlignment contains all original full-depth alignment points.
+  // Take the first reading node from the sorted full-depth alignment points
+  //   (= converted blocks from alignment)
+  val firstRemainingAlignmentPoint = remainingAlignment.head
+  val (pre, post): (UnalignedZone, UnalignedZone) = splitUnalignedZone(
     unalignedZone,
-    firstReadingNode.combineWitnessGroups.map((k, v) => k -> v.until),
-    gTa
+    firstRemainingAlignmentPoint
   )
-  // println(s"unalignedZone: $unalignedZone")
-  // unalignedZone.witnessReadings.foreach((siglum, tokenrange) => println(s"$siglum: ${tokenrange.tString}"))
-  // split the first returned reading node again, now by the start position for each witness of the first
-  // sorted reading node.
-  val tempSplit2: (UnalignedZone, UnalignedZone) = splitUnalignedZone(
-    tempSplit._1,
-    firstReadingNode.combineWitnessGroups.map((k, v) => k -> v.start),
-    gTa
-  )
+  // Expand pre recursively and add to result
+  // Then add block to result
+  // Then either recurse on post with next block or, in no more blocks, add post
 
-  // The undecided part (unaligned stuff before block) could be empty or could hold data, in which case it may
-  //   have partial alignment, variation, ….
-  // TODO: Currently we just report the undecided part, but we need to process it.
-  val undecidedPart = tempSplit2._1
-  // NOTE: This segment could be optional, empty.
-  if undecidedPart.witnessReadings.nonEmpty then result += setupNodeExpansion(sigla, undecidedPart, gTa)
-  result += firstReadingNode
-
-  // this part has to be split further recursively
-  val remainder = tempSplit._2
+  result.appendAll(Seq(pre, firstRemainingAlignmentPoint))
 
   if remainingAlignment.tail.nonEmpty then
     recursiveBuildAlignment(
       result,
-      remainder,
+      post,
       remainingAlignment.tail,
-      sigla,
-      gTa
+      sigla
     )
   else
-    // The alignment results are all processed,so we check for trailing non-aligned content and then until the recursion.
-    // This repeats the treatment as unaligned leading content
-    if tempSplit._2.witnessReadings.nonEmpty then result += setupNodeExpansion(sigla, tempSplit._2, gTa)
+    result.append(post)
+    result.slice(0, 10).foreach(println)
     val rootNode = AlignmentRibbon(
       children = result
     )
     rootNode
-}
