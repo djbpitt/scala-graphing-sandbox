@@ -158,11 +158,10 @@ def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[T
     sortedReadingNodes
 }
 
-def createAlignmentRibbon(sigla: List[Siglum], gTa: Vector[TokenEnum]): AlignmentRibbon = {
+def createGlobalUnalignedZone(sigla: List[Siglum], gTa: Vector[TokenEnum]) = {
   // NB: We are embarrassed by the mutable map (and by other things, such has having to scan token array)
   // Housekeeping; TODO: Think about witness-set metadata
   val witnessRanges: mutable.Map[Siglum, TokenRange] = mutable.Map.empty
-
   // go over the tokens and assign the lowest and the highest to the map
   // token doesn't know its position in a specific witness, so use indices
   // TODO: Could be simplified if the routine knew the token length of the witnesses
@@ -180,9 +179,14 @@ def createAlignmentRibbon(sigla: List[Siglum], gTa: Vector[TokenEnum]): Alignmen
       ) // +1 is for exclusive until
   // mutable map is local to the function, to convert to immutable before return
   val witnessReadings = witnessRanges.toMap
-
   val globalUnalignedZone = UnalignedZone(witnessReadings)
-  // Start recursion
+  globalUnalignedZone
+}
+
+def createAlignmentRibbon(sigla: List[Siglum], gTa: Vector[TokenEnum]): AlignmentRibbon = {
+  val globalUnalignedZone: UnalignedZone = createGlobalUnalignedZone(sigla, gTa)
+
+  // Execute first alignment phase recursively
   val fulldepthAlignmentPoints: List[AlignmentPoint] = // not yet handling intervening unaligned zones
     alignTokenArray(sigla, globalUnalignedZone, gTa)
   val rootNode = recursiveBuildAlignment(
@@ -192,7 +196,6 @@ def createAlignmentRibbon(sigla: List[Siglum], gTa: Vector[TokenEnum]): Alignmen
     sigla,
     gTa
   )
-
   rootNode
 }
 
