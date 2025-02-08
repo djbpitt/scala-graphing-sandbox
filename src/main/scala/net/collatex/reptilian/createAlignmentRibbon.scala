@@ -122,6 +122,26 @@ def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[T
         alignmentBlocksSet,
         longestFullDepthNonRepeatingBlocks
       )
+    // ===
+    // 2025-02-08 RESUME HERE
+    // Some blocks overlap at this point. Detect them and
+    // shorten one or the other where necessary before converting to
+    // alignment points
+    // Helper function returns true is no overlap, false if any overlap
+    // TODO: Identify overlapping witnesses so that we can examine tString values
+    // ===
+    def findBlockOverlap(first: FullDepthBlock, second: FullDepthBlock): Boolean =
+      val result = first.instances.map(e => e + first.length).zip(second.instances).forall((f, s) => f <= s)
+      result
+    val overlappingBlocks: Vector[Seq[FullDepthBlock]] =
+      alignmentBlocks.toSeq.sortBy(_.instances(0)).sliding(2, 1).filterNot(e => findBlockOverlap(e(0), e(1))).toVector
+    println(
+      s"${100 * overlappingBlocks.size / alignmentBlocks.toSeq.size}% of adjacent blocks have overlapping token ranges"
+    )
+    overlappingBlocks.foreach(println)
+    // ===
+    // End of diagnostic
+    // ===
     val alignmentPoints = blocksToNodes(alignmentBlocks, lTa, gTa, sigla)
     // We need to restore the sorting that we destroyed when we created the set
     // Called repeatedly, so there is always a w0, although not always the same one

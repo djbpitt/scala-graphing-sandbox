@@ -67,20 +67,18 @@ final case class AlignmentRibbon(
     children: ListBuffer[AlignmentUnit] = ListBuffer.empty
 ) extends AlignmentUnit
 
-// RESUME 2025-02-04 We updated this to pass in lTa and gTa, but
-// the splitting is still broken (see current diagnostic output)
-// We think (false memory): Start with full space, which has
-// alternating blocks and unaligned zones, although we can’t know
-// which is first. Walk over blocks in left-to-right order,
-// splitting space.
 def blocksToNodes(
     blocks: Iterable[FullDepthBlock],
     lTa: Vector[TokenEnum],
     gTa: Vector[TokenEnum],
     sigla: List[Siglum]
 ): Iterable[AlignmentPoint] =
-  blocks
+  val result = blocks
     .map(e => fullDepthBlockToAlignmentPoint(e, gTa, sigla))
+  // FIXME: There seems to be a token that is being included in two blocks. Sigh.
+  result.toSeq.sortBy(e => e.combineWitnessGroups("darwin1859.txt").start).foreach(println)
+  // println(gTa.slice(29144, 29160).map(_.t).mkString(" "))
+  result
 // Convert local alignment offsets to global token-array offsets for the reading node
 def fullDepthBlockToAlignmentPoint(
     block: FullDepthBlock,
