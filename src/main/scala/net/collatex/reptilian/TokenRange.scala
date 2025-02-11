@@ -19,6 +19,8 @@ enum TokenRange:
     List("TokenRange(", this.start, ",", this.until, ", gTa)").mkString
   def tString: String =
     this.tokens.map(_.t).mkString // concatenate t values
+  def nString: String =
+    this.tokens.map(_.n).mkString(" ")
 
   def decreaseStart: TokenRange = TokenRange(this.start - 1, this.until, this.ta)
 
