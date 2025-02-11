@@ -128,17 +128,32 @@ def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[T
     // shorten one or the other where necessary before converting to
     // alignment points
     // Helper function returns true is no overlap, false if any overlap
-    // TODO: Identify overlapping witnesses so that we can examine tString values
+    // TODO: Resolve overlap in favor of longer block, except (heuristically):
+    //   (What if the rules conflict? Split block into left and right parts? Eek!)
+    //   If overlap begins in a hyphen, it goes to the left (bull-dog / pug-dog)
+    //   If overlap ends in a comma, it goes to the left (Egyptian monuments
+    //   If overlap ends in a period, it goes to the left (At the present time)
+    //   If overlap ends in period + (end)quote, it goes to the left (In Saxony the importance)
+    //     Check for trailing whitespace after quotation mark in t property?
+    //   If overlap ends in the word "the", it goes to the right (the caudal and sacral vertebræ)
     // ===
-    def findBlockOverlap(first: FullDepthBlock, second: FullDepthBlock): Boolean =
-      val result = first.instances.map(e => e + first.length).zip(second.instances).forall((f, s) => f <= s)
-      result
-    val overlappingBlocks: Vector[Seq[FullDepthBlock]] =
-      alignmentBlocks.toSeq.sortBy(_.instances(0)).sliding(2, 1).filterNot(e => findBlockOverlap(e(0), e(1))).toVector
-    println(
-      s"${100 * overlappingBlocks.size / alignmentBlocks.toSeq.size}% of adjacent blocks have overlapping token ranges"
-    )
-    overlappingBlocks.foreach(println)
+    def findBlockOverlap(first: FullDepthBlock, second: FullDepthBlock): Unit =
+      val blockOverlapData: Vector[Int] = // if any value > 0, there is overlap
+        first.instances.map(e => e + first.length).zip(second.instances).map((f, s) => f - s)
+      if blockOverlapData.exists(e => e > 0) then
+//        println(s"first: $first")
+//        println(s"second: $second")
+        println(s"overlap: $blockOverlapData")
+        val overlapLength: Int = blockOverlapData.filter(e => e > 0).head
+//        println(s"overlap witnesses: ${blockOverlapData.zipWithIndex.filter((overlapValue, offset) => overlapValue > 0).map(_._2)}")
+        println(
+          s"overlap text: ${TokenRange(second.instances.head, second.instances.head + overlapLength, gTa).nString}"
+        )
+        println(s"first: ${TokenRange(first.instances.head, first.instances.head + first.length, gTa).nString}")
+        println(s"second: ${TokenRange(second.instances.head, second.instances.head + second.length, gTa).nString}")
+        println()
+
+    alignmentBlocks.toSeq.sortBy(_.instances(0)).sliding(2, 1).map(e => findBlockOverlap(e(0), e(1))).toVector
     // ===
     // End of diagnostic
     // ===
