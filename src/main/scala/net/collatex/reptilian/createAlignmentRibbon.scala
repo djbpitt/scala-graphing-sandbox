@@ -79,7 +79,7 @@ def splitUnalignedZone(
   )
   (UnalignedZone(pre), UnalignedZone(post))
 
-def groupOverlapTokens(overlapTokens: TokenRange): String =
+def overlapTokenValences(overlapTokens: TokenRange): String =
   val bindsLeft = Set(",", ".")
   val bindsRight = Set("the")
   val bindsBoth = Set("-")
@@ -92,6 +92,8 @@ def groupOverlapTokens(overlapTokens: TokenRange): String =
     case _ => "A" // ambiguous
   }
   bindings.mkString(" ")
+
+
 
 def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[TokenEnum]) = {
   // find the full depth blocks for the alignment
@@ -142,14 +144,6 @@ def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[T
     // shorten one or the other where necessary before converting to
     // alignment points
     // Helper function returns true is no overlap, false if any overlap
-    // TODO: Resolve overlap in favor of longer block, except (heuristically):
-    //   (What if the rules conflict? Split block into left and right parts? Eek!)
-    //   If overlap begins in a hyphen, it goes to the left (bull-dog / pug-dog)
-    //   If overlap ends in a comma, it goes to the left (Egyptian monuments
-    //   If overlap ends in a period, it goes to the left (At the present time)
-    //   If overlap ends in period + (end)quote, it goes to the left (In Saxony the importance)
-    //     Check for trailing whitespace after quotation mark in t property?
-    //   If overlap ends in the word "the", it goes to the right (the caudal and sacral vertebræ)
     // ===
     def findBlockOverlap(first: FullDepthBlock, second: FullDepthBlock): Unit =
       val blockOverlapData: Vector[Int] = // if any value > 0, there is overlap
@@ -161,13 +155,12 @@ def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[T
         val overlapLength: Int = blockOverlapData.filter(e => e > 0).head
 //        println(s"overlap witnesses: ${blockOverlapData.zipWithIndex.filter((overlapValue, offset) => overlapValue > 0).map(_._2)}")
         val overlapRange = TokenRange(second.instances.head, second.instances.head + overlapLength, gTa)
+        val overlapBindings = overlapTokenValences(overlapRange)
         println(
-          s"overlap text: ${overlapRange.nString}"
+          s"overlap text: ${overlapRange.nString} || overlap bindings: $overlapBindings"
         )
         println(s"first: ${TokenRange(first.instances.head, first.instances.head + first.length, gTa).nString}")
         println(s"second: ${TokenRange(second.instances.head, second.instances.head + second.length, gTa).nString}")
-        val overlapBindings = groupOverlapTokens(overlapRange)
-        println(s"overlap bindings: $overlapBindings")
         println()
 
     alignmentBlocks.toSeq.sortBy(_.instances(0)).sliding(2, 1).map(e => findBlockOverlap(e(0), e(1))).toVector
