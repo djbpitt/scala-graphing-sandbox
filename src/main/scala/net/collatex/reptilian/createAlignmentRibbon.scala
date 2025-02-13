@@ -79,6 +79,20 @@ def splitUnalignedZone(
   )
   (UnalignedZone(pre), UnalignedZone(post))
 
+def groupOverlapTokens(overlapTokens: TokenRange): String =
+  val bindsLeft = Set(",", ".")
+  val bindsRight = Set("the")
+  val bindsBoth = Set("-")
+  val bindings = overlapTokens.tokens.map {
+    case x if bindsLeft.contains(x.n) => "L"
+    case x if bindsRight.contains(x.n) => "R"
+    case x if bindsBoth.contains(x.n) => "B" // both
+    case x if x.n == "\"" && x.t.endsWith(" ") => "L" // end quote
+    case x if x.n == "\"" && x.t.startsWith(" ") => "R" // start quote
+    case _ => "A" // ambiguous
+  }
+  bindings.mkString(" ")
+
 def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[TokenEnum]) = {
   // find the full depth blocks for the alignment
   // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
@@ -146,11 +160,14 @@ def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[T
         println(s"overlap: $blockOverlapData")
         val overlapLength: Int = blockOverlapData.filter(e => e > 0).head
 //        println(s"overlap witnesses: ${blockOverlapData.zipWithIndex.filter((overlapValue, offset) => overlapValue > 0).map(_._2)}")
+        val overlapRange = TokenRange(second.instances.head, second.instances.head + overlapLength, gTa)
         println(
-          s"overlap text: ${TokenRange(second.instances.head, second.instances.head + overlapLength, gTa).nString}"
+          s"overlap text: ${overlapRange.nString}"
         )
         println(s"first: ${TokenRange(first.instances.head, first.instances.head + first.length, gTa).nString}")
         println(s"second: ${TokenRange(second.instances.head, second.instances.head + second.length, gTa).nString}")
+        val overlapBindings = groupOverlapTokens(overlapRange)
+        println(s"overlap bindings: $overlapBindings")
         println()
 
     alignmentBlocks.toSeq.sortBy(_.instances(0)).sliding(2, 1).map(e => findBlockOverlap(e(0), e(1))).toVector
