@@ -91,7 +91,7 @@ enum TokenRange:
 
 object TokenRange:
   def apply(start: Int, until: Int, ta: Vector[TokenEnum]): TokenRange =
-    if ta.size < 1000 then throw RuntimeException(s"ta = $ta")
+    // if ta.size < 1000 then throw RuntimeException(s"ta = $ta")
     Ordering.Int.compare(start, until) match
       case -1 => LegalTokenRange(start, until, ta)
       case 0  => EmptyTokenRange(start, until, ta)

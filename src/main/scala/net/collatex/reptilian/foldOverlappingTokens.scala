@@ -51,8 +51,24 @@ enum OverlapGroup:
       case (first: ambig, second: ambig) => Seq(first, second) // don’t merge because we can split between them
       case (first: ambig, second: both)  => Seq(right(first.size + 1))
 
+// Used by apply method
+val bindsLeft = Set(",", ".")
+val bindsRight = Set("the")
+val bindsBoth = Set("-")
+
+object OverlapGroup:
+  def apply(token: TokenEnum): OverlapGroup =
+    token match
+      case x if bindsLeft.contains(x.n)            => OverlapGroup.left(1)
+      case x if bindsRight.contains(x.n)           => OverlapGroup.right(1)
+      case x if bindsBoth.contains(x.n)            => OverlapGroup.both(1)
+      case x if x.n == "\"" && x.t.endsWith(" ")   => OverlapGroup.left(1) // end quote
+      case x if x.n == "\"" && x.t.startsWith(" ") => OverlapGroup.right(1) // start quote
+      case _                                       => OverlapGroup.ambig(1)
+
 def groupOverlapTokens(input: Seq[OverlapGroup]): Seq[OverlapGroup] =
-  input.foldLeft(Seq[OverlapGroup]())((acc, current) => acc match
-    case _ if acc.isEmpty => Seq(current)
-    case _ => acc.dropRight(1) ++ (acc.last + current)
+  input.foldLeft(Seq[OverlapGroup]())((acc, current) =>
+    acc match
+      case _ if acc.isEmpty => Seq(current)
+      case _                => acc.dropRight(1) ++ (acc.last + current)
   )
