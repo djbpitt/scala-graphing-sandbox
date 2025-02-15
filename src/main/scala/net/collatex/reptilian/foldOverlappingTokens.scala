@@ -26,15 +26,33 @@ package net.collatex.reptilian
   B + A => L
  */
 
-enum overlapGroup:
+enum OverlapGroup:
   case left(size: Int)
   case right(size: Int)
-  case both(size: Int)
-  case ambig(size: Int)
+  case both(size: Int) // open on both sides
+  case ambig(size: Int) // closed on both sides
   def size: Int
-  def + (second: overlapGroup): Seq[overlapGroup] =
-    (this, second) match
-      case (first:left, second:left) => Seq(left(first.size + 1))
-      case (first:left, second:right) => Seq(first, right(1))
-      case (first:left, second:ambig) => Seq(first, ambig(1))
-      case (first:left, second:both) => Seq(both(first.size + 1))
+  def +(second: OverlapGroup): Seq[OverlapGroup] =
+    (this, second) match // second always has a size of 1
+      case (first: left, second: left)   => Seq(left(first.size + 1))
+      case (first: left, second: right)  => Seq(first, second)
+      case (first: left, second: ambig)  => Seq(first, second)
+      case (first: left, second: both)   => Seq(both(first.size + 1))
+      case (first: right, second: left)  => Seq(ambig(first.size + 1))
+      case (first: right, second: right) => Seq(right(first.size + 1))
+      case (first: right, second: ambig) => Seq(ambig(first.size + 1))
+      case (first: right, second: both)  => Seq(right(first.size + 1))
+      case (first: both, second: left)   => Seq(left(first.size + 1))
+      case (first: both, second: right)  => Seq(both(first.size + 1))
+      case (first: both, second: ambig)  => Seq(left(first.size + 1))
+      case (first: both, second: both)   => Seq(both(first.size + 1))
+      case (first: ambig, second: left)  => Seq(ambig(first.size + 1))
+      case (first: ambig, second: right) => Seq(first, second)
+      case (first: ambig, second: ambig) => Seq(first, second) // don’t merge because we can split between them
+      case (first: ambig, second: both)  => Seq(right(first.size + 1))
+
+def groupOverlapTokens(input: Seq[OverlapGroup]): Seq[OverlapGroup] =
+  input.foldLeft(Seq[OverlapGroup]())((acc, current) => acc match
+    case _ if acc.isEmpty => Seq(current)
+    case _ => acc.dropRight(1) ++ (acc.last + current)
+  )
