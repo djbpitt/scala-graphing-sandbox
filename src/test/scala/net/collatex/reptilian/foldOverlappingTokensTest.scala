@@ -1,5 +1,6 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.TokenEnum.{Token, TokenSep}
 import org.scalatest.funsuite.AnyFunSuite
 
 class foldOverlappingTokensTest extends AnyFunSuite:
@@ -55,3 +56,32 @@ class foldOverlappingTokensTest extends AnyFunSuite:
     )
     val result = groupOverlapTokens(input)
     assert(result == expected)
+
+  test("allocate overlapping tokens with -dog, "):
+    // "the bull - dog , || - dog , or
+    val gTa: Vector[TokenEnum] = Vector(
+      Token("the ", "the", 0, 0),
+      Token("bull", "bull", 0, 1),
+      Token("-", "-", 0, 2),
+      Token("dog", "dog", 0, 3),
+      Token(", ", ",", 0, 4),
+      TokenSep("sep", "sep", 1, 5),
+      Token("-", "-", 1, 6),
+      Token("dog", "dog", 1, 7),
+      Token(", ", ",", 1, 8),
+      Token("or ", "or", 1, 9)
+    )
+    val first = FullDepthBlock(Vector(0), 5)
+    val second = FullDepthBlock(Vector(6), 4)
+    val overlap = Seq(OverlapGroup.left(3))
+    val expected = (
+      FullDepthBlock(Vector(0), 5),
+      FullDepthBlock(Vector(9), 1)
+    )
+    val (newFirst, newSecond) =
+      allocateOverlappingTokens(first, second, overlap)
+    println(s"oldFirst:  ${TokenRange(0, 5, gTa).tString }")
+    println(s"oldSecond: ${TokenRange(6, 10, gTa).tString}")
+    println(s"newFirst:  ${TokenRange(0, 5, gTa).tString}")
+    println(s"newSecond: ${TokenRange(9, 11, gTa).tString}")
+    assert((newFirst, newSecond) == expected)

@@ -2,7 +2,7 @@ package net.collatex.reptilian
 
 import scala.annotation.tailrec
 import scala.collection.{immutable, mutable}
-import scala.collection.mutable.{ListBuffer}
+import scala.collection.mutable.ListBuffer
 import TokenRange.*
 import SplitTokenRangeResult.*
 import net.collatex.reptilian.TokenEnum.Token
@@ -144,14 +144,15 @@ def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[T
 //        println(s"overlap witnesses: ${blockOverlapData.zipWithIndex.filter((overlapValue, offset) => overlapValue > 0).map(_._2)}")
         val overlapRange = TokenRange(second.instances.head, second.instances.head + overlapLength, gTa)
         val overlapBindings = determineOverlapTokenCategories(overlapRange)
+        val overlapGroups = groupOverlapTokens(overlapBindings)
         println(
-          s"overlap text: ${overlapRange.nString} || overlap bindings: $overlapBindings"
+          s"overlap text: ${overlapRange.nString} || overlap bindings: $overlapBindings || overlap groups: $overlapGroups"
         )
         println(s"first: ${TokenRange(first.instances.head, first.instances.head + first.length, gTa).nString}")
         println(s"second: ${TokenRange(second.instances.head, second.instances.head + second.length, gTa).nString}")
         println()
 
-    alignmentBlocks.toSeq.sortBy(_.instances(0)).sliding(2, 1).map(e => findBlockOverlap(e(0), e(1))).toVector
+    alignmentBlocks.toSeq.sortBy(_.instances(0)).sliding(2, 1).map(e => findBlockOverlap(e.head, e(1))).toVector
     // ===
     // End of diagnostic
     // ===

@@ -72,3 +72,29 @@ def groupOverlapTokens(input: Seq[OverlapGroup]): Seq[OverlapGroup] =
       case _ if acc.isEmpty => Seq(current)
       case _                => acc.dropRight(1) ++ (acc.last + current)
   )
+
+def allocateOverlappingTokens(
+    first: FullDepthBlock,
+    second: FullDepthBlock,
+    overlap: Seq[OverlapGroup]
+): (FullDepthBlock, FullDepthBlock) =
+  val overlapSize = overlap.map(_.size).sum
+  val larger = if first.length > second.length then first else second
+  val addLeft: Int = overlap.head match
+    case x: OverlapGroup.left => overlap.head.size
+    case _                    => 0
+  val addRight: Int = overlap.last match
+    case x: OverlapGroup.right => overlap.last.size
+    case _                     => 0
+  val addLongest = overlap.filter(e => e.getClass.getSimpleName == "ambig").map(f => f.size).sum
+  val totalLeft: Int = if larger == first then addLongest + addLeft else addLeft
+  val totalRight: Int = if larger == second then addLongest + addRight else addRight
+  val newLeft = FullDepthBlock(
+    first.instances,
+    first.length - (overlapSize - totalLeft)
+  )
+  val newRight = FullDepthBlock(
+    second.instances.map(e => e + overlapSize),
+    second.length - overlapSize
+  )
+  (newLeft, newRight)
