@@ -94,7 +94,7 @@ def allocateOverlappingTokens(
     first.length - (overlapSize - totalLeft)
   )
   val newRight = FullDepthBlock(
-    second.instances.map(e => e + overlapSize),
-    second.length - overlapSize
+    second.instances.map(e => e + (overlapSize - totalRight)),
+    second.length - (overlapSize - totalRight)
   )
   (newLeft, newRight)
