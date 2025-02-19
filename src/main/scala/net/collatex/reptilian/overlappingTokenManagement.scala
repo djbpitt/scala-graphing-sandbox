@@ -119,3 +119,8 @@ def allocateOverlappingTokens(
       second.length - sizeAdjustment
     )
   (newLeft, newRight)
+
+def determineOverlapTokenCategories(overlapTokens: TokenRange): Seq[OverlapGroup] =
+  val overlapGroups = overlapTokens.tokens.map(OverlapGroup.apply)
+  overlapGroups
+

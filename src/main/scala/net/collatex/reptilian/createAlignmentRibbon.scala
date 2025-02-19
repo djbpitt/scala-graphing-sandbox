@@ -79,10 +79,6 @@ def splitUnalignedZone(
   )
   (UnalignedZone(pre), UnalignedZone(post))
 
-def determineOverlapTokenCategories(overlapTokens: TokenRange): Seq[OverlapGroup] =
-  val overlapGroups = overlapTokens.tokens.map(OverlapGroup.apply)
-  overlapGroups
-
 def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[TokenEnum]) = {
   // find the full depth blocks for the alignment
   // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
