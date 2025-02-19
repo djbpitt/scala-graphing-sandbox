@@ -4,55 +4,55 @@ import net.collatex.reptilian.TokenEnum.{Token, TokenSep}
 import org.scalatest.funsuite.AnyFunSuite
 
 class foldOverlappingTokensTest extends AnyFunSuite:
-  test("Fold left over sequence of LLL"):
-    val input = Seq(OverlapGroup.left(1), OverlapGroup.left(1), OverlapGroup.left(1))
-    val expected = Seq(OverlapGroup.left(3))
+  test("Fold Left over sequence of LLL"):
+    val input = Seq(OverlapGroup.Left(1), OverlapGroup.Left(1), OverlapGroup.Left(1))
+    val expected = Seq(OverlapGroup.Left(3))
     val result = groupOverlapTokens(input)
     assert(result == expected)
-  test("Fold left over sequence of LLA"):
+  test("Fold Left over sequence of LLA"):
     val input = Seq(
-      OverlapGroup.left(1),
-      OverlapGroup.left(1),
-      OverlapGroup.ambig(1)
+      OverlapGroup.Left(1),
+      OverlapGroup.Left(1),
+      OverlapGroup.Ambig(1)
     )
-    val expected = Seq(OverlapGroup.left(2), OverlapGroup.ambig(1))
+    val expected = Seq(OverlapGroup.Left(2), OverlapGroup.Ambig(1))
     val result = groupOverlapTokens(input)
     assert(result == expected)
-  test("Fold left over sequence of LRL"):
+  test("Fold Left over sequence of LRL"):
     val input = Seq(
-      OverlapGroup.left(1),
-      OverlapGroup.right(1),
-      OverlapGroup.left(1)
+      OverlapGroup.Left(1),
+      OverlapGroup.Right(1),
+      OverlapGroup.Left(1)
     )
-    val expected = Seq(OverlapGroup.left(1), OverlapGroup.ambig(2))
+    val expected = Seq(OverlapGroup.Left(1), OverlapGroup.Ambig(2))
     val result = groupOverlapTokens(input)
     assert(result == expected)
-  test("Fold left over sequence of BLAB"):
+  test("Fold Left over sequence of BLAB"):
     val input = Seq(
-      OverlapGroup.both(1),
-      OverlapGroup.left(1),
-      OverlapGroup.ambig(1),
-      OverlapGroup.both(1)
+      OverlapGroup.Both(1),
+      OverlapGroup.Left(1),
+      OverlapGroup.Ambig(1),
+      OverlapGroup.Both(1)
     )
-    val expected = Seq(OverlapGroup.left(2), OverlapGroup.right(2))
+    val expected = Seq(OverlapGroup.Left(2), OverlapGroup.Right(2))
     val result = groupOverlapTokens(input)
     assert(result == expected)
-  test("Fold left over sequence of RLLR"):
+  test("Fold Left over sequence of RLLR"):
     val input = Seq(
-      OverlapGroup.right(1),
-      OverlapGroup.left(1),
-      OverlapGroup.left(1),
-      OverlapGroup.right(1)
+      OverlapGroup.Right(1),
+      OverlapGroup.Left(1),
+      OverlapGroup.Left(1),
+      OverlapGroup.Right(1)
     )
-    val expected = Seq(OverlapGroup.ambig(3), OverlapGroup.right(1))
+    val expected = Seq(OverlapGroup.Ambig(3), OverlapGroup.Right(1))
     val result = groupOverlapTokens(input)
     assert(result == expected)
-  test("Fold left over sequence of AAA"):
-    val input = Seq(OverlapGroup.ambig(1), OverlapGroup.ambig(1), OverlapGroup.ambig(1))
+  test("Fold Left over sequence of AAA"):
+    val input = Seq(OverlapGroup.Ambig(1), OverlapGroup.Ambig(1), OverlapGroup.Ambig(1))
     val expected = Seq(
-      OverlapGroup.ambig(1),
-      OverlapGroup.ambig(1),
-      OverlapGroup.ambig(1)
+      OverlapGroup.Ambig(1),
+      OverlapGroup.Ambig(1),
+      OverlapGroup.Ambig(1)
     )
     val result = groupOverlapTokens(input)
     assert(result == expected)
@@ -73,7 +73,7 @@ class foldOverlappingTokensTest extends AnyFunSuite:
     )
     val first = FullDepthBlock(Vector(0), 5)
     val second = FullDepthBlock(Vector(6), 4)
-    val overlap = Seq(OverlapGroup.left(3))
+    val overlap = Seq(OverlapGroup.Left(3))
     val expected = (
       FullDepthBlock(Vector(0), 5),
       FullDepthBlock(Vector(9), 1)
@@ -95,7 +95,7 @@ class foldOverlappingTokensTest extends AnyFunSuite:
     )
     val first = FullDepthBlock(Vector(0), 3)
     val second = FullDepthBlock(Vector(4), 3)
-    val overlap = Seq(OverlapGroup.left(1))
+    val overlap = Seq(OverlapGroup.Left(1))
     val expected = (
       FullDepthBlock(Vector(0), 3),
       FullDepthBlock(Vector(5), 2)
@@ -116,7 +116,7 @@ class foldOverlappingTokensTest extends AnyFunSuite:
     )
     val first = FullDepthBlock(Vector(0), 2)
     val second = FullDepthBlock(Vector(3), 3)
-    val overlap = Seq(OverlapGroup.right(1))
+    val overlap = Seq(OverlapGroup.Right(1))
     val expected = (
       FullDepthBlock(Vector(0), 1),
       FullDepthBlock(Vector(3), 3)
@@ -125,7 +125,7 @@ class foldOverlappingTokensTest extends AnyFunSuite:
       allocateOverlappingTokens(first, second, overlap)
     assert((newFirst, newSecond) == expected)
 
-  test("allocate overlapping tokens with an ambig "):
+  test("allocate overlapping tokens with an Ambig "):
     // Fake data
     // cliffs , seeing the  || , seeing the coastline on the horizon
     val gTa: Vector[TokenEnum] = Vector(
@@ -144,7 +144,7 @@ class foldOverlappingTokensTest extends AnyFunSuite:
     )
     val first = FullDepthBlock(Vector(0), 4)
     val second = FullDepthBlock(Vector(5), 7)
-    val overlap = Seq(OverlapGroup.left(1), OverlapGroup.ambig(1), OverlapGroup.right(1))
+    val overlap = Seq(OverlapGroup.Left(1), OverlapGroup.Ambig(1), OverlapGroup.Right(1))
     val expected = (
       FullDepthBlock(Vector(0), 2),
       FullDepthBlock(Vector(6), 6)
@@ -152,3 +152,4 @@ class foldOverlappingTokensTest extends AnyFunSuite:
     val (newFirst, newSecond) =
       allocateOverlappingTokens(first, second, overlap)
     assert((newFirst, newSecond) == expected)
+

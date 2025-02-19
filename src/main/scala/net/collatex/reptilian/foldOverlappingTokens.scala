@@ -27,44 +27,46 @@ package net.collatex.reptilian
  */
 
 enum OverlapGroup:
-  case left(size: Int)
-  case right(size: Int)
-  case both(size: Int) // open on both sides
-  case ambig(size: Int) // closed on both sides
+  case Left(size: Int)
+  case Right(size: Int)
+  case Both(size: Int) // open on both sides
+  case Ambig(size: Int) // closed on both sides
   def size: Int
   def +(second: OverlapGroup): Seq[OverlapGroup] =
     (this, second) match // second always has a size of 1
-      case (first: left, second: left)   => Seq(left(first.size + 1))
-      case (first: left, second: right)  => Seq(first, second)
-      case (first: left, second: ambig)  => Seq(first, second)
-      case (first: left, second: both)   => Seq(both(first.size + 1))
-      case (first: right, second: left)  => Seq(ambig(first.size + 1))
-      case (first: right, second: right) => Seq(right(first.size + 1))
-      case (first: right, second: ambig) => Seq(ambig(first.size + 1))
-      case (first: right, second: both)  => Seq(right(first.size + 1))
-      case (first: both, second: left)   => Seq(left(first.size + 1))
-      case (first: both, second: right)  => Seq(both(first.size + 1))
-      case (first: both, second: ambig)  => Seq(left(first.size + 1))
-      case (first: both, second: both)   => Seq(both(first.size + 1))
-      case (first: ambig, second: left)  => Seq(ambig(first.size + 1))
-      case (first: ambig, second: right) => Seq(first, second)
-      case (first: ambig, second: ambig) => Seq(first, second) // don’t merge because we can split between them
-      case (first: ambig, second: both)  => Seq(right(first.size + 1))
+      case (first: Left, second: Left)   => Seq(Left(first.size + 1))
+      case (first: Left, second: Right)  => Seq(first, second)
+      case (first: Left, second: Ambig)  => Seq(first, second)
+      case (first: Left, second: Both)   => Seq(Both(first.size + 1))
+      case (first: Right, second: Left)  => Seq(Ambig(first.size + 1))
+      case (first: Right, second: Right) => Seq(Right(first.size + 1))
+      case (first: Right, second: Ambig) => Seq(Ambig(first.size + 1))
+      case (first: Right, second: Both)  => Seq(Right(first.size + 1))
+      case (first: Both, second: Left)   => Seq(Left(first.size + 1))
+      case (first: Both, second: Right)  => Seq(Both(first.size + 1))
+      case (first: Both, second: Ambig)  => Seq(Left(first.size + 1))
+      case (first: Both, second: Both)   => Seq(Both(first.size + 1))
+      case (first: Ambig, second: Left)  => Seq(Ambig(first.size + 1))
+      case (first: Ambig, second: Right) => Seq(first, second)
+      case (first: Ambig, second: Ambig) => Seq(first, second) // don’t merge because we can split between them
+      case (first: Ambig, second: Both)  => Seq(Right(first.size + 1))
 
 // Used by apply method
 val bindsLeft = Set(",", ".")
 val bindsRight = Set("the")
 val bindsBoth = Set("-")
+val bindingMap: Map[String, OverlapGroup] =
+  (bindsLeft.map(e => e -> OverlapGroup.Left(1)) ++
+    bindsRight.map(e => e -> OverlapGroup.Right(1)) ++
+    bindsBoth.map(e => e -> OverlapGroup.Both(1))).toMap
+val bindingSpecial: TokenEnum => OverlapGroup = token =>
+  if token.t == "\" " then OverlapGroup.Left(1) // end quote
+  else if token.n == "\"" then OverlapGroup.Right(1) // start quote (not always!)
+  else OverlapGroup.Ambig(1)
 
 object OverlapGroup:
   def apply(token: TokenEnum): OverlapGroup =
-    token match
-      case x if bindsLeft.contains(x.n)            => OverlapGroup.left(1)
-      case x if bindsRight.contains(x.n)           => OverlapGroup.right(1)
-      case x if bindsBoth.contains(x.n)            => OverlapGroup.both(1)
-      case x if x.n == "\"" && x.t.endsWith(" ")   => OverlapGroup.left(1) // end quote
-      case x if x.n == "\"" && x.t.startsWith(" ") => OverlapGroup.right(1) // start quote
-      case _                                       => OverlapGroup.ambig(1)
+    bindingMap.getOrElse(token.n, bindingSpecial(token))
 
 def groupOverlapTokens(input: Seq[OverlapGroup]): Seq[OverlapGroup] =
   input.foldLeft(Seq[OverlapGroup]())((acc, current) =>
@@ -73,28 +75,47 @@ def groupOverlapTokens(input: Seq[OverlapGroup]): Seq[OverlapGroup] =
       case _                => acc.dropRight(1) ++ (acc.last + current)
   )
 
+/** Resolve overlapping blocks by allocating tokens to only one
+  *
+  * e.g.: on the monuments of Egypt, || , much diversity in the breeds (overlapping comma)
+  *
+  * Assumes: Determine initial overlap groups of length 1 with OverlapGroup.apply()
+  *
+  * Fold interacting adjacent groups with groupOverlapTokens()
+  *
+  * @param first
+  *   Left input block
+  * @param second
+  *   Right input block
+  * @param overlap
+  *   Sequence of OverlapGroup
+  * @return
+  *   new Left and Right with overlap apportioned
+  */
 def allocateOverlappingTokens(
     first: FullDepthBlock,
     second: FullDepthBlock,
     overlap: Seq[OverlapGroup]
 ): (FullDepthBlock, FullDepthBlock) =
   val overlapSize = overlap.map(_.size).sum
-  val larger = if first.length > second.length then first else second
   val addLeft: Int = overlap.head match
-    case x: OverlapGroup.left => overlap.head.size
+    case _: OverlapGroup.Left => overlap.head.size
     case _                    => 0
   val addRight: Int = overlap.last match
-    case x: OverlapGroup.right => overlap.last.size
+    case _: OverlapGroup.Right => overlap.last.size
     case _                     => 0
-  val addLongest = overlap.filter(e => e.getClass.getSimpleName == "ambig").map(f => f.size).sum
-  val totalLeft: Int = if larger == first then addLongest + addLeft else addLeft
-  val totalRight: Int = if larger == second then addLongest + addRight else addRight
+  val addLongest = overlap.filter(e => e.getClass.getSimpleName == "Ambig").map(f => f.size).sum
+  val (totalLeft: Int, totalRight: Int) =
+    if first.length > second.length then (addLongest + addLeft, addRight)
+    else (addLeft, addLongest + addRight)
   val newLeft = FullDepthBlock(
     first.instances,
     first.length - (overlapSize - totalLeft)
   )
-  val newRight = FullDepthBlock(
-    second.instances.map(e => e + (overlapSize - totalRight)),
-    second.length - (overlapSize - totalRight)
-  )
+  val newRight =
+    val sizeAdjustment = overlapSize - totalRight
+    FullDepthBlock(
+      second.instances.map(e => e + sizeAdjustment),
+      second.length - sizeAdjustment
+    )
   (newLeft, newRight)
