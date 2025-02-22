@@ -79,7 +79,11 @@ def splitUnalignedZone(
   )
   (UnalignedZone(pre), UnalignedZone(post))
 
-def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[TokenEnum]) = {
+def alignTokenArray(
+    sigla: List[Siglum],
+    selection: UnalignedZone,
+    gTa: Vector[TokenEnum]
+) =
   // find the full depth blocks for the alignment
   // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
   // ??: Modify createAlignedBlocks() not to return unused values
@@ -110,7 +114,6 @@ def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[T
   else
     // create navigation graph and filter out transposed nodes
     val graph = createTraversalGraph(longestFullDepthNonRepeatingBlocks)
-
     val alignment: List[Int] = findOptimalAlignment(
       graph
     ) // Int identifiers of full-depth blocks
@@ -122,33 +125,22 @@ def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[T
         alignmentBlocksSet,
         longestFullDepthNonRepeatingBlocks
       )
-    // ===
-    // 2025-02-08 RESUME HERE
-    // Some blocks overlap at this point. Detect them and
-    // shorten one or the other where necessary before converting to
-    // alignment points
-    // Helper function returns true is no overlap, false if any overlap
-    // ===
-    def findBlockOverlap(first: FullDepthBlock, second: FullDepthBlock): Unit =
-      val blockOverlapData: Vector[Int] = // if any value > 0, there is overlap
-        first.instances.map(e => e + first.length).zip(second.instances).map((f, s) => f - s)
-      if blockOverlapData.exists(e => e > 0) then
-//        println(s"first: $first")
-//        println(s"second: $second")
-        println(s"overlap: $blockOverlapData")
-        val overlapLength: Int = blockOverlapData.filter(e => e > 0).head
-//        println(s"overlap witnesses: ${blockOverlapData.zipWithIndex.filter((overlapValue, offset) => overlapValue > 0).map(_._2)}")
-        val overlapRange = TokenRange(second.instances.head, second.instances.head + overlapLength, gTa)
-        val overlapBindings = determineOverlapTokenCategories(overlapRange)
-        val overlapGroups = groupOverlapTokens(overlapBindings)
-        println(
-          s"overlap text: ${overlapRange.nString} || overlap bindings: $overlapBindings || overlap groups: $overlapGroups"
-        )
-        println(s"first: ${TokenRange(first.instances.head, first.instances.head + first.length, gTa).nString}")
-        println(s"second: ${TokenRange(second.instances.head, second.instances.head + second.length, gTa).nString}")
-        println()
 
-    alignmentBlocks.toSeq.sortBy(_.instances(0)).sliding(2, 1).map(e => findBlockOverlap(e.head, e(1))).toVector
+    // 2025-02-22 RESUME HERE
+    // Change two things:
+    // 1) Currently reports overlap, but we need to adjust the blocks and not just report
+    // 2) Currently slides over original blocks, which will break if there are consecutive overlaps
+    // To fix:
+    // 1) Either recurse or iterate-stop-update-resume instead of slide-map over original sequence
+    // 2) Accumulate modified blocks instead of accumulating only reports about overlap
+    // Code for #2 already exists in overlappingTokenManagement
+    // Also: Create test for consecutive overlaps
+    val x = alignmentBlocks.toSeq
+      .sortBy(_.instances(0))
+      .sliding(2, 1)
+      .map(e => findBlockOverlap(e.head, e(1), gTa))
+      .toVector
+    println(x.filterNot(_.isEmpty))
     // ===
     // End of diagnostic
     // ===
@@ -162,7 +154,6 @@ def alignTokenArray(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[T
       .sortBy(_.combineWitnessGroups(siglumForSorting).start)
       .toList
     sortedReadingNodes
-}
 
 def createGlobalUnalignedZone(sigla: List[Siglum], gTa: Vector[TokenEnum]) = {
   // NB: We are embarrassed by the mutable map (and by other things, such has having to scan token array)
