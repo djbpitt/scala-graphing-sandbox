@@ -136,8 +136,8 @@ def createHorizNodeData(
       }
       val missing = findMissingWitnesses(nodes.head.node, sigla)
       val newNode =
-        println(nodes.head.node.witnessGroups)
-        println(nodes.head.node.witnessGroups.head.map((k, v) => v.ta.size))
+        // println(nodes.head.node.witnessGroups)
+        // println(nodes.head.node.witnessGroups.head.map((k, v) => v.ta.size))
         HorizNodeData(
         treeNumber = nodes.head.nodeNo,
         seqNumber = pos,
@@ -319,7 +319,7 @@ def createHorizontalRibbons(root: AlignmentRibbon, sigla: Set[Siglum], gTa: Vect
     */
   def plotOneAlignmentPoint(node: HorizNodeData): xml.Elem =
     def processGroups(groups: Vector[HorizNodeGroup]): Vector[Elem] =
-      println(groups)
+      // println(groups)
       exit
       @tailrec
       def nextGroup(groups: Vector[HorizNodeGroup], top: Double, acc: Vector[Elem]): Vector[Elem] =

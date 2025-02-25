@@ -75,9 +75,6 @@ def blocksToNodes(
 ): Iterable[AlignmentPoint] =
   val result = blocks
     .map(e => fullDepthBlockToAlignmentPoint(e, gTa, sigla))
-  // FIXME: There seems to be a token that is being included in two blocks. Sigh.
-  result.toSeq.sortBy(e => e.combineWitnessGroups("darwin1859.txt").start).foreach(println)
-  // println(gTa.slice(29144, 29160).map(_.t).mkString(" "))
   result
 // Convert local alignment offsets to global token-array offsets for the reading node
 def fullDepthBlockToAlignmentPoint(
