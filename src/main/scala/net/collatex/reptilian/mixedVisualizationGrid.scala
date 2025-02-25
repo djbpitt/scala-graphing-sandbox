@@ -320,7 +320,6 @@ def createHorizontalRibbons(root: AlignmentRibbon, sigla: Set[Siglum], gTa: Vect
   def plotOneAlignmentPoint(node: HorizNodeData): xml.Elem =
     def processGroups(groups: Vector[HorizNodeGroup]): Vector[Elem] =
       // println(groups)
-      exit
       @tailrec
       def nextGroup(groups: Vector[HorizNodeGroup], top: Double, acc: Vector[Elem]): Vector[Elem] =
         if groups.isEmpty then acc

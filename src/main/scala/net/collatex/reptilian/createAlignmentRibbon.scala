@@ -143,10 +143,11 @@ def alignTokenArray(
           adjustForOverlap(blocksToProcess.tail, newSecond, acc :+ newFirst)
       adjustForOverlap(sortedBlocks.tail, sortedBlocks.head, Seq[FullDepthBlock]())
 
-    // ===
-    // End of diagnostic
-    // ===
     val adjustedBlocks = adjustBlockOverlap(alignmentBlocks)
+
+    // Examine difference between original blocks and blocks after overlap adjustment
+    // alignmentBlocks.toSeq.sortBy(_.instances.head).zip(adjustedBlocks).filterNot((e, f) => e == f).foreach(println)
+
     val alignmentPoints = blocksToNodes(adjustedBlocks, lTa, gTa, sigla)
     // We need to restore the sorting that we destroyed when we created the set
     // Called repeatedly, so there is always a w0, although not always the same one
