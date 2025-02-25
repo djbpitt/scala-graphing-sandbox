@@ -87,16 +87,17 @@ def groupOverlapTokens(input: Seq[OverlapGroup]): Seq[OverlapGroup] =
   *   Left input block
   * @param second
   *   Right input block
-  * @param overlap
-  *   Sequence of OverlapGroup
+  * @param gTa
+  *   Global token array
   * @return
   *   new Left and Right with overlap apportioned
   */
 def allocateOverlappingTokens(
     first: FullDepthBlock,
     second: FullDepthBlock,
-    overlap: Seq[OverlapGroup]
+    gTa: Vector[TokenEnum]
 ): (FullDepthBlock, FullDepthBlock) =
+  val overlap = findBlockOverlap(first = first, second = second, gTa = gTa)
   val overlapSize = overlap.map(_.size).sum
   val addLeft: Int = overlap.head match
     case _: OverlapGroup.Left => overlap.head.size
@@ -124,7 +125,11 @@ def determineOverlapTokenCategories(overlapTokens: TokenRange): Seq[OverlapGroup
   val overlapGroups = overlapTokens.tokens.map(OverlapGroup.apply)
   overlapGroups
 
-def findBlockOverlap(first: FullDepthBlock, second: FullDepthBlock, gTa: Vector[TokenEnum]): Seq[OverlapGroup] =
+def findBlockOverlap(
+    first: FullDepthBlock,
+    second: FullDepthBlock,
+    gTa: Vector[TokenEnum]
+): Seq[OverlapGroup] =
   val blockOverlapData: Vector[Int] = // if any value > 0, there is overlap
     first.instances.map(e => e + first.length).zip(second.instances).map((f, s) => f - s)
   if blockOverlapData.exists(e => e > 0) then
