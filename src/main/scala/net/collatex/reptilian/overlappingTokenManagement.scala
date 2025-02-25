@@ -99,27 +99,29 @@ def allocateOverlappingTokens(
 ): (FullDepthBlock, FullDepthBlock) =
   val overlap = findBlockOverlap(first = first, second = second, gTa = gTa)
   val overlapSize = overlap.map(_.size).sum
-  val addLeft: Int = overlap.head match
-    case _: OverlapGroup.Left => overlap.head.size
-    case _                    => 0
-  val addRight: Int = overlap.last match
-    case _: OverlapGroup.Right => overlap.last.size
-    case _                     => 0
-  val addLongest = overlap.filter(e => e.getClass.getSimpleName == "Ambig").map(f => f.size).sum
-  val (totalLeft: Int, totalRight: Int) =
-    if first.length > second.length then (addLongest + addLeft, addRight)
-    else (addLeft, addLongest + addRight)
-  val newLeft = FullDepthBlock(
-    first.instances,
-    first.length - (overlapSize - totalLeft)
-  )
-  val newRight =
-    val sizeAdjustment = overlapSize - totalRight
-    FullDepthBlock(
-      second.instances.map(e => e + sizeAdjustment),
-      second.length - sizeAdjustment
+  if overlapSize == 0 then (first, second) // no overlap -> nothing to do, so return original input
+  else
+    val addLeft: Int = overlap.head match
+      case _: OverlapGroup.Left => overlap.head.size
+      case _                    => 0
+    val addRight: Int = overlap.last match
+      case _: OverlapGroup.Right => overlap.last.size
+      case _                     => 0
+    val addLongest = overlap.filter(e => e.getClass.getSimpleName == "Ambig").map(f => f.size).sum
+    val (totalLeft: Int, totalRight: Int) =
+      if first.length > second.length then (addLongest + addLeft, addRight)
+      else (addLeft, addLongest + addRight)
+    val newLeft = FullDepthBlock(
+      first.instances,
+      first.length - (overlapSize - totalLeft)
     )
-  (newLeft, newRight)
+    val newRight =
+      val sizeAdjustment = overlapSize - totalRight
+      FullDepthBlock(
+        second.instances.map(e => e + sizeAdjustment),
+        second.length - sizeAdjustment
+      )
+    (newLeft, newRight)
 
 def determineOverlapTokenCategories(overlapTokens: TokenRange): Seq[OverlapGroup] =
   val overlapGroups = overlapTokens.tokens.map(OverlapGroup.apply)

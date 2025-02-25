@@ -126,25 +126,28 @@ def alignTokenArray(
         longestFullDepthNonRepeatingBlocks
       )
 
-    // 2025-02-22 RESUME HERE
-    // Change two things:
-    // 1) Currently reports overlap, but we need to adjust the blocks and not just report
-    // 2) Currently slides over original blocks, which will break if there are consecutive overlaps
-    // To fix:
-    // 1) Either recurse or iterate-stop-update-resume instead of slide-map over original sequence
-    // 2) Accumulate modified blocks instead of accumulating only reports about overlap
-    // Code for #2 already exists in overlappingTokenManagement
-    // Also: Create test for consecutive overlaps
-    val x = alignmentBlocks.toSeq
-      .sortBy(_.instances(0))
-      .sliding(2, 1)
-      .map(e => findBlockOverlap(e.head, e(1), gTa))
-      .toVector
-    println(x.filterNot(_.isEmpty))
+    // TODO: Create test for consecutive overlaps
+
+    def adjustBlockOverlap(originalBlocks: Iterable[FullDepthBlock]): Seq[FullDepthBlock] =
+      val sortedBlocks = originalBlocks.toSeq.sortBy(_.instances.head)
+      @tailrec
+      def adjustForOverlap(
+          blocksToProcess: Seq[FullDepthBlock],
+          currentFirst: FullDepthBlock,
+          acc: Seq[FullDepthBlock]
+      ): Seq[FullDepthBlock] =
+        if blocksToProcess.isEmpty
+        then acc :+ currentFirst
+        else
+          val (newFirst, newSecond) = allocateOverlappingTokens(currentFirst, blocksToProcess.head, gTa)
+          adjustForOverlap(blocksToProcess.tail, newSecond, acc :+ newFirst)
+      adjustForOverlap(sortedBlocks.tail, sortedBlocks.head, Seq[FullDepthBlock]())
+
     // ===
     // End of diagnostic
     // ===
-    val alignmentPoints = blocksToNodes(alignmentBlocks, lTa, gTa, sigla)
+    val adjustedBlocks = adjustBlockOverlap(alignmentBlocks)
+    val alignmentPoints = blocksToNodes(adjustedBlocks, lTa, gTa, sigla)
     // We need to restore the sorting that we destroyed when we created the set
     // Called repeatedly, so there is always a w0, although not always the same one
     //   (tokens know their global witness membership, so we can recover original witness membership when needed)
@@ -249,7 +252,7 @@ def recursiveBuildAlignment(
     )
   else
     result.append(post)
-    result.slice(0, 10).foreach(println)
+    // result.slice(0, 10).foreach(println)
     val rootNode = AlignmentRibbon(
       children = result
     )
