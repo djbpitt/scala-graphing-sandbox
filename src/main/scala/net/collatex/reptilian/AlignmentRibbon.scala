@@ -1,6 +1,5 @@
 package net.collatex.reptilian
 
-import net.collatex.reptilian.TokenEnum.Token
 import net.collatex.reptilian.TokenRange.*
 
 import scala.collection.mutable
