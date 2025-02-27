@@ -199,28 +199,33 @@ def createAlignmentRibbon(sigla: List[Siglum], gTa: Vector[TokenEnum]): Alignmen
   rootNode
 }
 
-def setupNodeExpansion(sigla: List[Siglum], selection: UnalignedZone, gTa: Vector[TokenEnum]) = {
+def setupNodeExpansion(
+    sigla: List[Siglum],
+    selection: UnalignedZone,
+    gTa: Vector[TokenEnum]
+) =
   val blocks = alignTokenArray(sigla, selection, gTa)
-  if blocks.isEmpty
-  then
-    val wg = selection.witnessReadings
-      .groupBy((_, offsets) =>
-        gTa
-          .slice(offsets.start, offsets.until)
-          .map(_.n)
-      ) // groups readings by shared text (n property)
-      .values // we don't care about the shared text after we've used it for grouping
-      .toSet
-    AlignmentPoint(wg)
-  else // blocks, so children are a sequence of one or more nodes of possibly different types
-    val expansion = recursiveBuildAlignment(
-      result = ListBuffer(),
-      unalignedZone = selection,
-      remainingAlignment = blocks,
-      sigla = sigla
-    )
-    expansion
-}
+  val result =
+    if blocks.isEmpty
+    then
+      val wg = selection.witnessReadings
+        .groupBy((_, offsets) =>
+          gTa
+            .slice(offsets.start, offsets.until)
+            .map(_.n)
+        ) // groups readings by shared text (n property)
+        .values // we don't care about the shared text after we've used it for grouping
+        .toSet
+      AlignmentPoint(wg)
+    else // blocks, so children are a sequence of one or more nodes of possibly different types
+      val expansion = recursiveBuildAlignment(
+        result = ListBuffer(),
+        unalignedZone = selection,
+        remainingAlignment = blocks,
+        sigla = sigla
+      )
+      expansion
+  result
 
 @tailrec
 def recursiveBuildAlignment(
