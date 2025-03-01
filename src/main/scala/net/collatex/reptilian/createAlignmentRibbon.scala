@@ -5,7 +5,7 @@ import scala.collection.{immutable, mutable}
 import scala.collection.mutable.ListBuffer
 import TokenRange.*
 import SplitTokenRangeResult.*
-import net.collatex.reptilian.TokenEnum.Token
+import net.collatex.reptilian.TokenEnum.{Token, TokenSep}
 
 // This method transform an alignment on the global level of the fullest depth blocks
 // into an alignment tree by splitting
@@ -104,7 +104,7 @@ def alignTokenArray(
     localTokenArraybyWitness.tail.zipWithIndex
       .flatMap((e, index) =>
         Vector(
-          Token(t = s" #$index ", n = s" #$index ", w = index, g = index)
+          TokenSep(t = s" #$index ", n = s" #$index ", w = index, g = index)
         ) ++ e
       )
   val (_, _, longestFullDepthNonRepeatingBlocks) =
@@ -187,7 +187,7 @@ def createGlobalUnalignedZone(sigla: List[Siglum], gTa: Vector[TokenEnum]) = {
 def createAlignmentRibbon(
     sigla: List[Siglum],
     gTa: Vector[TokenEnum]
-): AlignmentRibbon = 
+): AlignmentRibbon =
   val globalUnalignedZone: UnalignedZone = createGlobalUnalignedZone(sigla, gTa)
 
   // Execute first alignment phase recursively
@@ -202,13 +202,13 @@ def createAlignmentRibbon(
   rootNode
 
 def setupNodeExpansion(
-    sigla: List[Siglum],
-    selection: UnalignedZone, // pre
-    gTa: Vector[TokenEnum]
+    sigla: List[Siglum], // all sigla (global, not just current zone)
+    selection: UnalignedZone // pre
 ) =
-  val blocks = alignTokenArray(sigla, selection)
+  val gTa = selection.witnessReadings.values.head.ta
+  val alignmentPointsForSection = alignTokenArray(sigla, selection)
   val result =
-    if blocks.isEmpty
+    if alignmentPointsForSection.isEmpty
     then
       val wg = selection.witnessReadings
         .groupBy((_, offsets) =>
@@ -219,11 +219,11 @@ def setupNodeExpansion(
         .values // we don't care about the shared text after we've used it for grouping
         .toSet
       AlignmentPoint(wg)
-    else // blocks, so children are a sequence of one or more nodes of possibly different types
+    else // alignment points, so children are a sequence of one or more nodes of possibly different types
       val expansion = recursiveBuildAlignment(
         result = ListBuffer(),
         unalignedZone = selection,
-        remainingAlignment = blocks,
+        remainingAlignment = alignmentPointsForSection,
         sigla = sigla
       )
       expansion
@@ -236,6 +236,8 @@ def recursiveBuildAlignment(
     remainingAlignment: List[AlignmentPoint],
     sigla: List[Siglum]
 ): AlignmentRibbon =
+  println(s"(inside recursiveBuildAlignment) unaligned zone: $unalignedZone")
+  println(s"(inside recursiveBuildAlignment) blocks to align: $remainingAlignment")
   // On first run, unalignedZone contains full token ranges (globalUnalignedZone) and
   // remainingAlignment contains all original full-depth alignment points.
   // Take the first reading node from the sorted full-depth alignment points
@@ -250,7 +252,7 @@ def recursiveBuildAlignment(
   // Then either recurse on post with next block or, in no more blocks, add post
 
   // 2025-03-01
-  // val x = setupNodeExpansion(sigla, pre, gTa)
+  val x = setupNodeExpansion(sigla, pre)
 
   result.appendAll(Seq(pre, firstRemainingAlignmentPoint))
 
