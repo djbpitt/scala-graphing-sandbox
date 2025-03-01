@@ -210,7 +210,7 @@ def setupNodeExpansion(
 ) =
   val gTa = selection.witnessReadings.values.head.ta
   val alignmentPointsForSection = alignTokenArray(sigla, selection)
-  val result =
+  val result: AlignmentRibbon =
     if alignmentPointsForSection.isEmpty
     then
       val wg = selection.witnessReadings
@@ -221,7 +221,7 @@ def setupNodeExpansion(
         ) // groups readings by shared text (n property)
         .values // we don't care about the shared text after we've used it for grouping
         .toSet
-      AlignmentPoint(wg)
+      AlignmentRibbon(ListBuffer(AlignmentPoint(wg))) // one-item ribbon
     else // alignment points, so children are a sequence of one or more nodes of possibly different types
       val expansion = recursiveBuildAlignment(
         result = ListBuffer(),
@@ -252,11 +252,9 @@ def recursiveBuildAlignment(
   // Then add block to result
   // Then either recurse on post with next block or, in no more blocks, add post
 
-  // 2025-03-01
-
-  val expandedPre =
+  val expandedPre: AlignmentRibbon =
     if pre.witnessReadings.nonEmpty then setupNodeExpansion(sigla, pre)
-    else pre
+    else AlignmentRibbon(ListBuffer(pre)) // single-item ribbon in else case
 
   result.appendAll(Seq(expandedPre, firstRemainingAlignmentPoint))
 
