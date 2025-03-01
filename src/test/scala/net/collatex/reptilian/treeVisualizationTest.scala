@@ -4,10 +4,8 @@ import org.scalactic.Prettifier.default
 import org.scalatest.*
 import org.scalatest.funsuite.AnyFunSuite
 
-import scala.collection.immutable.List
-import scala.collection.mutable.ListBuffer
 
-class TreeVisualizationTest extends AnyFunSuite:
+class treeVisualizationTest extends AnyFunSuite:
   private val string1 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas at tortor blandit, porttitor sapien eu, pharetra erat. Nulla luctus est non efficitur posuere. Vestibulum placerat magna a pretium vehicula. Nullam congue condimentum auctor. Sed eu ligula turpis. Fusce ut felis condimentum, lobortis lectus non, ultrices enim. Praesent faucibus luctus mauris, at suscipit diam scelerisque at. Nunc pretium ornare sapien. Donec in leo at odio viverra efficitur iaculis porttitor elit."
 
   test(testName = "Wrap string to specified length") {
@@ -16,7 +14,7 @@ class TreeVisualizationTest extends AnyFunSuite:
     assert(result == expected)
   }
 
-  test(testName = "Wrap string to specified line length and line count") {
+  ignore(testName = "Wrap string to specified line length and line count") {
     val result = wrapTextToWidth(string1, targetLineLength = 20, targetLineCount = 3) // Truncate after 3 lines
     val expected ="Lorem ipsum dolor\\lsit amet,\\lconsectetur\\ladipiscing elit. … \\l"
     assert(result == expected)

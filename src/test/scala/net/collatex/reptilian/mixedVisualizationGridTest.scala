@@ -1,5 +1,6 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.TokenEnum.Token
 import org.scalatest.funsuite.AnyFunSuite
 
 class mixedVisualizationGridTest extends AnyFunSuite:

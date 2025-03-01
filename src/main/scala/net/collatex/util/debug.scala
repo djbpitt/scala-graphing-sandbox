@@ -1,6 +1,6 @@
 package net.collatex.util
 
-import net.collatex.reptilian.Token
+import net.collatex.reptilian.TokenEnum.*
 
 
 /** *Dump suffix array and lcp array with initial tokens */

@@ -28,4 +28,5 @@ libraryDependencies += "io.github.pityka" %% "pairwisealignment" % "2.2.7"
 libraryDependencies += ("nl.gn0s1s" %% "osita" % "0.0.2").cross(CrossVersion.for3Use2_13)
 libraryDependencies += "de.sciss" %% "linkernighantsp" % "0.1.3"
 libraryDependencies += "org.typelevel" %% "cats-core" % "2.12.0"
+libraryDependencies += "org.scala-lang.modules" %% "scala-collection-contrib" % "0.3.0"
 

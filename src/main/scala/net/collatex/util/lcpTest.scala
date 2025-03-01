@@ -32,7 +32,7 @@ import net.collatex.reptilian.{makeTokenizer, tokenize, vectorize, calculateLcpA
   val tokenizer = makeTokenizer(token_pattern)
 
   val token_array = tokenize(tokenizer)(witnesses01)
-  //  println(tokenArray)
+  //  println(lTa)
 
   val (vectorization, voc_size) = vectorize(token_array)
   val suffix_array = calculate_suffix_array(vectorization, voc_size)
@@ -49,15 +49,15 @@ import net.collatex.reptilian.{makeTokenizer, tokenize, vectorize, calculateLcpA
     .zipWithIndex
     .foreach((string, index) => println(s"$string : $index : ${lcp_array1(index)}"))
 
-//  val blocks = createAlignedBlocks(tokenArray, 6)
+//  val blocks = createAlignedBlocks(lTa, 6)
 //  blocks.foreach(println)
 //  blocks
-//    .map(_.show(tokenArray))
+//    .map(_.show(lTa))
 //    .foreach(println)
 
 // Represent blocks as token string
 //  val blocks_slice_tokens = blocks
-//    .map(e => tokenArray.slice(suffixArray(e.start), suffixArray(e.start) + e.length))
+//    .map(e => lTa.slice(suffixArray(e.start), suffixArray(e.start) + e.length))
 //  val block_count = blocks
 //    .map(e => e.until - e.start + 1)
 //  println("Start dump blocks within the slice")

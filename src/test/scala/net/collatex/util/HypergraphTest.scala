@@ -30,7 +30,7 @@ class HypergraphTest extends AnyFunSuite:
     val expectedVertices = Set(1, 2, 3, 4)
     val expectedHyperedges = Set("edge1", "edge2")
     assert(result.vertices == expectedVertices)
-    assert(result.hyperedges == expectedHyperedges)
+    assert(result.hyperedgeLabels == expectedHyperedges)
 
   test("overlay with a duplicate hyperedge"):
     val hg1 = Hypergraph.hyperedge("edge1", 1, 2)
@@ -80,7 +80,7 @@ class HypergraphTest extends AnyFunSuite:
     assert(result.members("edge1") == Set(1))
     assert(result.members("edge2") == Set.empty)
     assert(result.edges(1) == Set("edge1"))
-    assert(result.hyperedges == Set("edge1", "edge2"))
+    assert(result.hyperedgeLabels == Set("edge1", "edge2"))
 
   test("connect; basic connect plus lonely hyperedges; the other way around"):
     val hg1 = Hypergraph.vertices[String, Int](1) + Hypergraph.hyperedge("edge2")
@@ -91,7 +91,7 @@ class HypergraphTest extends AnyFunSuite:
     assert(result.members("edge1") == Set(1))
     assert(result.members("edge2") == Set.empty)
     assert(result.edges(1) == Set("edge1"))
-    assert(result.hyperedges == Set("edge1", "edge2"))
+    assert(result.hyperedgeLabels == Set("edge1", "edge2"))
 
   // Checks if there is a duplicate edge label in both graphs
   test("connect; duplicated hyperedge; different vertices"):
@@ -100,7 +100,7 @@ class HypergraphTest extends AnyFunSuite:
 
     val result = hg1 * hg2
 
-    assert(result.hyperedges == Set("edge1"))
+    assert(result.hyperedgeLabels == Set("edge1"))
     assert(result.vertices == Set(1, 2))
     assert(result.members("edge1") == Set(1, 2))
     assert(result.edges(1) == Set("edge1"))
@@ -112,8 +112,25 @@ class HypergraphTest extends AnyFunSuite:
 
     val result = hg1 * hg2
 
-    assert(result.hyperedges == Set("edge1", "edge2"))
+    assert(result.hyperedgeLabels == Set("edge1", "edge2"))
     assert(result.vertices == Set(1))
     assert(result.members("edge1") == Set(1))
     assert(result.members("edge2") == Set(1))
     assert(result.edges(1) == Set("edge1", "edge2"))
+
+  test("toIncidencePairs"):
+    val hg1 = Hypergraph.hyperedge("M1", "P4", "P5") +
+      Hypergraph.hyperedge("M2", "P5", "P6") +
+      Hypergraph.hyperedge("M4", "P1", "P2")
+    val result = hg1.toIncidencePairs
+    assert(result == Set(("M1","P4"), ("M4", "P2"), ("M1","P5"), ("M2","P5"), ("M2","P6"), ("M4","P1")))
+
+  test("subtraction; difference"):
+    val hg1 = Hypergraph.hyperedge("M1", "P4", "P5") +
+      Hypergraph.hyperedge("M2", "P5", "P6") +
+      Hypergraph.hyperedge("M4", "P1", "P2")
+    val hg2 = Hypergraph.hyperedge("M1", "P4", "P5") +
+      Hypergraph.hyperedge("M3", "P2", "P3", "P4") +
+      Hypergraph.hyperedge("M4", "P1", "P2", "P3")
+    val hg3 = hg1 - hg2
+    assert(hg3 == Hypergraph.hyperedge("M2", "P5", "P6"))

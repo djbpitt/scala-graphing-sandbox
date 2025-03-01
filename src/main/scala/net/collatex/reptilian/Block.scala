@@ -1,5 +1,7 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.TokenEnum.Token
+
 /** Block is an lcp interval
  *
  * @param start  start position in suffix array
@@ -23,7 +25,7 @@ case class Block(start: Int, end: Int, length: Int)
  *                  This plus token array is enough for all subsequent processing; no further need for suffix array, etc.
  */
 case class FullDepthBlock(instances: Vector[Int], length: Int):
-  def show(using gTa: Vector[Token]): String =
+  def show(gTa: Vector[Token]): String =
     gTa
       .slice(this.instances(0), this.instances(0) + this.length)
       .map(_.n)

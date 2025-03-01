@@ -2,7 +2,7 @@
 
 * Configuration is project-specific (cf. `make` file)
 * Format as XML; CollateX should validate (using data binding and custom case classes) after reading
-* Input is either single JSON file (cf. current CollateX) or filenames (verify)
+* Input is either single JSON file (cf. acc CollateX) or filenames (verify)
 * Filename information:
   * Ordered list of filenames (paths?)
   * Map from filename to abbreviated siglum

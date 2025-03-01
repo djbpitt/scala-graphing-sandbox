@@ -1,10 +1,12 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.TokenEnum.Token
+
 import scala.collection.{IndexedSeqView, mutable}
 import scala.collection.immutable.VectorMap
 import scala.collection.mutable.ArrayBuffer
 
-def vectorize(tokenArray: Vector[Token]): (Array[Int], Int) =
+def vectorize(tokenArray: Vector[TokenEnum]): (Array[Int], Int) =
   val voc = tokenArray
     .map(_.n)
     .distinct
@@ -75,7 +77,7 @@ def calculateLcpArrayKasai(txt: Vector[String], suffixArray: Array[Int]): Vector
   lcp.toVector
 }
 
-def findWitnessesOfBlock(suffixArray: Array[Int], tokenArray: Vector[Token])(block: Block) =
+def findWitnessesOfBlock(suffixArray: Array[Int], tokenArray: Vector[TokenEnum])(block: Block) =
   val witnesses: Array[Int] = suffixArray
     .slice(block.start, block.end + 1)
     .map(tokenArray(_).w)
@@ -141,7 +143,7 @@ def removeOverlappingBlocks(fullDepthBlocks: List[FullDepthBlock]): Iterable[Ful
 
 // When working with full-depth blocks it uses witnessCount; when processing
 // SingletonTree and not using full-depth, it requires witnessCount but doesn’t use it
-def createAlignedBlocks(tokenArray: Vector[Token], witnessCount: Int, keepOnlyFullDepth: Boolean = true) =
+def createAlignedBlocks(tokenArray: Vector[TokenEnum], witnessCount: Int, keepOnlyFullDepth: Boolean = true) =
   val (vectorization, _) = vectorize(tokenArray)
   val suffixArray = createSuffixArray(vectorization)
   val lcpArray = calculateLcpArrayKasai(tokenArray.map(_.n), suffixArray)
