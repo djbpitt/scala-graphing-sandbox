@@ -112,8 +112,11 @@ def alignTokenArray(
   if longestFullDepthNonRepeatingBlocks.isEmpty
   then List()
   else
+    // blocks come back with lTa; map to gTa
     // create navigation graph and filter out transposed nodes
-    val graph = createTraversalGraph(longestFullDepthNonRepeatingBlocks)
+    val blocksGTa =
+      longestFullDepthNonRepeatingBlocks.map(e => FullDepthBlock(e.instances.map(f => lTa(f).g), e.length))
+    val graph = createTraversalGraph(blocksGTa)
     val alignment: List[Int] = findOptimalAlignment(
       graph
     ) // Int identifiers of full-depth blocks
@@ -123,7 +126,7 @@ def alignTokenArray(
     val alignmentBlocks: Iterable[FullDepthBlock] =
       alignmentIntsToBlocks(
         alignmentBlocksSet,
-        longestFullDepthNonRepeatingBlocks
+        blocksGTa
       )
 
     // TODO: Create test for consecutive overlaps
