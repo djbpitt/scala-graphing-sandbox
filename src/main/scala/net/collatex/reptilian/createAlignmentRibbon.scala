@@ -253,10 +253,12 @@ def recursiveBuildAlignment(
   // Then either recurse on post with next block or, in no more blocks, add post
 
   // 2025-03-01
-  if pre.witnessReadings.nonEmpty then
-    val x = setupNodeExpansion(sigla, pre)
 
-  result.appendAll(Seq(pre, firstRemainingAlignmentPoint))
+  val expandedPre =
+    if pre.witnessReadings.nonEmpty then setupNodeExpansion(sigla, pre)
+    else pre
+
+  result.appendAll(Seq(expandedPre, firstRemainingAlignmentPoint))
 
   if remainingAlignment.tail.nonEmpty then
     recursiveBuildAlignment(
