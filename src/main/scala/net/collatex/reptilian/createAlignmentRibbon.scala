@@ -239,8 +239,6 @@ def recursiveBuildAlignment(
     remainingAlignment: List[AlignmentPoint],
     sigla: List[Siglum]
 ): AlignmentRibbon =
-  println(s"(inside recursiveBuildAlignment) unaligned zone: $unalignedZone")
-  println(s"(inside recursiveBuildAlignment) blocks to align: $remainingAlignment")
   // On first run, unalignedZone contains full token ranges (globalUnalignedZone) and
   // remainingAlignment contains all original full-depth alignment points.
   // Take the first reading node from the sorted full-depth alignment points
@@ -255,7 +253,8 @@ def recursiveBuildAlignment(
   // Then either recurse on post with next block or, in no more blocks, add post
 
   // 2025-03-01
-  val x = setupNodeExpansion(sigla, pre)
+  if pre.witnessReadings.nonEmpty then
+    val x = setupNodeExpansion(sigla, pre)
 
   result.appendAll(Seq(pre, firstRemainingAlignmentPoint))
 
