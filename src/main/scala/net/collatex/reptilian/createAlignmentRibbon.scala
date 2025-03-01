@@ -81,9 +81,9 @@ def splitUnalignedZone(
 
 def alignTokenArray(
     sigla: List[Siglum],
-    selection: UnalignedZone,
-    gTa: Vector[TokenEnum]
+    selection: UnalignedZone
 ) =
+  val gTa: Vector[TokenEnum] = selection.witnessReadings.values.head.ta
   // find the full depth blocks for the alignment
   // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
   // ??: Modify createAlignedBlocks() not to return unused values
@@ -184,12 +184,15 @@ def createGlobalUnalignedZone(sigla: List[Siglum], gTa: Vector[TokenEnum]) = {
   globalUnalignedZone
 }
 
-def createAlignmentRibbon(sigla: List[Siglum], gTa: Vector[TokenEnum]): AlignmentRibbon = {
+def createAlignmentRibbon(
+    sigla: List[Siglum],
+    gTa: Vector[TokenEnum]
+): AlignmentRibbon = 
   val globalUnalignedZone: UnalignedZone = createGlobalUnalignedZone(sigla, gTa)
 
   // Execute first alignment phase recursively
   val fulldepthAlignmentPoints: List[AlignmentPoint] = // not yet handling intervening unaligned zones
-    alignTokenArray(sigla, globalUnalignedZone, gTa)
+    alignTokenArray(sigla, globalUnalignedZone)
   val rootNode = recursiveBuildAlignment(
     ListBuffer(),
     globalUnalignedZone,
@@ -197,14 +200,13 @@ def createAlignmentRibbon(sigla: List[Siglum], gTa: Vector[TokenEnum]): Alignmen
     sigla
   )
   rootNode
-}
 
 def setupNodeExpansion(
     sigla: List[Siglum],
-    selection: UnalignedZone,
+    selection: UnalignedZone, // pre
     gTa: Vector[TokenEnum]
 ) =
-  val blocks = alignTokenArray(sigla, selection, gTa)
+  val blocks = alignTokenArray(sigla, selection)
   val result =
     if blocks.isEmpty
     then
@@ -238,7 +240,7 @@ def recursiveBuildAlignment(
   // remainingAlignment contains all original full-depth alignment points.
   // Take the first reading node from the sorted full-depth alignment points
   //   (= converted blocks from alignment)
-  val firstRemainingAlignmentPoint = remainingAlignment.head
+  val firstRemainingAlignmentPoint = remainingAlignment.head // current block
   val (pre, post): (UnalignedZone, UnalignedZone) = splitUnalignedZone(
     unalignedZone,
     firstRemainingAlignmentPoint
@@ -246,6 +248,9 @@ def recursiveBuildAlignment(
   // Expand pre recursively and add to result
   // Then add block to result
   // Then either recurse on post with next block or, in no more blocks, add post
+
+  // 2025-03-01
+  // val x = setupNodeExpansion(sigla, pre, gTa)
 
   result.appendAll(Seq(pre, firstRemainingAlignmentPoint))
 
