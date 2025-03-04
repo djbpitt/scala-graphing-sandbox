@@ -69,7 +69,7 @@ def splitUnalignedZone(
 ): (UnalignedZone, UnalignedZone) =
   // We filter out all the witnesses that have an empty range after the split
   val preAndPost = current.witnessReadings
-    .map((k, v) => k -> v.splitTokenRange(alignment_point_for_split.combineWitnessGroups(k)))
+    .map((k, v) => k -> v.splitTokenRange(alignment_point_for_split.witnessReadings(k)))
   val pre = preAndPost
     .map((k, v) => k -> v._1)
     .filter((k, v) => v.isInstanceOf[LegalTokenRange])
@@ -155,10 +155,10 @@ def alignTokenArray(
     // We need to restore the sorting that we destroyed when we created the set
     // Called repeatedly, so there is always a w0, although not always the same one
     //   (tokens know their global witness membership, so we can recover original witness membership when needed)
-    val siglumForSorting = alignmentPoints.head.combineWitnessGroups.keys.head
+    val siglumForSorting: Siglum = alignmentPoints.head.witnessReadings.keys.head
     val sortedReadingNodes = alignmentPoints // Sort reading nodes in token order
       .toVector
-      .sortBy(_.combineWitnessGroups(siglumForSorting).start)
+      .sortBy(_.witnessReadings(siglumForSorting).start)
       .toList
     sortedReadingNodes
 

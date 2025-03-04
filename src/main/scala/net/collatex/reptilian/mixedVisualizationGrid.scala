@@ -80,7 +80,7 @@ def computeTokenTextLength(in: String): Double =
   */
 def retrieveWitnessReadings(n: AlignmentPoint): Map[Siglum, Vector[TokenEnum]] =
   val witnessReadings =
-    n.combineWitnessGroups.map((k, v) => k -> v.tokens)
+    n.witnessReadings.map((k, v) => k -> v.tokens)
   witnessReadings
 
 val memoizedComputeTokenTextLength = memoizeFnc(computeTokenTextLength)
@@ -109,7 +109,7 @@ def computeReadingTextLength(in: Vector[TokenEnum]): Double =
   *   Vector of sigla of missing witnesses as strings
   */
 def findMissingWitnesses(n: AlignmentPoint, sigla: Set[Siglum]): Vector[Siglum] =
-  val missingWitnesses = sigla.diff(n.combineWitnessGroups.keySet).toVector.sorted
+  val missingWitnesses = sigla.diff(n.witnessReadings.keySet).toVector.sorted
   missingWitnesses
 
 def computeAlignmentNodeRenderingWidth(n: AlignmentPoint): Double =
@@ -125,7 +125,11 @@ def createHorizNodeData(
     sigla: Set[Siglum]
 ): Vector[HorizNodeData] =
   @tailrec
-  def nextNode(nodes: Vector[NumberedNode], pos: Int, acc: Vector[HorizNodeData]): Vector[HorizNodeData] =
+  def nextNode(
+      nodes: Vector[NumberedNode],
+      pos: Int,
+      acc: Vector[HorizNodeData]
+  ): Vector[HorizNodeData] =
     if nodes.isEmpty then acc
     else
       val nodeType = nodes.head.node.getClass.getSimpleName
@@ -139,29 +143,29 @@ def createHorizNodeData(
         // println(nodes.head.node.witnessGroups)
         // println(nodes.head.node.witnessGroups.head.map((k, v) => v.ta.size))
         HorizNodeData(
-        treeNumber = nodes.head.nodeNo,
-        seqNumber = pos,
-        nodeType = nodeType,
-        alignmentWidth = alignmentWidth,
-        xOffset = xOffset,
-        /* Create one HorizNodeGroup for each group, where HorizNodeGroupMember is a
-         * map from siglum to reading as string. Sort both groups and within groups. */
-        groups = nodes.head.node.witnessGroups
-          .map(f =>
-            HorizNodeGroup(
-              f.map((k, v) =>
-                HorizNodeGroupMember(
-                  k,
-                  v.tString
-                )
-              ).toVector
-                .sorted
+          treeNumber = nodes.head.nodeNo,
+          seqNumber = pos,
+          nodeType = nodeType,
+          alignmentWidth = alignmentWidth,
+          xOffset = xOffset,
+          /* Create one HorizNodeGroup for each group, where HorizNodeGroupMember is a
+           * map from siglum to reading as string. Sort both groups and within groups. */
+          groups = nodes.head.node.witnessGroups
+            .map(f =>
+              HorizNodeGroup(
+                f.map((k, v) =>
+                  HorizNodeGroupMember(
+                    k,
+                    v.tString
+                  )
+                ).toVector
+                  .sorted
+              )
             )
-          )
-          .toVector
-          .sorted,
-        missing = missing
-      )
+            .toVector
+            .sorted,
+          missing = missing
+        )
       nextNode(nodes.tail, pos + 1, acc :+ newNode)
   nextNode(nodeSequence, 1, Vector.empty[HorizNodeData])
 
@@ -213,7 +217,11 @@ def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   * @return
   *   <html> element in HTML namespace, with embedded SVG
   */
-def createHorizontalRibbons(root: AlignmentRibbon, sigla: Set[Siglum], gTa: Vector[TokenEnum]): scala.xml.Node =
+def createHorizontalRibbons(
+    root: AlignmentRibbon,
+    sigla: Set[Siglum],
+    gTa: Vector[TokenEnum]
+): scala.xml.Node =
   /** Constants */
   val ribbonWidth = 18
   // val missingTop = allSigla.size * ribbonWidth * 2 + ribbonWidth / 2
