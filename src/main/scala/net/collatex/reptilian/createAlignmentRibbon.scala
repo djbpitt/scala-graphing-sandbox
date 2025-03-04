@@ -221,7 +221,7 @@ def setupNodeExpansion(
         ) // groups readings by shared text (n property)
         .values // we don't care about the shared text after we've used it for grouping
         .toSet
-      AlignmentRibbon(ListBuffer(AlignmentPoint(wg))) // one-item ribbon
+      AlignmentRibbon(ListBuffer(AlignmentPoint(selection.witnessReadings, wg))) // one-item ribbon
     else // alignment points, so children are a sequence of one or more nodes of possibly different types
       val expansion = recursiveBuildAlignment(
         result = ListBuffer(),

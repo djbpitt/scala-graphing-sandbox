@@ -13,7 +13,7 @@ def createSecondAlignmentPhaseVisualization(hg: Hypergraph[EdgeLabel, TokenRange
   val sortedRanks = hyperedgesByRank.keySet.toSeq.sorted
   val aps: ListBuffer[AlignmentUnit] = sortedRanks
     .map(e =>
-      val stuff = hyperedgesByRank(e) // set of hyperedges, one per witness group on alignment point
+      val wg = hyperedgesByRank(e) // set of hyperedges, one per witness group on alignment point
         .map(f =>
           f.vertices
             .map(tr =>
@@ -22,7 +22,8 @@ def createSecondAlignmentPhaseVisualization(hg: Hypergraph[EdgeLabel, TokenRange
             )
             .toMap
         )
-      AlignmentPoint(stuff)
+      val wr = wg.reduce(_ ++ _)
+      AlignmentPoint(wr, wg)
     )
     .to(ListBuffer)
   val result = AlignmentRibbon(aps)
