@@ -81,6 +81,18 @@ def readJsonData: List[List[Token]] =
   val darwin: List[List[Token]] = darwinJSON.map(_.map(e => Token(e.t, e.n, e.w, e.g)))
   darwin
 
+// Used to develop phase 2 transposition detection
+// Triages unaligned zone JSON data according to presence/absence of transposition
+def readSpecifiedJsonData(filename: String): List[List[Token]] =
+  val datafilePath =
+    os.pwd / "src" / "main" / "outputs" / "unalignedZones"/ filename
+  val fileContents = os.read(datafilePath)
+  // To avoid reading directly into enum subtype, read into TokenJSON and then remap
+  val darwinJSON = read[List[List[TokenJSON]]](fileContents)
+  val darwin: List[List[Token]] = darwinJSON.map(_.map(e => Token(e.t, e.n, e.w, e.g)))
+  darwin
+
+
 def createGlobalTokenArray(darwinReadings: List[List[Token]]) =
   // Calculate the g position for each of the separators.
   // Return type is complex type of List of Tuple(global position, List of witness tokens)
@@ -299,13 +311,14 @@ def mergeClustersIntoHG(
 
 @main def secondAlignmentPhase(): Unit =
   val darwinReadings: List[List[Token]] = readJsonData
-  val gTa: Vector[TokenEnum] = createGlobalTokenArray(darwinReadings)
-  val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
-  val hg: Hypergraph[EdgeLabel, TokenRange] = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-  // println(s"hg: $hg")
-  createDependencyGraphEdgeLabels(hg)
-  // Transform hypergraph to alignment ribbon and visualize
-  createSecondAlignmentPhaseVisualization(hg)
+    val gTa: Vector[TokenEnum] = createGlobalTokenArray(darwinReadings)
+    val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
+    val hg: Hypergraph[EdgeLabel, TokenRange] = 
+      mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
+    // println(s"hg: $hg")
+    createDependencyGraphEdgeLabels(hg)
+    // Transform hypergraph to alignment ribbon and visualize
+    createSecondAlignmentPhaseVisualization(hg)
 
 type HyperedgeMatch = SetOf2[Hyperedge[EdgeLabel, TokenRange]]
 
@@ -314,3 +327,20 @@ object HyperedgeMatch:
     new HyperedgeMatch(set.head, set.last)
   def apply(he1: Hyperedge[EdgeLabel, TokenRange], he2: Hyperedge[EdgeLabel, TokenRange]) =
     new HyperedgeMatch(he1, he2)
+
+@main def secondAlignmentPhaseTriage(): Unit =
+  val unalignedZonesDir = os.pwd / "main" / "outputs" / "unalignedZones"
+  val JSONFiles = os.list(unalignedZonesDir).filter(e => os.isFile(e))
+    // val darwinReadings: List[List[Token]] = readJsonData
+    // 2025-03-07 RESUME HERE
+    // 
+  for uzFilename <- JSONFiles do
+    val darwinReadings: List[List[Token]] = readSpecifiedJsonData(uzFilename.toString)
+    val gTa: Vector[TokenEnum] = createGlobalTokenArray(darwinReadings)
+    val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
+    val hg: Hypergraph[EdgeLabel, TokenRange] =
+      mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
+    // println(s"hg: $hg")
+    createDependencyGraphEdgeLabels(hg)
+    // Transform hypergraph to alignment ribbon and visualize
+    createSecondAlignmentPhaseVisualization(hg)
