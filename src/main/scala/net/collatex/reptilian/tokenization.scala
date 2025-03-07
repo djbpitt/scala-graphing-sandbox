@@ -1,5 +1,6 @@
 package net.collatex.reptilian
 
+import upickle.core.Types
 import upickle.default.*
 
 import scala.collection.mutable.ArrayBuffer
