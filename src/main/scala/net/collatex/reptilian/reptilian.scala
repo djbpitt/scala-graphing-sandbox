@@ -21,27 +21,31 @@ def readData(pathToData: Path): List[(String, String)] =
     .toList
     .map(e => (e.last, os.read(e)))
 
-@main def main(): Unit =
+def createGTa = {
   /** Select data */
   val pathToDarwin = os.pwd / "src" / "main" / "data" / "darwin"
 
   /** Prepare tokenizer
-    *
-    * Sequences of non-word characters (except spaces) are entire tokens Unlike in CollateX Python, where punctuation
-    * characters are their own tokens
-    */
+   *
+   * Sequences of non-word characters (except spaces) are entire tokens Unlike in CollateX Python, where punctuation
+   * characters are their own tokens
+   */
   val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
   val tokenizer = makeTokenizer(
     tokenPattern
   ) // Tokenizer function with user-supplied regex
 
   /** Read data into token array */
-  val witnessInputInfo: List[(String, String)] = readData(
+  val witnessInputInfo = readData(
     pathToDarwin
   ) // One string per witness
-  val witnessStrings: List[String] = witnessInputInfo.map(_._2)
+  val witnessStrings = witnessInputInfo.map(_._2)
   val sigla: List[Siglum] = witnessInputInfo.map(_._1).map(Siglum(_))
   val gTa: Vector[TokenEnum] = tokenize(tokenizer)(witnessStrings) // global token array
+  (sigla, gTa)
+}
+@main def main(): Unit =
+  val (sigla: List[Siglum], gTa: Vector[TokenEnum]) = createGTa
 
   /** Create alignment ribbon
     */
@@ -50,7 +54,7 @@ def readData(pathToData: Path): List[(String, String)] =
   // To write unaligned zone data to separate JSON files during
   // development run writePhaseTwoJSONData(root) here
 
-  val doctypeHtml: scala.xml.dtd.DocType = DocType("html")
+  val doctypeHtml: DocType = DocType("html")
   val horizontalRibbons = createHorizontalRibbons(root, sigla.toSet, gTa)
   val horizontalRibbonsPath =
     os.pwd / "src" / "main" / "outputs" / "horizontal-ribbons-full.xhtml" // "horizontal-ribbons.xhtml"
