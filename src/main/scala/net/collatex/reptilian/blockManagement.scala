@@ -1,7 +1,5 @@
 package net.collatex.reptilian
 
-import net.collatex.reptilian.TokenEnum.Token
-
 import scala.collection.{IndexedSeqView, mutable}
 import scala.collection.immutable.VectorMap
 import scala.collection.mutable.ArrayBuffer
@@ -15,12 +13,14 @@ def vectorize(tokenArray: Vector[TokenEnum]): (Array[Int], Int) =
   (tokenArray.map(_.n).map(termsToInt).toArray, voc.length)
 
 /** Create suffix array
- *
- * @param vectorization : Token array as Array[Int], corresponding to normalized words (in alphabetical order)
- * @return : Suffix array
- *
- *         Defines ordering for IndexedSeqView[Int] to sort vectorized suffixes
- */
+  *
+  * @param vectorization
+  *   : Token array as Array[Int], corresponding to normalized words (in alphabetical order)
+  * @return
+  *   : Suffix array
+  *
+  * Defines ordering for IndexedSeqView[Int] to sort vectorized suffixes
+  */
 def createSuffixArray(vectorization: Array[Int]) =
   val suffixes = vectorization.indices
     .map(e => vectorization.view.slice(e, vectorization.length))
@@ -30,40 +30,39 @@ def createSuffixArray(vectorization: Array[Int]) =
       x.zip(y)
         .map(_ compare _)
         .find(e => e != 0) // return -1 or 1 for first non-0 value, or …
-        .getOrElse(x.length compare y.length) // return -1 or 1 if x < y (vs y < x); cannot be 0 because suffixes are unique
+        .getOrElse(
+          x.length compare y.length
+        ) // return -1 or 1 if x < y (vs y < x); cannot be 0 because suffixes are unique
   }
-  val suffixArray = suffixes
-    .zipWithIndex
+  val suffixArray = suffixes.zipWithIndex
     .sortBy(_._1)(IntArrayOrdering)
     .map(_._2)
   suffixArray.toArray
 
-
 /** Create LCP array from suffix array and token array
- *
- * Follows Kasai algorithm
- *
- * @param txt          Array of text tokens
- * @param suffixArray Array of Ints
- *
- *                     Array and not vector because third-party library requires array
- *                     https://www.geeksforgeeks.org/kasais-algorithm-for-construction-of-lcp-array-from-suffix-array/
- */
-
+  *
+  * Follows Kasai algorithm
+  *
+  * @param txt
+  *   Array of text tokens
+  * @param suffixArray
+  *   Array of Ints
+  *
+  * Array and not vector because third-party library requires array
+  * https://www.geeksforgeeks.org/kasais-algorithm-for-construction-of-lcp-array-from-suffix-array/
+  */
 
 def calculateLcpArrayKasai(txt: Vector[String], suffixArray: Array[Int]): Vector[Int] = {
   val n = suffixArray.length
   val lcp: Array[Int] = new Array[Int](n)
   val invSuff = new Array[Int](n)
-  for i <- suffixArray.indices do
-    invSuff(suffixArray(i)) = i
+  for i <- suffixArray.indices do invSuff(suffixArray(i)) = i
   var k: Int = 0
   var i: Int = 0
   while i < n do
     if (invSuff(i) == n - 1) {
       k = 0
-    }
-    else {
+    } else {
       val j: Int = suffixArray(invSuff(i) + 1)
       while (i + k < n && j + k < n && txt(i + k) == txt(j + k)) {
         k += 1
@@ -85,10 +84,12 @@ def findWitnessesOfBlock(suffixArray: Array[Int], tokenArray: Vector[TokenEnum])
   witnesses.toVector
 
 /** Calculate blocks
- *
- * @param lcpArray Vector[Int]
- * @return List of Block objects
- */
+  *
+  * @param lcpArray
+  *   Vector[Int]
+  * @return
+  *   List of Block objects
+  */
 def createBlocks(lcpArray: Vector[Int]): List[Block] =
   val closedIntervals: ArrayBuffer[Block] = ArrayBuffer()
   var previousLcpValue = 0
@@ -130,20 +131,25 @@ def createBlocks(lcpArray: Vector[Int]): List[Block] =
   closedIntervals.toList
 
 /** Remove shorter embedded blocks
- *
- * @param fullDepthBlocks as List[FullDepthBlock]
- * @return Iterable of longest patterns
- */
+  *
+  * @param fullDepthBlocks
+  *   as List[FullDepthBlock]
+  * @return
+  *   Iterable of longest patterns
+  */
 def removeOverlappingBlocks(fullDepthBlocks: List[FullDepthBlock]): Iterable[FullDepthBlock] =
   fullDepthBlocks
     .groupBy(e => e.instances(0) + e.length) // until position of instance in witness 0
     .values
     .map(fdBlocks => fdBlocks.maxBy(_.length))
 
-
 // When working with full-depth blocks it uses witnessCount; when processing
 // SingletonTree and not using full-depth, it requires witnessCount but doesn’t use it
-def createAlignedBlocks(tokenArray: Vector[TokenEnum], witnessCount: Int, keepOnlyFullDepth: Boolean = true) =
+def createAlignedBlocks(
+    tokenArray: Vector[TokenEnum],
+    witnessCount: Int,
+    keepOnlyFullDepth: Boolean = true
+) =
   val (vectorization, _) = vectorize(tokenArray)
   val suffixArray = createSuffixArray(vectorization)
   val lcpArray = calculateLcpArrayKasai(tokenArray.map(_.n), suffixArray)
