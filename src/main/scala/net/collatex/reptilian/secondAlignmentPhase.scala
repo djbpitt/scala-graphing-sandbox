@@ -5,6 +5,7 @@ import net.collatex.reptilian.TokenRange.*
 import net.collatex.reptilian.createAlignedBlocks
 import net.collatex.util.Hypergraph.Hyperedge
 import net.collatex.util.{Hypergraph, SetOf2}
+import os.Path
 import upickle.default.*
 
 import scala.annotation.tailrec
@@ -83,10 +84,8 @@ def readJsonData: List[List[Token]] =
 
 // Used to develop phase 2 transposition detection
 // Triages unaligned zone JSON data according to presence/absence of transposition
-def readSpecifiedJsonData(filename: String): List[List[Token]] =
-  val datafilePath =
-    os.pwd / "src" / "main" / "outputs" / "unalignedZones"/ filename
-  val fileContents = os.read(datafilePath)
+def readSpecifiedJsonData(filename: Path): List[List[Token]] =
+  val fileContents = os.read(filename)
   // To avoid reading directly into enum subtype, read into TokenJSON and then remap
   val darwinJSON = read[List[List[TokenJSON]]](fileContents)
   val darwin: List[List[Token]] = darwinJSON.map(_.map(e => Token(e.t, e.n, e.w, e.g)))
@@ -329,18 +328,17 @@ object HyperedgeMatch:
     new HyperedgeMatch(he1, he2)
 
 @main def secondAlignmentPhaseTriage(): Unit =
-  val unalignedZonesDir = os.pwd / "main" / "outputs" / "unalignedZones"
+  val unalignedZonesDir = os.pwd / "src" / "main" / "outputs" / "unalignedZones"
   val JSONFiles = os.list(unalignedZonesDir).filter(e => os.isFile(e))
     // val darwinReadings: List[List[Token]] = readJsonData
     // 2025-03-07 RESUME HERE
     // 
   for uzFilename <- JSONFiles do
-    val darwinReadings: List[List[Token]] = readSpecifiedJsonData(uzFilename.toString)
+    val darwinReadings: List[List[Token]] = readSpecifiedJsonData(uzFilename)
     val gTa: Vector[TokenEnum] = createGlobalTokenArray(darwinReadings)
     val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
     val hg: Hypergraph[EdgeLabel, TokenRange] =
       mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-    // println(s"hg: $hg")
     createDependencyGraphEdgeLabels(hg)
     // Transform hypergraph to alignment ribbon and visualize
     createSecondAlignmentPhaseVisualization(hg)
