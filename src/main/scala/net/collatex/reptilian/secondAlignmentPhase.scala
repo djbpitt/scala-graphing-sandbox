@@ -62,7 +62,7 @@ def mergeHgHg(
   //  This replaces those separate hyperedges in full inventory of hyperedges
   if transpositionBool
   then
-    // println("Found a transposition")
+    println("Found a transposition")
     bothHgs
   else
     val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
@@ -328,17 +328,20 @@ object HyperedgeMatch:
     new HyperedgeMatch(he1, he2)
 
 @main def secondAlignmentPhaseTriage(): Unit =
+  // Transpositions only in 3287
+  val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
   val unalignedZonesDir = os.pwd / "src" / "main" / "outputs" / "unalignedZones"
   val JSONFiles = os.list(unalignedZonesDir).filter(e => os.isFile(e))
     // val darwinReadings: List[List[Token]] = readJsonData
     // 2025-03-07 RESUME HERE
     // 
   for uzFilename <- JSONFiles do
+    println(uzFilename)
     val darwinReadings: List[List[Token]] = readSpecifiedJsonData(uzFilename)
-    val gTa: Vector[TokenEnum] = createGlobalTokenArray(darwinReadings)
     val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
     val hg: Hypergraph[EdgeLabel, TokenRange] =
       mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-    createDependencyGraphEdgeLabels(hg)
+
+    // createDependencyGraphEdgeLabels(hg)
     // Transform hypergraph to alignment ribbon and visualize
-    createSecondAlignmentPhaseVisualization(hg)
+    // createSecondAlignmentPhaseVisualization(hg)
