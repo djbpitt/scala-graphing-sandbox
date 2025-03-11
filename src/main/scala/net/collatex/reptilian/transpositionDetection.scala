@@ -101,9 +101,9 @@ def createDependencyGraph(hg: Hypergraph[EdgeLabel, TokenRange], debug: Boolean,
     .flatMap(_.map(_.edge).distinct)
     .map(e => Graph.edge(e.source, e.target))
     .fold(Graph.empty)(_ + _)
-  if debug then // create html tables and Graphviz dot only for debug
-    createHtmlTable(rowDatas) // unit; writes html tables to disk
-    dependencyGraphToDot(depGraph, hg) // unit; writes Graphviz dot to disk
+  // if debug then // create html tables and Graphviz dot only for debug
+  // createHtmlTable(rowDatas) // unit; writes html tables to disk
+  // dependencyGraphToDot(depGraph, hg) // unit; writes Graphviz dot to disk
   depGraph
 
 def rankHg(hg: Hypergraph[EdgeLabel, TokenRange], debug: Boolean = false): Map[NodeType, Int] =
@@ -111,7 +111,7 @@ def rankHg(hg: Hypergraph[EdgeLabel, TokenRange], debug: Boolean = false): Map[N
   val egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
   val dependencyGraph = createDependencyGraph(hg, debug, egTa)
   // println(s"Dependency graph:")
-  dependencyGraphToDot(dependencyGraph, hg)
+  if debug then dependencyGraphToDot(dependencyGraph, hg) // interim result
   // dependencyGraph.toMap.foreach((k, v) => println(s"  $k: $v"))
   val ranks = dependencyGraph.longestPath
   ranks
@@ -145,8 +145,7 @@ def detectTransposition(
       matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.last.label)))
     val transpositionBool = matchesSortedHead != matchesSortedLast
     transpositionBool
-  else
-    false
+  else false
 
 def realMainFunction(debug: Boolean): Unit =
   val (gTa, hg1, hg2) = returnSampleData() // don’t use (global) names of hgs because real data isn’t global

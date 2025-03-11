@@ -163,15 +163,13 @@ def dependencyGraphToDot(
     .map(k => k -> Vector("\"", k, ": ", hg.members(EdgeLabel(k)).head.tString, "\"").mkString)
     .toMap ++ Map(NodeType("starts") -> "starts", NodeType("ends") -> "ends")
   val dotEdges = edges
-    .map((k, v) =>
-      Vector(k.toString, " -> ", v.toString)
-        .mkString
-    ).mkString(";\n\t")
+    .map((k, v) => Vector(k.toString, " -> ", v.toString).mkString)
+    .mkString(";\n\t")
   val dotNodes = ";\n\t" + readings
     .map((k, v) => Vector(k, "[label=", v.replace("\n", " "), "]").mkString)
     .mkString(";\n\t")
   val dotPath =
     os.pwd / "src" / "main" / "outputs" /
-      s"dependency-graph-$hgId.dot"
+      s"${System.currentTimeMillis()}-dependency-graph-$hgId.dot"
   val dotValue = prologue + dotEdges + dotNodes + epilogue
   os.write.over(dotPath, dotValue)

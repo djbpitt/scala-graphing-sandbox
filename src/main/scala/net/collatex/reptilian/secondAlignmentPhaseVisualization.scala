@@ -7,8 +7,9 @@ import scala.xml.dtd.DocType
 
 def createSecondAlignmentPhaseVisualization(hg: Hypergraph[EdgeLabel, TokenRange]): Unit =
   val gTa = hg.vertices.head.ta
+  val id: String = hg.hyperedges.head.label.toString // unique id for hg
   // println(s"hypergraph: $hg")
-  val ranking: Map[NodeType, Int] = rankHg(hg, true)
+  val ranking: Map[NodeType, Int] = rankHg(hg, false)
   val hyperedgesByRank = hg.hyperedges.groupBy(e => ranking(NodeType(e.label))) // unsorted
   val sortedRanks = hyperedgesByRank.keySet.toSeq.sorted
   val aps: ListBuffer[AlignmentUnit] = sortedRanks
@@ -32,5 +33,5 @@ def createSecondAlignmentPhaseVisualization(hg: Hypergraph[EdgeLabel, TokenRange
   val horizontalRibbons = createHorizontalRibbons(result, localSigla, gTa)
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html")
   val horizontalRibbonsPath =
-    os.pwd / "src" / "main" / "outputs" / "secondAlignmentPhase.xhtml" // "horizontal-ribbons.xhtml"
+    os.pwd / "src" / "main" / "outputs" / s"secondAlignmentPhase-$id.xhtml" // unique names
   scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true, doctypeHtml)
