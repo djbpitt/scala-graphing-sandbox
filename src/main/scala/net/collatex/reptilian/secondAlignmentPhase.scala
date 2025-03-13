@@ -325,12 +325,3 @@ object HyperedgeMatch:
     // Transform hypergraph to alignment ribbon and visualize
     createSecondAlignmentPhaseVisualization(hg)
 
-@main def exploreBrokenAlignment(): Unit =
-  val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
-  val egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
-  val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "brokenUnalignedZones" / "4154.json"
-  val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
-  val nodesToCluster = clusterWitnesses(darwinReadings)
-  val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa, egTa)
-  val dg = createDependencyGraph(hg, false, egTa)
-  dependencyGraphToDot(dg, hg)
