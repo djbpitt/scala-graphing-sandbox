@@ -111,7 +111,8 @@ def rankHg(hg: Hypergraph[EdgeLabel, TokenRange], debug: Boolean = false): Map[N
   val egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
   val dependencyGraph = createDependencyGraph(hg, debug, egTa)
   // println(s"Dependency graph:")
-  if debug then dependencyGraphToDot(dependencyGraph, hg) // interim result
+  // if debug then println("Inside rankHg()")
+  // if debug then dependencyGraphToDot(dependencyGraph, hg) // interim result
   // dependencyGraph.toMap.foreach((k, v) => println(s"  $k: $v"))
   val ranks = dependencyGraph.longestPath
   ranks
