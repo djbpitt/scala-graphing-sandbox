@@ -48,8 +48,9 @@ def mergeHgHg(
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
   val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
+  val gTa = bothHgs.vertices.head.ta
   val allSplitHyperedges: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
-    splitAllHyperedges(bothHgs, blocksGTa)
+    splitAllHyperedges(bothHgs, blocksGTa.filter(e => gTa(e.instances.head).n != "many"))
   val matchesAsSet = allSplitHyperedges._2
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
     matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
@@ -61,7 +62,13 @@ def mergeHgHg(
   if transpositionBool
   then
     println("Found a transposition")
-    bothHgs
+    println(s"matchesAsHg: $matchesAsHg")
+    println(s"matchesAsSet: $matchesAsSet")
+    val newMatchHg = matchesAsSet.map(e => AlignmentHyperedge(e.head.vertices ++ e.last.vertices))
+      .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
+    println(s"newMatchHg: $newMatchHg")
+    // bothHgs
+    allSplitHyperedges._1
   else
     val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
       // FIXME: If only one token, don’t add both head and last, which are the same
@@ -325,3 +332,14 @@ object HyperedgeMatch:
     // Transform hypergraph to alignment ribbon and visualize
     createSecondAlignmentPhaseVisualization(hg)
 
+@main def exploreBrokenAlignment(): Unit =
+  val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
+  val egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
+  val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "3287.json"
+  val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
+  darwinReadings.foreach(e => println(e.map(_.t).mkString))
+  val nodesToCluster = clusterWitnesses(darwinReadings)
+  println(nodesToCluster)
+  val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa, egTa)
+  val dg = createDependencyGraph(hg, false, egTa)
+  dependencyGraphToDot(dg, hg)

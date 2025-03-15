@@ -145,7 +145,8 @@ def detectTransposition(
     val matchesSortedLast =
       matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.last.label)))
     val transpositionBool = matchesSortedHead != matchesSortedLast
-    transpositionBool
+    if transpositionBool then println(matchesAsHg)
+      transpositionBool
   else false
 
 def realMainFunction(debug: Boolean): Unit =
