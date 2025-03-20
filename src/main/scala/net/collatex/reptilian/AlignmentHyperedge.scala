@@ -8,7 +8,7 @@ object AlignmentHyperedge:
   def apply(tokenRanges: Set[TokenRange]): Hyperedge[EdgeLabel, TokenRange] =
     val edgeLabel = EdgeLabel(tokenRanges.map(_.start).min)
     Hyperedge[EdgeLabel, TokenRange](edgeLabel, tokenRanges)
-    
+
 extension (he: Hyperedge[EdgeLabel, TokenRange])
   def slice(startOffset: Int, untilOffset: Int): Hypergraph[EdgeLabel, TokenRange] =
     if startOffset == untilOffset then Hypergraph.empty
@@ -42,8 +42,9 @@ extension (he: Hyperedge[EdgeLabel, TokenRange])
   def toText: Set[String] =
     val result = he.vertices.map(e => e.tString)
     result
-  
-  def witnesses: Set[_] =
+
+  // FIXME: Needs to be generic, since witness identifier is not always int
+  def witnesses: Set[Int] =
     val gTa = he.vertices.head.ta
-    val result = he.vertices.map(_.start).map(e => gTa(e).w)
+    val result: Set[Int] = he.vertices.map(_.start).map(e => gTa(e).w)
     result

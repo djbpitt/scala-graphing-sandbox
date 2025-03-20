@@ -122,11 +122,18 @@ def createGlobalTokenArray(darwinReadings: List[List[Token]]) =
         .toVector
   tokenArray
 
+enum MatchesSide:
+  case first
+  case second
+
 /** Adjust set of hyperedge matches to remove transpositions
   *
-  * @param hg1: Hyperedge[EdgeLabel, TokenRange]
-  * @param hg2: Hyperedge[EdgeLabel, TokenRange]
-  * @param matches Set[HyperedgeMatch]
+  * @param hg1:
+  *   Hyperedge[EdgeLabel, TokenRange]
+  * @param hg2:
+  *   Hyperedge[EdgeLabel, TokenRange]
+  * @param matches
+  *   Set[HyperedgeMatch]
   */
 def traversalGraphPhase2(
     hg1: Hypergraph[EdgeLabel, TokenRange],
@@ -137,15 +144,30 @@ def traversalGraphPhase2(
   else
     val ranking1 = rankHg(hg1)
     val ranking2 = rankHg(hg2)
-    val hg1witnesses = hg1.hyperedges.flatMap(_.witnesses)
-    val hg2witnesses = hg2.hyperedges.flatMap(_.witnesses)
+    val hg1witnesses: Set[Int] = hg1.hyperedges.flatMap(e => e.witnesses)
+    val hg2witnesses: Set[Int] = hg2.hyperedges.flatMap(_.witnesses)
     println(s"hg1 witnesses: $hg1witnesses")
     println(s"hg2 witnesses: $hg2witnesses")
+    val siglumToHyperedge: Map[Int, MatchesSide] =
+      val map1 = hg1witnesses.map(e => (e -> MatchesSide.first)).toMap
+      val map2 = hg2witnesses.map(e => (e -> MatchesSide.second)).toMap
+      map1 ++ map2
+    println(s"Map: $siglumToHyperedge")
     println(s"match count: ${matches.size}")
     matches.foreach(e =>
       println(s"hyperedge: $e")
       println(s"  first(${e.head.label}: ${e.head.witnesses})")
       println(s"  second(${e.last.label}: ${e.last.witnesses}")
+    )
+    val reconstructedHgs: (Hypergraph[EdgeLabel, TokenRange], Hypergraph[EdgeLabel, TokenRange]) =
+      matches.toSeq.foldLeft((Hypergraph.empty, Hypergraph.empty))((y, x) =>
+        siglumToHyperedge(x.head.witnesses.head) match
+          case MatchesSide.first => (y.head + x.head, y.last + x.last)
+          case _                 => (y.head + x.last, y.last + x.head)
+      )
+    println("reconstructedHgs:")
+    reconstructedHgs.toList.foreach(e =>
+      println(s"${e.hyperedges.size}: ${e.hyperedges}")
     )
     println(s"ranking1: $ranking1")
     println(s"ranking2: $ranking2")
