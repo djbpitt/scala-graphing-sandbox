@@ -37,14 +37,14 @@ def mergeSingletonHG(
 ): Hypergraph[EdgeLabel, TokenRange] =
   val singletonAsTokenRange =
     TokenRange(start = singletonTokens.head.g, until = singletonTokens.last.g + 1, ta = hg.vertices.head.ta)
-  val bothHgs: Hypergraph[EdgeLabel, TokenRange] =
-    hg + AlignmentHyperedge(Set(singletonAsTokenRange))
-  mergeHgHg(bothHgs, debug)
+  mergeHgHg(hg, AlignmentHyperedge(Set(singletonAsTokenRange)), debug)
 
 def mergeHgHg(
-    bothHgs: Hypergraph[EdgeLabel, TokenRange],
+    hg1: Hypergraph[EdgeLabel, TokenRange],
+    hg2: Hypergraph[EdgeLabel, TokenRange],
     debug: Boolean // TODO: Does transposition detection, but doesn’t yet handle
 ): Hypergraph[EdgeLabel, TokenRange] =
+  val bothHgs = hg1 + hg2
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
   val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
@@ -54,6 +54,10 @@ def mergeHgHg(
   val matchesAsSet = allSplitHyperedges._2
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
     matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
+  //
+  // New a*-based alignment goes here
+  //
+  val newAlignment: Unit = traversalGraphPhase2(hg1, hg2, matchesAsSet)
   val transpositionBool =
     detectTransposition(matchesAsSet, matchesAsHg, true) // currently raises error if transposition
   // If no transposition (temporarily):
@@ -64,7 +68,8 @@ def mergeHgHg(
     println("Found a transposition")
     println(s"matchesAsHg: $matchesAsHg")
     println(s"matchesAsSet: $matchesAsSet")
-    val newMatchHg = matchesAsSet.map(e => AlignmentHyperedge(e.head.vertices ++ e.last.vertices))
+    val newMatchHg = matchesAsSet
+      .map(e => AlignmentHyperedge(e.head.vertices ++ e.last.vertices))
       .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
     println(s"newMatchHg: $newMatchHg")
     // bothHgs
@@ -116,6 +121,34 @@ def createGlobalTokenArray(darwinReadings: List[List[Token]]) =
         )
         .toVector
   tokenArray
+
+/** Adjust set of hyperedge matches to remove transpositions
+  *
+  * @param hg1: Hyperedge[EdgeLabel, TokenRange]
+  * @param hg2: Hyperedge[EdgeLabel, TokenRange]
+  * @param matches Set[HyperedgeMatch]
+  */
+def traversalGraphPhase2(
+    hg1: Hypergraph[EdgeLabel, TokenRange],
+    hg2: Hypergraph[EdgeLabel, TokenRange],
+    matches: Set[HyperedgeMatch]
+): Unit =
+  if matches.size < 2 then println("Boring; too few matches")
+  else
+    val ranking1 = rankHg(hg1)
+    val ranking2 = rankHg(hg2)
+    val hg1witnesses = hg1.hyperedges.flatMap(_.witnesses)
+    val hg2witnesses = hg2.hyperedges.flatMap(_.witnesses)
+    println(s"hg1 witnesses: $hg1witnesses")
+    println(s"hg2 witnesses: $hg2witnesses")
+    println(s"match count: ${matches.size}")
+    matches.foreach(e =>
+      println(s"hyperedge: $e")
+      println(s"  first(${e.head.label}: ${e.head.witnesses})")
+      println(s"  second(${e.last.label}: ${e.last.witnesses}")
+    )
+    println(s"ranking1: $ranking1")
+    println(s"ranking2: $ranking2")
 
 // FIXME: Used only in text; we create lTa elsewhere in real code.
 // Remove this function and update the test to point to the real one
@@ -288,7 +321,7 @@ def mergeClustersIntoHG(
           val hypergraph = mergeSingletonHG(singletonTokens, hg, false)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (HGHG(item1, item2, _), i: Int) =>
-          val hypergraph = mergeHgHg(y(item1) + y(item2), false) // true creates xhtml table
+          val hypergraph = mergeHgHg(y(item1), y(item2), false) // true creates xhtml table
           y + ((i + darwinReadings.size) -> hypergraph)
       //          val hypergraph = mergeHgHg(y(item1), y(item2)) // currently just lTA
       //          y + ((i + darwinReadings.size) -> Hypergraph.empty[EdgeLabel, TokenRange])
@@ -335,7 +368,8 @@ object HyperedgeMatch:
 @main def exploreBrokenAlignment(): Unit =
   val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
   val egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
-  val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "3287.json"
+  // val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "3287.json"
+  val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "4154.json"
   val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
   darwinReadings.foreach(e => println(e.map(_.t).mkString))
   val nodesToCluster = clusterWitnesses(darwinReadings)
