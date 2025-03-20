@@ -169,6 +169,8 @@ def traversalGraphPhase2(
     reconstructedHgs.toList.foreach(e =>
       println(s"${e.hyperedges.size}: ${e.hyperedges}")
     )
+    // 2025-03-20 (vernal equinox): RESUME HERE
+    // The following are wrong; create from reconstructed hypergraphs (after splitting)
     println(s"ranking1: $ranking1")
     println(s"ranking2: $ranking2")
 
