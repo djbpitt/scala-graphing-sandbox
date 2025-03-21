@@ -1,11 +1,7 @@
 package net.collatex.reptilian
-import net.collatex.reptilian.NodeType.Internal
-import net.collatex.reptilian.TokenEnum.{Token, TokenSep}
-import net.collatex.util.{Graph, Hypergraph, SetOf2, hypergraphToReadings}
+import net.collatex.util.{Hypergraph, hypergraphToReadings}
 
-import scala.collection.immutable.TreeMap
 import net.collatex.reptilian.returnSampleData
-import net.collatex.util.Hypergraph.{Hyperedge, hyperedge}
 
 import scala.math.Ordering
 
@@ -59,7 +55,7 @@ def detectTransposition(
   else false
 
 def realMainFunction(debug: Boolean): Unit =
-  val (gTa, hg1, hg2) = returnSampleData() // don’t use (global) names of hgs because real data isn’t global
+  val (_, hg1, hg2) = returnSampleData() // don’t use (global) names of hgs because real data isn’t global
   val hgWithMergeResults: Hypergraph[EdgeLabel, TokenRange] = mergeHgHg(hg1, hg2, debug)
   val result = hypergraphToReadings(hgWithMergeResults)
   // println(result)
