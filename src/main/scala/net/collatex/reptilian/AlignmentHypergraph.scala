@@ -1,6 +1,6 @@
 package net.collatex.reptilian
 
-import net.collatex.util.Hypergraph
+import net.collatex.util.{Graph, Hypergraph}
 import net.collatex.util.Hypergraph.Hyperedge
 
 
@@ -10,7 +10,7 @@ extension (hg: Hypergraph[EdgeLabel, TokenRange])
     hg.hyperedges.flatMap(_.witnesses)
 
   def rank(debug: Boolean = false): Map[NodeType, Int] =
-    val dependencyGraph = createDependencyGraph(hg, debug)
+    val dependencyGraph = hg.toDependencyGraph(debug)
     // println(s"Dependency graph:")
     // if debug then println("Inside rankHg()")
     // if debug then dependencyGraphToDot(dependencyGraph, hg) // interim result
@@ -25,3 +25,6 @@ extension (hg: Hypergraph[EdgeLabel, TokenRange])
     val resultTr = hg.vertices.find(e => e.contains(instance)).get
     val resultHe = hg.hyperedges.find(e => e.vertices.contains(resultTr)).get
     (resultHe, resultTr)
+    
+  def toDependencyGraph(debug: Boolean): Graph[NodeType] =
+    DependencyGraph(hg, debug)

@@ -273,7 +273,7 @@ def splitAllHyperedges(
 
 def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange]): Unit =
   val gTa = hg.vertices.head.ta
-  val hgDg = createDependencyGraph(hg, false)
+  val hgDg = hg.toDependencyGraph(false)
   val fullHgRanking = hg.rank() // FIXME: creates yet another dependency graph internally
   val edges = hgDg.toMap map ((k, v) => k -> v._2)
   val allWitnesses = Range(0, 6).toSet // FIXME: Look it up
@@ -331,7 +331,7 @@ def mergeClustersIntoHG(
           val w2: List[Token] = darwinReadings(item2)
           // process
           val hypergraph: Hypergraph[EdgeLabel, TokenRange] = mergeSingletonSingleton(w1, w2, gTa)
-          val dg = createDependencyGraph(hypergraph, false)
+          val dg = hypergraph.toDependencyGraph(false)
           dependencyGraphToDot(dg, hypergraph)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (SingletonHG(item1, item2, _), i: Int) =>
@@ -392,5 +392,5 @@ object HyperedgeMatch:
   val nodesToCluster = clusterWitnesses(darwinReadings)
   println(nodesToCluster)
   val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-  val dg = createDependencyGraph(hg, false)
+  val dg = hg.toDependencyGraph(false)
   dependencyGraphToDot(dg, hg)
