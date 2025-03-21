@@ -232,7 +232,7 @@ def splitAllHyperedges(
       val currentBlockRanges = toTokenRanges(currentBlock, gTa)
       // Find hyperedges to split and token ranges used to perform splitting
       val hesToSplit: Vector[(Hyperedge[EdgeLabel, TokenRange], TokenRange)] =
-        currentBlock.instances.map(e => findInstanceInHypergraph(hgTmp, e))
+        currentBlock.instances.map(e => hgTmp.findInstance(e))
       // Zip token ranges to be split with block ranges to use for splitting,
       // used to compute preLength and postLength
       val outerAndInnerRanges: Vector[(TokenRange, TokenRange)] =

@@ -109,14 +109,6 @@ def createDependencyGraph(hg: Hypergraph[EdgeLabel, TokenRange], debug: Boolean,
 def remapBlockToGTa(block: FullDepthBlock, lTa: Vector[TokenEnum]) =
   FullDepthBlock(block.instances.map(e => lTa(e).g), block.length)
 
-def findInstanceInHypergraph(hg: Hypergraph[EdgeLabel, TokenRange], instance: Int) =
-  // Find first hyperedge that contains instance; get() should never throw
-  // Find tokenRange in set of all tokenRanges (of all hyperedges)
-  // Find hyperedge that contains that tokenRange
-  val resultTr = hg.vertices.find(e => e.contains(instance)).get
-  val resultHe = hg.hyperedges.find(e => e.vertices.contains(resultTr)).get
-  (resultHe, resultTr)
-
 // converts a block into n number of token ranges, where n is the number of instances
 def toTokenRanges(currentBlock: FullDepthBlock, gTa: Vector[TokenEnum]) =
   currentBlock.instances.map(e => TokenRange(e, e + currentBlock.length, gTa))

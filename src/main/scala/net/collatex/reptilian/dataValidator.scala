@@ -13,7 +13,7 @@ def convertMatch(
   val matchTokenRanges = toTokenRanges(block, gTa)
   // each match has a vector with token ranges associated with it
   // for each token range find the associated hyperedge in the graph
-  val result2 = matchTokenRanges.map(e => findInstanceInHypergraph(hypergraph, e.start))
+  val result2 = matchTokenRanges.map(e => hypergraph.findInstance(e.start))
   // for each block we now have a vector of hyperedges
   // now we split the hyperedges according to the token ranges of the matches.
   // Zip token ranges to be split with block ranges to use for splitting,
