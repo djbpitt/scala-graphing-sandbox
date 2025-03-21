@@ -32,11 +32,14 @@ import scala.math.Ordering
  * */
 
 // NOTE: This method is both incorrect and incomplete!
-// It is incorrect because the two hypergraphs are merged, which means that in a case of a 
+// It is incorrect because the two hypergraphs are merged, which means that in a case of a
 //  transposition the ranking will fail because of a cycle.
-// Also this implementation assumes that a HyperedgeMatch head is always from the first hypergraph and last is always from 
-// the second hypergraph. However I don't think SetOf2 has any such guarantee.
+// TODO: Check or am I wrong about that? Would the dependency graph just split into two separate paths from the root?
+// Also this implementation assumes that a HyperedgeMatch head is always from the first hypergraph and last is always from
+// the second hypergraph. However I don't think SetOf2 has any such guarantee. But if point one is not a problem, then this concern
+// disappears.
 // The method is incomplete because no graph traversal is done!
+// TODO: We are building a traversal graph in secondAlignmentPhase traversalGraph2. That functionality should probably go here.
 def detectTransposition(
     matchesAsSet: Set[HyperedgeMatch],
     matchesAsHg: Hypergraph[EdgeLabel, TokenRange],
