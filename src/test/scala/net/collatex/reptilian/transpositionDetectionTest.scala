@@ -7,7 +7,9 @@ import net.collatex.util.Hypergraph.{FullHypergraph, Hyperedge}
 import org.scalatest.funsuite.AnyFunSuite
 
 class transpositionDetectionTest extends AnyFunSuite:
-  test("Test splitAllHyperedges"):
+  //NOTE: INPUT DATA IS WRONG! GTA IS SMALLER THAN TOKEN RANGES SPECIFIED IN AlignmentHyperedge
+  //FURTHERMORE THERE ARE NO ASSERTS AT THE END!
+  ignore("Test splitAllHyperedges"):
     val gTa: Vector[TokenEnum] = returnSampleData()._1
     val hg: Hypergraph[EdgeLabel, TokenRange] =
       // Token ranges in hyperedge are from different witnesses; must be same length
