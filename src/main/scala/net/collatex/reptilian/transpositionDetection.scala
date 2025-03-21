@@ -35,6 +35,12 @@ import scala.math.Ordering
  * appears in both blocks.
  * */
 
+// NOTE: This method is both incorrect and incomplete!
+// It is incorrect because the two hypergraphs are merged, which means that in a case of a 
+//  transposition the ranking will fail because of a cycle.
+// Also this implementation assumes that a HyperedgeMatch head is always from the first hypergraph and last is always from 
+// the second hypergraph. However I don't think SetOf2 has any such guarantee.
+// The method is incomplete because no graph traversal is done!
 def detectTransposition(
     matchesAsSet: Set[HyperedgeMatch],
     matchesAsHg: Hypergraph[EdgeLabel, TokenRange],
@@ -64,48 +70,3 @@ def realMainFunction(debug: Boolean): Unit =
 @main def runWithSampleDataDebug(): Unit = // dot and html saved to disk
   realMainFunction(true)
 
-case class EdgeData(
-    he: EdgeLabel,
-    witness: Int,
-    tokenRange: TokenRange,
-    source: NodeType,
-    tmTarget: Option[(Int, EdgeLabel)],
-    edge: EdgeEndpoints
-)
-case class EdgeEndpoints(
-    source: NodeType,
-    target: NodeType
-)
-enum NodeType:
-  case Internal(label: Int)
-  case Terminal(label: String)
-  override def toString: String = this match
-    case Internal(label) => label.toString
-    case Terminal(label) => label
-
-object NodeType:
-  def apply(label: String): NodeType = NodeType.Terminal(label)
-  def apply(label: Int): NodeType = NodeType.Internal(label)
-  def apply(label: EdgeLabel): NodeType =
-    label match
-      case EdgeLabel.Terminal(label) => NodeType.Terminal(label)
-      case EdgeLabel.Internal(label) => NodeType.Internal(label)
-
-case class TokenArrayWithStartsAndEnds(
-    tokens: Vector[TokenEnum],
-    starts: Vector[TokenRange],
-    ends: Vector[TokenRange]
-)
-object TokenArrayWithStartsAndEnds:
-  // Eventually a single global TokenArray will
-  // include separators when created, making the
-  // enhancements here unnecessary
-  def apply(tokens: Vector[TokenEnum]): TokenArrayWithStartsAndEnds =
-    val seps = tokens.filter(_.getClass.getSimpleName == "TokenSep")
-    def computeStarts(): Vector[TokenRange] =
-      (TokenSep("Sep-1", "Sep-1", -1, -1) +: seps)
-        .map(e => TokenRange(e.g, e.g, tokens))
-    def computeEnds(): Vector[TokenRange] =
-      (seps :+ TokenSep("Sep" + tokens.size.toString, "", tokens.last.w + 1, tokens.size))
-        .map(e => TokenRange(e.g, e.g, tokens))
-    new TokenArrayWithStartsAndEnds(tokens, computeStarts(), computeEnds())

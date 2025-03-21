@@ -1,5 +1,6 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.TokenEnum.TokenSep
 import net.collatex.util.{Graph, Hypergraph}
 
 import scala.collection.immutable.TreeMap
@@ -32,6 +33,60 @@ import scala.collection.immutable.TreeMap
  * E. Combine edges into dependency graph using fold.
  * F. Visualize for sanity checking
 .*/
+
+case class EdgeData(
+    he: EdgeLabel,
+    witness: Int,
+    tokenRange: TokenRange,
+    source: NodeType,
+    tmTarget: Option[(Int, EdgeLabel)],
+    edge: EdgeEndpoints
+  )
+
+case class EdgeEndpoints(
+    source: NodeType,
+    target: NodeType
+  )
+
+enum NodeType:
+  case Internal(label: Int)
+  case Terminal(label: String)
+
+  override def toString: String =
+    this match
+      case Internal(label) => label.toString
+      case Terminal(label) => label
+
+object NodeType:
+  def apply(label: String): NodeType = NodeType.Terminal(label)
+  def apply(label: Int): NodeType = NodeType.Internal(label)
+  def apply(label: EdgeLabel): NodeType =
+    label match
+      case EdgeLabel.Terminal(label) => NodeType.Terminal(label)
+      case EdgeLabel.Internal(label) => NodeType.Internal(label)
+
+case class TokenArrayWithStartsAndEnds(
+    tokens: Vector[TokenEnum],
+    starts: Vector[TokenRange],
+    ends: Vector[TokenRange]
+  )
+
+object TokenArrayWithStartsAndEnds:
+  // Eventually a single global TokenArray will
+  // include separators when created, making the
+  // enhancements here unnecessary
+  def apply(tokens: Vector[TokenEnum]): TokenArrayWithStartsAndEnds =
+    val seps = tokens.filter(_.getClass.getSimpleName == "TokenSep")
+
+    def computeStarts(): Vector[TokenRange] =
+      (TokenSep("Sep-1", "Sep-1", -1, -1) +: seps)
+        .map(e => TokenRange(e.g, e.g, tokens))
+
+    def computeEnds(): Vector[TokenRange] =
+      (seps :+ TokenSep("Sep" + tokens.size.toString, "", tokens.last.w + 1, tokens.size))
+        .map(e => TokenRange(e.g, e.g, tokens))
+
+    new TokenArrayWithStartsAndEnds(tokens, computeStarts(), computeEnds())
 
 // Take in hypergraph, add fake starts, calculate tree map and return dependency graph
 // For each key in hg 1) find all target TokenRange starts, 2) look up start value
