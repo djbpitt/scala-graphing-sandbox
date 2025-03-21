@@ -34,6 +34,10 @@ case class FullDepthBlock(instances: Vector[Int], length: Int):
   def remapBlockToGTa(lTa: Vector[TokenEnum]): FullDepthBlock =
     FullDepthBlock(instances.map(e => lTa(e).g), length)
 
+  // converts a block into n number of token ranges, where n is the number of instances
+  def toTokenRanges(gTa: Vector[TokenEnum]): Seq[TokenRange] =
+    instances.map(e => TokenRange(e, e + length, gTa))
+
 case class OpenBlock(start: Int, length: Int)
 
 
