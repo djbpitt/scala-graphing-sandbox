@@ -65,7 +65,9 @@ import scala.math.Ordering
 //   with that next key. E.g., with hyperedge
 //   255 -> Set(TokenRange(255,272), TokenRange(174, 191)) locate keys 255 and
 //   174 in treemap, find next key sequentially, and return associated value.
-def createDependencyGraph(hg: Hypergraph[EdgeLabel, TokenRange], debug: Boolean, egTa: TokenArrayWithStartsAndEnds) =
+def createDependencyGraph(hg: Hypergraph[EdgeLabel, TokenRange], debug: Boolean) =
+  val gTa = hg.vertices.head.ta
+  val egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
   val startsWithHg = Hypergraph.hyperedge(EdgeLabel("starts"), egTa.starts: _*) + hg
   // Sorted map (treemap) from start of token range (Int) to hyperedge label (String)
   def createTreeMap(hg: Hypergraph[EdgeLabel, TokenRange]): TreeMap[Int, EdgeLabel] =

@@ -10,9 +10,7 @@ extension (hg: Hypergraph[EdgeLabel, TokenRange])
     hg.hyperedges.flatMap(_.witnesses)
 
   def rank(debug: Boolean = false): Map[NodeType, Int] =
-    val gTa = hg.vertices.head.ta
-    val egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
-    val dependencyGraph = createDependencyGraph(hg, debug, egTa)
+    val dependencyGraph = createDependencyGraph(hg, debug)
     // println(s"Dependency graph:")
     // if debug then println("Inside rankHg()")
     // if debug then dependencyGraphToDot(dependencyGraph, hg) // interim result
