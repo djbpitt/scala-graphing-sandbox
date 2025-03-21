@@ -144,13 +144,13 @@ def traversalGraphPhase2(
   else
     val ranking1 = rankHg(hg1)
     val ranking2 = rankHg(hg2)
-    val hg1witnesses: Set[Int] = hg1.hyperedges.flatMap(e => e.witnesses)
-    val hg2witnesses: Set[Int] = hg2.hyperedges.flatMap(_.witnesses)
+    val hg1witnesses: Set[Int] = hg1.witnessSet
+    val hg2witnesses: Set[Int] = hg2.witnessSet
     println(s"hg1 witnesses: $hg1witnesses")
     println(s"hg2 witnesses: $hg2witnesses")
     val siglumToHyperedge: Map[Int, MatchesSide] =
-      val map1 = hg1witnesses.map(e => (e -> MatchesSide.first)).toMap
-      val map2 = hg2witnesses.map(e => (e -> MatchesSide.second)).toMap
+      val map1 = hg1witnesses.map(e => e -> MatchesSide.first).toMap
+      val map2 = hg2witnesses.map(e => e -> MatchesSide.second).toMap
       map1 ++ map2
     println(s"Map: $siglumToHyperedge")
     println(s"match count: ${matches.size}")
