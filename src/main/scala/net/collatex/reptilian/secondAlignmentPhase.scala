@@ -142,8 +142,8 @@ def traversalGraphPhase2(
 ): Unit =
   if matches.size < 2 then println("Boring; too few matches")
   else
-    val ranking1 = rankHg(hg1)
-    val ranking2 = rankHg(hg2)
+    val ranking1 = hg1.rank()
+    val ranking2 = hg2.rank()
     val hg1witnesses: Set[Int] = hg1.witnessSet
     val hg2witnesses: Set[Int] = hg2.witnessSet
     println(s"hg1 witnesses: $hg1witnesses")
@@ -277,7 +277,7 @@ def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange]): Unit
     TokenArrayWithStartsAndEnds(gTa)
 
   val hgDg = createDependencyGraph(hg, false, tAStartsEnds)
-  val fullHgRanking = rankHg(hg) // FIXME: creates yet another dependency graph internally
+  val fullHgRanking = hg.rank() // FIXME: creates yet another dependency graph internally
   val edges = hgDg.toMap map ((k, v) => k -> v._2)
   val allWitnesses = Range(0, 6).toSet // FIXME: Look it up
 

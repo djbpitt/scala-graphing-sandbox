@@ -9,7 +9,7 @@ def createSecondAlignmentPhaseVisualization(hg: Hypergraph[EdgeLabel, TokenRange
   val gTa = hg.vertices.head.ta
   val id: String = hg.hyperedges.head.label.toString // unique id for hg
   // println(s"hypergraph: $hg")
-  val ranking: Map[NodeType, Int] = rankHg(hg, false)
+  val ranking: Map[NodeType, Int] = hg.rank()
   val hyperedgesByRank = hg.hyperedges.groupBy(e => ranking(NodeType(e.label))) // unsorted
   val sortedRanks = hyperedgesByRank.keySet.toSeq.sorted
   val aps: ListBuffer[AlignmentUnit] = sortedRanks

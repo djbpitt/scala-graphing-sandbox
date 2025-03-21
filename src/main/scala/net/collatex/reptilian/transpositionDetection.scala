@@ -106,17 +106,6 @@ def createDependencyGraph(hg: Hypergraph[EdgeLabel, TokenRange], debug: Boolean,
   // dependencyGraphToDot(depGraph, hg) // unit; writes Graphviz dot to disk
   depGraph
 
-def rankHg(hg: Hypergraph[EdgeLabel, TokenRange], debug: Boolean = false): Map[NodeType, Int] =
-  val gTa = hg.vertices.head.ta
-  val egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
-  val dependencyGraph = createDependencyGraph(hg, debug, egTa)
-  // println(s"Dependency graph:")
-  // if debug then println("Inside rankHg()")
-  // if debug then dependencyGraphToDot(dependencyGraph, hg) // interim result
-  // dependencyGraph.toMap.foreach((k, v) => println(s"  $k: $v"))
-  val ranks = dependencyGraph.longestPath
-  ranks
-
 def remapBlockToGTa(block: FullDepthBlock, lTa: Vector[TokenEnum]) =
   FullDepthBlock(block.instances.map(e => lTa(e).g), block.length)
 
@@ -139,7 +128,7 @@ def detectTransposition(
 ): Boolean =
   if matchesAsSet.size > 1 // more than one block means possible transposition
   then
-    val ranking: Map[NodeType, Int] = rankHg(matchesAsHg, debug)
+    val ranking: Map[NodeType, Int] = matchesAsHg.rank(debug)
     val matchesSortedHead =
       matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.head.label)))
     val matchesSortedLast =
