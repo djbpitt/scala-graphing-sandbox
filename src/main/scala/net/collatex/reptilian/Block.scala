@@ -31,6 +31,9 @@ case class FullDepthBlock(instances: Vector[Int], length: Int):
       .map(_.n)
       .mkString(" ")
 
+  def remapBlockToGTa(lTa: Vector[TokenEnum]): FullDepthBlock =
+    FullDepthBlock(instances.map(e => lTa(e).g), length)
+
 case class OpenBlock(start: Int, length: Int)
 
 

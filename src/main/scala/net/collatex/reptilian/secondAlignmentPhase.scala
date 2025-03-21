@@ -47,7 +47,7 @@ def mergeHgHg(
   val bothHgs = hg1 + hg2
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
-  val blocksGTa = blocks.map(e => remapBlockToGTa(e, lTa))
+  val blocksGTa = blocks.map(e => e.remapBlockToGTa(lTa))
   val gTa = bothHgs.vertices.head.ta
   val allSplitHyperedges: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
     splitAllHyperedges(bothHgs, blocksGTa.filter(e => gTa(e.instances.head).n != "many"))

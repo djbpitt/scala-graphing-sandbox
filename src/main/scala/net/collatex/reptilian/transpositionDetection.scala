@@ -108,9 +108,6 @@ def createDependencyGraph(hg: Hypergraph[EdgeLabel, TokenRange], debug: Boolean)
   // dependencyGraphToDot(depGraph, hg) // unit; writes Graphviz dot to disk
   depGraph
 
-def remapBlockToGTa(block: FullDepthBlock, lTa: Vector[TokenEnum]) =
-  FullDepthBlock(block.instances.map(e => lTa(e).g), block.length)
-
 // converts a block into n number of token ranges, where n is the number of instances
 def toTokenRanges(currentBlock: FullDepthBlock, gTa: Vector[TokenEnum]) =
   currentBlock.instances.map(e => TokenRange(e, e + currentBlock.length, gTa))
