@@ -145,16 +145,19 @@ def traversalGraphPhase2(
     val siglumToHyperedge: Map[Int, MatchesSide] =
       hg1.witnessSet.map(e => e -> MatchesSide.first).toMap ++
         hg2.witnessSet.map(e => e -> MatchesSide.second).toMap
-    val reconstructedHgs: (Hypergraph[EdgeLabel, TokenRange], Hypergraph[EdgeLabel, TokenRange]) =
-      matches.toSeq.foldLeft((Hypergraph.empty, Hypergraph.empty))((y, x) =>
-        siglumToHyperedge(x.head.witnesses.head) match
-          case MatchesSide.first => (y.head + x.head, y.last + x.last)
-          case _                 => (y.head + x.last, y.last + x.head)
-      )
+    val reconstructedHgs: List[Hypergraph[EdgeLabel, TokenRange]] =
+      matches.toSeq
+        .foldLeft(
+          List(Hypergraph.empty[EdgeLabel, TokenRange], Hypergraph.empty[EdgeLabel, TokenRange])
+        )((y, x) =>
+          siglumToHyperedge(x.head.witnesses.head) match
+            case MatchesSide.first => List(y.head + x.head, y.last + x.last)
+            case _                 => List(y.head + x.last, y.last + x.head)
+        )
     println("reconstructedHgs:")
-    reconstructedHgs.toList.foreach(e => println(s"${e.hyperedges.size}: ${e.hyperedges}"))
-    // 2025-03-20 (vernal equinox): RESUME HERE
-    // The following are wrong; create from reconstructed hypergraphs (after splitting)
+    reconstructedHgs.foreach(e => println(s"${e.hyperedges.size}: ${e.hyperedges}"))
+    val rankings = reconstructedHgs.map(_.rank())
+    println(rankings)
 
 // FIXME: Used only in text; we create lTa elsewhere in real code.
 // Remove this function and update the test to point to the real one
