@@ -4,7 +4,7 @@ import net.collatex.reptilian.TokenEnum.*
 import net.collatex.reptilian.TokenRange.*
 import net.collatex.reptilian.createAlignedBlocks
 import net.collatex.util.Hypergraph.Hyperedge
-import net.collatex.util.{Hypergraph, SetOf2}
+import net.collatex.util.{Graph, Hypergraph, SetOf2}
 import os.Path
 import upickle.default.*
 
@@ -120,6 +120,25 @@ enum MatchesSide:
   case first
   case second
 
+case class DecisionGraphStepPhase2(pos1: OrderPosition, pos2: OrderPosition)
+type OrderPosition = Int
+
+def createDecisionGraphPhase2(
+    order1: List[HyperedgeMatch],
+    order2: List[HyperedgeMatch]
+): Unit =
+  val max = order1.size // for end position
+  val start = DecisionGraphStepPhase2(-1, -1)
+  val end = DecisionGraphStepPhase2(max, max)
+  val g = Graph.node(start) + Graph.node(end)
+  println(s"Decision graph: $g")
+
+  // RESUME HERE 2025-03-22
+  // Make a graph
+  // Add edges, and not just nodes
+  // Search over it
+  // Done
+
 /** Adjust set of hyperedge matches to remove transpositions
   *
   * @param hg1:
@@ -171,7 +190,14 @@ def traversalGraphPhase2(
             .get
         )
       )
-    stuff2.foreach(println)
+    // stuff2.foreach(println)
+//    stuff2.head
+//      .zip(stuff2.last)
+//      .map(t => t._1 == t._2)
+//      .zipWithIndex
+//      .map((e, f) => (f, e))
+//      .foreach(println)
+    createDecisionGraphPhase2(stuff2.head, stuff2.last)
 
 // FIXME: Used only in text; we create lTa elsewhere in real code.
 // Remove this function and update the test to point to the real one
