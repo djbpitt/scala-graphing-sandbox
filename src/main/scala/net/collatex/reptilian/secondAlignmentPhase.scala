@@ -50,14 +50,13 @@ def mergeHgHg(
   val blocksGTa = blocks.map(e => e.remapBlockToGTa(lTa))
   val gTa = bothHgs.vertices.head.ta
   val allSplitHyperedges: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
-    splitAllHyperedges(bothHgs, blocksGTa.filter(e => gTa(e.instances.head).n != "many"))
+    splitAllHyperedges(bothHgs, blocksGTa) // .filter(e => gTa(e.instances.head).n != "many")
   val matchesAsSet = allSplitHyperedges._2
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
     matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
   //
   // New a*-based alignment goes here
   //
-  val newAlignment: Unit = traversalGraphPhase2(hg1, hg2, matchesAsSet)
   val transpositionBool =
     detectTransposition(matchesAsSet, matchesAsHg, true) // currently raises error if transposition
   // If no transposition (temporarily):
@@ -66,12 +65,7 @@ def mergeHgHg(
   if transpositionBool
   then
     println("Found a transposition")
-    println(s"matchesAsHg: $matchesAsHg")
-    println(s"matchesAsSet: $matchesAsSet")
-    val newMatchHg = matchesAsSet
-      .map(e => AlignmentHyperedge(e.head.vertices ++ e.last.vertices))
-      .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
-    println(s"newMatchHg: $newMatchHg")
+    val newAlignment: Unit = traversalGraphPhase2(hg1, hg2, matchesAsSet)
     // bothHgs
     allSplitHyperedges._1
   else
@@ -154,10 +148,30 @@ def traversalGraphPhase2(
             case MatchesSide.first => List(y.head + x.head, y.last + x.last)
             case _                 => List(y.head + x.last, y.last + x.head)
         )
-    println("reconstructedHgs:")
     reconstructedHgs.foreach(e => println(s"${e.hyperedges.size}: ${e.hyperedges}"))
-    val rankings = reconstructedHgs.map(_.rank())
-    println(rankings)
+    val rankingsAsList = reconstructedHgs
+      .map(_.rank())
+      .map(e =>
+        e.toList
+          .sortBy(_._2) // sort by rank
+          .map(_._1) // keep only hes
+          .tail // drop start …
+          .dropRight(1) // … and end
+      )
+    println("sorted rankings")
+    rankingsAsList.foreach(println)
+    // rankingsAsList.map(e => matches.find(_.contains(e.asInstanceOf[NodeType.Internal].label)).get)
+    // Find original match that contains edge label from ranking
+    val stuff2: List[List[HyperedgeMatch]] = rankingsAsList
+      .zip(reconstructedHgs)
+      .map((r, h) =>
+        r.map(e =>
+          matches
+            .find(_.contains(h(EdgeLabel(e.asInstanceOf[NodeType.Internal].label)).get))
+            .get
+        )
+      )
+    stuff2.foreach(println)
 
 // FIXME: Used only in text; we create lTa elsewhere in real code.
 // Remove this function and update the test to point to the real one
@@ -370,8 +384,8 @@ object HyperedgeMatch:
 
 @main def exploreBrokenAlignment(): Unit =
   val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
-  // val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "3287.json"
-  val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "4154.json"
+  val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "3287.json"
+  // val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "4154.json"
   val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
   darwinReadings.foreach(e => println(e.map(_.t).mkString))
   val nodesToCluster = clusterWitnesses(darwinReadings)
