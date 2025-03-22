@@ -41,12 +41,12 @@ case class EdgeData(
     source: NodeType,
     tmTarget: Option[(Int, EdgeLabel)],
     edge: EdgeEndpoints
-  )
+)
 
 case class EdgeEndpoints(
     source: NodeType,
     target: NodeType
-  )
+)
 
 enum NodeType:
   case Internal(label: Int)
@@ -69,10 +69,10 @@ case class TokenArrayWithStartsAndEnds(
     tokens: Vector[TokenEnum],
     starts: Vector[TokenRange],
     ends: Vector[TokenRange]
-  )
+)
 
 object TokenArrayWithStartsAndEnds:
-  // Eventually a single global TokenArray will
+  // TODO: Eventually a single global TokenArray will
   // include separators when created, making the
   // enhancements here unnecessary
   def apply(tokens: Vector[TokenEnum]): TokenArrayWithStartsAndEnds =
@@ -95,7 +95,7 @@ object TokenArrayWithStartsAndEnds:
 //   255 -> Set(TokenRange(255,272), TokenRange(174, 191)) locate keys 255 and
 //   174 in treemap, find next key sequentially, and return associated value.
 object DependencyGraph:
-  def apply(hg: Hypergraph[EdgeLabel, TokenRange], debug: Boolean): Graph[NodeType] =
+  def apply(hg: Hypergraph[EdgeLabel, TokenRange], debug: Boolean = false): Graph[NodeType] =
     val gTa = hg.vertices.head.ta
     val egTa: TokenArrayWithStartsAndEnds = TokenArrayWithStartsAndEnds(gTa)
     val startsWithHg = Hypergraph.hyperedge(EdgeLabel("starts"), egTa.starts: _*) + hg
@@ -104,7 +104,6 @@ object DependencyGraph:
       val result = hg.toMap._2 // map from vertices (token ranges) to labels
         .map((tr, l) => tr.start -> l.head) // head because set, even though set of 1
         .to(TreeMap)
-      // println(s"Tree map: $result")
       result
 
     val tm = createTreeMap(Hypergraph.hyperedge(EdgeLabel("ends"), egTa.ends: _*) + hg)
@@ -122,6 +121,7 @@ object DependencyGraph:
     def computeRowDatas(hes: Set[EdgeLabel]): Seq[Seq[EdgeData]] =
       val sortedHes = hes.toSeq.sorted
       val rds: Seq[Seq[EdgeData]] = for he <- sortedHes yield
+        // FIXME: Replace deprecated methods with current code
         val tokrs = startsWithHg.members(he).toSeq.sortBy(e => e.start) // egTa is already ordered
         tokrs.map(e => computeEdgeData(e, he))
       rds

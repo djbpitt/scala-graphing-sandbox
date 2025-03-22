@@ -142,23 +142,9 @@ def traversalGraphPhase2(
 ): Unit =
   if matches.size < 2 then println("Boring; too few matches")
   else
-    val ranking1 = hg1.rank()
-    val ranking2 = hg2.rank()
-    val hg1witnesses: Set[Int] = hg1.witnessSet
-    val hg2witnesses: Set[Int] = hg2.witnessSet
-    println(s"hg1 witnesses: $hg1witnesses")
-    println(s"hg2 witnesses: $hg2witnesses")
     val siglumToHyperedge: Map[Int, MatchesSide] =
-      val map1 = hg1witnesses.map(e => e -> MatchesSide.first).toMap
-      val map2 = hg2witnesses.map(e => e -> MatchesSide.second).toMap
-      map1 ++ map2
-    println(s"Map: $siglumToHyperedge")
-    println(s"match count: ${matches.size}")
-    matches.foreach(e =>
-      println(s"hyperedge: $e")
-      println(s"  first(${e.head.label}: ${e.head.witnesses})")
-      println(s"  second(${e.last.label}: ${e.last.witnesses}")
-    )
+      hg1.witnessSet.map(e => e -> MatchesSide.first).toMap ++
+        hg2.witnessSet.map(e => e -> MatchesSide.second).toMap
     val reconstructedHgs: (Hypergraph[EdgeLabel, TokenRange], Hypergraph[EdgeLabel, TokenRange]) =
       matches.toSeq.foldLeft((Hypergraph.empty, Hypergraph.empty))((y, x) =>
         siglumToHyperedge(x.head.witnesses.head) match
@@ -166,13 +152,9 @@ def traversalGraphPhase2(
           case _                 => (y.head + x.last, y.last + x.head)
       )
     println("reconstructedHgs:")
-    reconstructedHgs.toList.foreach(e =>
-      println(s"${e.hyperedges.size}: ${e.hyperedges}")
-    )
+    reconstructedHgs.toList.foreach(e => println(s"${e.hyperedges.size}: ${e.hyperedges}"))
     // 2025-03-20 (vernal equinox): RESUME HERE
     // The following are wrong; create from reconstructed hypergraphs (after splitting)
-    println(s"ranking1: $ranking1")
-    println(s"ranking2: $ranking2")
 
 // FIXME: Used only in text; we create lTa elsewhere in real code.
 // Remove this function and update the test to point to the real one
@@ -273,7 +255,7 @@ def splitAllHyperedges(
 
 def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange]): Unit =
   val gTa = hg.vertices.head.ta
-  val hgDg = hg.toDependencyGraph(false)
+  val hgDg = hg.toDependencyGraph()
   val fullHgRanking = hg.rank() // FIXME: creates yet another dependency graph internally
   val edges = hgDg.toMap map ((k, v) => k -> v._2)
   val allWitnesses = Range(0, 6).toSet // FIXME: Look it up
@@ -290,10 +272,10 @@ def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange]): Unit
     @tailrec
     def processEdge(
         targets: Seq[NodeType],
-        edgesforSource: Vector[Set[Int]],
+        edgesForSource: Vector[Set[Int]],
         witnessesSeen: Set[Int]
     ): Vector[Set[Int]] =
-      if targets.isEmpty then edgesforSource
+      if targets.isEmpty then edgesForSource
       else // update witnesses, not including those already seen
         val witnessesOnTarget = // FIXME: Ugly duplicate code
           targets.head match
@@ -302,7 +284,7 @@ def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange]): Unit
               hg(EdgeLabel(targets.head)).get.vertices
                 .map(_.start)
                 .map(e => gTa(e).w)
-        val newEdgesForSource = edgesforSource :+ (witnessesOnSource intersect
+        val newEdgesForSource = edgesForSource :+ (witnessesOnSource intersect
           witnessesOnTarget diff
           witnessesSeen)
         val newWitnessesSeen = witnessesSeen ++ witnessesOnTarget
@@ -319,7 +301,7 @@ def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange]): Unit
 def mergeClustersIntoHG(
     nodesToCluster: List[ClusterInfo],
     darwinReadings: List[List[Token]],
-    gTa: Vector[TokenEnum],
+    gTa: Vector[TokenEnum]
 ): Hypergraph[EdgeLabel, TokenRange] =
   val hgMap: Map[Int, Hypergraph[EdgeLabel, TokenRange]] = nodesToCluster.zipWithIndex
     .foldLeft(Map.empty[Int, Hypergraph[EdgeLabel, TokenRange]])((y, x) => {
@@ -331,7 +313,7 @@ def mergeClustersIntoHG(
           val w2: List[Token] = darwinReadings(item2)
           // process
           val hypergraph: Hypergraph[EdgeLabel, TokenRange] = mergeSingletonSingleton(w1, w2, gTa)
-          val dg = hypergraph.toDependencyGraph(false)
+          val dg = hypergraph.toDependencyGraph()
           dependencyGraphToDot(dg, hypergraph)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (SingletonHG(item1, item2, _), i: Int) =>
@@ -392,5 +374,5 @@ object HyperedgeMatch:
   val nodesToCluster = clusterWitnesses(darwinReadings)
   println(nodesToCluster)
   val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-  val dg = hg.toDependencyGraph(false)
+  val dg = hg.toDependencyGraph()
   dependencyGraphToDot(dg, hg)
