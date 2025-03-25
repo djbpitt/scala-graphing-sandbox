@@ -131,13 +131,36 @@ def createDecisionGraphPhase2(
   val start = DecisionGraphStepPhase2(-1, -1)
   val end = DecisionGraphStepPhase2(max, max)
   val g = Graph.node(start) + Graph.node(end)
-  println(s"Decision graph: $g")
+  @tailrec
+  def step(
+      mostRecentNodes: Set[DecisionGraphStepPhase2],
+      graph: Graph[DecisionGraphStepPhase2]
+  ): Graph[DecisionGraphStepPhase2] =
+    if graph.leafs() == Set[DecisionGraphStepPhase2](end)
+    then graph
+    else
+      // RESUME HERE 2025-03-25
+      // We are not yet handling ends of order1 and order 2
+      val currentNode = mostRecentNodes.head
+      val newDecision1: DecisionGraphStepPhase2 =
+        val newPos1 = currentNode.pos1 + 1
+        val newPos2 = order2.indexOf(order1(newPos1))
+        DecisionGraphStepPhase2(newPos1, newPos2)
+      val newDecision2: DecisionGraphStepPhase2 =
+        val newPos2 = currentNode.pos2 + 1
+        val newPos1 = order1.indexOf(order2(newPos2))
+        DecisionGraphStepPhase2(newPos1, newPos2)
+      val newSubgraph = Graph.node(currentNode) * 
+        (Graph.node(newDecision1) + Graph.node(newDecision2))
+      val newMostRecentNodes: Set[DecisionGraphStepPhase2] = 
+        mostRecentNodes.tail + newDecision1 + newDecision2
+      val newGraph: Graph[DecisionGraphStepPhase2] = graph + newSubgraph
+      step(newMostRecentNodes, newGraph)
 
-  // RESUME HERE 2025-03-22
-  // Make a graph
-  // Add edges, and not just nodes
-  // Search over it
-  // Done
+  step(mostRecentNodes = Set(start), graph = g)
+  // Nodes
+
+  println(s"Decision graph: $g")
 
 /** Adjust set of hyperedge matches to remove transpositions
   *
@@ -167,7 +190,7 @@ def traversalGraphPhase2(
             case MatchesSide.first => List(y.head + x.head, y.last + x.last)
             case _                 => List(y.head + x.last, y.last + x.head)
         )
-    reconstructedHgs.foreach(e => println(s"${e.hyperedges.size}: ${e.hyperedges}"))
+    // reconstructedHgs.foreach(e => println(s"${e.hyperedges.size}: ${e.hyperedges}"))
     val rankingsAsList = reconstructedHgs
       .map(_.rank())
       .map(e =>
@@ -190,8 +213,7 @@ def traversalGraphPhase2(
             .get
         )
       )
-    // stuff2.foreach(println)
-//    stuff2.head
+//    stuff2.head // track synchronization
 //      .zip(stuff2.last)
 //      .map(t => t._1 == t._2)
 //      .zipWithIndex
@@ -400,7 +422,7 @@ object HyperedgeMatch:
   val unalignedZonesDir = os.pwd / "src" / "main" / "outputs" / "unalignedZones"
   val JSONFiles = os.list(unalignedZonesDir).filter(e => os.isFile(e))
   for uzFilename <- JSONFiles do
-    println(uzFilename)
+    // println(uzFilename)
     val darwinReadings: List[List[Token]] = readSpecifiedJsonData(uzFilename)
     val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
     val hg: Hypergraph[EdgeLabel, TokenRange] =
@@ -413,9 +435,9 @@ object HyperedgeMatch:
   val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "3287.json"
   // val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "4154.json"
   val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
-  darwinReadings.foreach(e => println(e.map(_.t).mkString))
+  // darwinReadings.foreach(e => println(e.map(_.t).mkString))
   val nodesToCluster = clusterWitnesses(darwinReadings)
-  println(nodesToCluster)
+  // println(nodesToCluster)
   val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
   val dg = hg.toDependencyGraph()
   dependencyGraphToDot(dg, hg)
