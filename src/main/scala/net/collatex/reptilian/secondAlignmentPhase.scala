@@ -123,6 +123,18 @@ enum MatchesSide:
 case class DecisionGraphStepPhase2(pos1: OrderPosition, pos2: OrderPosition)
 type OrderPosition = Int
 
+/** Node is at end if either pointer is at end of list
+  *
+  * @param node
+  *   : DecisionGraphStepPhase2
+  * @param max
+  *   : Int
+  * @return
+  *   Boolean
+  */
+def nodeAtEnd(node: DecisionGraphStepPhase2, max: Int): Boolean =
+  node.pos1 == max - 1 || node.pos2 == max - 1
+
 def createDecisionGraphPhase2(
     order1: List[HyperedgeMatch],
     order2: List[HyperedgeMatch]
@@ -133,15 +145,14 @@ def createDecisionGraphPhase2(
   val g = Graph.node(start) + Graph.node(end)
   @tailrec
   def step(
-      mostRecentNodes: Set[DecisionGraphStepPhase2],
+      nodesToProcess: Set[DecisionGraphStepPhase2],
       graph: Graph[DecisionGraphStepPhase2]
   ): Graph[DecisionGraphStepPhase2] =
-    if graph.leafs() == Set[DecisionGraphStepPhase2](end)
+    if nodesToProcess.isEmpty
     then graph
     else
-      // RESUME HERE 2025-03-25
-      // We are not yet handling ends of order1 and order 2
-      val currentNode = mostRecentNodes.head
+      val currentNode = nodesToProcess.head
+      println(nodesToProcess)
       val newDecision1: DecisionGraphStepPhase2 =
         val newPos1 = currentNode.pos1 + 1
         val newPos2 = order2.indexOf(order1(newPos1))
@@ -150,14 +161,23 @@ def createDecisionGraphPhase2(
         val newPos2 = currentNode.pos2 + 1
         val newPos1 = order1.indexOf(order2(newPos2))
         DecisionGraphStepPhase2(newPos1, newPos2)
-      val newSubgraph = Graph.node(currentNode) * 
+        // RESUME HERE 2025-03-25
+        // FIXME: We create new decisions that sometimes look back in the
+        // other order, which isn't correct. Instead of + below, do a
+        // fold, filtering by comparing position to current position
+      val newSubgraph: Graph[DecisionGraphStepPhase2] = Graph.node(currentNode) *
         (Graph.node(newDecision1) + Graph.node(newDecision2))
-      val newMostRecentNodes: Set[DecisionGraphStepPhase2] = 
-        mostRecentNodes.tail + newDecision1 + newDecision2
-      val newGraph: Graph[DecisionGraphStepPhase2] = graph + newSubgraph
-      step(newMostRecentNodes, newGraph)
+      val newNodesNotAtEnd: Set[DecisionGraphStepPhase2] = Set(newDecision1, newDecision2)
+        .filterNot(e => nodeAtEnd(e, max))
+      val newNodesToProcess: Set[DecisionGraphStepPhase2] =
+        nodesToProcess.tail ++ newNodesNotAtEnd
+      val newEdgesToEnd: Graph[DecisionGraphStepPhase2] =
+        (Set(newDecision1, newDecision2) -- newNodesNotAtEnd)
+          .foldLeft(Graph.empty[DecisionGraphStepPhase2])((y, x) => Graph.edge(source = x, target = end) + y)
+      val newGraph: Graph[DecisionGraphStepPhase2] = graph + newSubgraph + newEdgesToEnd
+      step(newNodesToProcess, newGraph)
 
-  step(mostRecentNodes = Set(start), graph = g)
+  step(nodesToProcess = Set(start), graph = g)
   // Nodes
 
   println(s"Decision graph: $g")
