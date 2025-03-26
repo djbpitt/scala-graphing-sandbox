@@ -84,11 +84,13 @@ enum Graph[N]:
       case (_: EmptyGraph[N], other: Graph[N]) => other
       case (one: Graph[N], _: EmptyGraph[N])   => one
       case (one: Graph[N], other: Graph[N])    =>
-        // convert graphs into two maps so that we can merge the graphs
-        val m1 = one.toMap
-        val m2 = other.toMap
-        // create a new graph with the entries combined
-        DirectedGraph(m1 |+| m2)
+        if one == other then one
+        else
+          // convert graphs into two maps so that we can merge the graphs
+          val m1 = one.toMap
+          val m2 = other.toMap
+          // create a new graph with the entries combined
+          DirectedGraph(m1 |+| m2)
 
   // Connects two graphs with one or more edges.
   @targetName("connect")
@@ -117,7 +119,7 @@ enum Graph[N]:
         other.roots().foreach(node => incoming(node) = Set(one.node))
         outgoing(one.node) = other.roots()
         // val result = the combination of outgoing and incoming per node
-        val keys = outgoing.keySet union incoming.keySet
+        val keys = outgoing.keySet intersect incoming.keySet
         val pairs = for key <- keys yield key -> (incoming(key), outgoing(key))
         val result = pairs.toMap
 
