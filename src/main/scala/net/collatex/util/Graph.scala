@@ -119,7 +119,7 @@ enum Graph[N]:
         other.roots().foreach(node => incoming(node) = Set(one.node))
         outgoing(one.node) = other.roots()
         // val result = the combination of outgoing and incoming per node
-        val keys = outgoing.keySet intersect incoming.keySet
+        val keys = outgoing.keySet union incoming.keySet
         val pairs = for key <- keys yield key -> (incoming(key), outgoing(key))
         val result = pairs.toMap
 
