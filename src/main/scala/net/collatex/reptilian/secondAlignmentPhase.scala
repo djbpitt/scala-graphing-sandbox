@@ -152,7 +152,8 @@ def createDecisionGraphPhase2(
     then graph
     else
       val currentNode = nodesToProcess.head
-      println(nodesToProcess)
+      println(s"currentNode: $currentNode")
+      println(s"nodesToProcess: $nodesToProcess")
       val newDecision1: DecisionGraphStepPhase2 =
         val newPos1 = currentNode.pos1 + 1
         val newPos2 = order2.indexOf(order1(newPos1))
@@ -161,8 +162,10 @@ def createDecisionGraphPhase2(
         val newPos2 = currentNode.pos2 + 1
         val newPos1 = order1.indexOf(order2(newPos2))
         DecisionGraphStepPhase2(newPos1, newPos2)
+      println(s"all decisions: ${Set(newDecision1, newDecision2)}")
       val validDecisions = Set(newDecision1, newDecision2)
-        .filter(e => e.pos1 >= currentNode.pos1 & e.pos2 >= currentNode.pos2)
+        .filter(e => e.pos1 >= currentNode.pos1 && e.pos2 >= currentNode.pos2)
+      println(s"validDecisions: $validDecisions")
       val newSubgraph: Graph[DecisionGraphStepPhase2] = Graph.node(currentNode) *
         validDecisions
           .map(e => Graph.node(e))
