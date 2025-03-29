@@ -161,18 +161,18 @@ def createDecisionGraphPhase2(
         val newPos2 = currentNode.pos2 + 1
         val newPos1 = order1.indexOf(order2(newPos2))
         DecisionGraphStepPhase2(newPos1, newPos2)
-        // RESUME HERE 2025-03-25
-        // FIXME: We create new decisions that sometimes look back in the
-        // other order, which isn't correct. Instead of + below, do a
-        // fold, filtering by comparing position to current position
+      val validDecisions = Set(newDecision1, newDecision2)
+        .filter(e => e.pos1 >= currentNode.pos1 & e.pos2 >= currentNode.pos2)
       val newSubgraph: Graph[DecisionGraphStepPhase2] = Graph.node(currentNode) *
-        (Graph.node(newDecision1) + Graph.node(newDecision2))
-      val newNodesNotAtEnd: Set[DecisionGraphStepPhase2] = Set(newDecision1, newDecision2)
+        validDecisions
+          .map(e => Graph.node(e))
+          .foldLeft(Graph.empty[DecisionGraphStepPhase2])(_ + _)
+      val newNodesNotAtEnd: Set[DecisionGraphStepPhase2] = validDecisions
         .filterNot(e => nodeAtEnd(e, max))
       val newNodesToProcess: Set[DecisionGraphStepPhase2] =
         nodesToProcess.tail ++ newNodesNotAtEnd
       val newEdgesToEnd: Graph[DecisionGraphStepPhase2] =
-        (Set(newDecision1, newDecision2) -- newNodesNotAtEnd)
+        (validDecisions -- newNodesNotAtEnd)
           .foldLeft(Graph.empty[DecisionGraphStepPhase2])((y, x) => Graph.edge(source = x, target = end) + y)
       val newGraph: Graph[DecisionGraphStepPhase2] = graph + newSubgraph + newEdgesToEnd
       step(newNodesToProcess, newGraph)
