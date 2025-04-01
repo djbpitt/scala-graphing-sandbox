@@ -117,20 +117,20 @@ enum Graph[N]:
         // We are also missing non-root nodes here from other in the result
         // all the other.nodes need to point back to one.node
         val incomingWithNew: Map[N, Set[N]] =
-          incoming ++ other.roots().map(root => one.node -> Set(root))
+          incoming ++ other.roots().map(root => root -> Set(one.node))
         val outgoingWithNew: Map[N, Set[N]] =
           outgoing ++ Map(one.node -> other.roots())
         // val result = the combination of outgoing and incoming per node
         val keys = outgoingWithNew.keySet union incomingWithNew.keySet
-        val pairs = for key <- keys yield key -> (incomingWithNew(key), outgoingWithNew(key))
+        val pairs = for key <- keys yield key -> (incomingWithNew.getOrElse(key, Set()), outgoingWithNew(key))
         val result = pairs.toMap
-        println(s"result (adjacency map): $result")
+        // println(s"result (adjacency map): $result")
         DirectedGraph(result) + other
 
       case (one: Graph[N], other: SingleNodeGraph[N]) =>
         other * one
 
-      case (one: DirectedGraph[N], other: DirectedGraph[N]) =>
+      case (_: DirectedGraph[N], _: DirectedGraph[N]) =>
         throw new RuntimeException("Not implemented yet! Would be one leaves x other roots")
 
   def topologicalSort: Vector[N] =
@@ -182,3 +182,28 @@ enum Graph[N]:
             .max // only the largest
         acc + (e -> (highestParentRank + 1)) // new node is one greater than its source
       )
+
+extension [N](graph: Graph[N])
+  def asDot(toNodeLabel: N => String): String =
+    graph match
+      case Graph.EmptyGraph()          => "graph EMPTY {}"
+      case Graph.SingleNodeGraph(node) => s"graph SINGLE {\n${toNodeLabel(node)}\n}"
+      case Graph.DirectedGraph(adjacencyMap) =>
+        (
+          List("digraph G {") :::
+            adjacencyMap
+              .flatMap(asDotLines(toNodeLabel))
+              .toSet
+              .map(indent)
+              .toList
+              .sorted :::
+            List("}")
+        ).mkString("\n")
+
+private def asDotLines[N](toNodeLabel: N => String)(node: N, adjacentNodes: (Set[N], Set[N])): List[String] = {
+  val (incoming, outgoing) = adjacentNodes
+  incoming.toList.map(i => s"${toNodeLabel(i)} -> ${toNodeLabel(node)}") ++
+    outgoing.toList.map(o => s"${toNodeLabel(node)} -> ${toNodeLabel(o)}")
+}
+
+private def indent(l: String): String = s"  $l"

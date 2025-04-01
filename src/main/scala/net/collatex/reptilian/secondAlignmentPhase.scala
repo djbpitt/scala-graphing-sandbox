@@ -4,7 +4,7 @@ import net.collatex.reptilian.TokenEnum.*
 import net.collatex.reptilian.TokenRange.*
 import net.collatex.reptilian.createAlignedBlocks
 import net.collatex.util.Hypergraph.Hyperedge
-import net.collatex.util.{Graph, Hypergraph, SetOf2}
+import net.collatex.util.{Graph, Hypergraph, SetOf2, asDot}
 import os.Path
 import upickle.default.*
 
@@ -152,8 +152,8 @@ def createDecisionGraphPhase2(
     then graph
     else
       val currentNode = nodesToProcess.head
-      println(s"currentNode: $currentNode")
-      println(s"nodesToProcess: $nodesToProcess")
+//      println(s"currentNode: $currentNode")
+//      println(s"nodesToProcess: $nodesToProcess")
       val newDecision1: DecisionGraphStepPhase2 =
         val newPos1 = currentNode.pos1 + 1
         val newPos2 = order2.indexOf(order1(newPos1))
@@ -162,10 +162,10 @@ def createDecisionGraphPhase2(
         val newPos2 = currentNode.pos2 + 1
         val newPos1 = order1.indexOf(order2(newPos2))
         DecisionGraphStepPhase2(newPos1, newPos2)
-      println(s"all decisions: ${Set(newDecision1, newDecision2)}")
+//      println(s"all decisions: ${Set(newDecision1, newDecision2)}")
       val validDecisions = Set(newDecision1, newDecision2)
         .filter(e => e.pos1 >= currentNode.pos1 && e.pos2 >= currentNode.pos2)
-      println(s"validDecisions: $validDecisions")
+//      println(s"validDecisions: $validDecisions")
       val newSubgraph: Graph[DecisionGraphStepPhase2] = Graph.node(currentNode) *
         validDecisions
           .map(e => Graph.node(e))
@@ -183,7 +183,8 @@ def createDecisionGraphPhase2(
   val result = step(nodesToProcess = Set(start), graph = g)
   // Nodes
 
-  println(s"Decision graph: $result")
+  def toNodeLabel(n: DecisionGraphStepPhase2) = s"L${n.pos1}R${n.pos2}"
+  println(result.asDot(toNodeLabel))
 
 /** Adjust set of hyperedge matches to remove transpositions
   *
@@ -223,8 +224,8 @@ def traversalGraphPhase2(
           .tail // drop start …
           .dropRight(1) // … and end
       )
-    println("sorted rankings")
-    rankingsAsList.foreach(println)
+//    println("sorted rankings")
+//    rankingsAsList.foreach(println)
     // rankingsAsList.map(e => matches.find(_.contains(e.asInstanceOf[NodeType.Internal].label)).get)
     // Find original match that contains edge label from ranking
     val stuff2: List[List[HyperedgeMatch]] = rankingsAsList
