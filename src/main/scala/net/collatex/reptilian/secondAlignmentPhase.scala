@@ -180,10 +180,10 @@ def createDecisionGraphPhase2(
       val newGraph: Graph[DecisionGraphStepPhase2] = graph + newSubgraph + newEdgesToEnd
       step(newNodesToProcess, newGraph)
 
-  step(nodesToProcess = Set(start), graph = g)
+  val result = step(nodesToProcess = Set(start), graph = g)
   // Nodes
 
-  println(s"Decision graph: $g")
+  println(s"Decision graph: $result")
 
 /** Adjust set of hyperedge matches to remove transpositions
   *
