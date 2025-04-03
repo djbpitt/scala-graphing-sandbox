@@ -152,8 +152,6 @@ def createDecisionGraphPhase2(
     then graph
     else
       val currentNode = nodesToProcess.head
-//      println(s"currentNode: $currentNode")
-//      println(s"nodesToProcess: $nodesToProcess")
       val newDecision1: DecisionGraphStepPhase2 =
         val newPos1 = currentNode.pos1 + 1
         val newPos2 = order2.indexOf(order1(newPos1))
@@ -162,14 +160,18 @@ def createDecisionGraphPhase2(
         val newPos2 = currentNode.pos2 + 1
         val newPos1 = order1.indexOf(order2(newPos2))
         DecisionGraphStepPhase2(newPos1, newPos2)
-//      println(s"all decisions: ${Set(newDecision1, newDecision2)}")
-      val validDecisions = Set(newDecision1, newDecision2)
+      val skipNode: Option[DecisionGraphStepPhase2] =
+        if newDecision1 == newDecision2 // not needed if both decisions are the same
+        then None
+        else Some(DecisionGraphStepPhase2(newDecision1.pos1, newDecision2.pos2))
+      val validDecisions =
+        Set(Some(newDecision1), Some(newDecision2), skipNode)
+        .flatten // remove skipNode if None
         .filter(e => e.pos1 >= currentNode.pos1 && e.pos2 >= currentNode.pos2)
-//      println(s"validDecisions: $validDecisions")
-      val newSubgraph: Graph[DecisionGraphStepPhase2] = Graph.node(currentNode) *
-        validDecisions
-          .map(e => Graph.node(e))
-          .foldLeft(Graph.empty[DecisionGraphStepPhase2])(_ + _)
+      val newSubgraph: Graph[DecisionGraphStepPhase2] =
+        Graph.node(currentNode) * validDecisions
+            .map(e => Graph.node(e))
+            .foldLeft(Graph.empty[DecisionGraphStepPhase2])(_ + _)
       val newNodesNotAtEnd: Set[DecisionGraphStepPhase2] = validDecisions
         .filterNot(e => nodeAtEnd(e, max))
       val newNodesToProcess: Set[DecisionGraphStepPhase2] =
@@ -308,7 +310,7 @@ def splitAllHyperedges(
       // used to compute preLength and postLength
       val outerAndInnerRanges: Vector[(TokenRange, TokenRange)] =
         hesToSplit.map(_._2).zip(currentBlockRanges)
-      // Use preceding to obtain vector of tuples of pre and post token ranges
+      // Use preceding to obtain vector of tuples of pre- and post-token ranges
       val preAndPostMatch: Vector[(TokenRange, TokenRange)] =
         outerAndInnerRanges.map((outer, inner) =>
           if !(outer.contains(inner.start) && outer.contains(inner.until - 1)) then
@@ -318,7 +320,7 @@ def splitAllHyperedges(
             // Alternatively: filtering blocks
           else outer.splitTokenRange(inner)
         )
-      // Pair up each hyperedge to be split with pre and post token ranges
+      // Pair up each hyperedge to be split with pre- and post-token ranges
       val hes: Vector[(Hyperedge[EdgeLabel, TokenRange], (TokenRange, TokenRange))] =
         hesToSplit.map(_._1).zip(preAndPostMatch) // token range lengths are pre, post
       // Remove original hyperedges that will be replaced by their split results
