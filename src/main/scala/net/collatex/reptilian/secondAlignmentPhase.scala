@@ -1,10 +1,11 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.DGNodeType.{Alignment, Skip}
 import net.collatex.reptilian.TokenEnum.*
 import net.collatex.reptilian.TokenRange.*
 import net.collatex.reptilian.createAlignedBlocks
 import net.collatex.util.Hypergraph.Hyperedge
-import net.collatex.util.{Graph, Hypergraph, SetOf2, asDot}
+import net.collatex.util.{Graph, Hypergraph, SetOf2}
 import os.Path
 import upickle.default.*
 
@@ -120,8 +121,11 @@ enum MatchesSide:
   case first
   case second
 
-case class DecisionGraphStepPhase2(pos1: OrderPosition, pos2: OrderPosition)
+case class DecisionGraphStepPhase2(pos1: OrderPosition, pos2: OrderPosition, nodeType: DGNodeType)
 type OrderPosition = Int
+enum DGNodeType:
+  case Alignment
+  case Skip
 
 /** Node is at end if either pointer is at end of list
   *
@@ -140,8 +144,8 @@ def createDecisionGraphPhase2(
     order2: List[HyperedgeMatch]
 ): Unit =
   val max = order1.size // for end position
-  val start = DecisionGraphStepPhase2(-1, -1)
-  val end = DecisionGraphStepPhase2(max, max)
+  val start = DecisionGraphStepPhase2(-1, -1, Alignment)
+  val end = DecisionGraphStepPhase2(max, max, Alignment)
   val g = Graph.node(start) + Graph.node(end)
   @tailrec
   def step(
@@ -155,23 +159,22 @@ def createDecisionGraphPhase2(
       val newDecision1: DecisionGraphStepPhase2 =
         val newPos1 = currentNode.pos1 + 1
         val newPos2 = order2.indexOf(order1(newPos1))
-        DecisionGraphStepPhase2(newPos1, newPos2)
+        DecisionGraphStepPhase2(newPos1, newPos2, Alignment)
       val newDecision2: DecisionGraphStepPhase2 =
         val newPos2 = currentNode.pos2 + 1
         val newPos1 = order1.indexOf(order2(newPos2))
-        DecisionGraphStepPhase2(newPos1, newPos2)
+        DecisionGraphStepPhase2(newPos1, newPos2, Alignment)
       val skipNode: Option[DecisionGraphStepPhase2] =
         if newDecision1 == newDecision2 // not needed if both decisions are the same
         then None
-        else Some(DecisionGraphStepPhase2(newDecision1.pos1, newDecision2.pos2))
+        else Some(DecisionGraphStepPhase2(newDecision1.pos1, newDecision2.pos2, Skip))
       val validDecisions =
-        Set(Some(newDecision1), Some(newDecision2), skipNode)
-        .flatten // remove skipNode if None
-        .filter(e => e.pos1 >= currentNode.pos1 && e.pos2 >= currentNode.pos2)
+        Set(Some(newDecision1), Some(newDecision2), skipNode).flatten // remove skipNode if None
+          .filter(e => e.pos1 >= currentNode.pos1 && e.pos2 >= currentNode.pos2)
       val newSubgraph: Graph[DecisionGraphStepPhase2] =
         Graph.node(currentNode) * validDecisions
-            .map(e => Graph.node(e))
-            .foldLeft(Graph.empty[DecisionGraphStepPhase2])(_ + _)
+          .map(e => Graph.node(e))
+          .foldLeft(Graph.empty[DecisionGraphStepPhase2])(_ + _)
       val newNodesNotAtEnd: Set[DecisionGraphStepPhase2] = validDecisions
         .filterNot(e => nodeAtEnd(e, max))
       val newNodesToProcess: Set[DecisionGraphStepPhase2] =
@@ -185,8 +188,43 @@ def createDecisionGraphPhase2(
   val result = step(nodesToProcess = Set(start), graph = g)
   // Nodes
 
-  def toNodeLabel(n: DecisionGraphStepPhase2) = s"L${n.pos1}R${n.pos2}"
-  println(result.asDot(toNodeLabel))
+  println(result.asDot(toNodeInfo))
+
+extension [N](graph: Graph[N])
+  def asDot(toNodeInfo: N => NodeInfo): String =
+    graph match
+      case Graph.EmptyGraph()          => "graph EMPTY {}"
+      case Graph.SingleNodeGraph(node) => s"graph SINGLE {\n${toNodeInfo(node)}\n}"
+      case Graph.DirectedGraph(adjacencyMap) =>
+        (
+          List("digraph G {") :::
+            adjacencyMap
+              .flatMap(asDotLines(e => toNodeInfo(e)))
+              .toSet
+              .map(indent)
+              .toList
+              .sorted :::
+            List("}")
+        ).mkString("\n")
+
+def dotNodeType[N](n: N): DGNodeType = n.asInstanceOf[DecisionGraphStepPhase2].nodeType
+def asDotLines[N](toNodeInfo: N => NodeInfo)(node: N, adjacentNodes: (Set[N], Set[N])): List[String] = {
+  val (incoming, outgoing) = adjacentNodes
+  incoming.toList.map(i => s"${toNodeInfo(i).id.replace('-', 'm')} -> ${toNodeInfo(node).id}") ++
+    outgoing.toList.map(o => s"${toNodeInfo(node).id.replace('-', 'm')} -> ${toNodeInfo(o).id}") ++
+    ((incoming ++ outgoing).toList map (node =>
+      val bgColor = node.asInstanceOf[DecisionGraphStepPhase2].nodeType match
+        case Alignment => "lightblue"
+        case Skip => "lightpink"
+      val id = s"L${node.asInstanceOf[DecisionGraphStepPhase2].pos1}R${node.asInstanceOf[DecisionGraphStepPhase2].pos2}"
+      s"${id.replace('-', 'm')} [style=\"filled\"; fillcolor=\"$bgColor\"]"
+    ))
+}
+
+def indent(l: String): String = s"  $l"
+
+case class NodeInfo(id: String, nodeType: DGNodeType)
+def toNodeInfo(n: DecisionGraphStepPhase2) = NodeInfo(s"L${n.pos1}R${n.pos2}", n.nodeType)
 
 /** Adjust set of hyperedge matches to remove transpositions
   *

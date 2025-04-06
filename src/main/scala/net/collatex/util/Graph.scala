@@ -1,6 +1,7 @@
 package net.collatex.util
 
 import cats.implicits.catsSyntaxSemigroup
+import net.collatex.reptilian.{DGNodeType, NodeInfo}
 
 import scala.annotation.{tailrec, targetName}
 import scala.collection.immutable.Set
@@ -182,28 +183,3 @@ enum Graph[N]:
             .max // only the largest
         acc + (e -> (highestParentRank + 1)) // new node is one greater than its source
       )
-
-extension [N](graph: Graph[N])
-  def asDot(toNodeLabel: N => String): String =
-    graph match
-      case Graph.EmptyGraph()          => "graph EMPTY {}"
-      case Graph.SingleNodeGraph(node) => s"graph SINGLE {\n${toNodeLabel(node)}\n}"
-      case Graph.DirectedGraph(adjacencyMap) =>
-        (
-          List("digraph G {") :::
-            adjacencyMap
-              .flatMap(asDotLines(toNodeLabel))
-              .toSet
-              .map(indent)
-              .toList
-              .sorted :::
-            List("}")
-        ).mkString("\n")
-
-private def asDotLines[N](toNodeLabel: N => String)(node: N, adjacentNodes: (Set[N], Set[N])): List[String] = {
-  val (incoming, outgoing) = adjacentNodes
-  incoming.toList.map(i => s"${toNodeLabel(i)} -> ${toNodeLabel(node)}") ++
-    outgoing.toList.map(o => s"${toNodeLabel(node)} -> ${toNodeLabel(o)}")
-}
-
-private def indent(l: String): String = s"  $l"
