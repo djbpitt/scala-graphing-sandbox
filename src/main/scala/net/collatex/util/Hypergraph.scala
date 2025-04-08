@@ -82,7 +82,8 @@ enum Hypergraph[L, V]:
       case _: EmptyHypergraph[L, V]         => Set.empty
       case OnlyVerticesHypergraph(vertices) => vertices
       case Hyperedge(_, vertices)           => vertices
-      case FullHypergraph(_, im2)           => im2.keySet
+      // case FullHypergraph(_, im2)           => im2.keySet
+      case FullHypergraph(im1, _)           => im1.values.flatten.toSet
 
   // returns all the hyperedges contained in this hypergraph
   def hyperedges: Set[Hyperedge[L, V]] =
@@ -166,7 +167,8 @@ object Hypergraph:
     if incidenceMap.size == 1 then
       Hyperedge(incidenceMap.head._1, incidenceMap.head._2)
     else
-      FullHypergraph(incidenceMap, MultiDict.from(input.map((l, v) => (v, l))).sets)
+      // FullHypergraph(incidenceMap, MultiDict.from(input.map((l, v) => (v, l))).sets)
+      FullHypergraph(incidenceMap, Map())
 
 @main def main(): Unit =
   val hypergraph = Hypergraph.vertices[String, Int](1)
