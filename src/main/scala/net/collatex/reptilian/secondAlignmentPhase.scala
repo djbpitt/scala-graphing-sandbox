@@ -165,7 +165,7 @@ def createDecisionGraphPhase2(
         val newPos1 = order1.indexOf(order2(newPos2))
         DecisionGraphStepPhase2(newPos1, newPos2, Alignment)
       val skipNode: Option[DecisionGraphStepPhase2] =
-        if newDecision1 == newDecision2 // not needed if both decisions are the same
+        if currentNode.nodeType == Skip || newDecision1 == newDecision2
         then None
         else Some(DecisionGraphStepPhase2(newDecision1.pos1, newDecision2.pos2, Skip))
       val validDecisions =
@@ -224,7 +224,8 @@ def asDotLines[N](toNodeInfo: N => NodeInfo)(node: N, adjacentNodes: (Set[N], Se
 def indent(l: String): String = s"  $l"
 
 case class NodeInfo(id: String, nodeType: DGNodeType)
-def toNodeInfo(n: DecisionGraphStepPhase2) = NodeInfo(s"L${n.pos1}R${n.pos2}", n.nodeType)
+def toNodeInfo(n: DecisionGraphStepPhase2) =
+  NodeInfo(s"L${n.pos1}R${n.pos2}", n.nodeType)
 
 /** Adjust set of hyperedge matches to remove transpositions
   *
