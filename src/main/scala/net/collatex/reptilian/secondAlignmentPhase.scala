@@ -317,8 +317,8 @@ def insertSeparators(HGTokens: Vector[Vector[TokenEnum]]): Vector[TokenEnum] =
 def createHgTa = insertSeparators compose identifyHGTokenRanges
 
 def splitAllHyperedges(
-    bothHgs: Hypergraph[EdgeLabel, TokenRange],
-    blocks: Iterable[FullDepthBlock]
+    bothHgs: Hypergraph[EdgeLabel, TokenRange], // what to split
+    blocks: Iterable[FullDepthBlock] // where to split it
 ): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
   val gTa = bothHgs.verticesIterator.next.ta
   @tailrec

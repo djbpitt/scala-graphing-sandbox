@@ -143,7 +143,7 @@ def removeOverlappingBlocks(fullDepthBlocks: List[FullDepthBlock]): Iterable[Ful
     .values
     .map(fdBlocks => fdBlocks.maxBy(_.length))
 
-// When working with full-depth blocks it uses witnessCount; when processing
+// FIXME: When working with full-depth blocks it uses witnessCount; when processing
 // SingletonTree and not using full-depth, it requires witnessCount but doesn’t use it
 def createAlignedBlocks(
     tokenArray: Vector[TokenEnum],
@@ -155,6 +155,7 @@ def createAlignedBlocks(
   val lcpArray = calculateLcpArrayKasai(tokenArray.map(_.n), suffixArray)
   val blocks = createBlocks(lcpArray)
   val witnessesOfBlock = findWitnessesOfBlock(suffixArray, tokenArray) // Partially applied, requires Block
+  // Change to adaptable definition of full depth instead of hard-coding original witness count
   val tmpFullDepthNonrepeatingBlocks =
     if keepOnlyFullDepth then
       blocks
@@ -169,6 +170,8 @@ def createAlignedBlocks(
   val blockStartPositions = tmpFullDepthNonrepeatingBlocks
     .map((block, _) => suffixArray.slice(block.start, block.end + 1))
     .map(_.sorted)
+  // RESUME HERE 2025-04-18 Perhaps keep code above but, for phase 2,
+  // include hyperedge and token range information
   val annoyingInterimVariable = (blockStartPositions lazyZip blockLengths)
     .map((starts, length) => FullDepthBlock(starts.toVector, length))
   (blocks, suffixArray, removeOverlappingBlocks(annoyingInterimVariable))
