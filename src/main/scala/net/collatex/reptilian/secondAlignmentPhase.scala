@@ -302,7 +302,6 @@ def createLocalTA(
 }
 
 def identifyHGTokenRanges(y: Hypergraph[EdgeLabel, TokenRange]): Vector[Vector[TokenHG]] =
-  // val HGTokenRange = y.hyperedgeLabels map (e => (e, y.members(e).head)) // one token range per hyperedge
   val HGTokenRange: Set[(EdgeLabel, TokenRange)] = y.hyperedges map (e => (e.label, e.verticesIterator.next()))
   val HGTokens: Vector[Vector[TokenHG]] = HGTokenRange.toVector
     .map((id, tr) => tr.tokens.map(f => TokenHG(f.t, f.n, f.w, f.g, id)))
