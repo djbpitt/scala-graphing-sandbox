@@ -22,15 +22,10 @@ extension (hg: Hypergraph[EdgeLabel, TokenRange])
     // Find hyperedge that contains that tokenRange
     // val resultTr = hg.vertices.find(e => e.contains(instance)).get
     // val resultHe = hg.hyperedges.find(e => e.vertices.contains(resultTr)).get
-    def findTr(e: Hypergraph.Hyperedge[EdgeLabel, TokenRange]): Option[TokenRange] =
-      e.verticesIterator.find(_.contains(instance))
+    def findTr(e: Hypergraph.Hyperedge[EdgeLabel, TokenRange]): Option[(Hyperedge[EdgeLabel, TokenRange], TokenRange)] =
+      e.verticesIterator.find(_.contains(instance)).map(tr => (e, tr))
     val result: (Hyperedge[EdgeLabel, TokenRange], TokenRange) =
-      hg.hyperedges.foldLeft
-        (List.empty[(Hyperedge[EdgeLabel, TokenRange], TokenRange)])
-        ((y, x) => findTr(x) match
-          case Some(tr) => (x, tr) :: y
-          case None => y
-        ).head
+      hg.hyperedges.map(he => findTr(he)).find(_.isDefined).get.get
     result
 
   def toDependencyGraph(debug: Boolean = false): Graph[NodeType] =
