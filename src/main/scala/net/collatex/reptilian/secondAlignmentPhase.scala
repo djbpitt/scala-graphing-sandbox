@@ -304,7 +304,7 @@ def createLocalTA(
 def identifyHGTokenRanges(y: Hypergraph[EdgeLabel, TokenRange]): Vector[Vector[TokenHG]] =
   val HGTokenRange: Set[(EdgeLabel, TokenRange)] = y.hyperedges map (e => (e.label, e.verticesIterator.next()))
   val HGTokens: Vector[Vector[TokenHG]] = HGTokenRange.toVector
-    .map((id, tr) => tr.tokens.map(f => TokenHG(f.t, f.n, f.w, f.g, id)))
+    .map((id, tr) => tr.tokens.map(f => TokenHG(f.t, f.n, f.w, f.g, id, tr)))
   HGTokens
 
 def insertSeparators(HGTokens: Vector[Vector[TokenEnum]]): Vector[TokenEnum] =
