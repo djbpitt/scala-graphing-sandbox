@@ -9,7 +9,7 @@ def convertMatch(
     block: FullDepthBlock
 ): Vector[Hypergraph[EdgeLabel, TokenRange]] =
   // convert match into two TokenRanges
-  val gTa = hypergraph.vertices.head.ta
+  val gTa = hypergraph.verticesIterator.next.ta
   val matchTokenRanges = block.toTokenRanges(gTa)
   // each match has a vector with token ranges associated with it
   // for each token range find the associated hyperedge in the graph
@@ -40,7 +40,7 @@ def validateData(
   val hesAsSets = allResults
     .map(e =>
       e
-        .flatMap(_.vertices)
+        .flatMap(_.verticesIterator)
         .flatMap(f => Range(f.start, f.until))
         .toSet
     )

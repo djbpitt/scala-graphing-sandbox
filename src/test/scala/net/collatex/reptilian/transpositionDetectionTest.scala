@@ -45,30 +45,7 @@ class transpositionDetectionTest extends AnyFunSuite:
           EdgeLabel(256) -> Set(LegalTokenRange(256, 259, gTa), LegalTokenRange(356, 359, gTa)), // Block 1
           EdgeLabel(259) -> Set(LegalTokenRange(259, 260, gTa), LegalTokenRange(359, 360, gTa))
         ),
-        Map(
-          LegalTokenRange(10, 20, gTa) -> Set(EdgeLabel(10)),
-          LegalTokenRange(30, 40, gTa) -> Set(EdgeLabel(30)),
-          LegalTokenRange(40, 43, gTa) -> Set(EdgeLabel(40)),
-          LegalTokenRange(43, 60, gTa) -> Set(EdgeLabel(43)),
-          LegalTokenRange(60, 63, gTa) -> Set(EdgeLabel(60)),
-          LegalTokenRange(63, 70, gTa) -> Set(EdgeLabel(63)),
-          LegalTokenRange(110, 120, gTa) -> Set(EdgeLabel(10)),
-          LegalTokenRange(130, 140, gTa) -> Set(EdgeLabel(30)),
-          LegalTokenRange(140, 143, gTa) -> Set(EdgeLabel(40)),
-          LegalTokenRange(143, 160, gTa) -> Set(EdgeLabel(43)),
-          LegalTokenRange(160, 163, gTa) -> Set(EdgeLabel(60)),
-          LegalTokenRange(163, 170, gTa) -> Set(EdgeLabel(63)),
-          LegalTokenRange(250, 252, gTa) -> Set(EdgeLabel(250)),
-          LegalTokenRange(252, 255, gTa) -> Set(EdgeLabel(252)),
-          LegalTokenRange(255, 256, gTa) -> Set(EdgeLabel(255)),
-          LegalTokenRange(256, 259, gTa) -> Set(EdgeLabel(256)),
-          LegalTokenRange(259, 260, gTa) -> Set(EdgeLabel(259)),
-          LegalTokenRange(350, 352, gTa) -> Set(EdgeLabel(250)),
-          LegalTokenRange(352, 355, gTa) -> Set(EdgeLabel(252)),
-          LegalTokenRange(355, 356, gTa) -> Set(EdgeLabel(255)),
-          LegalTokenRange(356, 359, gTa) -> Set(EdgeLabel(256)),
-          LegalTokenRange(359, 360, gTa) -> Set(EdgeLabel(259))
-        )
+        Set.empty
       ),
       Set(
         HyperedgeMatch(

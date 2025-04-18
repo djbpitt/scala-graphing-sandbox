@@ -37,7 +37,7 @@ def mergeSingletonHG(
     debug: Boolean
 ): Hypergraph[EdgeLabel, TokenRange] =
   val singletonAsTokenRange =
-    TokenRange(start = singletonTokens.head.g, until = singletonTokens.last.g + 1, ta = hg.vertices.head.ta)
+    TokenRange(start = singletonTokens.head.g, until = singletonTokens.last.g + 1, ta = hg.verticesIterator.next.ta)
   mergeHgHg(hg, AlignmentHyperedge(Set(singletonAsTokenRange)), debug)
 
 def mergeHgHg(
@@ -49,7 +49,7 @@ def mergeHgHg(
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
   val blocksGTa = blocks.map(e => e.remapBlockToGTa(lTa))
-  val gTa = bothHgs.vertices.head.ta
+  val gTa = bothHgs.verticesIterator.next.ta
   val allSplitHyperedges: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
     splitAllHyperedges(bothHgs, blocksGTa) // .filter(e => gTa(e.instances.head).n != "many")
   val matchesAsSet = allSplitHyperedges._2
@@ -72,7 +72,7 @@ def mergeHgHg(
   else
     val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
       // FIXME: If only one token, don’t add both head and last, which are the same
-      .map(e => AlignmentHyperedge(e.head.vertices ++ e.last.vertices)) // NB: new hyperedge
+      .map(e => AlignmentHyperedge(e.head.verticesIterator.toSet ++ e.last.verticesIterator.toSet)) // NB: new hyperedge
       .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
     val hgWithMergeResults = allSplitHyperedges._1 // Original full hypergraph
       - matchesAsHg // Remove hyperedges that will be merged
@@ -320,7 +320,7 @@ def splitAllHyperedges(
     bothHgs: Hypergraph[EdgeLabel, TokenRange],
     blocks: Iterable[FullDepthBlock]
 ): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
-  val gTa = bothHgs.vertices.head.ta
+  val gTa = bothHgs.verticesIterator.next.ta
   @tailrec
   def processBlock(
       blockQueue: Vector[FullDepthBlock],
@@ -372,10 +372,10 @@ def splitAllHyperedges(
 
       val matchCandidates: Set[Hyperedge[EdgeLabel, TokenRange]] =
         newHg.hyperedges
-          .filter(_.vertices.intersect(currentBlockRanges.toSet).nonEmpty)
+          .filter(_.verticesIterator.toSet.intersect(currentBlockRanges.toSet).nonEmpty)
       // TODO: Make this less clunky
       def isSpuriousMatch(candidates: Set[Hyperedge[EdgeLabel, TokenRange]]): Boolean =
-        candidates.head.vertices.map(_.tokens.head.w).intersect(candidates.last.vertices.map(_.tokens.head.w)).nonEmpty
+        candidates.head.verticesIterator.map(_.tokens.head.w).toSet.intersect(candidates.last.verticesIterator.map(_.tokens.head.w).toSet).nonEmpty
       val newMatches: Set[HyperedgeMatch] =
         if isSpuriousMatch(matchCandidates) then matches
         else matches + HyperedgeMatch(matchCandidates) // remove old matches and add new split results
@@ -384,7 +384,7 @@ def splitAllHyperedges(
   processBlock(blocks.toVector.filter(e => e.instances.size == 2), bothHgs, Set.empty[HyperedgeMatch])
 
 def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange]): Unit =
-  val gTa = hg.vertices.head.ta
+  val gTa = hg.verticesIterator.next.ta
   val hgDg = hg.toDependencyGraph()
   val fullHgRanking = hg.rank() // FIXME: creates yet another dependency graph internally
   val edges = hgDg.toMap map ((k, v) => k -> v._2)
@@ -396,7 +396,7 @@ def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange]): Unit
       source match
         case x if Set(NodeType("starts"), NodeType("ends")).contains(x) => allWitnesses
         case _ =>
-          hg(EdgeLabel(source)).get.vertices
+          hg(EdgeLabel(source)).get.verticesIterator
             .map(_.start)
             .map(e => gTa(e).w)
     @tailrec
@@ -411,11 +411,11 @@ def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange]): Unit
           targets.head match
             case x if Set(NodeType("starts"), NodeType("ends")).contains(x) => allWitnesses
             case _ =>
-              hg(EdgeLabel(targets.head)).get.vertices
+              hg(EdgeLabel(targets.head)).get.verticesIterator
                 .map(_.start)
                 .map(e => gTa(e).w)
-        val newEdgesForSource = edgesForSource :+ (witnessesOnSource intersect
-          witnessesOnTarget diff
+        val newEdgesForSource = edgesForSource :+ (witnessesOnSource.toSet intersect
+          witnessesOnTarget.toSet diff
           witnessesSeen)
         val newWitnessesSeen = witnessesSeen ++ witnessesOnTarget
         processEdge(targets.tail, newEdgesForSource, newWitnessesSeen)

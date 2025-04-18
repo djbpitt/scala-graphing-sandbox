@@ -55,14 +55,7 @@ class AlignmentHyperedgeTest extends AnyFunSuite:
           LegalTokenRange(23, 30, fakeGTa)
         )
       ),
-      Map(
-        LegalTokenRange(0, 3, fakeGTa) -> Set(EdgeLabel(0)),
-        LegalTokenRange(10, 13, fakeGTa) -> Set(EdgeLabel(0)),
-        LegalTokenRange(20, 23, fakeGTa) -> Set(EdgeLabel(0)),
-        LegalTokenRange(3, 10, fakeGTa) -> Set(EdgeLabel(3)),
-        LegalTokenRange(13, 20, fakeGTa) -> Set(EdgeLabel(3)),
-        LegalTokenRange(23, 30, fakeGTa) -> Set(EdgeLabel(3))
-      )
+      Set.empty
     )
     val result = he.split(3, 7, 0)
     assert(result == expected)
@@ -81,14 +74,7 @@ class AlignmentHyperedgeTest extends AnyFunSuite:
           LegalTokenRange(27, 30, fakeGTa)
         )
       ),
-      Map(
-        LegalTokenRange(0, 7, fakeGTa) -> Set(EdgeLabel(0)),
-        LegalTokenRange(10, 17, fakeGTa) -> Set(EdgeLabel(0)),
-        LegalTokenRange(20, 27, fakeGTa) -> Set(EdgeLabel(0)),
-        LegalTokenRange(7, 10, fakeGTa) -> Set(EdgeLabel(7)),
-        LegalTokenRange(17, 20, fakeGTa) -> Set(EdgeLabel(7)),
-        LegalTokenRange(27, 30, fakeGTa) -> Set(EdgeLabel(7))
-      )
+      Set.empty
     )
     val result = he.split(0, 7, 3)
     assert(result == expected)
@@ -112,17 +98,7 @@ class AlignmentHyperedgeTest extends AnyFunSuite:
           LegalTokenRange(27, 30, fakeGTa)
         )
       ),
-      Map(
-        LegalTokenRange(0, 3, fakeGTa) -> Set(EdgeLabel(0)),
-        LegalTokenRange(10, 13, fakeGTa) -> Set(EdgeLabel(0)),
-        LegalTokenRange(20, 23, fakeGTa) -> Set(EdgeLabel(0)),
-        LegalTokenRange(3, 7, fakeGTa) -> Set(EdgeLabel(3)),
-        LegalTokenRange(23, 27, fakeGTa) -> Set(EdgeLabel(3)),
-        LegalTokenRange(13, 17, fakeGTa) -> Set(EdgeLabel(3)),
-        LegalTokenRange(7, 10, fakeGTa) -> Set(EdgeLabel(7)),
-        LegalTokenRange(17, 20, fakeGTa) -> Set(EdgeLabel(7)),
-        LegalTokenRange(27, 30, fakeGTa) -> Set(EdgeLabel(7))
-      )
+      Set.empty
     )
     val result = he.split(3, 4, 3)
     assert(result == expected)
@@ -146,17 +122,7 @@ class AlignmentHyperedgeTest extends AnyFunSuite:
           IllegalTokenRange(28, 31, fakeGTa)
         )
       ),
-      Map(
-        LegalTokenRange(0, 3, fakeGTa) -> Set(EdgeLabel(0)),
-        LegalTokenRange(10, 13, fakeGTa) -> Set(EdgeLabel(0)),
-        LegalTokenRange(20, 23, fakeGTa) -> Set(EdgeLabel(0)),
-        LegalTokenRange(3, 8, fakeGTa) -> Set(EdgeLabel(3)),
-        LegalTokenRange(13, 18, fakeGTa) -> Set(EdgeLabel(3)),
-        LegalTokenRange(23, 28, fakeGTa) -> Set(EdgeLabel(3)),
-        IllegalTokenRange(8, 11, fakeGTa) -> Set(EdgeLabel(8)),
-        IllegalTokenRange(18, 21, fakeGTa) -> Set(EdgeLabel(8)),
-        IllegalTokenRange(28, 31, fakeGTa) -> Set(EdgeLabel(8))
-      )
+      Set.empty
     )
 
     val result = he.split(3, 5, 3) // values should sum to 10

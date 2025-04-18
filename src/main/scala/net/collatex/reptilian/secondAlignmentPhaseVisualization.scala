@@ -6,7 +6,7 @@ import scala.collection.mutable.ListBuffer
 import scala.xml.dtd.DocType
 
 def createSecondAlignmentPhaseVisualization(hg: Hypergraph[EdgeLabel, TokenRange]): Unit =
-  val gTa = hg.vertices.head.ta
+  val gTa = hg.verticesIterator.next.ta
   val id: String = hg.hyperedges.head.label.toString // unique id for hg
   // println(s"hypergraph: $hg")
   val ranking: Map[NodeType, Int] = hg.rank()
@@ -16,7 +16,7 @@ def createSecondAlignmentPhaseVisualization(hg: Hypergraph[EdgeLabel, TokenRange
     .map(e =>
       val wg = hyperedgesByRank(e) // set of hyperedges, one per witness group on alignment point
         .map(f =>
-          f.vertices
+          f.verticesIterator
             .map(tr =>
               val witness: Siglum = Siglum(gTa(tr.start).w.toString)
               witness -> tr
