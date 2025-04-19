@@ -215,7 +215,7 @@ def asDotLines[N](toNodeInfo: N => NodeInfo)(node: N, adjacentNodes: (Set[N], Se
     ((incoming ++ outgoing).toList map (node =>
       val bgColor = node.asInstanceOf[DecisionGraphStepPhase2].nodeType match
         case Alignment => "lightblue"
-        case Skip => "lightpink"
+        case Skip      => "lightpink"
       val id = s"L${node.asInstanceOf[DecisionGraphStepPhase2].pos1}R${node.asInstanceOf[DecisionGraphStepPhase2].pos2}"
       s"${id.replace('-', 'm')} [style=\"filled\"; fillcolor=\"$bgColor\"]"
     ))
@@ -316,6 +316,28 @@ def insertSeparators(HGTokens: Vector[Vector[TokenEnum]]): Vector[TokenEnum] =
 
 def createHgTa = insertSeparators compose identifyHGTokenRanges
 
+def splitHesOnAlignedPatterns(
+    bothHgs: Hypergraph[EdgeLabel, TokenRange], // what to split
+    patterns: Iterable[AlignedPatternPhaseTwo] // how to split it
+): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
+  val gTa = bothHgs.verticesIterator.next.ta
+  @tailrec
+  def processPattern(
+      patternQueue: Vector[AlignedPatternPhaseTwo],
+      hgTmp: Hypergraph[EdgeLabel, TokenRange],
+      matches: Set[HyperedgeMatch]
+  ): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
+    if patternQueue.isEmpty
+    then (hgTmp, matches)
+    else processPattern(patternQueue.tail, hgTmp, matches)
+  processPattern(
+    patterns
+      .toVector
+      .filter(e => e.occurrences.size == 2),
+    bothHgs,
+    Set.empty[HyperedgeMatch]
+  )
+
 def splitAllHyperedges(
     bothHgs: Hypergraph[EdgeLabel, TokenRange], // what to split
     blocks: Iterable[FullDepthBlock] // where to split it
@@ -375,7 +397,11 @@ def splitAllHyperedges(
           .filter(_.verticesIterator.toSet.intersect(currentBlockRanges.toSet).nonEmpty)
       // TODO: Make this less clunky
       def isSpuriousMatch(candidates: Set[Hyperedge[EdgeLabel, TokenRange]]): Boolean =
-        candidates.head.verticesIterator.map(_.tokens.head.w).toSet.intersect(candidates.last.verticesIterator.map(_.tokens.head.w).toSet).nonEmpty
+        candidates.head.verticesIterator
+          .map(_.tokens.head.w)
+          .toSet
+          .intersect(candidates.last.verticesIterator.map(_.tokens.head.w).toSet)
+          .nonEmpty
       val newMatches: Set[HyperedgeMatch] =
         if isSpuriousMatch(matchCandidates) then matches
         else matches + HyperedgeMatch(matchCandidates) // remove old matches and add new split results

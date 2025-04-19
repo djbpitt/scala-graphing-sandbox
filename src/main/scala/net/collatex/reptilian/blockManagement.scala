@@ -1,5 +1,7 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.TokenEnum.TokenHG
+
 import scala.collection.{IndexedSeqView, mutable}
 import scala.collection.immutable.VectorMap
 import scala.collection.mutable.ArrayBuffer
@@ -143,10 +145,7 @@ def removeOverlappingBlocks(fullDepthBlocks: List[FullDepthBlock]): Iterable[Ful
     .values
     .map(fdBlocks => fdBlocks.maxBy(_.length))
 
-def getPatternsFromTokenArray(
-                               tokenArray: Vector[TokenEnum],
-                               witnessCount: Int,
-                               keepOnlyFullDepth: Boolean) =
+def getPatternsFromTokenArray(tokenArray: Vector[TokenEnum], witnessCount: Int, keepOnlyFullDepth: Boolean) =
   val (vectorization, _) = vectorize(tokenArray)
   val suffixArray = createSuffixArray(vectorization)
   val lcpArray = calculateLcpArrayKasai(tokenArray.map(_.n), suffixArray)
@@ -176,9 +175,45 @@ def createAlignedBlocks(
     witnessCount: Int,
     keepOnlyFullDepth: Boolean = true
 ) =
-  val (suffixArray: Array[Int], blocks: List[Block], blockLengths: List[Int], blockStartPositions: List[Array[Int]]) = getPatternsFromTokenArray(tokenArray, witnessCount, keepOnlyFullDepth)
+  val (suffixArray: Array[Int], blocks: List[Block], blockLengths: List[Int], blockStartPositions: List[Array[Int]]) =
+    getPatternsFromTokenArray(tokenArray, witnessCount, keepOnlyFullDepth)
   // RESUME HERE 2025-04-18 Perhaps keep code above but, for phase 2,
   // include hyperedge and token range information
   val annoyingInterimVariable = (blockStartPositions lazyZip blockLengths)
     .map((starts, length) => FullDepthBlock(starts.toVector, length))
   (blocks, suffixArray, removeOverlappingBlocks(annoyingInterimVariable))
+
+def createAlignedPatternsPhaseTwo(
+    lTa: Vector[TokenEnum], // TokenHG and TokenSep
+    witnessCount: Int
+): Iterable[AlignedPatternPhaseTwo] =
+  val (_, _, blockLengths: List[Int], blockStartPositions: List[Array[Int]]) =
+    getPatternsFromTokenArray(lTa, witnessCount, false)
+  val blocks: Iterable[FullDepthBlock] =
+    removeOverlappingBlocks(
+      (blockStartPositions lazyZip blockLengths)
+        .map((starts, length) => FullDepthBlock(starts.toVector, length))
+    )
+  val result: Iterable[AlignedPatternPhaseTwo] = blocks map (e => // e: block
+    val gTa = lTa.head.asInstanceOf[TokenHG].tr.ta // from arbitrary TokenRange
+    val occurrences = e.instances.map(f => // f: block instance (start offset)
+      val occurrenceStart: TokenHG = lTa(f).asInstanceOf[TokenHG]
+      val occurrenceStartAsGlobal: Int = occurrenceStart.g
+      val patternTr: TokenRange = TokenRange(occurrenceStartAsGlobal, occurrenceStartAsGlobal + e.length, gTa)
+      val originalHe = occurrenceStart.he
+      val originalTr = occurrenceStart.tr
+      AlignedPatternOccurrencePhaseTwo(originalHe, originalTr, patternTr)
+    )
+    AlignedPatternPhaseTwo(occurrences)
+  )
+  result
+
+case class AlignedPatternOccurrencePhaseTwo(
+    originalHe: EdgeLabel,
+    originalTr: TokenRange,
+    patternTr: TokenRange // must be contained by originalTr
+)
+
+case class AlignedPatternPhaseTwo(
+    occurrences: Vector[AlignedPatternOccurrencePhaseTwo]
+)
