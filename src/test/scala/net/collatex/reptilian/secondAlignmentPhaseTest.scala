@@ -89,10 +89,10 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
       Set.empty
     )
     val expected = Vector(
-      Vector(TokenHG("Mom", "Mom", 0, 2, EdgeLabel("1b"))),
-      Vector(TokenHG("Dad", "Dad", 1, 7, EdgeLabel("1a"))),
-      Vector(TokenHG("!", "!", 1, 8, EdgeLabel("0"))),
-      Vector(TokenHG("Hi", "Hi", 1, 5, EdgeLabel("2")), TokenHG(", ", ", ", 1, 6, EdgeLabel("2")))
+      Vector(TokenHG("Mom", "Mom", 0, 2, EdgeLabel("1b"), TokenRange(2, 3, gTa))),
+      Vector(TokenHG("Dad", "Dad", 1, 7, EdgeLabel("1a"), TokenRange(7, 8, gTa))),
+      Vector(TokenHG("!", "!", 1, 8, EdgeLabel("0"), TokenRange(8,9, gTa))),
+      Vector(TokenHG("Hi", "Hi", 1, 5, EdgeLabel("2"), TokenRange(5, 7, gTa)), TokenHG(", ", ", ", 1, 6, EdgeLabel("2"), TokenRange(5, 7, gTa)))
     )
     val result = identifyHGTokenRanges(hg)
     assert(result == expected)
@@ -134,14 +134,14 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
       TokenSg("parents", "parents", 2, 12),
       TokenSg("!", "!", 2, 13),
       TokenSep("0", "0", 0, -1),
-      TokenHG("Hi", "Hi", 0, 0, EdgeLabel("0")),
-      TokenHG(", ", ", ", 0, 1, EdgeLabel("0")),
+      TokenHG("Hi", "Hi", 0, 0, EdgeLabel("0"), TokenRange(0, 2, gTa)),
+      TokenHG(", ", ", ", 0, 1, EdgeLabel("0"), TokenRange(0, 2, gTa)),
       TokenSep("1", "1", 1, -1),
-      TokenHG("Mom", "Mom", 0, 2, EdgeLabel("2")),
+      TokenHG("Mom", "Mom", 0, 2, EdgeLabel("2"), TokenRange(2, 3, gTa)),
       TokenSep("2", "2", 2, -1),
-      TokenHG(", ", ", ", 1, 6, EdgeLabel("6")),
+      TokenHG(", ", ", ", 1, 6, EdgeLabel("6"), TokenRange(6, 7, gTa)),
       TokenSep("3", "3", 3, -1),
-      TokenHG("!", "!", 0, 3, EdgeLabel("3"))
+      TokenHG("!", "!", 0, 3, EdgeLabel("3"), TokenRange(3, 4, gTa))
     )
     val result = createLocalTA(singletonTokens, hg)
     assert(result == expected)
@@ -594,13 +594,13 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     val hg2 = AlignmentHyperedge(Set(TokenRange(6, 8, gTa), TokenRange(9, 11, gTa))) +
       AlignmentHyperedge(Set(TokenRange(12, 13, gTa)))
     val expected = Vector(
-      TokenHG("!", "!", 3, 12, EdgeLabel(12)),
+      TokenHG("!", "!", 3, 12, EdgeLabel(12), TokenRange(12, 13, gTa)),
       TokenSep("Sep12", "Sep12", -1, -1),
-      TokenHG("Bye ", "bye", 2, 6, EdgeLabel(6)),
-      TokenHG("Dad ", "dad", 2, 7, EdgeLabel(6)),
+      TokenHG("Bye ", "bye", 2, 6, EdgeLabel(6), TokenRange(6, 8, gTa)),
+      TokenHG("Dad ", "dad", 2, 7, EdgeLabel(6), TokenRange(6, 8, gTa)),
       TokenSep("Sep6", "Sep6", -1, -1),
-      TokenHG("Hi ", "hi", 0, 0, EdgeLabel(0)),
-      TokenHG("Mom ", "mom", 0, 1, EdgeLabel(0))
+      TokenHG("Hi ", "hi", 0, 0, EdgeLabel(0), TokenRange(0, 2, gTa)),
+      TokenHG("Mom ", "mom", 0, 1, EdgeLabel(0), TokenRange(0, 2, gTa))
     )
     val result = createHgTa(hg1 + hg2)
     assert(result == expected)

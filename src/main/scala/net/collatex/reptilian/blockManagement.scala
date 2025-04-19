@@ -143,13 +143,10 @@ def removeOverlappingBlocks(fullDepthBlocks: List[FullDepthBlock]): Iterable[Ful
     .values
     .map(fdBlocks => fdBlocks.maxBy(_.length))
 
-// FIXME: When working with full-depth blocks it uses witnessCount; when processing
-// SingletonTree and not using full-depth, it requires witnessCount but doesn’t use it
-def createAlignedBlocks(
-    tokenArray: Vector[TokenEnum],
-    witnessCount: Int,
-    keepOnlyFullDepth: Boolean = true
-) =
+def getPatternsFromTokenArray(
+                               tokenArray: Vector[TokenEnum],
+                               witnessCount: Int,
+                               keepOnlyFullDepth: Boolean) =
   val (vectorization, _) = vectorize(tokenArray)
   val suffixArray = createSuffixArray(vectorization)
   val lcpArray = calculateLcpArrayKasai(tokenArray.map(_.n), suffixArray)
@@ -170,6 +167,16 @@ def createAlignedBlocks(
   val blockStartPositions = tmpFullDepthNonrepeatingBlocks
     .map((block, _) => suffixArray.slice(block.start, block.end + 1))
     .map(_.sorted)
+  (suffixArray, blocks, blockLengths, blockStartPositions)
+
+// FIXME: When working with full-depth blocks it uses witnessCount; when processing
+// SingletonTree and not using full-depth, it requires witnessCount but doesn’t use it
+def createAlignedBlocks(
+    tokenArray: Vector[TokenEnum],
+    witnessCount: Int,
+    keepOnlyFullDepth: Boolean = true
+) =
+  val (suffixArray: Array[Int], blocks: List[Block], blockLengths: List[Int], blockStartPositions: List[Array[Int]]) = getPatternsFromTokenArray(tokenArray, witnessCount, keepOnlyFullDepth)
   // RESUME HERE 2025-04-18 Perhaps keep code above but, for phase 2,
   // include hyperedge and token range information
   val annoyingInterimVariable = (blockStartPositions lazyZip blockLengths)
