@@ -5,6 +5,7 @@ import net.collatex.reptilian.TokenEnum.TokenHG
 import scala.collection.{IndexedSeqView, mutable}
 import scala.collection.immutable.VectorMap
 import scala.collection.mutable.ArrayBuffer
+import scala.util.chaining.scalaUtilChainingOps
 
 def vectorize(tokenArray: Vector[TokenEnum]): (Array[Int], Int) =
   val voc = tokenArray
@@ -190,10 +191,9 @@ def createAlignedPatternsPhaseTwo(
   val (_, _, blockLengths: List[Int], blockStartPositions: List[Array[Int]]) =
     getPatternsFromTokenArray(lTa, witnessCount, false)
   val blocks: Iterable[FullDepthBlock] =
-    removeOverlappingBlocks(
       (blockStartPositions lazyZip blockLengths)
-        .map((starts, length) => FullDepthBlock(starts.toVector, length))
-    )
+        .map((starts, length) => FullDepthBlock(starts.toVector, length)) pipe removeOverlappingBlocks
+
   val result: Iterable[AlignedPatternPhaseTwo] = blocks map (e => // e: block
     val gTa = lTa.head.asInstanceOf[TokenHG].tr.ta // from arbitrary TokenRange
     val occurrences = e.instances.map(f => // f: block instance (start offset)
