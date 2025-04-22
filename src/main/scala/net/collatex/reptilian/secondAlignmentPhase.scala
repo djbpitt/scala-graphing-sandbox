@@ -43,16 +43,37 @@ def mergeSingletonHG(
 def mergeHgHg(
     hg1: Hypergraph[EdgeLabel, TokenRange],
     hg2: Hypergraph[EdgeLabel, TokenRange],
-    debug: Boolean // TODO: Does transposition detection, but doesn’t yet handle
+    debug: Boolean
 ): Hypergraph[EdgeLabel, TokenRange] =
   val bothHgs = hg1 + hg2
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
+  // 2025-04-22 Old version
   val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
   val blocksGTa = blocks.map(e => e.remapBlockToGTa(lTa))
-  val gTa = bothHgs.verticesIterator.next.ta
   val allSplitHyperedges: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
     splitAllHyperedges(bothHgs, blocksGTa) // .filter(e => gTa(e.instances.head).n != "many")
-  val matchesAsSet = allSplitHyperedges._2
+  // 2025-04-22 New version
+  val patterns: Iterable[AlignedPatternPhaseTwo] = createAlignedPatternsPhaseTwo(lTa, -1)
+  val allSplitHyperedgesNew: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
+    splitHesOnAlignedPatterns(bothHgs, patterns)
+  // 2025-04-22 Debug
+  val comparison = allSplitHyperedges._1 == allSplitHyperedgesNew._1
+  if !comparison then
+    println(s"new_patterns: $patterns")
+    val originalTStrings = patterns.flatMap(e => e.occurrences.map(f => f.originalTr.tString))
+    val patternTStrings = patterns.flatMap(e => e.occurrences.map(f => f.patternTr.tString))
+    println("Outer token ranges:")
+    originalTStrings.foreach(e => println(s"  || $e ||"))
+    println("Inner token ranges:")
+    patternTStrings.foreach(e => println(s"  || $e ||"))
+    println(s"old: ${allSplitHyperedges._1}")
+    println(s"new: ${allSplitHyperedgesNew._1}")
+    val dgOld = DependencyGraph(allSplitHyperedges._1)
+    dependencyGraphToDot(dgOld, allSplitHyperedges._1)
+    val dgNew = DependencyGraph(allSplitHyperedgesNew._1)
+    dependencyGraphToDot(dgNew, allSplitHyperedgesNew._1) // writes to disk
+  //
+  val matchesAsSet = allSplitHyperedgesNew._2
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
     matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
   //
@@ -320,7 +341,6 @@ def splitHesOnAlignedPatterns(
     bothHgs: Hypergraph[EdgeLabel, TokenRange], // what to split
     patterns: Iterable[AlignedPatternPhaseTwo] // how to split it
 ): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
-  val gTa = bothHgs.verticesIterator.next.ta
   @tailrec
   def processPattern(
       patternQueue: Vector[AlignedPatternPhaseTwo],
@@ -366,7 +386,7 @@ def splitHesOnAlignedPatterns(
 
   processPattern(
     patterns.toVector
-      .filter(e => e.occurrences.size == 2),
+      .filter(e => e.occurrences.size == 2),  // TODO: How can there be more or fewer than 2?
     bothHgs,
     Set.empty[HyperedgeMatch]
   )
@@ -488,6 +508,8 @@ def mergeClustersIntoHG(
   val hgMap: Map[Int, Hypergraph[EdgeLabel, TokenRange]] = nodesToCluster.zipWithIndex
     .foldLeft(Map.empty[Int, Hypergraph[EdgeLabel, TokenRange]])((y, x) => {
       // TODO: If height == 0 witnesses are identical (or possibly transposed!); can we take a shortcut?
+//      println(s"clusterInfo: $x")
+//      println(s"y: $y")
       x match
         case (SingletonSingleton(item1, item2, _), i: Int) =>
           // prepare arguments
@@ -495,8 +517,8 @@ def mergeClustersIntoHG(
           val w2: List[Token] = darwinReadings(item2)
           // process
           val hypergraph: Hypergraph[EdgeLabel, TokenRange] = mergeSingletonSingleton(w1, w2, gTa)
-          val dg = hypergraph.toDependencyGraph()
-          dependencyGraphToDot(dg, hypergraph)
+          // val dg = hypergraph.toDependencyGraph()
+          // dependencyGraphToDot(dg, hypergraph)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (SingletonHG(item1, item2, _), i: Int) =>
           // prepare arguments, tokens for singleton and Hypergraph instance (!) for hypergraph
@@ -505,7 +527,10 @@ def mergeClustersIntoHG(
           val hypergraph = mergeSingletonHG(singletonTokens, hg, false)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (HGHG(item1, item2, _), i: Int) =>
+//          println(s"item1: ${y(item1)}")
+//          println(s"item2: ${y(item2)}")
           val hypergraph = mergeHgHg(y(item1), y(item2), false) // true creates xhtml table
+//          println(s"merged: $hypergraph")
           y + ((i + darwinReadings.size) -> hypergraph)
       //          val hypergraph = mergeHgHg(y(item1), y(item2)) // currently just lTA
       //          y + ((i + darwinReadings.size) -> Hypergraph.empty[EdgeLabel, TokenRange])
@@ -539,7 +564,7 @@ object HyperedgeMatch:
   val unalignedZonesDir = os.pwd / "src" / "main" / "outputs" / "unalignedZones"
   val JSONFiles = os.list(unalignedZonesDir).filter(e => os.isFile(e))
   for uzFilename <- JSONFiles do
-    // println(uzFilename)
+    println(uzFilename)
     val darwinReadings: List[List[Token]] = readSpecifiedJsonData(uzFilename)
     val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
     val hg: Hypergraph[EdgeLabel, TokenRange] =
@@ -547,7 +572,7 @@ object HyperedgeMatch:
     // Transform hypergraph to alignment ribbon and visualize
     createSecondAlignmentPhaseVisualization(hg)
 
-@main def exploreBrokenAlignment(): Unit =
+@main def explore3287(): Unit =
   val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
   val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "3287.json"
   // val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "4154.json"
@@ -555,6 +580,17 @@ object HyperedgeMatch:
   // darwinReadings.foreach(e => println(e.map(_.t).mkString))
   val nodesToCluster = clusterWitnesses(darwinReadings)
   // println(nodesToCluster)
+  val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
+  val dg = hg.toDependencyGraph()
+  dependencyGraphToDot(dg, hg)
+
+@main def explore7212(): Unit =
+  val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
+  val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "7212.json"
+  val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
+  // darwinReadings.foreach(e => println(e.map(_.t).mkString))
+  val nodesToCluster = clusterWitnesses(darwinReadings)
+  println(s"nodesToCluster: $nodesToCluster")
   val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
   val dg = hg.toDependencyGraph()
   dependencyGraphToDot(dg, hg)

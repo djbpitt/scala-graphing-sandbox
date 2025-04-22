@@ -191,8 +191,8 @@ def createAlignedPatternsPhaseTwo(
   val (_, _, blockLengths: List[Int], blockStartPositions: List[Array[Int]]) =
     getPatternsFromTokenArray(lTa, witnessCount, false)
   val blocks: Iterable[FullDepthBlock] =
-      (blockStartPositions lazyZip blockLengths)
-        .map((starts, length) => FullDepthBlock(starts.toVector, length)) pipe removeOverlappingBlocks
+    (blockStartPositions lazyZip blockLengths)
+      .map((starts, length) => FullDepthBlock(starts.toVector, length)) pipe removeOverlappingBlocks
 
   val result: Iterable[AlignedPatternPhaseTwo] = blocks map (e => // e: block
     val gTa = lTa.head.asInstanceOf[TokenHG].tr.ta // from arbitrary TokenRange
