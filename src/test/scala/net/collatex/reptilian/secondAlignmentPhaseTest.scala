@@ -672,6 +672,9 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
       val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
       // 2025-04-22 New version
       val patterns: Iterable[AlignedPatternPhaseTwo] = createAlignedPatternsPhaseTwo(lTa, -1)
+      // 2025-04-24 Mistake appears to happen in splitHesOnAlignedPattern, which
+      // a) we rewrote for the new pattern-based method, and
+      // b) we are not yet testing explicitly
       val allSplitHyperedgesNew: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
         splitHesOnAlignedPatterns(bothHgs, patterns)
       // println(s"new_patterns: $patterns")
