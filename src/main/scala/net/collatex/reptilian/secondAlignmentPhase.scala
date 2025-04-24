@@ -59,15 +59,15 @@ def mergeHgHg(
   // 2025-04-22 Debug
   val comparison = allSplitHyperedges._1 == allSplitHyperedgesNew._1
   if !comparison then
-    println(s"new_patterns: $patterns")
+    // println(s"new_patterns: $patterns")
     val originalTStrings = patterns.flatMap(e => e.occurrences.map(f => f.originalTr.tString))
     val patternTStrings = patterns.flatMap(e => e.occurrences.map(f => f.patternTr.tString))
-    println("Outer token ranges:")
+    // println("Outer token ranges:")
     originalTStrings.foreach(e => println(s"  || $e ||"))
-    println("Inner token ranges:")
+    // println("Inner token ranges:")
     patternTStrings.foreach(e => println(s"  || $e ||"))
-    println(s"old: ${allSplitHyperedges._1}")
-    println(s"new: ${allSplitHyperedgesNew._1}")
+    // println(s"old: ${allSplitHyperedges._1}")
+    // println(s"new: ${allSplitHyperedgesNew._1}")
     val dgOld = DependencyGraph(allSplitHyperedges._1)
     dependencyGraphToDot(dgOld, allSplitHyperedges._1)
     val dgNew = DependencyGraph(allSplitHyperedgesNew._1)
@@ -587,6 +587,17 @@ object HyperedgeMatch:
 @main def explore7212(): Unit =
   val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
   val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "7212.json"
+  val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
+  // darwinReadings.foreach(e => println(e.map(_.t).mkString))
+  val nodesToCluster = clusterWitnesses(darwinReadings)
+  println(s"nodesToCluster: $nodesToCluster")
+  val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
+  val dg = hg.toDependencyGraph()
+  dependencyGraphToDot(dg, hg)
+
+@main def explore2965(): Unit =
+  val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
+  val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "2965.json"
   val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
   // darwinReadings.foreach(e => println(e.map(_.t).mkString))
   val nodesToCluster = clusterWitnesses(darwinReadings)

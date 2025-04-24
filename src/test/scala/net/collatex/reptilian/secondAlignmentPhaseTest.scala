@@ -91,8 +91,11 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     val expected = Vector(
       Vector(TokenHG("Mom", "Mom", 0, 2, EdgeLabel("1b"), TokenRange(2, 3, gTa))),
       Vector(TokenHG("Dad", "Dad", 1, 7, EdgeLabel("1a"), TokenRange(7, 8, gTa))),
-      Vector(TokenHG("!", "!", 1, 8, EdgeLabel("0"), TokenRange(8,9, gTa))),
-      Vector(TokenHG("Hi", "Hi", 1, 5, EdgeLabel("2"), TokenRange(5, 7, gTa)), TokenHG(", ", ", ", 1, 6, EdgeLabel("2"), TokenRange(5, 7, gTa)))
+      Vector(TokenHG("!", "!", 1, 8, EdgeLabel("0"), TokenRange(8, 9, gTa))),
+      Vector(
+        TokenHG("Hi", "Hi", 1, 5, EdgeLabel("2"), TokenRange(5, 7, gTa)),
+        TokenHG(", ", ", ", 1, 6, EdgeLabel("2"), TokenRange(5, 7, gTa))
+      )
     )
     val result = identifyHGTokenRanges(hg)
     assert(result == expected)
@@ -624,3 +627,76 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     val result = mergeClustersIntoHG(nodesToCluster, mexicoData, gTa)
     // println(result)
     assert(result == result)
+
+  test("2965 example"):
+    def mergeClustersIntoHGTest(
+        nodesToCluster: List[ClusterInfo],
+        darwinReadings: List[List[Token]],
+        gTa: Vector[TokenEnum]
+    ): Hypergraph[EdgeLabel, TokenRange] =
+      val hgMap: Map[Int, Hypergraph[EdgeLabel, TokenRange]] = nodesToCluster.zipWithIndex
+        .foldLeft(Map.empty[Int, Hypergraph[EdgeLabel, TokenRange]])((y, x) => {
+          x match
+            case (SingletonSingleton(item1, item2, _), i: Int) =>
+              val w1: List[Token] = darwinReadings(item1)
+              val w2: List[Token] = darwinReadings(item2)
+              val hypergraph: Hypergraph[EdgeLabel, TokenRange] = mergeSingletonSingleton(w1, w2, gTa)
+              y + ((i + darwinReadings.size) -> hypergraph)
+            case (SingletonHG(item1, item2, _), i: Int) =>
+              val singletonTokens = darwinReadings(item1).toVector
+              val hg = y(item2)
+              val hypergraph = mergeSingletonHGTest(singletonTokens, hg, false)
+              y + ((i + darwinReadings.size) -> hypergraph)
+            case (HGHG(item1, item2, _), i: Int) =>
+              val hypergraph = mergeHgHgTest(y(item1), y(item2), false) // true creates xhtml table
+              y + ((i + darwinReadings.size) -> hypergraph)
+        })
+      val hg = hgMap(hgMap.keySet.max)
+      hg
+
+    def mergeSingletonHGTest(
+        singletonTokens: Vector[Token],
+        hg: Hypergraph[EdgeLabel, TokenRange],
+        debug: Boolean
+    ): Hypergraph[EdgeLabel, TokenRange] =
+      val singletonAsTokenRange =
+        TokenRange(start = singletonTokens.head.g, until = singletonTokens.last.g + 1, ta = hg.verticesIterator.next.ta)
+      mergeHgHgTest(hg, AlignmentHyperedge(Set(singletonAsTokenRange)), debug)
+
+    def mergeHgHgTest(
+        hg1: Hypergraph[EdgeLabel, TokenRange],
+        hg2: Hypergraph[EdgeLabel, TokenRange],
+        debug: Boolean
+    ): Hypergraph[EdgeLabel, TokenRange] =
+      val bothHgs = hg1 + hg2
+      val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
+      // 2025-04-22 New version
+      val patterns: Iterable[AlignedPatternPhaseTwo] = createAlignedPatternsPhaseTwo(lTa, -1)
+      val allSplitHyperedgesNew: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
+        splitHesOnAlignedPatterns(bothHgs, patterns)
+      // println(s"new_patterns: $patterns")
+      val patternTStrings = patterns.flatMap(e => e.occurrences.map(f => f.patternTr.tString))
+      patternTStrings.foreach(e => println(s"  || $e ||"))
+      // println(s"new: ${allSplitHyperedgesNew._1}")
+      val dgNew = DependencyGraph(allSplitHyperedgesNew._1)
+      dependencyGraphToDot(dgNew, allSplitHyperedgesNew._1) // writes to disk
+      val matchesAsSet = allSplitHyperedgesNew._2
+      val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
+        matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
+      val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
+        .map(e => AlignmentHyperedge(e.head.verticesIterator.toSet ++ e.last.verticesIterator.toSet))
+        // NB: new hyperedge
+        .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
+      val hgWithMergeResults = allSplitHyperedgesNew._1 // Original full hypergraph
+        - matchesAsHg // Remove hyperedges that will be merged
+        + newMatchHg // Add the merged hyperedges in place of those removed
+      hgWithMergeResults
+
+    val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
+    val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "2965.json"
+    val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
+    val nodesToCluster = clusterWitnesses(darwinReadings)
+    // println(s"clusters: $nodesToCluster")
+    val hg = mergeClustersIntoHGTest(nodesToCluster, darwinReadings, gTa)
+    val dg = hg.toDependencyGraph()
+    dependencyGraphToDot(dg, hg)
