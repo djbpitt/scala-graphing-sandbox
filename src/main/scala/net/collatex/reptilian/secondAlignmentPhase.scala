@@ -66,12 +66,6 @@ def mergeHgHg(
     originalTStrings.foreach(e => println(s"  || $e ||"))
     // println("Inner token ranges:")
     patternTStrings.foreach(e => println(s"  || $e ||"))
-    // println(s"old: ${allSplitHyperedges._1}")
-    // println(s"new: ${allSplitHyperedgesNew._1}")
-    val dgOld = DependencyGraph(allSplitHyperedges._1)
-    dependencyGraphToDot(dgOld, allSplitHyperedges._1)
-    val dgNew = DependencyGraph(allSplitHyperedgesNew._1)
-    dependencyGraphToDot(dgNew, allSplitHyperedgesNew._1) // writes to disk
   //
   val matchesAsSet = allSplitHyperedgesNew._2
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
@@ -96,8 +90,9 @@ def mergeHgHg(
       .map(e => AlignmentHyperedge(e.head.verticesIterator.toSet ++ e.last.verticesIterator.toSet)) // NB: new hyperedge
       .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
     val hgWithMergeResults = allSplitHyperedges._1 // Original full hypergraph
-      - matchesAsHg // Remove hyperedges that will be merged
       + newMatchHg // Add the merged hyperedges in place of those removed
+    val dgNew = DependencyGraph(hgWithMergeResults)
+    dependencyGraphToDot(dgNew, hgWithMergeResults) // writes to disk
     hgWithMergeResults
 
 def readJsonData: List[List[Token]] =
@@ -367,7 +362,7 @@ def splitHesOnAlignedPatterns(
             he.slice(preLength, preLength + midLength)
           val allPosts: Hypergraph[EdgeLabel, TokenRange] =
             he.slice(preLength + midLength, e.originalTr.length)
-          val newHgParts = allPres + allMiddles + allPosts
+          val newHgParts = allPres + allPosts
           val newMatchPart = allMiddles
           (newHgParts, newMatchPart)
         )
@@ -386,7 +381,7 @@ def splitHesOnAlignedPatterns(
 
   processPattern(
     patterns.toVector
-      .filter(e => e.occurrences.size == 2),  // TODO: How can there be more or fewer than 2?
+      .filter(e => e.occurrences.size == 2), // TODO: How can there be more or fewer than 2?
     bothHgs,
     Set.empty[HyperedgeMatch]
   )

@@ -680,9 +680,6 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
       // println(s"new_patterns: $patterns")
       val patternTStrings = patterns.flatMap(e => e.occurrences.map(f => f.patternTr.tString))
       patternTStrings.foreach(e => println(s"  || $e ||"))
-      // println(s"new: ${allSplitHyperedgesNew._1}")
-      val dgNew = DependencyGraph(allSplitHyperedgesNew._1)
-      dependencyGraphToDot(dgNew, allSplitHyperedgesNew._1) // writes to disk
       val matchesAsSet = allSplitHyperedgesNew._2
       val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
         matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
@@ -691,8 +688,9 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
         // NB: new hyperedge
         .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
       val hgWithMergeResults = allSplitHyperedgesNew._1 // Original full hypergraph
-        - matchesAsHg // Remove hyperedges that will be merged
         + newMatchHg // Add the merged hyperedges in place of those removed
+      val dgNew = DependencyGraph(hgWithMergeResults)
+      dependencyGraphToDot(dgNew, hgWithMergeResults) // writes to disk
       hgWithMergeResults
 
     val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
