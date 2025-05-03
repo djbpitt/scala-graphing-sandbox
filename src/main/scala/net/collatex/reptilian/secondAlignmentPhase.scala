@@ -47,25 +47,18 @@ def mergeHgHg(
 ): Hypergraph[EdgeLabel, TokenRange] =
   val bothHgs = hg1 + hg2
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
-  // 2025-04-22 Old version
-  val (_, _, blocks) = createAlignedBlocks(lTa, -1, false) // create blocks from local token array
-  val blocksGTa = blocks.map(e => e.remapBlockToGTa(lTa))
-  val allSplitHyperedges: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
-    splitAllHyperedges(bothHgs, blocksGTa) // .filter(e => gTa(e.instances.head).n != "many")
   // 2025-04-22 New version
   val patterns: Iterable[AlignedPatternPhaseTwo] = createAlignedPatternsPhaseTwo(lTa, -1)
   val allSplitHyperedgesNew: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
     splitHesOnAlignedPatterns(bothHgs, patterns)
   // 2025-04-22 Debug
-  val comparison = allSplitHyperedges._1 == allSplitHyperedgesNew._1
-  if !comparison then
-    // println(s"new_patterns: $patterns")
-    val originalTStrings = patterns.flatMap(e => e.occurrences.map(f => f.originalTr.tString))
-    val patternTStrings = patterns.flatMap(e => e.occurrences.map(f => f.patternTr.tString))
-    // println("Outer token ranges:")
-    originalTStrings.foreach(e => println(s"  || $e ||"))
-    // println("Inner token ranges:")
-    patternTStrings.foreach(e => println(s"  || $e ||"))
+  // println(s"new_patterns: $patterns")
+  val originalTStrings = patterns.flatMap(e => e.occurrences.map(f => f.originalTr.tString))
+  val patternTStrings = patterns.flatMap(e => e.occurrences.map(f => f.patternTr.tString))
+  // println("Outer token ranges:")
+  originalTStrings.foreach(e => println(s"  || $e ||"))
+  // println("Inner token ranges:")
+  patternTStrings.foreach(e => println(s"  || $e ||"))
   //
   val matchesAsSet = allSplitHyperedgesNew._2
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
@@ -83,13 +76,13 @@ def mergeHgHg(
     println("Found a transposition")
     val newAlignment: Unit = traversalGraphPhase2(hg1, hg2, matchesAsSet)
     // bothHgs
-    allSplitHyperedges._1
+    allSplitHyperedgesNew._1
   else
     val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
       // FIXME: If only one token, don’t add both head and last, which are the same
       .map(e => AlignmentHyperedge(e.head.verticesIterator.toSet ++ e.last.verticesIterator.toSet)) // NB: new hyperedge
       .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
-    val hgWithMergeResults = allSplitHyperedges._1 // Original full hypergraph
+    val hgWithMergeResults = allSplitHyperedgesNew._1 // Original full hypergraph
       + newMatchHg // Add the merged hyperedges in place of those removed
     val dgNew = DependencyGraph(hgWithMergeResults)
     dependencyGraphToDot(dgNew, hgWithMergeResults) // writes to disk
@@ -503,8 +496,6 @@ def mergeClustersIntoHG(
   val hgMap: Map[Int, Hypergraph[EdgeLabel, TokenRange]] = nodesToCluster.zipWithIndex
     .foldLeft(Map.empty[Int, Hypergraph[EdgeLabel, TokenRange]])((y, x) => {
       // TODO: If height == 0 witnesses are identical (or possibly transposed!); can we take a shortcut?
-//      println(s"clusterInfo: $x")
-//      println(s"y: $y")
       x match
         case (SingletonSingleton(item1, item2, _), i: Int) =>
           // prepare arguments
@@ -522,13 +513,8 @@ def mergeClustersIntoHG(
           val hypergraph = mergeSingletonHG(singletonTokens, hg, false)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (HGHG(item1, item2, _), i: Int) =>
-//          println(s"item1: ${y(item1)}")
-//          println(s"item2: ${y(item2)}")
           val hypergraph = mergeHgHg(y(item1), y(item2), false) // true creates xhtml table
-//          println(s"merged: $hypergraph")
           y + ((i + darwinReadings.size) -> hypergraph)
-      //          val hypergraph = mergeHgHg(y(item1), y(item2)) // currently just lTA
-      //          y + ((i + darwinReadings.size) -> Hypergraph.empty[EdgeLabel, TokenRange])
     })
 
   // hypergraphMapToDot(hgMap) /// Writes all intermediate hypergraphs as dot to disk (for debug)
