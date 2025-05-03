@@ -47,7 +47,6 @@ def mergeHgHg(
 ): Hypergraph[EdgeLabel, TokenRange] =
   val bothHgs = hg1 + hg2
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
-  // 2025-04-22 New version
   val patterns: Iterable[AlignedPatternPhaseTwo] = createAlignedPatternsPhaseTwo(lTa, -1)
   val allSplitHyperedgesNew: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
     splitHesOnAlignedPatterns(bothHgs, patterns)

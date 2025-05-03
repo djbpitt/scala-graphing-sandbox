@@ -194,7 +194,7 @@ def createAlignedPatternsPhaseTwo(
     (blockStartPositions lazyZip blockLengths)
       .map((starts, length) => FullDepthBlock(starts.toVector, length)) pipe removeOverlappingBlocks
 
-  val result: Iterable[AlignedPatternPhaseTwo] = blocks map (e => // e: block
+  val tmp: Iterable[AlignedPatternPhaseTwo] = blocks map (e => // e: block
     val gTa = lTa.head.asInstanceOf[TokenHG].tr.ta // from arbitrary TokenRange
     val occurrences = e.instances.map(f => // f: block instance (start offset)
       val occurrenceStart: TokenHG = lTa(f).asInstanceOf[TokenHG]
@@ -206,7 +206,10 @@ def createAlignedPatternsPhaseTwo(
     )
     AlignedPatternPhaseTwo(occurrences)
   )
-  result
+  val result = tmp.flatMap(_.occurrences).groupBy(_.originalHe)
+  result.foreach(println)
+  throw RuntimeException("Check grouping of patterns")
+  tmp
 
 case class AlignedPatternOccurrencePhaseTwo(
     originalHe: EdgeLabel,
