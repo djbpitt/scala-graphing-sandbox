@@ -187,7 +187,7 @@ def createAlignedBlocks(
 def createAlignedPatternsPhaseTwo(
     lTa: Vector[TokenEnum], // TokenHG and TokenSep
     witnessCount: Int
-): Iterable[AlignedPatternPhaseTwo] =
+): Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] =
   val (_, _, blockLengths: List[Int], blockStartPositions: List[Array[Int]]) =
     getPatternsFromTokenArray(lTa, witnessCount, false)
   val blocks: Iterable[FullDepthBlock] =
@@ -208,8 +208,8 @@ def createAlignedPatternsPhaseTwo(
   )
   val result = tmp.flatMap(_.occurrences).groupBy(_.originalHe)
   result.foreach(println)
-  throw RuntimeException("Check grouping of patterns")
-  tmp
+  // throw RuntimeException("Check grouping of patterns")
+  result
 
 case class AlignedPatternOccurrencePhaseTwo(
     originalHe: EdgeLabel,
