@@ -53,12 +53,12 @@ def mergeHgHg(
     splitHesOnAlignedPatterns(bothHgs, patterns)
   // 2025-04-22 Debug
   // println(s"new_patterns: $patterns")
-  val originalTStrings = patterns.flatMap(e => e.occurrences.map(f => f.originalTr.tString))
-  val patternTStrings = patterns.flatMap(e => e.occurrences.map(f => f.patternTr.tString))
+  // val originalTStrings = patterns.flatMap(e => e.occurrences.map(f => f.originalTr.tString))
+  // val patternTStrings = patterns.flatMap(e => e.occurrences.map(f => f.patternTr.tString))
   // println("Outer token ranges:")
-  originalTStrings.foreach(e => println(s"  || $e ||"))
+  // originalTStrings.foreach(e => println(s"  || $e ||"))
   // println("Inner token ranges:")
-  patternTStrings.foreach(e => println(s"  || $e ||"))
+  // patternTStrings.foreach(e => println(s"  || $e ||"))
   //
   val matchesAsSet = allSplitHyperedgesNew._2
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
@@ -382,7 +382,7 @@ def splitHesOnAlignedPatterns(
 //        patternOccurrenceResults.map(_._2.asInstanceOf[Hyperedge[EdgeLabel, TokenRange]])
 //      val newMatches =
 //        matches + HyperedgeMatch(matchesAdditions.head, matchesAdditions.last)
-      processPattern(patternQueue.tail, newHgTmp1, newMatches)
+      processPattern(patternQueue.tail, Hypergraph.empty, Set.empty)
     }
 
   processPattern(
