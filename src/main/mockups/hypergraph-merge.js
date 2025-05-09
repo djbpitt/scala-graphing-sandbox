@@ -19,8 +19,10 @@ async function performMerge() {
     let ABline = document.getElementById('ABline');
     let CDline = document.getElementById('CDline');
     console.log('clicked after');
-    const result1 = await splitLine(ABline, 51);
-    const result2 = await splitLine(CDline, 35);
+    const [result1, result2] = await Promise.all([
+        splitLine(ABline, 51),
+        splitLine(CDline, 35)
+    ]);
     console.log("Result 1: " + result1 + "Result 2: " + result2);
 }
 
