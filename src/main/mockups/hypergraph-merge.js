@@ -1,23 +1,28 @@
 "use strict";
-window.addEventListener('DOMContentLoaded', (e) => {
+window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('before').click();
   document.querySelectorAll('input').forEach(
-  (elem) => {
+  () => {
     addEventListener('change', radioEventDispatch, false);
   })
-});
+})
+
 function radioEventDispatch(e) {
-  if (e.target.value == 'after') {
-    performMerge()
+  if (e.target.value === 'after') {
+    performMerge();
   } else {
-    reset()
-  };
+    reset();
+  }
 }
+
 function performMerge() {
   console.log('clicked after');
-  let ABlines = document.getElementById('ABline');
-  moveSlowly(ABlines, 35);
+  let ABline = document.getElementById('ABline');
+  let CDline = document.getElementById('CDline');
+  splitLine(ABline, 51);
+  splitLine(CDline, 35);
 }
+
 function reset() {
   /* Reset is instantaneous (unlike performMerge)
    * The top-level <g> has a scale() that we need to retain;
@@ -25,11 +30,13 @@ function reset() {
    *   movement, which we undo by stripping the @transform */
   console.log('clicked before');
   let gs = document.querySelectorAll('g g');
-  for (var i = 0, len = gs.length; i < len; i++) {
+  let i = 0;
+  const len = gs.length;
+  for (; i < len; i++) {
     gs[i].setAttribute('transform', 'translate(0, 0)');
   }
 }
-function moveSlowly(e, n) {
+function splitLine(e, n) {
   function timeoutLoop(i) {
     if (i < n) {
       setTimeout(function () {
@@ -40,5 +47,5 @@ function moveSlowly(e, n) {
     }
   }
   timeoutLoop(0);
-  // Start the loop  }
+  // Start the loop
 }
