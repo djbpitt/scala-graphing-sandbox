@@ -373,22 +373,26 @@ def splitHesOnAlignedPatterns(
       patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]],
       hgTmp: Hypergraph[EdgeLabel, TokenRange],
       matches: Set[HyperedgeMatch]
-  ): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
+  ): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) = {
     if patterns.isEmpty
     then (hgTmp, matches) // still need to write code to process matches
     else {
       val (key, value) = patterns.head
       val hyperedge = bothHgs(key).get
-      splitOneHyperedge(hyperedge, value)
-
-
-
-
-
-
-
-      processPattern(patterns.tail, Hypergraph.empty, Set.empty)
+      val splitHyperedges = splitOneHyperedge(hyperedge, value)
+      println("Old hyperedge "+hyperedge.toString+" into "+splitHyperedges)
+      processPattern(patterns.tail, hgTmp + splitHyperedges, Set.empty)
     }
+    
+    // NOTE: We still have to remove the old hyperedges
+    // NOTE: We still have to calculate the matches
+  }
+
+  processPattern(
+    patterns,
+    bothHgs,
+    Set.empty[HyperedgeMatch]
+  )
 
   //      val currentPattern: AlignedPatternPhaseTwo = patternQueue.head
 //      val currentPatternOccurrences: Vector[AlignedPatternOccurrencePhaseTwo] =
@@ -410,12 +414,6 @@ def splitHesOnAlignedPatterns(
 //      val newMatches =
 //        matches + HyperedgeMatch(matchesAdditions.head, matchesAdditions.last)
 
-  processPattern(
-    patterns,
-      //.values.toVector, // group with common originating hyperedge
-    bothHgs,
-    Set.empty[HyperedgeMatch]
-  )
 
 def splitAllHyperedges(
     bothHgs: Hypergraph[EdgeLabel, TokenRange], // what to split
