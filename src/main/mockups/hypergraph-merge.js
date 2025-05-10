@@ -42,7 +42,6 @@ function reset() {
    * The top-level <g> has a scale() that we need to retain;
    * All other instances of @transform on <g> elements involve
    *   movement, which we undo by stripping the @transform */
-  console.log('clicked before');
   let gs = document.querySelectorAll('g g');
   let i = 0;
   const len = gs.length;
