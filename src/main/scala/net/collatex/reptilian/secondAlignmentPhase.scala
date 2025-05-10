@@ -344,14 +344,24 @@ def splitHyperedgeOneOccurrence(hyperedge: Hyperedge[EdgeLabel, TokenRange], ali
 def splitOneHyperedge(hyperedge: Hyperedge[EdgeLabel, TokenRange], occurrences: Iterable[AlignedPatternOccurrencePhaseTwo]) = {
   // This function presumes that the occurrences are sorted from the left to the right
   // We split the hyperedge for the first occurrence, then we go to the next occurrence with the post hyperedge
-  val currentHyperedge = hyperedge
+  var currentHyperedge = hyperedge
+  var result = Hypergraph.empty[EdgeLabel, TokenRange]
   val occurrenceIterator = occurrences.iterator
-  val nextOccurrence = occurrenceIterator.next
-  splitHyperedgeOneOccurrence(currentHyperedge, nextOccurrence)
-
-
-
-  ???
+  while (occurrenceIterator.hasNext) {
+    val nextOccurrence = occurrenceIterator.next
+    val (preMiddle, post) = splitHyperedgeOneOccurrence(currentHyperedge, nextOccurrence)
+    result = result + preMiddle
+    if (occurrenceIterator.hasNext) {
+      val nextHyperedge: Hyperedge[EdgeLabel, TokenRange] = post match {
+        case x: Hyperedge[EdgeLabel, TokenRange] => x
+        case _ => throw RuntimeException("Can't cast post to hyperedge")
+      }
+      currentHyperedge = nextHyperedge
+    } else {
+      result = result + post
+    }
+  }
+  result
 }
 
 def splitHesOnAlignedPatterns(
