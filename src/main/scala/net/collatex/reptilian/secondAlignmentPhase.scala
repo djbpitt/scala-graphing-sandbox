@@ -325,50 +325,67 @@ def insertSeparators(HGTokens: Vector[Vector[TokenEnum]]): Vector[TokenEnum] =
 
 def createHgTa = insertSeparators compose identifyHGTokenRanges
 
+// returns the pre and middle part together, the post part separate
+def splitHyperedgeOneOccurrence(hyperedge: Hyperedge[EdgeLabel, TokenRange], alignedPatternOccurrence: AlignedPatternOccurrencePhaseTwo) =
+  val e = alignedPatternOccurrence
+  val presAndPosts: (TokenRange, TokenRange) = e.originalTr.splitTokenRange(e.patternTr)
+  val preLength = presAndPosts._1.length
+  val midLength = e.patternTr.length // block length
+  val allPres: Hypergraph[EdgeLabel, TokenRange] =
+    hyperedge.slice(0, preLength)
+  val allMiddles: Hypergraph[EdgeLabel, TokenRange] =
+    hyperedge.slice(preLength, preLength + midLength)
+  val allPosts: Hypergraph[EdgeLabel, TokenRange] =
+    hyperedge.slice(preLength + midLength, e.originalTr.length)
+  val newHgParts = allPres + allMiddles
+  (newHgParts, allPosts)
+
+
+def splitOneHyperedge(hyperedge: Hyperedge[EdgeLabel, TokenRange], occurrences: Iterable[AlignedPatternOccurrencePhaseTwo]) = {
+  // This function presumes that the occurrences are sorted from the left to the right
+  // We split the hyperedge for the first occurrence, then we go to the next occurrence with the post hyperedge
+  val currentHyperedge = hyperedge
+  val occurrenceIterator = occurrences.iterator
+  val nextOccurrence = occurrenceIterator.next
+  splitHyperedgeOneOccurrence(currentHyperedge, nextOccurrence)
+
+
+
+  ???
+}
+
 def splitHesOnAlignedPatterns(
     bothHgs: Hypergraph[EdgeLabel, TokenRange], // what to split
     patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] // how to split it
 ): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
   @tailrec
   def processPattern(
-      patternQueue: Vector[Iterable[AlignedPatternOccurrencePhaseTwo]],
+      patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]],
       hgTmp: Hypergraph[EdgeLabel, TokenRange],
       matches: Set[HyperedgeMatch]
   ): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
-    if patternQueue.isEmpty
+    if patterns.isEmpty
     then (hgTmp, matches) // still need to write code to process matches
     else {
-      val result: (Hypergraph[EdgeLabel, TokenRange], Hypergraph[EdgeLabel, TokenRange]) =
-        patternQueue.head
-          .foldLeft((Hypergraph.empty[EdgeLabel, TokenRange], Hypergraph.empty[EdgeLabel, TokenRange]))(
-            (
-                y: (Hypergraph[EdgeLabel, TokenRange], Hypergraph[EdgeLabel, TokenRange]),
-                x: AlignedPatternOccurrencePhaseTwo
-            ) =>
-              val he = // hyperedge to split
-                if y._2.hyperedges.isEmpty then bothHgs(x.originalHe).get
-                else y._2
-              y // 2025-05-03 RESUME HERE by splitting he, which we’ve just identified
-          )
+      val (key, value) = patterns.head
+      val hyperedge = bothHgs(key).get
+      splitOneHyperedge(hyperedge, value)
 
-//      val currentPattern: AlignedPatternPhaseTwo = patternQueue.head
+
+
+
+
+
+
+      processPattern(patterns.tail, Hypergraph.empty, Set.empty)
+    }
+
+  //      val currentPattern: AlignedPatternPhaseTwo = patternQueue.head
 //      val currentPatternOccurrences: Vector[AlignedPatternOccurrencePhaseTwo] =
 //        currentPattern.occurrences
 //      assert(currentPatternOccurrences.size == 2) // sanity check
 //      val patternOccurrenceResults: Vector[(Hypergraph[EdgeLabel, TokenRange], Hypergraph[EdgeLabel, TokenRange])] =
 //        currentPatternOccurrences map (e =>
-//          val presAndPosts: (TokenRange, TokenRange) = e.originalTr.splitTokenRange(e.patternTr)
-//          val preLength = presAndPosts._1.length
-//          val midLength = e.patternTr.length // block length
-//          val heLabel = e.originalHe
-//          val he: Hyperedge[EdgeLabel, TokenRange] = bothHgs(heLabel).get
-//          val allPres: Hypergraph[EdgeLabel, TokenRange] =
-//            he.slice(0, preLength)
-//          val allMiddles: Hypergraph[EdgeLabel, TokenRange] =
-//            he.slice(preLength, preLength + midLength)
-//          val allPosts: Hypergraph[EdgeLabel, TokenRange] =
-//            he.slice(preLength + midLength, e.originalTr.length)
-//          val newHgParts = allPres + allPosts
 //          val newMatchPart = allMiddles
 //          (newHgParts, newMatchPart)
 //        )
@@ -382,11 +399,10 @@ def splitHesOnAlignedPatterns(
 //        patternOccurrenceResults.map(_._2.asInstanceOf[Hyperedge[EdgeLabel, TokenRange]])
 //      val newMatches =
 //        matches + HyperedgeMatch(matchesAdditions.head, matchesAdditions.last)
-      processPattern(patternQueue.tail, Hypergraph.empty, Set.empty)
-    }
 
   processPattern(
-    patterns.values.toVector, // group with common originating hyperedge
+    patterns,
+      //.values.toVector, // group with common originating hyperedge
     bothHgs,
     Set.empty[HyperedgeMatch]
   )
