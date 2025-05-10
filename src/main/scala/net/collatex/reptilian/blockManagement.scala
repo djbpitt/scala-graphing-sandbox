@@ -199,10 +199,11 @@ def createAlignedPatternsPhaseTwo(
     val occurrences = e.instances.map(f => // f: block instance (start offset)
       val occurrenceStart: TokenHG = lTa(f).asInstanceOf[TokenHG]
       val occurrenceStartAsGlobal: Int = occurrenceStart.g
-      val patternTr: TokenRange = TokenRange(occurrenceStartAsGlobal, occurrenceStartAsGlobal + e.length, gTa)
+      val originalBlock = e
       val originalHe = occurrenceStart.he
       val originalTr = occurrenceStart.tr
-      AlignedPatternOccurrencePhaseTwo(originalHe, originalTr, patternTr)
+      val patternTr: TokenRange = TokenRange(occurrenceStartAsGlobal, occurrenceStartAsGlobal + e.length, gTa)
+      AlignedPatternOccurrencePhaseTwo(originalBlock, originalHe, originalTr, patternTr)
     )
     AlignedPatternPhaseTwo(occurrences)
   )
@@ -212,6 +213,7 @@ def createAlignedPatternsPhaseTwo(
   result
 
 case class AlignedPatternOccurrencePhaseTwo(
+    originalBlock: FullDepthBlock,
     originalHe: EdgeLabel,
     originalTr: TokenRange,
     patternTr: TokenRange // must be contained by originalTr
