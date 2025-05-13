@@ -352,13 +352,14 @@ def splitOneHyperedge(hyperedge: Hyperedge[EdgeLabel, TokenRange], occurrences: 
   // This function presumes that the occurrences are sorted from the left to the right
   // We split the hyperedge for the first occurrence, then we go to the next occurrence with the post hyperedge
   var currentHyperedge = hyperedge
-  val newHyperedgesPerBlock = mutable.HashMap.empty[Block, Hyperedge[EdgeLabel, TokenRange]]
+  val newHyperedgesPerBlock = mutable.HashMap.empty[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]
   var result = Hypergraph.empty[EdgeLabel, TokenRange]
   val occurrenceIterator = occurrences.iterator
   while (occurrenceIterator.hasNext) {
     val nextOccurrence = occurrenceIterator.next
     val (pre, post, (block, hyperedge)) = splitHyperedgeOneOccurrence(currentHyperedge, nextOccurrence)
     result = result + pre
+    newHyperedgesPerBlock.update(block, hyperedge)
     if (occurrenceIterator.hasNext) {
       val nextHyperedge: Hyperedge[EdgeLabel, TokenRange] = post match {
         case x: Hyperedge[EdgeLabel, TokenRange] => x
@@ -369,46 +370,51 @@ def splitOneHyperedge(hyperedge: Hyperedge[EdgeLabel, TokenRange], occurrences: 
       result = result + post
     }
   }
-  result
+  (result, newHyperedgesPerBlock)
 }
 
 def splitHesOnAlignedPatterns(
     bothHgs: Hypergraph[EdgeLabel, TokenRange], // what to split
     patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] // how to split it
 ): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
+  // A splitOneHyperedge call returns a map containing FullDepthBlocks -> to the new hyperedge
+  // at the end we collect all the items in een multi map, which has multiple values per key
+  // It can be stored in a MultiDict (part of the scala contrib module)
   @tailrec
   def processPattern(
       patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]],
       hgTmp: Hypergraph[EdgeLabel, TokenRange],
-      matches: Set[HyperedgeMatch]
-  ): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) = {
+      blockToHyperedges: mutable.MultiDict[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]
+  ): (Hypergraph[EdgeLabel, TokenRange], mutable.MultiDict[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]) = {
     if patterns.isEmpty
-    then (hgTmp, matches) // still need to write code to process matches
+    then (hgTmp, blockToHyperedges) // still need to write code to process matches
     else {
       val (key, value) = patterns.head
       val hyperedge = bothHgs(key).get
-      val splitHyperedges = splitOneHyperedge(hyperedge, value)
+      val (splitHyperedges, newMatches) = splitOneHyperedge(hyperedge, value)
       println("Old hyperedge "+hyperedge.toString+" into "+splitHyperedges)
-      processPattern(patterns.tail, hgTmp + splitHyperedges, Set.empty)
+      processPattern(patterns.tail, hgTmp + splitHyperedges, blockToHyperedges.addAll(newMatches))
     }
 
-    // A splitOneHyperedge call returns a map containing Blocks -> to the new hyperedge
-    // at the end we collect all the items in een multi map, which has multiple values per key
-    // It can be stored in a multimap (part of the scala contrib module)
 
 
 
-    // NOTE: We still have to remove the old hyperedges
-    // NOTE: We still have to calculate the matches
   }
 
-  processPattern(
+  val resultInWrongFormat = processPattern(
     patterns,
     bothHgs,
-    Set.empty[HyperedgeMatch]
+    mutable.MultiDict.empty[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]
   )
 
-  //      val currentPattern: AlignedPatternPhaseTwo = patternQueue.head
+  println(resultInWrongFormat)
+
+  throw RuntimeException("Blah")
+
+// NOTE: We still have to remove the old hyperedges
+// NOTE: We still have to calculate the matches
+
+//      val currentPattern: AlignedPatternPhaseTwo = patternQueue.head
 //      val currentPatternOccurrences: Vector[AlignedPatternOccurrencePhaseTwo] =
 //        currentPattern.occurrences
 //      assert(currentPatternOccurrences.size == 2) // sanity check
