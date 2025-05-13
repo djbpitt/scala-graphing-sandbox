@@ -407,12 +407,15 @@ def splitHesOnAlignedPatterns(
     mutable.MultiDict.empty[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]
   )
 
+  // convert MultiDict to HyperedgeMatches
+  val newHyperedgeMatches = resultInWrongFormat._2.map {
+    (key, _) => HyperedgeMatch(resultInWrongFormat._2.get(key).toSet)
+  }.toSet
   println(resultInWrongFormat)
+  println(newHyperedgeMatches)
 
-  throw RuntimeException("Blah")
-
-// NOTE: We still have to remove the old hyperedges
-// NOTE: We still have to calculate the matches
+  // NOTE: We still have to remove the old hyperedges; is that done in other methods after the split? I think so
+  (resultInWrongFormat._1, newHyperedgeMatches)
 
 //      val currentPattern: AlignedPatternPhaseTwo = patternQueue.head
 //      val currentPatternOccurrences: Vector[AlignedPatternOccurrencePhaseTwo] =
