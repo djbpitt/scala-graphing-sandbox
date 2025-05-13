@@ -210,7 +210,7 @@ def createAlignedPatternsPhaseTwo(
   )
   val resultTmp = tmp.flatMap(_.occurrences).groupBy(_.originalHe)
   val result = resultTmp.map((k, v) => k -> v.sortBy(_.patternTr.start))
-  result.foreach(println)
+  // result.foreach(println)
   // throw RuntimeException("Check grouping of patterns")
   result
 
