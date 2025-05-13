@@ -393,14 +393,11 @@ def splitHesOnAlignedPatterns(
       val hyperedge = bothHgs(key).get
       val (splitHyperedges, newMatches) = splitOneHyperedge(hyperedge, value)
       println("Old hyperedge "+hyperedge.toString+" into "+splitHyperedges)
-      processPattern(patterns.tail, hgTmp + splitHyperedges, blockToHyperedges.addAll(newMatches))
+      processPattern(patterns.tail, hgTmp - hyperedge + splitHyperedges, blockToHyperedges.addAll(newMatches))
     }
-
-
-
-
   }
 
+  // NOTE: This starts the recursion
   val resultInWrongFormat = processPattern(
     patterns,
     bothHgs,
@@ -414,7 +411,6 @@ def splitHesOnAlignedPatterns(
   println(resultInWrongFormat)
   println(newHyperedgeMatches)
 
-  // NOTE: We still have to remove the old hyperedges; is that done in other methods after the split? I think so
   (resultInWrongFormat._1, newHyperedgeMatches)
 
 //      val currentPattern: AlignedPatternPhaseTwo = patternQueue.head
