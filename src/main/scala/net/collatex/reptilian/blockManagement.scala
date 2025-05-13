@@ -140,11 +140,12 @@ def createBlocks(lcpArray: Vector[Int]): List[Block] =
   * @return
   *   Iterable of longest patterns
   */
-def removeOverlappingBlocks(fullDepthBlocks: List[FullDepthBlock]): Iterable[FullDepthBlock] =
+def removeOverlappingBlocks(fullDepthBlocks: List[FullDepthBlock]): List[FullDepthBlock] =
   fullDepthBlocks
     .groupBy(e => e.instances(0) + e.length) // until position of instance in witness 0
     .values
     .map(fdBlocks => fdBlocks.maxBy(_.length))
+    .toList
 
 def getPatternsFromTokenArray(tokenArray: Vector[TokenEnum], witnessCount: Int, keepOnlyFullDepth: Boolean) =
   val (vectorization, _) = vectorize(tokenArray)
@@ -187,14 +188,14 @@ def createAlignedBlocks(
 def createAlignedPatternsPhaseTwo(
     lTa: Vector[TokenEnum], // TokenHG and TokenSep
     witnessCount: Int
-): Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] =
+): Map[EdgeLabel, List[AlignedPatternOccurrencePhaseTwo]] =
   val (_, _, blockLengths: List[Int], blockStartPositions: List[Array[Int]]) =
     getPatternsFromTokenArray(lTa, witnessCount, false)
-  val blocks: Iterable[FullDepthBlock] =
+  val blocks: List[FullDepthBlock] =
     (blockStartPositions lazyZip blockLengths)
       .map((starts, length) => FullDepthBlock(starts.toVector, length)) pipe removeOverlappingBlocks
 
-  val tmp: Iterable[AlignedPatternPhaseTwo] = blocks map (e => // e: block
+  val tmp: List[AlignedPatternPhaseTwo] = blocks map (e => // e: block
     val gTa = lTa.head.asInstanceOf[TokenHG].tr.ta // from arbitrary TokenRange
     val occurrences = e.instances.map(f => // f: block instance (start offset)
       val occurrenceStart: TokenHG = lTa(f).asInstanceOf[TokenHG]
@@ -207,7 +208,8 @@ def createAlignedPatternsPhaseTwo(
     )
     AlignedPatternPhaseTwo(occurrences)
   )
-  val result = tmp.flatMap(_.occurrences).groupBy(_.originalHe)
+  val resultTmp = tmp.flatMap(_.occurrences).groupBy(_.originalHe)
+  val result = resultTmp.map((k, v) => k -> v.sortBy(_.patternTr.start))
   result.foreach(println)
   // throw RuntimeException("Check grouping of patterns")
   result
