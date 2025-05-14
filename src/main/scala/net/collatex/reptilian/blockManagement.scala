@@ -210,6 +210,11 @@ def createAlignedPatternsPhaseTwo(
   )
   val resultTmp = tmp.flatMap(_.occurrences).groupBy(_.originalHe)
   val result = resultTmp.map((k, v) => k -> v.sortBy(_.patternTr.start))
+  // check conflicting blocks. If two blocks have the same end position in an occurrence then we have a problem
+  val xxTmp = tmp.flatMap(_.occurrences).groupBy(_.patternTr.until)
+  val xx = xxTmp.map((k, v) => k -> v.size)
+  if xx.exists((k,v) => v>1) then throw RuntimeException("Two blocks conflict with each other!")
+
   // result.foreach(println)
   // throw RuntimeException("Check grouping of patterns")
   result
