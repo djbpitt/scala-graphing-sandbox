@@ -46,7 +46,7 @@ def mergeHgHg(
     debug: Boolean
 ): Hypergraph[EdgeLabel, TokenRange] =
   val bothHgs = hg1 + hg2
-  bothHgs.hyperedges.map(e => e.verticesIterator.toSet.map(f => f.length)).foreach(println)
+  // bothHgs.hyperedges.map(e => e.verticesIterator.toSet.map(f => f.length)).foreach(println)
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] =
     createAlignedPatternsPhaseTwo(lTa, -1)
