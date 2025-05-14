@@ -11,7 +11,7 @@ class transpositionDetectionTest extends AnyFunSuite:
   //FURTHERMORE THERE ARE NO ASSERTS AT THE END!
   ignore("Test splitAllHyperedges"):
     val gTa: Vector[TokenEnum] = returnSampleData()._1
-    val hg: Hypergraph[EdgeLabel, TokenRange] =
+    val bothHgs: Hypergraph[EdgeLabel, TokenRange] =
       // Token ranges in hyperedge are from different witnesses; must be same length
       // HE1 < W1 = TokenRange(0, 100), W2 = TokenRange(100, 200),
       // HE2 < W3 = TokenRange(200, 300), W4 = TokenRange(300, 400)
@@ -28,7 +28,7 @@ class transpositionDetectionTest extends AnyFunSuite:
       FullDepthBlock(Vector(40, 356), 3), // W1, W4
       FullDepthBlock(Vector(160, 252), 3) // W2, W3
     )
-    val outcome = validateData(hg, blocks)
+    val outcome = validateData(bothHgs, blocks)
     assert(outcome == ValidationResult.Valid)
     val expected = (
       FullHypergraph(
@@ -83,7 +83,10 @@ class transpositionDetectionTest extends AnyFunSuite:
       )
     )
 
-    val result = splitAllHyperedges(hg, blocks)
+    val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
+    val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] =
+      createAlignedPatternsPhaseTwo(lTa, -1)
+    val result = splitHesOnAlignedPatterns(bothHgs, patterns)
     println("Actual Set[HypergraphMatches]")
     result._2.foreach(println)
 //    assert(result._1 == expected._1)
