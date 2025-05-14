@@ -330,6 +330,12 @@ def splitHyperedgeOneOccurrence(
   val midLength = e.patternTr.length // block length
   val allPres: Hypergraph[EdgeLabel, TokenRange] =
     hyperedge.slice(0, preLength)
+  // unmark for debug
+  // check that the pre is not illegal
+  // if allPres.verticesIterator.hasNext then allPres.verticesIterator.next match {
+  //   case x: IllegalTokenRange => throw RuntimeException("The pre is illegal! 0 "+preLength)
+  //   case _ => null
+  // }
   // this is the new hyperedge for the match
   val allMatches: Hypergraph[EdgeLabel, TokenRange] =
     hyperedge.slice(preLength, preLength + midLength)
@@ -382,7 +388,10 @@ def splitOneHyperedge(
           val nextOccurrence = occurrences.tail.head
           nextOccurrence.patternTr.start - currentOccurrence.patternTr.until
       val newLengthOfPost: Int =
-        currentOccurrence.originalTr.until - currentOccurrence.patternTr.until
+        if occurrences.tail.isEmpty then 0
+        else
+          val nextOccurrence = occurrences.tail.head
+          nextOccurrence.originalTr.until - nextOccurrence.patternTr.until
       val hyperedgePartsNew = {
         if occurrences.tail.isEmpty then hyperedgeParts + newPre + newPost
         else hyperedgeParts + newPre
