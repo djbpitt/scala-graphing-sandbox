@@ -76,8 +76,9 @@ def mergeHgHg(
       .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
     val hgWithMergeResults = allSplitHyperedgesNew._1 // Original full hypergraph
       + newMatchHg // Add the merged hyperedges in place of those removed
-    val dgNew = DependencyGraph(hgWithMergeResults)
-    dependencyGraphToDot(dgNew, hgWithMergeResults) // writes to disk
+    // debug: unmark to create and write dependency graph to disk
+    // val dgNew = DependencyGraph(hgWithMergeResults)
+    // dependencyGraphToDot(dgNew, hgWithMergeResults) // writes to disk
     hgWithMergeResults
 
 def readJsonData: List[List[Token]] =
