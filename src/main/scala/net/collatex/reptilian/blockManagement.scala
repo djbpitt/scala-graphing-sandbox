@@ -2,10 +2,29 @@ package net.collatex.reptilian
 
 import net.collatex.reptilian.TokenEnum.TokenHG
 
+import scala.annotation.tailrec
 import scala.collection.{IndexedSeqView, mutable}
 import scala.collection.immutable.VectorMap
 import scala.collection.mutable.ArrayBuffer
 import scala.util.chaining.scalaUtilChainingOps
+
+// TODO: Create test for consecutive overlaps
+def adjustBlockOverlap(originalBlocks: Iterable[FullDepthBlock], gTa: Vector[TokenEnum]): Seq[FullDepthBlock] =
+  val sortedBlocks = originalBlocks.toSeq.sortBy(_.instances.head)
+
+  @tailrec
+  def adjustForOverlap(
+                        blocksToProcess: Seq[FullDepthBlock],
+                        currentFirst: FullDepthBlock,
+                        acc: Seq[FullDepthBlock]
+                      ): Seq[FullDepthBlock] =
+    if blocksToProcess.isEmpty
+    then acc :+ currentFirst
+    else
+      val (newFirst: FullDepthBlock, newSecond: FullDepthBlock) = allocateOverlappingTokens(currentFirst, blocksToProcess.head, gTa)
+      adjustForOverlap(blocksToProcess.tail, newSecond, acc :+ newFirst)
+
+  adjustForOverlap(sortedBlocks.tail, sortedBlocks.head, Seq[FullDepthBlock]())
 
 def vectorize(tokenArray: Vector[TokenEnum]): (Array[Int], Int) =
   val voc = tokenArray
@@ -195,8 +214,10 @@ def createAlignedPatternsPhaseTwo(
     (blockStartPositions lazyZip blockLengths)
       .map((starts, length) => FullDepthBlock(starts.toVector, length)) pipe removeOverlappingBlocks
 
-  val tmp: List[AlignedPatternPhaseTwo] = blocks map (e => // e: block
-    val gTa = lTa.head.asInstanceOf[TokenHG].tr.ta // from arbitrary TokenRange
+  val gTa = lTa.head.asInstanceOf[TokenHG].tr.ta // from arbitrary TokenRange
+  // TODO: Why do we need to filter _.length > 0 on the adjusted blocks ??
+  val xxBlocks = if blocks.isEmpty then List.empty else adjustBlockOverlap(blocks, gTa).filter(_.length > 0).toList
+  val tmp: List[AlignedPatternPhaseTwo] = xxBlocks map (e => // e: block
     val occurrences = e.instances.map(f => // f: block instance (start offset)
       val occurrenceStart: TokenHG = lTa(f).asInstanceOf[TokenHG]
       val occurrenceStartAsGlobal: Int = occurrenceStart.g
@@ -210,13 +231,11 @@ def createAlignedPatternsPhaseTwo(
   )
   val resultTmp = tmp.flatMap(_.occurrences).groupBy(_.originalHe)
   val result = resultTmp.map((k, v) => k -> v.sortBy(_.patternTr.start))
-  // check conflicting blocks. If two blocks have the same end position in an occurrence then we have a problem
-  val xxTmp = tmp.flatMap(_.occurrences).groupBy(_.patternTr.until)
-  val xx = xxTmp.map((k, v) => k -> v.size)
-  if xx.exists((k,v) => v>1) then throw RuntimeException("Two blocks conflict with each other!")
-
-  // result.foreach(println)
-  // throw RuntimeException("Check grouping of patterns")
+  // debug
+  // unmark to check conflicting blocks. If two blocks have the same end position in an occurrence then we have a problem
+  // val xxTmp = tmp.flatMap(_.occurrences).groupBy(_.patternTr.until)
+  // val xx = xxTmp.map((k, v) => k -> v.size)
+  // if xx.exists((k,v) => v>1) then throw RuntimeException("Two blocks conflict with each other!")
   result
 
 case class AlignedPatternOccurrencePhaseTwo(

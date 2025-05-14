@@ -129,24 +129,7 @@ def alignTokenArray(
         blocksGTa
       )
 
-    // TODO: Create test for consecutive overlaps
-
-    def adjustBlockOverlap(originalBlocks: Iterable[FullDepthBlock]): Seq[FullDepthBlock] =
-      val sortedBlocks = originalBlocks.toSeq.sortBy(_.instances.head)
-      @tailrec
-      def adjustForOverlap(
-          blocksToProcess: Seq[FullDepthBlock],
-          currentFirst: FullDepthBlock,
-          acc: Seq[FullDepthBlock]
-      ): Seq[FullDepthBlock] =
-        if blocksToProcess.isEmpty
-        then acc :+ currentFirst
-        else
-          val (newFirst, newSecond) = allocateOverlappingTokens(currentFirst, blocksToProcess.head, gTa)
-          adjustForOverlap(blocksToProcess.tail, newSecond, acc :+ newFirst)
-      adjustForOverlap(sortedBlocks.tail, sortedBlocks.head, Seq[FullDepthBlock]())
-
-    val adjustedBlocks = adjustBlockOverlap(alignmentBlocks)
+    val adjustedBlocks = adjustBlockOverlap(alignmentBlocks, gTa)
 
     // Examine difference between original blocks and blocks after overlap adjustment
     // alignmentBlocks.toSeq.sortBy(_.instances.head).zip(adjustedBlocks).filterNot((e, f) => e == f).foreach(println)
