@@ -1,10 +1,9 @@
 package net.collatex.reptilian
 
-import net.collatex.reptilian.DGNodeType.{Alignment, Skip}
 import net.collatex.reptilian.TokenEnum.*
 import net.collatex.reptilian.TokenRange.*
 import net.collatex.util.Hypergraph.Hyperedge
-import net.collatex.util.{Graph, Hypergraph, SetOf2}
+import net.collatex.util.{Hypergraph, SetOf2}
 import scala.collection.mutable
 import os.Path
 import upickle.default.*
@@ -118,10 +117,6 @@ def createGlobalTokenArray(darwinReadings: List[List[Token]]) =
         )
         .toVector
   tokenArray
-
-enum MatchesSide:
-  case first
-  case second
 
 // FIXME: Used only in text; we create lTa elsewhere in real code.
 // Remove this function and update the test to point to the real one

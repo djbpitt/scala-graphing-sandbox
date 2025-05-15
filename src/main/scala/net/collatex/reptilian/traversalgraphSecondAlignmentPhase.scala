@@ -15,6 +15,10 @@ case class DecisionGraphStepPhase2(pos1: OrderPosition, pos2: OrderPosition, nod
 
 case class NodeInfo(id: String, nodeType: DGNodeType)
 
+enum MatchesSide:
+  case first
+  case second
+
 /** Node is at end if either pointer is at end of list
  *
  * @param node
