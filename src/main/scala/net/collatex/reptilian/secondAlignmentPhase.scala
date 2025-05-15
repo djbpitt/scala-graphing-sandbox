@@ -370,43 +370,32 @@ def splitOneHyperedge(
       hyperedgeParts: Hypergraph[EdgeLabel, TokenRange],
       hyperedgesByBlock: Map[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]
   ): (Hypergraph[EdgeLabel, TokenRange], Map[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]) =
-    if occurrences.isEmpty then (hyperedgeParts, hyperedgesByBlock) // hyperedgesByBlock not yet merged
-    else {
       val currentOccurrence = occurrences.head
       val (newPre, newPost, (block, middle)) =
         splitHyperedgeOneOccurrence(currentHyperedge, currentOccurrence, preLength, postLength)
-      val currentHyperedgeNew: Hyperedge[EdgeLabel, TokenRange] = {
-        if occurrences.tail.isEmpty then null
-        else
-          newPost match {
-            case x: Hyperedge[EdgeLabel, TokenRange] => x
-            case _                                   => throw RuntimeException("Can't cast post to hyperedge")
-          }
-      }
-      val newLengthOfPre: Int =
-        if occurrences.tail.isEmpty then 0
-        else
-          val nextOccurrence = occurrences.tail.head
-          nextOccurrence.patternTr.start - currentOccurrence.patternTr.until
-      val newLengthOfPost: Int =
-        if occurrences.tail.isEmpty then 0
-        else
-          val nextOccurrence = occurrences.tail.head
-          nextOccurrence.originalTr.until - nextOccurrence.patternTr.until
-      val hyperedgePartsNew = {
-        if occurrences.tail.isEmpty then hyperedgeParts + newPre + newPost
-        else hyperedgeParts + newPre
-      }
       val hyperedgesByBlockNew = hyperedgesByBlock + (block -> middle)
-      splitOnPattern(
-        occurrences.tail,
-        currentHyperedgeNew,
-        newLengthOfPre,
-        newLengthOfPost,
-        hyperedgePartsNew,
-        hyperedgesByBlockNew
-      )
-    }
+
+      if occurrences.tail.isEmpty then
+          (hyperedgeParts + newPre + newPost, hyperedgesByBlockNew)
+      else
+        val currentHyperedgeNew: Hyperedge[EdgeLabel, TokenRange] =
+            newPost match
+              case x: Hyperedge[EdgeLabel, TokenRange] => x
+              case _ => throw RuntimeException("Can't cast post to hyperedge")
+        val nextOccurrence = occurrences.tail.head
+        val newLengthOfPre: Int =
+            nextOccurrence.patternTr.start - currentOccurrence.patternTr.until
+        val newLengthOfPost: Int =
+            nextOccurrence.originalTr.until - nextOccurrence.patternTr.until
+        val hyperedgePartsNew = hyperedgeParts + newPre
+        splitOnPattern(
+          occurrences.tail,
+          currentHyperedgeNew,
+          newLengthOfPre,
+          newLengthOfPost,
+          hyperedgePartsNew,
+          hyperedgesByBlockNew
+        )
 
   splitOnPattern(
     origOccurrences,
@@ -431,7 +420,7 @@ def splitHesOnAlignedPatterns(
       blockToHyperedges: mutable.MultiDict[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]
   ): (Hypergraph[EdgeLabel, TokenRange], mutable.MultiDict[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]) = {
     if patterns.isEmpty
-    then (hgTmp, blockToHyperedges) // still need to write code to process matches
+    then (hgTmp, blockToHyperedges)
     else {
       val (key, value) = patterns.head
       val hyperedge = bothHgs(key).get
@@ -456,8 +445,6 @@ def splitHesOnAlignedPatterns(
   val newHyperedgeMatches = resultInWrongFormat._2.map { (key, _) =>
     HyperedgeMatch(resultInWrongFormat._2.get(key).toSet)
   }.toSet
-  // println(resultInWrongFormat)
-  // println(newHyperedgeMatches)
 
   (resultInWrongFormat._1, newHyperedgeMatches)
 
