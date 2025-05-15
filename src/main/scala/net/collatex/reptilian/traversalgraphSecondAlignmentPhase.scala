@@ -11,7 +11,11 @@ enum DGNodeType:
 
 type OrderPosition = Int
 
-case class DecisionGraphStepPhase2(pos1: OrderPosition, pos2: OrderPosition, nodeType: DGNodeType)
+case class DecisionGraphStepPhase2(
+    pos1: OrderPosition,
+    pos2: OrderPosition,
+    nodeType: DGNodeType
+)
 
 case class NodeInfo(id: String, nodeType: DGNodeType)
 
@@ -20,90 +24,98 @@ enum MatchesSide:
   case second
 
 /** Node is at end if either pointer is at end of list
- *
- * @param node
- * : DecisionGraphStepPhase2
- * @param max
- * : Int
- * @return
- * Boolean
- */
+  *
+  * @param node
+  *   : DecisionGraphStepPhase2
+  * @param max
+  *   : Int
+  * @return
+  *   Boolean
+  */
 def nodeAtEnd(node: DecisionGraphStepPhase2, max: Int): Boolean =
   node.pos1 == max - 1 || node.pos2 == max - 1
 
-
 /** Adjust set of hyperedge matches to remove transpositions
- *
- * @param hg1:
- *   Hyperedge[EdgeLabel, TokenRange]
- * @param hg2:
- *   Hyperedge[EdgeLabel, TokenRange]
- * @param matches
- *   Set[HyperedgeMatch]
- */
+  *
+  * @param hg1:
+  *   Hyperedge[EdgeLabel, TokenRange]
+  * @param hg2:
+  *   Hyperedge[EdgeLabel, TokenRange]
+  * @param matches
+  *   Set[HyperedgeMatch]
+  *
+  * Called only when transposition detected, so there are always at least two matches
+  *
+  * We've split the original hyperedges (from hg1, hg2), but the order within one or the other hasn’t changed. This
+  * function determines which side of a match came from original hg1 and which from hg2. This lets us group the match
+  * sides by original hg. Because we lose contact with the original hg source when we create a match, we have to
+  * reconstruct it here.
+  *
+  * TODO: Revise HyperedgeMatch to retain consistent information about source hg, so that we don’t have to reconstruct
+  * it.
+  */
 def traversalGraphPhase2(
-                          hg1: Hypergraph[EdgeLabel, TokenRange],
-                          hg2: Hypergraph[EdgeLabel, TokenRange],
-                          matches: Set[HyperedgeMatch]
-                        ): Unit =
-  if matches.size < 2 then println("Boring; too few matches")
-  else
-    val siglumToHyperedge: Map[Int, MatchesSide] =
-      hg1.witnessSet.map(e => e -> MatchesSide.first).toMap ++
-        hg2.witnessSet.map(e => e -> MatchesSide.second).toMap
-    val reconstructedHgs: List[Hypergraph[EdgeLabel, TokenRange]] =
-      matches.toSeq
-        .foldLeft(
-          List(Hypergraph.empty[EdgeLabel, TokenRange], Hypergraph.empty[EdgeLabel, TokenRange])
-        )((y, x) =>
-          siglumToHyperedge(x.head.witnesses.head) match
-            case MatchesSide.first => List(y.head + x.head, y.last + x.last)
-            case _                 => List(y.head + x.last, y.last + x.head)
-        )
-    // reconstructedHgs.foreach(e => println(s"${e.hyperedges.size}: ${e.hyperedges}"))
-    val rankingsAsList = reconstructedHgs
-      .map(_.rank())
-      .map(e =>
-        e.toList
-          .sortBy(_._2) // sort by rank
-          .map(_._1) // keep only hes
-          .tail // drop start …
-          .dropRight(1) // … and end
+    hg1: Hypergraph[EdgeLabel, TokenRange],
+    hg2: Hypergraph[EdgeLabel, TokenRange],
+    matches: Set[HyperedgeMatch]
+): Graph[DecisionGraphStepPhase2] =
+  val siglumToHyperedge: Map[Int, MatchesSide] =
+    hg1.witnessSet.map(e => e -> MatchesSide.first).toMap ++
+      hg2.witnessSet.map(e => e -> MatchesSide.second).toMap
+  val reconstructedHgs: List[Hypergraph[EdgeLabel, TokenRange]] =
+    matches.toSeq
+      .foldLeft(
+        List(Hypergraph.empty[EdgeLabel, TokenRange], Hypergraph.empty[EdgeLabel, TokenRange])
+      )((y, x) =>
+        siglumToHyperedge(x.head.witnesses.head) match
+          case MatchesSide.first => List(y.head + x.head, y.last + x.last)
+          case _                 => List(y.head + x.last, y.last + x.head)
       )
-    //    println("sorted rankings")
-    //    rankingsAsList.foreach(println)
-    // rankingsAsList.map(e => matches.find(_.contains(e.asInstanceOf[NodeType.Internal].label)).get)
-    // Find original match that contains edge label from ranking
-    val stuff2: List[List[HyperedgeMatch]] = rankingsAsList
-      .zip(reconstructedHgs)
-      .map((r, h) =>
-        r.map(e =>
-          matches
-            .find(_.contains(h(EdgeLabel(e.asInstanceOf[NodeType.Internal].label)).get))
-            .get
-        )
+  // reconstructedHgs.foreach(e => println(s"${e.hyperedges.size}: ${e.hyperedges}"))
+  val rankingsAsList = reconstructedHgs
+    .map(_.rank())
+    .map(e =>
+      e.toList
+        .sortBy(_._2) // sort by rank
+        .map(_._1) // keep only hes
+        .tail // drop start …
+        .dropRight(1) // … and end
+    )
+  //    println("sorted rankings")
+  //    rankingsAsList.foreach(println)
+  // rankingsAsList.map(e => matches.find(_.contains(e.asInstanceOf[NodeType.Internal].label)).get)
+  // Find original match that contains edge label from ranking
+  val stuff2: List[List[HyperedgeMatch]] = rankingsAsList
+    .zip(reconstructedHgs)
+    .map((r, h) =>
+      r.map(e =>
+        matches
+          .find(_.contains(h(EdgeLabel(e.asInstanceOf[NodeType.Internal].label)).get))
+          .get
       )
-    //    stuff2.head // track synchronization
-    //      .zip(stuff2.last)
-    //      .map(t => t._1 == t._2)
-    //      .zipWithIndex
-    //      .map((e, f) => (f, e))
-    //      .foreach(println)
-    createDecisionGraphPhase2(stuff2.head, stuff2.last)
+    )
+  //    stuff2.head // track synchronization
+  //      .zip(stuff2.last)
+  //      .map(t => t._1 == t._2)
+  //      .zipWithIndex
+  //      .map((e, f) => (f, e))
+  //      .foreach(println)
+  val result = createDecisionGraphPhase2(stuff2.head, stuff2.last)
+  result
 
 def createDecisionGraphPhase2(
-                               order1: List[HyperedgeMatch],
-                               order2: List[HyperedgeMatch]
-                             ): Unit =
+    order1: List[HyperedgeMatch],
+    order2: List[HyperedgeMatch]
+): Graph[DecisionGraphStepPhase2] =
   val max = order1.size // for end position
   val start = DecisionGraphStepPhase2(-1, -1, Alignment)
   val end = DecisionGraphStepPhase2(max, max, Alignment)
   val g = Graph.node(start) + Graph.node(end)
   @tailrec
   def step(
-            nodesToProcess: Set[DecisionGraphStepPhase2],
-            graph: Graph[DecisionGraphStepPhase2]
-          ): Graph[DecisionGraphStepPhase2] =
+      nodesToProcess: Set[DecisionGraphStepPhase2],
+      graph: Graph[DecisionGraphStepPhase2]
+  ): Graph[DecisionGraphStepPhase2] =
     if nodesToProcess.isEmpty
     then graph
     else
@@ -141,6 +153,7 @@ def createDecisionGraphPhase2(
   // Nodes
 
   println(result.asDot(toNodeInfo))
+  result
 
 extension [N](graph: Graph[N])
   def asDot(toNodeInfo: N => NodeInfo): String =
@@ -157,7 +170,7 @@ extension [N](graph: Graph[N])
               .toList
               .sorted :::
             List("}")
-          ).mkString("\n")
+        ).mkString("\n")
 
 def dotNodeType[N](n: N): DGNodeType = n.asInstanceOf[DecisionGraphStepPhase2].nodeType
 def asDotLines[N](toNodeInfo: N => NodeInfo)(node: N, adjacentNodes: (Set[N], Set[N])): List[String] = {
@@ -170,10 +183,21 @@ def asDotLines[N](toNodeInfo: N => NodeInfo)(node: N, adjacentNodes: (Set[N], Se
         case Skip      => "lightpink"
       val id = s"L${node.asInstanceOf[DecisionGraphStepPhase2].pos1}R${node.asInstanceOf[DecisionGraphStepPhase2].pos2}"
       s"${id.replace('-', 'm')} [style=\"filled\"; fillcolor=\"$bgColor\"]"
-      ))
+    ))
 }
 
 def indent(l: String): String = s"  $l"
 
 def toNodeInfo(n: DecisionGraphStepPhase2) =
   NodeInfo(s"L${n.pos1}R${n.pos2}", n.nodeType)
+
+def astar(dg: Graph[DecisionGraphStepPhase2]): Hypergraph[EdgeLabel, TokenRange] =
+  val aStarInputSorted = dg.topologicalSort
+  val startNode = aStarInputSorted.head
+  val endNode = aStarInputSorted.last
+
+
+
+
+
+  Hypergraph.empty

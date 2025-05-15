@@ -3,7 +3,8 @@ package net.collatex.reptilian
 import net.collatex.reptilian.TokenEnum.*
 import net.collatex.reptilian.TokenRange.*
 import net.collatex.util.Hypergraph.Hyperedge
-import net.collatex.util.{Hypergraph, SetOf2}
+import net.collatex.util.{Graph, Hypergraph, SetOf2}
+
 import scala.collection.mutable
 import os.Path
 import upickle.default.*
@@ -54,19 +55,17 @@ def mergeHgHg(
   val matchesAsSet = allSplitHyperedgesNew._2
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
     matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
-  //
-  // New a*-based alignment goes here
-  //
   val transpositionBool =
-    detectTransposition(matchesAsSet, matchesAsHg, true) // currently raises error if transposition
-  // If no transposition (temporarily):
-  //  Merge hyperedges on matches into single hyperedge
-  //  This replaces those separate hyperedges in full inventory of hyperedges
+    detectTransposition(matchesAsSet, matchesAsHg, true)
   if transpositionBool
   then
     println("Found a transposition")
-    val newAlignment: Unit = traversalGraphPhase2(hg1, hg2, matchesAsSet)
-    // bothHgs
+    val aStarInput: Graph[DecisionGraphStepPhase2] = traversalGraphPhase2(hg1, hg2, matchesAsSet)
+    // TODO: Perform a* over newAlignment to resolve transposition (only if transposition previously detected)
+    
+    val result: Hypergraph[EdgeLabel, TokenRange] = astar(aStarInput)
+    
+    // Temporary output: bothHgs
     allSplitHyperedgesNew._1
   else
     val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
@@ -200,32 +199,31 @@ def splitOneHyperedge(
       hyperedgeParts: Hypergraph[EdgeLabel, TokenRange],
       hyperedgesByBlock: Map[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]
   ): (Hypergraph[EdgeLabel, TokenRange], Map[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]) =
-      val currentOccurrence = occurrences.head
-      val (newPre, newPost, (block, middle)) =
-        splitHyperedgeOneOccurrence(currentHyperedge, currentOccurrence, preLength, postLength)
-      val hyperedgesByBlockNew = hyperedgesByBlock + (block -> middle)
+    val currentOccurrence = occurrences.head
+    val (newPre, newPost, (block, middle)) =
+      splitHyperedgeOneOccurrence(currentHyperedge, currentOccurrence, preLength, postLength)
+    val hyperedgesByBlockNew = hyperedgesByBlock + (block -> middle)
 
-      if occurrences.tail.isEmpty then
-          (hyperedgeParts + newPre + newPost, hyperedgesByBlockNew)
-      else
-        val currentHyperedgeNew: Hyperedge[EdgeLabel, TokenRange] =
-            newPost match
-              case x: Hyperedge[EdgeLabel, TokenRange] => x
-              case _ => throw RuntimeException("Can't cast post to hyperedge")
-        val nextOccurrence = occurrences.tail.head
-        val newLengthOfPre: Int =
-            nextOccurrence.patternTr.start - currentOccurrence.patternTr.until
-        val newLengthOfPost: Int =
-            nextOccurrence.originalTr.until - nextOccurrence.patternTr.until
-        val hyperedgePartsNew = hyperedgeParts + newPre
-        splitOnPattern(
-          occurrences.tail,
-          currentHyperedgeNew,
-          newLengthOfPre,
-          newLengthOfPost,
-          hyperedgePartsNew,
-          hyperedgesByBlockNew
-        )
+    if occurrences.tail.isEmpty then (hyperedgeParts + newPre + newPost, hyperedgesByBlockNew)
+    else
+      val currentHyperedgeNew: Hyperedge[EdgeLabel, TokenRange] =
+        newPost match
+          case x: Hyperedge[EdgeLabel, TokenRange] => x
+          case _                                   => throw RuntimeException("Can't cast post to hyperedge")
+      val nextOccurrence = occurrences.tail.head
+      val newLengthOfPre: Int =
+        nextOccurrence.patternTr.start - currentOccurrence.patternTr.until
+      val newLengthOfPost: Int =
+        nextOccurrence.originalTr.until - nextOccurrence.patternTr.until
+      val hyperedgePartsNew = hyperedgeParts + newPre
+      splitOnPattern(
+        occurrences.tail,
+        currentHyperedgeNew,
+        newLengthOfPre,
+        newLengthOfPost,
+        hyperedgePartsNew,
+        hyperedgesByBlockNew
+      )
 
   splitOnPattern(
     origOccurrences,
