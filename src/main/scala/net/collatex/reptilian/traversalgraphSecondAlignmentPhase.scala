@@ -58,7 +58,7 @@ def traversalGraphPhase2(
     hg1: Hypergraph[EdgeLabel, TokenRange],
     hg2: Hypergraph[EdgeLabel, TokenRange],
     matches: Set[HyperedgeMatch]
-): Graph[DecisionGraphStepPhase2] =
+): (Graph[DecisionGraphStepPhase2], List[List[HyperedgeMatch]]) =
   val siglumToHyperedge: Map[Int, MatchesSide] =
     hg1.witnessSet.map(e => e -> MatchesSide.first).toMap ++
       hg2.witnessSet.map(e => e -> MatchesSide.second).toMap
@@ -85,7 +85,7 @@ def traversalGraphPhase2(
   //    rankingsAsList.foreach(println)
   // rankingsAsList.map(e => matches.find(_.contains(e.asInstanceOf[NodeType.Internal].label)).get)
   // Find original match that contains edge label from ranking
-  val stuff2: List[List[HyperedgeMatch]] = rankingsAsList
+  val matchLists: List[List[HyperedgeMatch]] = rankingsAsList
     .zip(reconstructedHgs)
     .map((r, h) =>
       r.map(e =>
@@ -94,14 +94,8 @@ def traversalGraphPhase2(
           .get
       )
     )
-  //    stuff2.head // track synchronization
-  //      .zip(stuff2.last)
-  //      .map(t => t._1 == t._2)
-  //      .zipWithIndex
-  //      .map((e, f) => (f, e))
-  //      .foreach(println)
-  val result = createDecisionGraphPhase2(stuff2.head, stuff2.last)
-  result
+  val dg = createDecisionGraphPhase2(matchLists.head, matchLists.last)
+  (dg, matchLists)
 
 def createDecisionGraphPhase2(
     order1: List[HyperedgeMatch],
@@ -191,13 +185,69 @@ def indent(l: String): String = s"  $l"
 def toNodeInfo(n: DecisionGraphStepPhase2) =
   NodeInfo(s"L${n.pos1}R${n.pos2}", n.nodeType)
 
+/** greedy(): Align decisions greedily
+  *
+  * Choose next step that aligns the most tokens (skip = 0; otherwise witness count * token range length)
+  *
+  * @param dg:
+  *   Graph[DecisionGraphStepPhase2]
+  * @param ml:
+  *   List[List[HyperedgeMatch]] (same information ordered by original hypergraph; greedy traversal uses only one)
+  * @return
+  *   Hypergraph[EdgeLabel, TokenRange] (hypergraph of alignments)
+  */
+def greedy(
+    dg: Graph[DecisionGraphStepPhase2],
+    ml: List[List[HyperedgeMatch]]
+): Hypergraph[EdgeLabel, TokenRange] =
+  val dgSorted: Vector[DecisionGraphStepPhase2] = dg.topologicalSort
+  val matchOrder1: List[HyperedgeMatch] = ml.head
+  val startNode: DecisionGraphStepPhase2 = dgSorted.head
+  val endNode: DecisionGraphStepPhase2 = dgSorted.last
+  println(s"ml: $ml")
+
+  /** score()
+    *
+    * @param dgCurrent:
+    *   DecisionGraphPhase2 instance
+    * @return
+    */
+  def score(dgCurrent: DecisionGraphStepPhase2): Double =
+    println(s"dgNode: $dgCurrent")
+    val result: Int = dgCurrent.nodeType match
+      case Skip => 0
+      case _ =>
+        if dgCurrent == endNode then 0
+        else
+          val witnessCount: Int = matchOrder1(dgCurrent.pos1).map(e => e.verticesIterator.size).sum
+          val witnessLength: Int = matchOrder1(dgCurrent.pos1).head.verticesIterator.next().length
+          witnessCount * witnessLength
+    result
+  @tailrec
+  def traverseGreedy(
+      n: DecisionGraphStepPhase2,
+      res: List[DecisionGraphStepPhase2]
+  ): List[DecisionGraphStepPhase2] =
+    if n == endNode then res
+    else
+      val allOutNodes: Set[DecisionGraphStepPhase2] = dg.outgoingEdges(n).map(_._2) // targets
+      val newNScores: Set[(Double, DecisionGraphStepPhase2)] = allOutNodes.map(e => (score(e), e))
+      val newN: DecisionGraphStepPhase2 = newNScores.find(e => e._1 == newNScores.map(_._1).max).get._2
+      val newOut: List[DecisionGraphStepPhase2] = newN +: res
+      traverseGreedy(newN, newOut)
+  val nodeList = traverseGreedy(startNode, List.empty[DecisionGraphStepPhase2])
+  println(s"nodeList: $nodeList")
+  val result = Hypergraph.empty[EdgeLabel, TokenRange]
+  result
+
+/* TODO: Write and use
+ * */
+def beamSearch(dg: Graph[DecisionGraphStepPhase2]): Hypergraph[EdgeLabel, TokenRange] = ???
+
+/* TODO: Write and use
+ * */
 def astar(dg: Graph[DecisionGraphStepPhase2]): Hypergraph[EdgeLabel, TokenRange] =
   val aStarInputSorted = dg.topologicalSort
   val startNode = aStarInputSorted.head
   val endNode = aStarInputSorted.last
-
-
-
-
-
   Hypergraph.empty
