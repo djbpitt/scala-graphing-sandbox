@@ -223,6 +223,8 @@ def greedy(
           val witnessLength: Int = matchOrder1(dgCurrent.pos1).head.verticesIterator.next().length
           witnessCount * witnessLength
     result
+  def decisionGraphStepPhase2ToHyperedgeMatch(n: DecisionGraphStepPhase2): HyperedgeMatch =
+    matchOrder1(n.pos1)
   @tailrec
   def traverseGreedy(
       n: DecisionGraphStepPhase2,
@@ -235,9 +237,17 @@ def greedy(
       val newN: DecisionGraphStepPhase2 = newNScores.find(e => e._1 == newNScores.map(_._1).max).get._2
       val newOut: List[DecisionGraphStepPhase2] = newN +: res
       traverseGreedy(newN, newOut)
-  val nodeList = traverseGreedy(startNode, List.empty[DecisionGraphStepPhase2])
-  println(s"nodeList: $nodeList")
-  val result = Hypergraph.empty[EdgeLabel, TokenRange]
+  val nodeList: List[DecisionGraphStepPhase2] = // NB: We no longer need the order by this stage
+    traverseGreedy(startNode, List.empty[DecisionGraphStepPhase2])
+  val newMatches: Set[HyperedgeMatch] =
+    nodeList.tail.map(e => decisionGraphStepPhase2ToHyperedgeMatch(e)).toSet
+  println(s"new matches: $newMatches")
+  val newNonmatches: Set[HyperedgeMatch] = matchOrder1.filterNot(e => newMatches.contains(e)).toSet
+  val newHypergraph: Hypergraph[EdgeLabel, TokenRange] = newMatches
+    .map(e => AlignmentHyperedge(e.head.verticesIterator.toSet ++ e.last.verticesIterator.toSet)) // NB: new hyperedge
+    .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
+//  val result = newNonmatches.flatten.foldLeft(newHypergraph)((y, x) => y + x)
+  val result = newHypergraph
   result
 
 /* TODO: Write and use

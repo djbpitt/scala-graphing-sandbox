@@ -50,6 +50,7 @@ def mergeHgHg(
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] =
     createAlignedPatternsPhaseTwo(lTa, -1)
+
   val allSplitHyperedgesNew: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
     splitHesOnAlignedPatterns(bothHgs, patterns)
   val matchesAsSet = allSplitHyperedgesNew._2
@@ -59,18 +60,21 @@ def mergeHgHg(
     detectTransposition(matchesAsSet, matchesAsHg, true)
   if transpositionBool
   then
-    println("Found a transposition")
+    // println("Found a transposition")
     val (decisionGraph, matchLists): (Graph[DecisionGraphStepPhase2], List[List[HyperedgeMatch]]) =
       traversalGraphPhase2(hg1, hg2, matchesAsSet)
     // TODO: Perform a* over newAlignment to resolve transposition (only if transposition previously detected)
 
     val greedyResult: Hypergraph[EdgeLabel, TokenRange] = greedy(decisionGraph, matchLists)
-
-    // Temporary output: bothHgs
-    allSplitHyperedgesNew._1
+    val result = allSplitHyperedgesNew._1 + greedyResult
+    val tmp = result.hyperedges.toVector
+      .sortBy(e => e.verticesIterator.map(_.start).min)
+      .map(_.verticesIterator.next())
+      .map(_.tString)
+    tmp.foreach(println)
+    result
   else
     val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
-      // FIXME: If only one token, don’t add both head and last, which are the same
       .map(e => AlignmentHyperedge(e.head.verticesIterator.toSet ++ e.last.verticesIterator.toSet)) // NB: new hyperedge
       .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
     val hgWithMergeResults = allSplitHyperedgesNew._1 // Original full hypergraph
@@ -380,12 +384,17 @@ object HyperedgeMatch:
   val JSONFiles = os.list(unalignedZonesDir).filter(e => os.isFile(e))
   for uzFilename <- JSONFiles do
     println(uzFilename)
-    val darwinReadings: List[List[Token]] = readSpecifiedJsonData(uzFilename)
-    val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
-    val hg: Hypergraph[EdgeLabel, TokenRange] =
-      mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-    // Transform hypergraph to alignment ribbon and visualize
-    createSecondAlignmentPhaseVisualization(hg)
+    // FIXME: 12599 detects phantom transposition; temporarily ignore
+    // FIXME: 12599 is too long to diagnose; temporarily remove
+    if uzFilename != os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "12599.json"
+      && uzFilename != os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "3287.json"
+    then
+      val darwinReadings: List[List[Token]] = readSpecifiedJsonData(uzFilename)
+      val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
+      val hg: Hypergraph[EdgeLabel, TokenRange] =
+        mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
+      // Transform hypergraph to alignment ribbon and visualize
+      createSecondAlignmentPhaseVisualization(hg)
 
 @main def explore3287(): Unit =
   val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
