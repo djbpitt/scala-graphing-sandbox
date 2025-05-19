@@ -61,10 +61,10 @@ def traversalGraphPhase2(
 ): (Graph[DecisionGraphStepPhase2], List[List[HyperedgeMatch]]) =
   // debug
   // combine the incoming hypergraphs into one and visualize it as a directed graph
-  val combinedHG = hg1 + hg2
-  val _dg = combinedHG.toDependencyGraph()
+  // val combinedHG = hg1 + hg2
+  // val _dg = combinedHG.toDependencyGraph()
   // println("Combined HG input"
-  dependencyGraphToDot(_dg, combinedHG)
+  // dependencyGraphToDot(_dg, combinedHG)
 
 
 

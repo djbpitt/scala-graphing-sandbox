@@ -58,6 +58,12 @@ def mergeHgHg(
     debug: Boolean
 ): Hypergraph[EdgeLabel, TokenRange] =
   val bothHgs = hg1 + hg2
+  // debug
+  val _dg = bothHgs.toDependencyGraph()
+  println("Combined HG input")
+  dependencyGraphToDot(_dg, bothHgs)
+
+
   // bothHgs.hyperedges.map(e => e.verticesIterator.toSet.map(f => f.length)).foreach(println)
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] =
