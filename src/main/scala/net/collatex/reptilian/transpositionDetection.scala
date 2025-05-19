@@ -55,8 +55,8 @@ def detectTransposition(
     val transpositionBool = matchesSortedHead != matchesSortedLast
     if transpositionBool then
       println("Found a transposition")
-      println(matchesSortedHead)
-      println(matchesSortedLast)
+      println(matchesSortedHead.map(_.head.label))
+      println(matchesSortedLast.map(_.head.label))
     transpositionBool
   else false
 
