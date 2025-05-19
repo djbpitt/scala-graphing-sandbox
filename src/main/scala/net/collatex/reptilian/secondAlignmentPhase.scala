@@ -429,3 +429,18 @@ object HyperedgeMatch:
   val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
   val dg = hg.toDependencyGraph()
   dependencyGraphToDot(dg, hg)
+
+// Example contains a transposition
+@main def explore4154(): Unit =
+  val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
+  val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "4154.json"
+  val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
+  // darwinReadings.foreach(e => println(e.map(_.t).mkString))
+  val nodesToCluster = clusterWitnesses(darwinReadings)
+  println(s"nodesToCluster: $nodesToCluster")
+  val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
+  val dg = hg.toDependencyGraph()
+  dependencyGraphToDot(dg, hg)
+  // Transform hypergraph to alignment ribbon and visualize
+  createSecondAlignmentPhaseVisualization(hg)
+
