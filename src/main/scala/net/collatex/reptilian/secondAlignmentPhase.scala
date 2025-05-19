@@ -67,11 +67,12 @@ def mergeHgHg(
   // bothHgs.hyperedges.map(e => e.verticesIterator.toSet.map(f => f.length)).foreach(println)
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] =
-    createAlignedPatternsPhaseTwo(lTa, -1) pipe groupPatternsTogetherByHyperedge
+    createAlignedPatternsPhaseTwo(lTa, 2) pipe groupPatternsTogetherByHyperedge
 
   val allSplitHyperedgesNew: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
     splitHesOnAlignedPatterns(bothHgs, patterns)
-  val matchesAsSet = allSplitHyperedgesNew._2
+  val unfilteredMatchesAsSet = allSplitHyperedgesNew._2 // May includes spurious matches within single witness
+  val matchesAsSet = unfilteredMatchesAsSet.filterNot(e => isSpuriousMatch(e))
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
     matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
   val transpositionBool =
@@ -297,6 +298,29 @@ def splitHesOnAlignedPatterns(
   }.toSet
 
   (resultInWrongFormat._1, newHyperedgeMatches)
+
+// Compares witnesses on left to those on right
+// A true pattern requires one input from left and one from right
+// Intersection means not a true pattern, since left and right involve the same witness (and therefore graph)
+// TODO: Ideally we would analyze the patterns, recognize when both parts are from the
+// same side, and not attempt to proceed further
+// Quick fix: split, detect the non-match after, and prevent merge that would
+// involve two instances from the same witness / hyperedge
+// FIXME: Although we prevent the merge, we currently throw away the pieces. Oops!
+def isSpuriousMatch(candidate: HyperedgeMatch): Boolean =
+  candidate
+    .head
+    .verticesIterator
+    .map(_.tokens.head.w)
+    .toSet
+    .intersect(
+      candidate
+        .last
+        .verticesIterator
+        .map(_.tokens.head.w)
+        .toSet
+    ).nonEmpty
+
 
 def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange]): Unit =
   val gTa = hg.verticesIterator.next.ta

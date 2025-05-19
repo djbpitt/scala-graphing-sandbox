@@ -209,7 +209,7 @@ def createAlignedPatternsPhaseTwo(
     witnessCount: Int
 ): List[AlignedPatternPhaseTwo] =
   val (_, _, blockLengths: List[Int], blockStartPositions: List[Array[Int]]) =
-    getPatternsFromTokenArray(lTa, witnessCount, false)
+    getPatternsFromTokenArray(lTa, witnessCount, true)
   val blocks: List[FullDepthBlock] =
     (blockStartPositions lazyZip blockLengths)
       .map((starts, length) => FullDepthBlock(starts.toVector, length)) pipe removeOverlappingBlocks
