@@ -11,6 +11,7 @@ import upickle.default.*
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Vector
+import scala.util.chaining.scalaUtilChainingOps
 
 def mergeSingletonSingleton(
     w1: List[TokenEnum], // rows
@@ -40,6 +41,18 @@ def mergeSingletonHG(
     TokenRange(start = singletonTokens.head.g, until = singletonTokens.last.g + 1, ta = hg.verticesIterator.next.ta)
   mergeHgHg(hg, AlignmentHyperedge(Set(singletonAsTokenRange)), debug)
 
+def groupPatternsTogetherByHyperedge(patterns: List[AlignedPatternPhaseTwo]):
+    Map[EdgeLabel, List[AlignedPatternOccurrencePhaseTwo]] =
+  patterns.map(_.occurrences.head.patternTr.tString).foreach(e => println(s"  $e"))
+  val resultUnsorted = patterns.flatMap(_.occurrences).groupBy(_.originalHe)
+  val result = resultUnsorted.map((k, v) => k -> v.sortBy(_.patternTr.start))
+  // debug
+  // unmark to check conflicting blocks. If two blocks have the same end position in an occurrence then we have a problem
+  // val xxTmp = patterns.flatMap(_.occurrences).groupBy(_.patternTr.until)
+  // val xx = xxTmp.map((k, v) => k -> v.size)
+  // if xx.exists((k,v) => v>1) then throw RuntimeException("Two blocks conflict with each other!")
+  result
+
 def mergeHgHg(
     hg1: Hypergraph[EdgeLabel, TokenRange],
     hg2: Hypergraph[EdgeLabel, TokenRange],
@@ -49,7 +62,7 @@ def mergeHgHg(
   // bothHgs.hyperedges.map(e => e.verticesIterator.toSet.map(f => f.length)).foreach(println)
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] =
-    createAlignedPatternsPhaseTwo(lTa, -1)
+    createAlignedPatternsPhaseTwo(lTa, -1) pipe groupPatternsTogetherByHyperedge
 
   val allSplitHyperedgesNew: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
     splitHesOnAlignedPatterns(bothHgs, patterns)
@@ -60,7 +73,7 @@ def mergeHgHg(
     detectTransposition(matchesAsSet, matchesAsHg, true)
   if transpositionBool
   then
-    // println("Found a transposition")
+    println("Found a transposition")
     val (decisionGraph, matchLists): (Graph[DecisionGraphStepPhase2], List[List[HyperedgeMatch]]) =
       traversalGraphPhase2(hg1, hg2, matchesAsSet)
     // TODO: Perform a* over newAlignment to resolve transposition (only if transposition previously detected)

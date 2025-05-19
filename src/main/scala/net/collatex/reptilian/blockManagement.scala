@@ -207,7 +207,7 @@ def createAlignedBlocks(
 def createAlignedPatternsPhaseTwo(
     lTa: Vector[TokenEnum], // TokenHG and TokenSep
     witnessCount: Int
-): Map[EdgeLabel, List[AlignedPatternOccurrencePhaseTwo]] =
+): List[AlignedPatternPhaseTwo] =
   val (_, _, blockLengths: List[Int], blockStartPositions: List[Array[Int]]) =
     getPatternsFromTokenArray(lTa, witnessCount, false)
   val blocks: List[FullDepthBlock] =
@@ -217,7 +217,7 @@ def createAlignedPatternsPhaseTwo(
   val gTa = lTa.head.asInstanceOf[TokenHG].tr.ta // from arbitrary TokenRange
   // TODO: Why do we need to filter _.length > 0 on the adjusted blocks ??
   val xxBlocks = if blocks.isEmpty then List.empty else adjustBlockOverlap(blocks, gTa).filter(_.length > 0).toList
-  val tmp: List[AlignedPatternPhaseTwo] = xxBlocks map (e => // e: block
+  val patterns: List[AlignedPatternPhaseTwo] = xxBlocks map (e => // e: block
     val occurrences = e.instances.map(f => // f: block instance (start offset)
       val occurrenceStart: TokenHG = lTa(f).asInstanceOf[TokenHG]
       val occurrenceStartAsGlobal: Int = occurrenceStart.g
@@ -229,15 +229,8 @@ def createAlignedPatternsPhaseTwo(
     )
     AlignedPatternPhaseTwo(occurrences)
   )
-  tmp.map(_.occurrences.head.patternTr.tString).foreach(e => println(s"  $e"))
-  val resultTmp = tmp.flatMap(_.occurrences).groupBy(_.originalHe)
-  val result = resultTmp.map((k, v) => k -> v.sortBy(_.patternTr.start))
-  // debug
-  // unmark to check conflicting blocks. If two blocks have the same end position in an occurrence then we have a problem
-  // val xxTmp = tmp.flatMap(_.occurrences).groupBy(_.patternTr.until)
-  // val xx = xxTmp.map((k, v) => k -> v.size)
-  // if xx.exists((k,v) => v>1) then throw RuntimeException("Two blocks conflict with each other!")
-  result
+  patterns
+
 
 case class AlignedPatternOccurrencePhaseTwo(
     originalBlock: FullDepthBlock,
