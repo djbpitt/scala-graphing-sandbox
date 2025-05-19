@@ -78,7 +78,6 @@ def mergeHgHg(
     detectTransposition(matchesAsSet, matchesAsHg, true)
   if transpositionBool
   then
-    println("Found a transposition")
     val (decisionGraph, matchLists): (Graph[DecisionGraphStepPhase2], List[List[HyperedgeMatch]]) =
       traversalGraphPhase2(hg1, hg2, matchesAsSet)
     // TODO: Perform a* over newAlignment to resolve transposition (only if transposition previously detected)
