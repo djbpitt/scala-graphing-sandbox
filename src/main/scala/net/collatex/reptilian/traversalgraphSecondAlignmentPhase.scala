@@ -59,6 +59,20 @@ def traversalGraphPhase2(
     hg2: Hypergraph[EdgeLabel, TokenRange],
     matches: Set[HyperedgeMatch]
 ): (Graph[DecisionGraphStepPhase2], List[List[HyperedgeMatch]]) =
+  // debug
+  // combine the incoming hypergraphs into one and visualize it as a directed graph
+  val combinedHG = hg1 + hg2
+  val _dg = combinedHG.toDependencyGraph()
+  // println("Combined HG input"
+  dependencyGraphToDot(_dg, combinedHG)
+
+
+
+
+
+
+
+
   val siglumToHyperedge: Map[Int, MatchesSide] =
     hg1.witnessSet.map(e => e -> MatchesSide.first).toMap ++
       hg2.witnessSet.map(e => e -> MatchesSide.second).toMap
