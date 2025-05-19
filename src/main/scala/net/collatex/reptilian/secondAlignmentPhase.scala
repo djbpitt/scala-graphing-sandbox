@@ -43,7 +43,6 @@ def mergeSingletonHG(
 
 def groupPatternsTogetherByHyperedge(patterns: List[AlignedPatternPhaseTwo]):
     Map[EdgeLabel, List[AlignedPatternOccurrencePhaseTwo]] =
-  patterns.map(_.occurrences.head.patternTr.tString).foreach(e => println(s"  $e"))
   val resultUnsorted = patterns.flatMap(_.occurrences).groupBy(_.originalHe)
   val result = resultUnsorted.map((k, v) => k -> v.sortBy(_.patternTr.start))
   // debug
