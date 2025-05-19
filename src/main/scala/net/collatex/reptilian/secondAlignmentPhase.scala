@@ -41,8 +41,9 @@ def mergeSingletonHG(
     TokenRange(start = singletonTokens.head.g, until = singletonTokens.last.g + 1, ta = hg.verticesIterator.next.ta)
   mergeHgHg(hg, AlignmentHyperedge(Set(singletonAsTokenRange)), debug)
 
-def groupPatternsTogetherByHyperedge(patterns: List[AlignedPatternPhaseTwo]):
-    Map[EdgeLabel, List[AlignedPatternOccurrencePhaseTwo]] =
+def groupPatternsTogetherByHyperedge(
+    patterns: List[AlignedPatternPhaseTwo]
+): Map[EdgeLabel, List[AlignedPatternOccurrencePhaseTwo]] =
   val resultUnsorted = patterns.flatMap(_.occurrences).groupBy(_.originalHe)
   val result = resultUnsorted.map((k, v) => k -> v.sortBy(_.patternTr.start))
   // debug
@@ -62,7 +63,6 @@ def mergeHgHg(
   val _dg = bothHgs.toDependencyGraph()
   println("Combined HG input")
   dependencyGraphToDot(_dg, bothHgs)
-
 
   // bothHgs.hyperedges.map(e => e.verticesIterator.toSet.map(f => f.length)).foreach(println)
   val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
@@ -310,19 +310,15 @@ def splitHesOnAlignedPatterns(
 // involve two instances from the same witness / hyperedge
 // FIXME: Although we prevent the merge, we currently throw away the pieces. Oops!
 def isSpuriousMatch(candidate: HyperedgeMatch): Boolean =
-  candidate
-    .head
-    .verticesIterator
+  candidate.head.verticesIterator
     .map(_.tokens.head.w)
     .toSet
     .intersect(
-      candidate
-        .last
-        .verticesIterator
+      candidate.last.verticesIterator
         .map(_.tokens.head.w)
         .toSet
-    ).nonEmpty
-
+    )
+    .nonEmpty
 
 def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange]): Unit =
   val gTa = hg.verticesIterator.next.ta
@@ -427,17 +423,12 @@ object HyperedgeMatch:
   val JSONFiles = os.list(unalignedZonesDir).filter(e => os.isFile(e))
   for uzFilename <- JSONFiles do
     println(uzFilename)
-    // FIXME: 12599 detects phantom transposition; temporarily ignore
-    // FIXME: 12599 is too long to diagnose; temporarily remove
-    if uzFilename != os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "12599.json"
-      && uzFilename != os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "3287.json"
-    then
-      val darwinReadings: List[List[Token]] = readSpecifiedJsonData(uzFilename)
-      val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
-      val hg: Hypergraph[EdgeLabel, TokenRange] =
-        mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-      // Transform hypergraph to alignment ribbon and visualize
-      createSecondAlignmentPhaseVisualization(hg)
+    val darwinReadings: List[List[Token]] = readSpecifiedJsonData(uzFilename)
+    val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
+    val hg: Hypergraph[EdgeLabel, TokenRange] =
+      mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
+    // Transform hypergraph to alignment ribbon and visualize
+    createSecondAlignmentPhaseVisualization(hg)
 
 @main def explore3287(): Unit =
   val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
@@ -486,4 +477,3 @@ object HyperedgeMatch:
   dependencyGraphToDot(dg, hg)
   // Transform hypergraph to alignment ribbon and visualize
   createSecondAlignmentPhaseVisualization(hg)
-
