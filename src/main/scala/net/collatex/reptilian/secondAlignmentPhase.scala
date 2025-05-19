@@ -72,7 +72,9 @@ def mergeHgHg(
   val allSplitHyperedgesNew: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
     splitHesOnAlignedPatterns(bothHgs, patterns)
   val unfilteredMatchesAsSet = allSplitHyperedgesNew._2 // May includes spurious matches within single witness
-  val matchesAsSet = unfilteredMatchesAsSet.filterNot(e => isSpuriousMatch(e))
+  val matchesAsSet = unfilteredMatchesAsSet.filterNot(e => isSpuriousMatch(e)) // will process normally
+  val spuriousMatches = unfilteredMatchesAsSet.diff(matchesAsSet) // will add to result directly
+  if spuriousMatches.nonEmpty then println(s"Spurious matches: $spuriousMatches")
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
     matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
   val transpositionBool =
@@ -90,7 +92,7 @@ def mergeHgHg(
       .map(_.verticesIterator.next())
       .map(_.tString)
     tmp.foreach(println)
-    result
+    spuriousMatches.flatten.foldLeft(result)(_ + _)
   else
     val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
       .map(e => AlignmentHyperedge(e.head.verticesIterator.toSet ++ e.last.verticesIterator.toSet)) // NB: new hyperedge
@@ -100,7 +102,7 @@ def mergeHgHg(
     // debug: unmark to create and write dependency graph to disk
     // val dgNew = DependencyGraph(hgWithMergeResults)
     // dependencyGraphToDot(dgNew, hgWithMergeResults) // writes to disk
-    hgWithMergeResults
+    spuriousMatches.flatten.foldLeft(hgWithMergeResults)(_ + _)
 
 def readJsonData: List[List[Token]] =
   val datafilePath =
