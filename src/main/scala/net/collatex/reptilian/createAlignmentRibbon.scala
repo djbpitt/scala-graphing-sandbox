@@ -196,6 +196,8 @@ def setupNodeExpansion(
   val result: AlignmentRibbon =
     if alignmentPointsForSection.isEmpty
     then
+      println(s"\nselection: $selection")
+      selection.convertToTokenLists(sigla).foreach(println)
       val wg = selection.witnessReadings
         .groupBy((_, offsets) =>
           gTa

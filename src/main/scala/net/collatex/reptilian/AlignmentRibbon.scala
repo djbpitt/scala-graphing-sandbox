@@ -1,5 +1,6 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.TokenEnum.Token
 import net.collatex.reptilian.TokenRange.*
 
 import scala.collection.mutable
@@ -45,13 +46,15 @@ object AlignmentPoint {
   *
   * Same input as AlignmentPoint (varargs of (Siglum, TokenRange)) but create only WitnessReadings and no WitnessGroups
   */
-final case class UnalignedZone(witnessReadings: WitnessReadings) extends AlignmentUnit
+final case class UnalignedZone(witnessReadings: WitnessReadings) extends AlignmentUnit:
+  def convertToTokenLists(realSigla: List[Siglum]): List[List[TokenEnum]] = 
+    val sortedKeys = this.witnessReadings.keys.toSeq.sorted
+    sortedKeys.map(e => this.witnessReadings(e).tokens.toList).toList  
 
-object UnalignedZone {
+object UnalignedZone 
   def apply(m: (Siglum, TokenRange)*): UnalignedZone =
     val wr = m.toMap
     UnalignedZone(wr)
-}
 
 /** AlignmentRibbon
   *
