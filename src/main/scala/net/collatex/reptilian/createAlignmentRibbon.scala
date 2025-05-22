@@ -192,21 +192,53 @@ def setupNodeExpansion(
     selection: UnalignedZone // pre
 ) =
   val gTa = selection.witnessReadings.values.head.ta
+//  println(selection.witnessReadings)
+//  println(gTa.head.w)
   val alignmentPointsForSection = alignTokenArray(sigla, selection)
   val result: AlignmentRibbon =
     if alignmentPointsForSection.isEmpty
     then
-      println(s"\nselection: $selection")
-      selection.convertToTokenLists(sigla).foreach(println)
-      val wg = selection.witnessReadings
-        .groupBy((_, offsets) =>
-          gTa
-            .slice(offsets.start, offsets.until)
-            .map(_.n)
-        ) // groups readings by shared text (n property)
-        .values // we don't care about the shared text after we've used it for grouping
-        .toSet
-      AlignmentRibbon(ListBuffer(AlignmentPoint(selection.witnessReadings, wg))) // one-item ribbon
+      val darwinReadings: List[List[Token]] = selection.convertToTokenLists()
+      // println(s"darwinReadings: $darwinReadings")
+      val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
+      // println(s"clusters: $nodesToCluster")
+      if nodesToCluster.isEmpty then { // One witness, so construct local ribbon directly
+        val wg: Set[Map[Siglum, TokenRange]] = Set(selection.witnessReadings)
+        AlignmentRibbon(ListBuffer(AlignmentPoint(selection.witnessReadings, wg)))
+      } else // Variation node with … er … variation
+        val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
+        val ranking: Map[NodeType, Int] = hg.rank()
+        val hyperedgesByRank = hg.hyperedges.groupBy(e => ranking(NodeType(e.label))) // unsorted
+        val sortedRanks = hyperedgesByRank.keySet.toSeq.sorted
+        val aps: ListBuffer[AlignmentUnit] = sortedRanks
+          .map(e =>
+            val wg = hyperedgesByRank(e) // set of hyperedges, one per witness group on alignment point
+              .map(f =>
+                f.verticesIterator
+                  .map(tr =>
+                    val witness: Siglum = Siglum(gTa(tr.start).w.toString)
+                    // println(s"witness inside setupNodeExpansion: $witness")
+                    witness -> tr
+                  )
+                  .toMap
+              )
+            val wr = wg.reduce(_ ++ _)
+            AlignmentPoint(wr, wg)
+          )
+          .to(ListBuffer)
+        val result = AlignmentRibbon(aps)
+        result
+
+
+//        val wg = selection.witnessReadings
+//          .groupBy((_, offsets) =>
+//            gTa
+//              .slice(offsets.start, offsets.until)
+//              .map(_.n)
+//          ) // groups readings by shared text (n property)
+//          .values // we don't care about the shared text after we've used it for grouping
+//          .toSet
+//        AlignmentRibbon(ListBuffer(AlignmentPoint(selection.witnessReadings, wg))) // one-item ribbon
     else // alignment points, so children are a sequence of one or more nodes of possibly different types
       val expansion = recursiveBuildAlignment(
         result = ListBuffer(),
@@ -239,7 +271,8 @@ def recursiveBuildAlignment(
 
   val expandedPre: AlignmentRibbon =
     if pre.witnessReadings.nonEmpty then setupNodeExpansion(sigla, pre)
-    else AlignmentRibbon(ListBuffer(pre)) // single-item ribbon in else case
+    else
+      AlignmentRibbon(ListBuffer(pre)) // single-item ribbon in else case
 
   result.appendAll(Seq(expandedPre, firstRemainingAlignmentPoint))
 

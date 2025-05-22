@@ -109,8 +109,13 @@ def computeReadingTextLength(in: Vector[TokenEnum]): Double =
   *   Vector of sigla of missing witnesses as strings
   */
 def findMissingWitnesses(n: AlignmentPoint, sigla: Set[Siglum]): Vector[Siglum] =
-  val missingWitnesses = sigla.diff(n.witnessReadings.keySet).toVector.sorted
-  missingWitnesses
+  val missingWitnessesRaw = sigla.diff(n.witnessReadings.keySet).toVector.sorted
+  val result = missingWitnessesRaw.map(s =>
+    if s.value.length == 1 then
+      Siglum(intToSiglum(s.value.toInt))
+    else s
+  )
+  result
 
 def computeAlignmentNodeRenderingWidth(n: AlignmentPoint): Double =
   // FIXME: Temporarily add 28 to allow for two-character siglum plus colon plus space
@@ -138,7 +143,11 @@ def createHorizNodeData(
         case Some(e) => e.xOffset + e.alignmentWidth + flowLength
         case None    => 0d
       }
-      val missing = findMissingWitnesses(nodes.head.node, sigla)
+      val missing: Vector[Siglum] = {
+        println(s"sigla on node: ${nodes.head.node}")
+        println(s"sigla from val: $sigla")
+        findMissingWitnesses(nodes.head.node, sigla)
+      }
       val newNode =
         // println(nodes.head.node.witnessGroups)
         // println(nodes.head.node.witnessGroups.head.map((k, v) => v.ta.size))
@@ -189,6 +198,15 @@ def selfCartesianProduct[A](input: Iterable[A]) =
     )
     .filter(_.size > 1)
   result
+
+def intToSiglum = Map(
+  0 -> "darwin1859.txt",
+  1 -> "darwin1860.txt",
+  2 -> "darwin1861.txt",
+  3 -> "darwin1866.txt",
+  4 -> "darwin1869.txt",
+  5 -> "darwin1872.txt"
+)
 
 @unused
 def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
@@ -295,8 +313,14 @@ def createHorizontalRibbons(
   )
 
   // FIXME: Hard-coded for darwin18xx.txt or single-character sigla
-  def formatSiglum(siglum: Siglum): String =
-    if siglum.value.length == 1 then siglum.value else siglum.value.slice(8, 10)
+  def formatSiglum(siglum: Siglum): String = {
+    println(siglum.value)
+    if siglum.value.length == 1
+    then
+      intToSiglum(siglum.value.toInt).slice(8, 10)
+    else
+      siglum.value.slice(8, 10)
+  }
 
   def plotRect(vOffset: Double, node: HorizNodeData, fillColor: String, top: Double) =
     <rect x="0"
