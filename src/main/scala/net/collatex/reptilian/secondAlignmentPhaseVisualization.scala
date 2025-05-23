@@ -18,7 +18,11 @@ def createSecondAlignmentPhaseVisualization(hg: Hypergraph[EdgeLabel, TokenRange
         .map(f =>
           f.verticesIterator
             .map(tr =>
-              val witness: Siglum = Siglum(gTa(tr.start).w.toString)
+              val witness: Siglum = {
+                val inSiglum: String = gTa(tr.start).w.toString
+                if inSiglum.length == 1 then Siglum(intToSiglum(inSiglum.toInt))
+                else Siglum(inSiglum)
+              }
               witness -> tr
             )
             .toMap

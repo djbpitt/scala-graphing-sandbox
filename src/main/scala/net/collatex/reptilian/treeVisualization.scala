@@ -76,14 +76,15 @@ def flattenNodeSeq(
   val flattenedNodeSeq =
     @tailrec
     def nextNode(
-                  inList: List[(Int, AlignmentUnit)],
-                  outVector: Vector[NumberedNode]
+        inList: List[(Int, AlignmentUnit)],
+        outVector: Vector[NumberedNode]
     ): Vector[NumberedNode] =
       if inList.isEmpty then outVector
       else
         val currentNode = inList.head
         currentNode match
           case (nodeNo, node: AlignmentPoint) =>
+            println(s"AlignmentPoint: ${node.witnessGroups}")
             nextNode(inList.tail, outVector :+ NumberedNode(node, nodeNo))
           case (_, node: AlignmentRibbon) =>
             val newNodesToProcess: List[(Int, AlignmentUnit)] =
@@ -93,6 +94,9 @@ def flattenNodeSeq(
               }.toList
             nextNode(newNodesToProcess ::: inList.tail, outVector)
           case (_, UnalignedZone(_)) => // FIXME: shouldn't happen, but handle instead of ignore
+            println(s"UnalignedZone: ${currentNode}")
+//            println("Oops! Unaligned zone!")
+//            println(currentNode)
             nextNode(inList.tail, outVector)
     nextNode(nodesToProcess, Vector.empty)
   flattenedNodeSeq

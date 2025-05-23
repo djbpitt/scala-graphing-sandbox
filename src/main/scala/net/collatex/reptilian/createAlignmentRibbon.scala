@@ -190,10 +190,10 @@ def createAlignmentRibbon(
 def setupNodeExpansion(
     sigla: List[Siglum], // all sigla (global, not just current zone)
     selection: UnalignedZone // pre
-) =
+): AlignmentRibbon =
   val gTa = selection.witnessReadings.values.head.ta
-//  println(selection.witnessReadings)
-//  println(gTa.head.w)
+  //  println(selection.witnessReadings)
+  //  println(gTa.head.w)
   val alignmentPointsForSection = alignTokenArray(sigla, selection)
   val result: AlignmentRibbon =
     if alignmentPointsForSection.isEmpty
@@ -216,8 +216,12 @@ def setupNodeExpansion(
               .map(f =>
                 f.verticesIterator
                   .map(tr =>
-                    val witness: Siglum = Siglum(gTa(tr.start).w.toString)
-                    // println(s"witness inside setupNodeExpansion: $witness")
+                    val witness: Siglum = {
+                      val inSiglum: String = gTa(tr.start).w.toString
+                      if inSiglum.length == 1 then Siglum(intToSiglum(inSiglum.toInt))
+                      else Siglum(inSiglum)
+                    }
+                    println(s"witness inside setupNodeExpansion: $witness")
                     witness -> tr
                   )
                   .toMap
@@ -229,16 +233,15 @@ def setupNodeExpansion(
         val result = AlignmentRibbon(aps)
         result
 
-
-//        val wg = selection.witnessReadings
-//          .groupBy((_, offsets) =>
-//            gTa
-//              .slice(offsets.start, offsets.until)
-//              .map(_.n)
-//          ) // groups readings by shared text (n property)
-//          .values // we don't care about the shared text after we've used it for grouping
-//          .toSet
-//        AlignmentRibbon(ListBuffer(AlignmentPoint(selection.witnessReadings, wg))) // one-item ribbon
+    //        val wg = selection.witnessReadings
+    //          .groupBy((_, offsets) =>
+    //            gTa
+    //              .slice(offsets.start, offsets.until)
+    //              .map(_.n)
+    //          ) // groups readings by shared text (n property)
+    //          .values // we don't care about the shared text after we've used it for grouping
+    //          .toSet
+    //        AlignmentRibbon(ListBuffer(AlignmentPoint(selection.witnessReadings, wg))) // one-item ribbon
     else // alignment points, so children are a sequence of one or more nodes of possibly different types
       val expansion = recursiveBuildAlignment(
         result = ListBuffer(),

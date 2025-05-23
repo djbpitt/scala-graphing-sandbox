@@ -111,8 +111,7 @@ def computeReadingTextLength(in: Vector[TokenEnum]): Double =
 def findMissingWitnesses(n: AlignmentPoint, sigla: Set[Siglum]): Vector[Siglum] =
   val missingWitnessesRaw = sigla.diff(n.witnessReadings.keySet).toVector.sorted
   val result = missingWitnessesRaw.map(s =>
-    if s.value.length == 1 then
-      Siglum(intToSiglum(s.value.toInt))
+    if s.value.length == 1 then Siglum(intToSiglum(s.value.toInt))
     else s
   )
   result
@@ -144,8 +143,8 @@ def createHorizNodeData(
         case None    => 0d
       }
       val missing: Vector[Siglum] = {
-        println(s"sigla on node: ${nodes.head.node}")
-        println(s"sigla from val: $sigla")
+//        println(s"sigla on node: ${nodes.head.node}")
+//        println(s"sigla from val: $sigla")
         findMissingWitnesses(nodes.head.node, sigla)
       }
       val newNode =
@@ -313,14 +312,12 @@ def createHorizontalRibbons(
   )
 
   // FIXME: Hard-coded for darwin18xx.txt or single-character sigla
-  def formatSiglum(siglum: Siglum): String = {
-    println(siglum.value)
-    if siglum.value.length == 1
-    then
-      intToSiglum(siglum.value.toInt).slice(8, 10)
-    else
-      siglum.value.slice(8, 10)
-  }
+  def formatSiglum(siglum: Siglum): String =
+    val result =
+      if siglum.value.length == 1
+      then intToSiglum(siglum.value.toInt).slice(8, 10)
+      else siglum.value.slice(8, 10)
+    result
 
   def plotRect(vOffset: Double, node: HorizNodeData, fillColor: String, top: Double) =
     <rect x="0"
@@ -409,10 +406,18 @@ def createHorizontalRibbons(
   def plotLeadingRibbons(currentNode: HorizNodeData, precedingNode: HorizNodeData): xml.Elem =
     /* Coordinates for witnesses in groups */
     @tailrec
-    def nextGroup(groups: Vector[HorizNodeGroup], top: Double, acc: Map[Siglum, Double]): Map[Siglum, Double] =
+    def nextGroup(
+        groups: Vector[HorizNodeGroup],
+        top: Double,
+        acc: Map[Siglum, Double]
+    ): Map[Siglum, Double] =
       if groups.isEmpty then acc
       else
-        val newAcc = acc ++ groups.head.members.zipWithIndex.map(e => e._1.siglum -> (top + e._2 * ribbonWidth)).toMap
+        val newAcc = acc ++ groups
+          .head
+          .members
+          .zipWithIndex
+          .map(e => e._1.siglum -> (top + e._2 * ribbonWidth)).toMap
         nextGroup(groups.tail, top + (groups.head.members.size + 1) * ribbonWidth, newAcc)
     def missings(missings: Vector[Siglum], top: Double): Map[Siglum, Double] =
       missings.zipWithIndex.map(e => e._1 -> (top + e._2 * ribbonWidth)).toMap
