@@ -40,6 +40,17 @@ object AlignmentPoint {
       .values // we don't care about the shared text after we've used it for grouping
       .toSet
     AlignmentPoint(wr, wg)
+  def apply(gTa: Vector[TokenEnum], m: WitnessReadings): AlignmentPoint =
+    val wg = m
+      .groupBy((_, offsets) =>
+        gTa
+          .slice(offsets.start, offsets.until)
+          .map(_.n)
+      ) // groups readings by shared text (n property); can we improve the performance here?
+      .values // we don't care about the shared text after we've used it for grouping
+      .toSet
+    AlignmentPoint(m, wg)
+
 }
 
 /** Zone to be processed in phase two

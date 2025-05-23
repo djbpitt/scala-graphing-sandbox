@@ -221,7 +221,6 @@ def setupNodeExpansion(
                       if inSiglum.length == 1 then Siglum(intToSiglum(inSiglum.toInt))
                       else Siglum(inSiglum)
                     }
-                    println(s"witness inside setupNodeExpansion: $witness")
                     witness -> tr
                   )
                   .toMap
