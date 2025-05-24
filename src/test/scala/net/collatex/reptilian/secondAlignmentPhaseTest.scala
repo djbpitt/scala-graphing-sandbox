@@ -59,14 +59,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
         EdgeLabel("8") -> Set(TokenRange(8, 9, gTa), TokenRange(3, 4, gTa)),
         EdgeLabel("5") -> Set(TokenRange(5, 7, gTa), TokenRange(0, 2, gTa))
       ),
-      Map(
-        TokenRange(5, 7, gTa) -> Set(EdgeLabel("5")),
-        TokenRange(3, 4, gTa) -> Set(EdgeLabel("8")),
-        TokenRange(7, 8, gTa) -> Set(EdgeLabel("7")),
-        TokenRange(2, 3, gTa) -> Set(EdgeLabel("2")),
-        TokenRange(8, 9, gTa) -> Set(EdgeLabel("8")),
-        TokenRange(0, 2, gTa) -> Set(EdgeLabel("5"))
-      )
+      Set.empty
     )
     assert(result.hyperedgeLabels.map(e => result.members(e)) == expected.hyperedgeLabels.map(e => expected.members(e)))
   test("test identifyHGTokenRanges()"):
@@ -93,20 +86,16 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
         EdgeLabel("0") -> Set(TokenRange(8, 9, gTa), TokenRange(3, 4, gTa)),
         EdgeLabel("2") -> Set(TokenRange(5, 7, gTa), TokenRange(0, 2, gTa))
       ),
-      Map(
-        TokenRange(5, 7, gTa) -> Set(EdgeLabel("2")),
-        TokenRange(3, 4, gTa) -> Set(EdgeLabel("0")),
-        TokenRange(7, 8, gTa) -> Set(EdgeLabel("1a")),
-        TokenRange(2, 3, gTa) -> Set(EdgeLabel("1b")),
-        TokenRange(8, 9, gTa) -> Set(EdgeLabel("0")),
-        TokenRange(0, 2, gTa) -> Set(EdgeLabel("2"))
-      )
+      Set.empty
     )
     val expected = Vector(
-      Vector(TokenHG("Mom", "Mom", 0, 2, EdgeLabel("1b"))),
-      Vector(TokenHG("Dad", "Dad", 1, 7, EdgeLabel("1a"))),
-      Vector(TokenHG("!", "!", 1, 8, EdgeLabel("0"))),
-      Vector(TokenHG("Hi", "Hi", 1, 5, EdgeLabel("2")), TokenHG(", ", ", ", 1, 6, EdgeLabel("2")))
+      Vector(TokenHG("Mom", "Mom", 0, 2, EdgeLabel("1b"), TokenRange(2, 3, gTa))),
+      Vector(TokenHG("Dad", "Dad", 1, 7, EdgeLabel("1a"), TokenRange(7, 8, gTa))),
+      Vector(TokenHG("!", "!", 1, 8, EdgeLabel("0"), TokenRange(8, 9, gTa))),
+      Vector(
+        TokenHG("Hi", "Hi", 1, 5, EdgeLabel("2"), TokenRange(5, 7, gTa)),
+        TokenHG(", ", ", ", 1, 6, EdgeLabel("2"), TokenRange(5, 7, gTa))
+      )
     )
     val result = identifyHGTokenRanges(hg)
     assert(result == expected)
@@ -140,14 +129,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
         EdgeLabel("6") -> Set(TokenRange(6, 7, gTa)),
         EdgeLabel("3") -> Set(TokenRange(3, 4, gTa), TokenRange(7, 8, gTa))
       ),
-      Map(
-        TokenRange(0, 2, gTa) -> Set(EdgeLabel("0")),
-        TokenRange(5, 7, gTa) -> Set(EdgeLabel("0")),
-        TokenRange(2, 3, gTa) -> Set(EdgeLabel("2")),
-        TokenRange(6, 7, gTa) -> Set(EdgeLabel("6")),
-        TokenRange(3, 4, gTa) -> Set(EdgeLabel("3")),
-        TokenRange(7, 8, gTa) -> Set(EdgeLabel("3"))
-      )
+      Set.empty
     )
     val expected = Vector(
       TokenSg("Hi", "Hi", 2, 10),
@@ -155,14 +137,14 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
       TokenSg("parents", "parents", 2, 12),
       TokenSg("!", "!", 2, 13),
       TokenSep("0", "0", 0, -1),
-      TokenHG("Hi", "Hi", 0, 0, EdgeLabel("0")),
-      TokenHG(", ", ", ", 0, 1, EdgeLabel("0")),
+      TokenHG("Hi", "Hi", 0, 0, EdgeLabel("0"), TokenRange(0, 2, gTa)),
+      TokenHG(", ", ", ", 0, 1, EdgeLabel("0"), TokenRange(0, 2, gTa)),
       TokenSep("1", "1", 1, -1),
-      TokenHG("Mom", "Mom", 0, 2, EdgeLabel("2")),
+      TokenHG("Mom", "Mom", 0, 2, EdgeLabel("2"), TokenRange(2, 3, gTa)),
       TokenSep("2", "2", 2, -1),
-      TokenHG(", ", ", ", 1, 6, EdgeLabel("6")),
+      TokenHG(", ", ", ", 1, 6, EdgeLabel("6"), TokenRange(6, 7, gTa)),
       TokenSep("3", "3", 3, -1),
-      TokenHG("!", "!", 0, 3, EdgeLabel("3"))
+      TokenHG("!", "!", 0, 3, EdgeLabel("3"), TokenRange(3, 4, gTa))
     )
     val result = createLocalTA(singletonTokens, hg)
     assert(result == expected)
@@ -196,17 +178,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
         EdgeLabel(2) -> Set(TokenRange(2, 3, gTa)),
         EdgeLabel(7) -> Set(TokenRange(7, 8, gTa))
       ),
-      Map(
-        TokenRange(5, 7, gTa) -> Set(EdgeLabel(5)),
-        TokenRange(3, 4, gTa) -> Set(EdgeLabel(8)),
-        TokenRange(7, 8, gTa) -> Set(EdgeLabel(7)),
-        TokenRange(2, 3, gTa) -> Set(EdgeLabel(2)),
-        TokenRange(8, 9, gTa) -> Set(EdgeLabel(8)),
-        TokenRange(15, 19, gTa) -> Set(EdgeLabel(15)),
-        TokenRange(0, 2, gTa) -> Set(EdgeLabel(5)),
-        TokenRange(10, 12, gTa) -> Set(EdgeLabel(5)),
-        TokenRange(13, 14, gTa) -> Set(EdgeLabel(8))
-      )
+      Set.empty
     )
     // RESUME 2024-01-18: gTa should be the same for all tokens, but the gTa attached
     // to the tokens in the result is not consistent. The numerical values are correct;
@@ -232,485 +204,9 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
           TokenRange(10, 12, gTa)
         ) // Hi,
       ),
-      Map(
-        TokenRange(5, 7, gTa) -> Set(EdgeLabel(5)),
-        TokenRange(3, 4, gTa) -> Set(EdgeLabel(8)),
-        TokenRange(7, 8, gTa) -> Set(EdgeLabel(7)),
-        TokenRange(2, 3, gTa) -> Set(EdgeLabel(2)),
-        TokenRange(8, 9, gTa) -> Set(EdgeLabel(8)),
-        TokenRange(0, 2, gTa) -> Set(EdgeLabel(5)),
-        TokenRange(13, 14, gTa) -> Set(EdgeLabel(8)),
-        TokenRange(10, 12, gTa) -> Set(EdgeLabel(5))
-      )
+      Set.empty
     )
     val result = mergeSingletonHG(singletonTokens, hg, true)
-    val returned = FullHypergraph(
-      Map(
-        5 -> Set(
-          TokenRange(
-            10,
-            12,
-            Vector(
-              Token("Hi", "Hi", 0, 0),
-              Token(", ", ", ", 0, 1),
-              Token("Mom", "Mom", 0, 2),
-              Token("!", "!", 0, 3),
-              Token("Sep4", "Sep4", 0, 4),
-              Token("Hi", "Hi", 1, 5),
-              Token(", ", ", ", 1, 6),
-              Token("Dad", "Dad", 1, 7),
-              Token("!", "!", 1, 8),
-              Token("Sep9", "Sep9", 1, 9),
-              Token("Hi", "Hi", 2, 10),
-              Token(", ", ", ", 2, 11),
-              Token("parents", "parents", 2, 12),
-              Token("!", "!", 2, 13),
-              Token("Sep14", "Sep14", 2, 14),
-              Token("There ", "there", 3, 15),
-              Token("are ", "are", 3, 16),
-              Token("no ", "no", 3, 17),
-              Token("blocks", "blocks", 3, 18)
-            )
-          ),
-          TokenRange(
-            5,
-            7,
-            Vector(
-              Token("Hi", "Hi", 0, 0),
-              Token(", ", ", ", 0, 1),
-              Token("Mom", "Mom", 0, 2),
-              Token("!", "!", 0, 3),
-              Token("Sep4", "Sep4", 0, 4),
-              Token("Hi", "Hi", 1, 5),
-              Token(", ", ", ", 1, 6),
-              Token("Dad", "Dad", 1, 7),
-              Token("!", "!", 1, 8),
-              Token("Sep9", "Sep9", 1, 9),
-              Token("Hi", "Hi", 2, 10),
-              Token(", ", ", ", 2, 11),
-              Token("parents", "parents", 2, 12),
-              Token("!", "!", 2, 13),
-              Token("Sep14", "Sep14", 2, 14),
-              Token("There ", "there", 3, 15),
-              Token("are ", "are", 3, 16),
-              Token("no ", "no", 3, 17),
-              Token("blocks", "blocks", 3, 18)
-            )
-          ),
-          TokenRange(
-            0,
-            2,
-            Vector(
-              Token("Hi", "Hi", 0, 0),
-              Token(", ", ", ", 0, 1),
-              Token("Mom", "Mom", 0, 2),
-              Token("!", "!", 0, 3),
-              Token("Sep4", "Sep4", 0, 4),
-              Token("Hi", "Hi", 1, 5),
-              Token(", ", ", ", 1, 6),
-              Token("Dad", "Dad", 1, 7),
-              Token("!", "!", 1, 8),
-              Token("Sep9", "Sep9", 1, 9),
-              Token("Hi", "Hi", 2, 10),
-              Token(", ", ", ", 2, 11),
-              Token("parents", "parents", 2, 12),
-              Token("!", "!", 2, 13),
-              Token("Sep14", "Sep14", 2, 14),
-              Token("There ", "there", 3, 15),
-              Token("are ", "are", 3, 16),
-              Token("no ", "no", 3, 17),
-              Token("blocks", "blocks", 3, 18)
-            )
-          )
-        ),
-        8 -> Set(
-          TokenRange(
-            13,
-            14,
-            Vector(
-              Token("Hi", "Hi", 0, 0),
-              Token(", ", ", ", 0, 1),
-              Token("Mom", "Mom", 0, 2),
-              Token("!", "!", 0, 3),
-              Token("Sep4", "Sep4", 0, 4),
-              Token("Hi", "Hi", 1, 5),
-              Token(", ", ", ", 1, 6),
-              Token("Dad", "Dad", 1, 7),
-              Token("!", "!", 1, 8),
-              Token("Sep9", "Sep9", 1, 9),
-              Token("Hi", "Hi", 2, 10),
-              Token(", ", ", ", 2, 11),
-              Token("parents", "parents", 2, 12),
-              Token("!", "!", 2, 13),
-              Token("Sep14", "Sep14", 2, 14),
-              Token("There ", "there", 3, 15),
-              Token("are ", "are", 3, 16),
-              Token("no ", "no", 3, 17),
-              Token("blocks", "blocks", 3, 18)
-            )
-          ),
-          TokenRange(
-            8,
-            9,
-            Vector(
-              Token("Hi", "Hi", 0, 0),
-              Token(", ", ", ", 0, 1),
-              Token("Mom", "Mom", 0, 2),
-              Token("!", "!", 0, 3),
-              Token("Sep4", "Sep4", 0, 4),
-              Token("Hi", "Hi", 1, 5),
-              Token(", ", ", ", 1, 6),
-              Token("Dad", "Dad", 1, 7),
-              Token("!", "!", 1, 8),
-              Token("Sep9", "Sep9", 1, 9),
-              Token("Hi", "Hi", 2, 10),
-              Token(", ", ", ", 2, 11),
-              Token("parents", "parents", 2, 12),
-              Token("!", "!", 2, 13),
-              Token("Sep14", "Sep14", 2, 14),
-              Token("There ", "there", 3, 15),
-              Token("are ", "are", 3, 16),
-              Token("no ", "no", 3, 17),
-              Token("blocks", "blocks", 3, 18)
-            )
-          ),
-          TokenRange(
-            3,
-            4,
-            Vector(
-              Token("Hi", "Hi", 0, 0),
-              Token(", ", ", ", 0, 1),
-              Token("Mom", "Mom", 0, 2),
-              Token("!", "!", 0, 3),
-              Token("Sep4", "Sep4", 0, 4),
-              Token("Hi", "Hi", 1, 5),
-              Token(", ", ", ", 1, 6),
-              Token("Dad", "Dad", 1, 7),
-              Token("!", "!", 1, 8),
-              Token("Sep9", "Sep9", 1, 9),
-              Token("Hi", "Hi", 2, 10),
-              Token(", ", ", ", 2, 11),
-              Token("parents", "parents", 2, 12),
-              Token("!", "!", 2, 13),
-              Token("Sep14", "Sep14", 2, 14),
-              Token("There ", "there", 3, 15),
-              Token("are ", "are", 3, 16),
-              Token("no ", "no", 3, 17),
-              Token("blocks", "blocks", 3, 18)
-            )
-          )
-        ),
-        7 -> Set(
-          TokenRange(
-            7,
-            8,
-            Vector(
-              Token("Hi", "Hi", 0, 0),
-              Token(", ", ", ", 0, 1),
-              Token("Mom", "Mom", 0, 2),
-              Token("!", "!", 0, 3),
-              Token("Sep4", "Sep4", 0, 4),
-              Token("Hi", "Hi", 1, 5),
-              Token(", ", ", ", 1, 6),
-              Token("Dad", "Dad", 1, 7),
-              Token("!", "!", 1, 8),
-              Token("Sep9", "Sep9", 1, 9),
-              Token("Hi", "Hi", 2, 10),
-              Token(", ", ", ", 2, 11),
-              Token("parents", "parents", 2, 12),
-              Token("!", "!", 2, 13),
-              Token("Sep14", "Sep14", 2, 14),
-              Token("There ", "there", 3, 15),
-              Token("are ", "are", 3, 16),
-              Token("no ", "no", 3, 17),
-              Token("blocks", "blocks", 3, 18)
-            )
-          )
-        ),
-        0 -> Set(
-          TokenRange(
-            15,
-            19,
-            Vector(
-              Token("Hi", "Hi", 0, 0),
-              Token(", ", ", ", 0, 1),
-              Token("Mom", "Mom", 0, 2),
-              Token("!", "!", 0, 3),
-              Token("Sep4", "Sep4", 0, 4),
-              Token("Hi", "Hi", 1, 5),
-              Token(", ", ", ", 1, 6),
-              Token("Dad", "Dad", 1, 7),
-              Token("!", "!", 1, 8),
-              Token("Sep9", "Sep9", 1, 9),
-              Token("Hi", "Hi", 2, 10),
-              Token(", ", ", ", 2, 11),
-              Token("parents", "parents", 2, 12),
-              Token("!", "!", 2, 13),
-              Token("Sep14", "Sep14", 2, 14),
-              Token("There ", "there", 3, 15),
-              Token("are ", "are", 3, 16),
-              Token("no ", "no", 3, 17),
-              Token("blocks", "blocks", 3, 18)
-            )
-          )
-        ),
-        2 -> Set(
-          TokenRange(
-            2,
-            3,
-            Vector(
-              Token("Hi", "Hi", 0, 0),
-              Token(", ", ", ", 0, 1),
-              Token("Mom", "Mom", 0, 2),
-              Token("!", "!", 0, 3),
-              Token("Sep4", "Sep4", 0, 4),
-              Token("Hi", "Hi", 1, 5),
-              Token(", ", ", ", 1, 6),
-              Token("Dad", "Dad", 1, 7),
-              Token("!", "!", 1, 8),
-              Token("Sep9", "Sep9", 1, 9),
-              Token("Hi", "Hi", 2, 10),
-              Token(", ", ", ", 2, 11),
-              Token("parents", "parents", 2, 12),
-              Token("!", "!", 2, 13),
-              Token("Sep14", "Sep14", 2, 14),
-              Token("There ", "there", 3, 15),
-              Token("are ", "are", 3, 16),
-              Token("no ", "no", 3, 17),
-              Token("blocks", "blocks", 3, 18)
-            )
-          )
-        )
-      ),
-      Map(
-        TokenRange(
-          15,
-          19,
-          Vector(
-            Token("Hi", "Hi", 0, 0),
-            Token(", ", ", ", 0, 1),
-            Token("Mom", "Mom", 0, 2),
-            Token("!", "!", 0, 3),
-            Token("Sep4", "Sep4", 0, 4),
-            Token("Hi", "Hi", 1, 5),
-            Token(", ", ", ", 1, 6),
-            Token("Dad", "Dad", 1, 7),
-            Token("!", "!", 1, 8),
-            Token("Sep9", "Sep9", 1, 9),
-            Token("Hi", "Hi", 2, 10),
-            Token(", ", ", ", 2, 11),
-            Token("parents", "parents", 2, 12),
-            Token("!", "!", 2, 13),
-            Token("Sep14", "Sep14", 2, 14),
-            Token("There ", "there", 3, 15),
-            Token("are ", "are", 3, 16),
-            Token("no ", "no", 3, 17),
-            Token("blocks", "blocks", 3, 18)
-          )
-        ) -> Set(0),
-        TokenRange(
-          13,
-          14,
-          Vector(
-            Token("Hi", "Hi", 0, 0),
-            Token(", ", ", ", 0, 1),
-            Token("Mom", "Mom", 0, 2),
-            Token("!", "!", 0, 3),
-            Token("Sep4", "Sep4", 0, 4),
-            Token("Hi", "Hi", 1, 5),
-            Token(", ", ", ", 1, 6),
-            Token("Dad", "Dad", 1, 7),
-            Token("!", "!", 1, 8),
-            Token("Sep9", "Sep9", 1, 9),
-            Token("Hi", "Hi", 2, 10),
-            Token(", ", ", ", 2, 11),
-            Token("parents", "parents", 2, 12),
-            Token("!", "!", 2, 13),
-            Token("Sep14", "Sep14", 2, 14),
-            Token("There ", "there", 3, 15),
-            Token("are ", "are", 3, 16),
-            Token("no ", "no", 3, 17),
-            Token("blocks", "blocks", 3, 18)
-          )
-        ) -> Set(8),
-        TokenRange(
-          5,
-          7,
-          Vector(
-            Token("Hi", "Hi", 0, 0),
-            Token(", ", ", ", 0, 1),
-            Token("Mom", "Mom", 0, 2),
-            Token("!", "!", 0, 3),
-            Token("Sep4", "Sep4", 0, 4),
-            Token("Hi", "Hi", 1, 5),
-            Token(", ", ", ", 1, 6),
-            Token("Dad", "Dad", 1, 7),
-            Token("!", "!", 1, 8),
-            Token("Sep9", "Sep9", 1, 9),
-            Token("Hi", "Hi", 2, 10),
-            Token(", ", ", ", 2, 11),
-            Token("parents", "parents", 2, 12),
-            Token("!", "!", 2, 13),
-            Token("Sep14", "Sep14", 2, 14),
-            Token("There ", "there", 3, 15),
-            Token("are ", "are", 3, 16),
-            Token("no ", "no", 3, 17),
-            Token("blocks", "blocks", 3, 18)
-          )
-        ) -> Set(5),
-        TokenRange(
-          3,
-          4,
-          Vector(
-            Token("Hi", "Hi", 0, 0),
-            Token(", ", ", ", 0, 1),
-            Token("Mom", "Mom", 0, 2),
-            Token("!", "!", 0, 3),
-            Token("Sep4", "Sep4", 0, 4),
-            Token("Hi", "Hi", 1, 5),
-            Token(", ", ", ", 1, 6),
-            Token("Dad", "Dad", 1, 7),
-            Token("!", "!", 1, 8),
-            Token("Sep9", "Sep9", 1, 9),
-            Token("Hi", "Hi", 2, 10),
-            Token(", ", ", ", 2, 11),
-            Token("parents", "parents", 2, 12),
-            Token("!", "!", 2, 13),
-            Token("Sep14", "Sep14", 2, 14),
-            Token("There ", "there", 3, 15),
-            Token("are ", "are", 3, 16),
-            Token("no ", "no", 3, 17),
-            Token("blocks", "blocks", 3, 18)
-          )
-        ) -> Set(8),
-        TokenRange(
-          10,
-          12,
-          Vector(
-            Token("Hi", "Hi", 0, 0),
-            Token(", ", ", ", 0, 1),
-            Token("Mom", "Mom", 0, 2),
-            Token("!", "!", 0, 3),
-            Token("Sep4", "Sep4", 0, 4),
-            Token("Hi", "Hi", 1, 5),
-            Token(", ", ", ", 1, 6),
-            Token("Dad", "Dad", 1, 7),
-            Token("!", "!", 1, 8),
-            Token("Sep9", "Sep9", 1, 9),
-            Token("Hi", "Hi", 2, 10),
-            Token(", ", ", ", 2, 11),
-            Token("parents", "parents", 2, 12),
-            Token("!", "!", 2, 13),
-            Token("Sep14", "Sep14", 2, 14),
-            Token("There ", "there", 3, 15),
-            Token("are ", "are", 3, 16),
-            Token("no ", "no", 3, 17),
-            Token("blocks", "blocks", 3, 18)
-          )
-        ) -> Set(5),
-        TokenRange(
-          7,
-          8,
-          Vector(
-            Token("Hi", "Hi", 0, 0),
-            Token(", ", ", ", 0, 1),
-            Token("Mom", "Mom", 0, 2),
-            Token("!", "!", 0, 3),
-            Token("Sep4", "Sep4", 0, 4),
-            Token("Hi", "Hi", 1, 5),
-            Token(", ", ", ", 1, 6),
-            Token("Dad", "Dad", 1, 7),
-            Token("!", "!", 1, 8),
-            Token("Sep9", "Sep9", 1, 9),
-            Token("Hi", "Hi", 2, 10),
-            Token(", ", ", ", 2, 11),
-            Token("parents", "parents", 2, 12),
-            Token("!", "!", 2, 13),
-            Token("Sep14", "Sep14", 2, 14),
-            Token("There ", "there", 3, 15),
-            Token("are ", "are", 3, 16),
-            Token("no ", "no", 3, 17),
-            Token("blocks", "blocks", 3, 18)
-          )
-        ) -> Set(7),
-        TokenRange(
-          8,
-          9,
-          Vector(
-            Token("Hi", "Hi", 0, 0),
-            Token(", ", ", ", 0, 1),
-            Token("Mom", "Mom", 0, 2),
-            Token("!", "!", 0, 3),
-            Token("Sep4", "Sep4", 0, 4),
-            Token("Hi", "Hi", 1, 5),
-            Token(", ", ", ", 1, 6),
-            Token("Dad", "Dad", 1, 7),
-            Token("!", "!", 1, 8),
-            Token("Sep9", "Sep9", 1, 9),
-            Token("Hi", "Hi", 2, 10),
-            Token(", ", ", ", 2, 11),
-            Token("parents", "parents", 2, 12),
-            Token("!", "!", 2, 13),
-            Token("Sep14", "Sep14", 2, 14),
-            Token("There ", "there", 3, 15),
-            Token("are ", "are", 3, 16),
-            Token("no ", "no", 3, 17),
-            Token("blocks", "blocks", 3, 18)
-          )
-        ) -> Set(8),
-        TokenRange(
-          2,
-          3,
-          Vector(
-            Token("Hi", "Hi", 0, 0),
-            Token(", ", ", ", 0, 1),
-            Token("Mom", "Mom", 0, 2),
-            Token("!", "!", 0, 3),
-            Token("Sep4", "Sep4", 0, 4),
-            Token("Hi", "Hi", 1, 5),
-            Token(", ", ", ", 1, 6),
-            Token("Dad", "Dad", 1, 7),
-            Token("!", "!", 1, 8),
-            Token("Sep9", "Sep9", 1, 9),
-            Token("Hi", "Hi", 2, 10),
-            Token(", ", ", ", 2, 11),
-            Token("parents", "parents", 2, 12),
-            Token("!", "!", 2, 13),
-            Token("Sep14", "Sep14", 2, 14),
-            Token("There ", "there", 3, 15),
-            Token("are ", "are", 3, 16),
-            Token("no ", "no", 3, 17),
-            Token("blocks", "blocks", 3, 18)
-          )
-        ) -> Set(2),
-        TokenRange(
-          0,
-          2,
-          Vector(
-            Token("Hi", "Hi", 0, 0),
-            Token(", ", ", ", 0, 1),
-            Token("Mom", "Mom", 0, 2),
-            Token("!", "!", 0, 3),
-            Token("Sep4", "Sep4", 0, 4),
-            Token("Hi", "Hi", 1, 5),
-            Token(", ", ", ", 1, 6),
-            Token("Dad", "Dad", 1, 7),
-            Token("!", "!", 1, 8),
-            Token("Sep9", "Sep9", 1, 9),
-            Token("Hi", "Hi", 2, 10),
-            Token(", ", ", ", 2, 11),
-            Token("parents", "parents", 2, 12),
-            Token("!", "!", 2, 13),
-            Token("Sep14", "Sep14", 2, 14),
-            Token("There ", "there", 3, 15),
-            Token("are ", "are", 3, 16),
-            Token("no ", "no", 3, 17),
-            Token("blocks", "blocks", 3, 18)
-          )
-        ) -> Set(5)
-      )
-    )
-
     println(s"result: $result")
     assert(result == expected)
   test("test mergeSingletonHG() with one block and singleton splitting (pre and post)"):
@@ -737,13 +233,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
         EdgeLabel(8) -> Set(TokenRange(8, 9, gTa)),
         EdgeLabel(0) -> Set(TokenRange(0, 3, gTa), TokenRange(4, 7, gTa), TokenRange(9, 12, gTa))
       ),
-      Map(
-        TokenRange(12, 15, gTa) -> Set(EdgeLabel(12)),
-        TokenRange(9, 12, gTa) -> Set(EdgeLabel(0)),
-        TokenRange(4, 7, gTa) -> Set(EdgeLabel(0)),
-        TokenRange(0, 3, gTa) -> Set(EdgeLabel(0)),
-        TokenRange(8, 9, gTa) -> Set(EdgeLabel(8))
-      )
+      Set.empty
     )
     val singletonTokens = Vector[Token](
       Token("Oh ", "oh", 2, 8),
@@ -758,10 +248,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
       Map(
         EdgeLabel(0) -> Set(TokenRange(0, 3, gTa), TokenRange(4, 7, gTa))
       ),
-      Map(
-        TokenRange(0, 3, gTa) -> Set(EdgeLabel(0)),
-        TokenRange(4, 7, gTa) -> Set(EdgeLabel(0))
-      )
+      Set.empty
     )
     val result = mergeSingletonHG(singletonTokens, hg, false)
     assert(result == expected)
@@ -786,7 +273,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     )
     val hg = FullHypergraph[EdgeLabel, TokenRange](
       Map(EdgeLabel("3") -> Set(TokenRange(3, 7, gTa), TokenRange(8, 12, gTa))),
-      Map(TokenRange(3, 7, gTa) -> Set(EdgeLabel("3")), TokenRange(8, 12, gTa) -> Set(EdgeLabel("3")))
+      Set.empty
     )
     val expected = FullHypergraph(
       Map(
@@ -794,15 +281,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
         EdgeLabel("3") -> Set(TokenRange(3, 4, gTa), TokenRange(8, 9, gTa)), // hg pre
         EdgeLabel("6") -> Set(TokenRange(6, 7, gTa), TokenRange(11, 12, gTa)) // hg post
       ),
-      Map(
-        TokenRange(3, 4, gTa) -> Set(EdgeLabel("3")),
-        TokenRange(8, 9, gTa) -> Set(EdgeLabel("3")),
-        TokenRange(0, 2, gTa) -> Set(EdgeLabel("0")),
-        TokenRange(4, 6, gTa) -> Set(EdgeLabel("0")),
-        TokenRange(9, 11, gTa) -> Set(EdgeLabel("0")),
-        TokenRange(6, 7, gTa) -> Set(EdgeLabel("6")),
-        TokenRange(11, 12, gTa) -> Set(EdgeLabel("6"))
-      )
+      Set.empty
     )
     val resultRanges =
       val mergeResult = mergeSingletonHG(singletonTokens, hg, true)
@@ -836,7 +315,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
       )
     val hg = FullHypergraph[EdgeLabel, TokenRange](
       Map(EdgeLabel("5") -> Set(TokenRange(5, 9, gTa), TokenRange(10, 14, gTa))),
-      Map(TokenRange(5, 9, gTa) -> Set(EdgeLabel("5")), TokenRange(10, 14, gTa) -> Set(EdgeLabel("5")))
+      Set.empty
     )
     val expected = FullHypergraph(
       Map(
@@ -846,17 +325,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
         EdgeLabel("0") -> Set(TokenRange(0, 1, gTa)),
         EdgeLabel("3") -> Set(TokenRange(3, 4, gTa))
       ),
-      Map(
-        TokenRange(1, 3, gTa) -> Set(EdgeLabel("6")),
-        TokenRange(0, 1, gTa) -> Set(EdgeLabel("0")),
-        TokenRange(8, 9, gTa) -> Set(EdgeLabel("8")),
-        TokenRange(11, 13, gTa) -> Set(EdgeLabel("6")),
-        TokenRange(6, 8, gTa) -> Set(EdgeLabel("6")),
-        TokenRange(13, 14, gTa) -> Set(EdgeLabel("8")),
-        TokenRange(10, 11, gTa) -> Set(EdgeLabel("5")),
-        TokenRange(5, 6, gTa) -> Set(EdgeLabel("5")),
-        TokenRange(3, 4, gTa) -> Set(EdgeLabel("3"))
-      )
+      Set.empty
     )
     val resultRanges =
       val mergeResult = mergeSingletonHG(singletonTokens, hg, true)
@@ -887,13 +356,13 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     val hg2 = AlignmentHyperedge(Set(TokenRange(6, 8, gTa), TokenRange(9, 11, gTa))) +
       AlignmentHyperedge(Set(TokenRange(12, 13, gTa)))
     val expected = Vector(
-      TokenHG("!", "!", 3, 12, EdgeLabel(12)),
+      TokenHG("!", "!", 3, 12, EdgeLabel(12), TokenRange(12, 13, gTa)),
       TokenSep("Sep12", "Sep12", -1, -1),
-      TokenHG("Bye ", "bye", 2, 6, EdgeLabel(6)),
-      TokenHG("Dad ", "dad", 2, 7, EdgeLabel(6)),
+      TokenHG("Bye ", "bye", 2, 6, EdgeLabel(6), TokenRange(6, 8, gTa)),
+      TokenHG("Dad ", "dad", 2, 7, EdgeLabel(6), TokenRange(6, 8, gTa)),
       TokenSep("Sep6", "Sep6", -1, -1),
-      TokenHG("Hi ", "hi", 0, 0, EdgeLabel(0)),
-      TokenHG("Mom ", "mom", 0, 1, EdgeLabel(0))
+      TokenHG("Hi ", "hi", 0, 0, EdgeLabel(0), TokenRange(0, 2, gTa)),
+      TokenHG("Mom ", "mom", 0, 1, EdgeLabel(0), TokenRange(0, 2, gTa))
     )
     val result = createHgTa(hg1 + hg2)
     assert(result == expected)
@@ -1158,3 +627,12 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     val result = mergeClustersIntoHG(nodesToCluster, mexicoData, gTa)
     // println(result)
     assert(result == result)
+
+  test("2965 example"):
+    val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
+    val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "2965.json"
+    val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
+    val nodesToCluster = clusterWitnesses(darwinReadings)
+    val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
+    val dg = hg.toDependencyGraph()
+    dependencyGraphToDot(dg, hg)

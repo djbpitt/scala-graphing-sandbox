@@ -291,28 +291,14 @@ def returnSampleData(): (
     EdgeLabel(254) -> Set(TokenRange(254, 255, gTa)),
     EdgeLabel(255) -> Set(TokenRange(255, 272, gTa), TokenRange(174, 191, gTa)),
     EdgeLabel(192) -> Set(TokenRange(192, 254, gTa), TokenRange(111, 173, gTa))
-  ),
-  Map(
-    TokenRange(254, 255, gTa) -> Set(EdgeLabel(254)),
-    TokenRange(174, 191, gTa) -> Set(EdgeLabel(255)),
-    TokenRange(173, 174, gTa) -> Set(EdgeLabel(173)),
-    TokenRange(192, 254, gTa) -> Set(EdgeLabel(192)),
-    TokenRange(111, 173, gTa) -> Set(EdgeLabel(192)),
-    TokenRange(255, 272, gTa) -> Set(EdgeLabel(255))
-  )
+  ), Set.empty
 )
   val hg2Sample: Hypergraph[EdgeLabel, TokenRange] = FullHypergraph(
   Map(
     EdgeLabel(22) -> Set(TokenRange(22, 43, gTa), TokenRange(0, 21, gTa), TokenRange(44, 65, gTa), TokenRange(66, 87, gTa)),
     EdgeLabel(87) -> Set(TokenRange(87, 110, gTa))
   ),
-  Map(
-    TokenRange(44, 65, gTa) -> Set(EdgeLabel(22)),
-    TokenRange(87, 110, gTa) -> Set(EdgeLabel(87)),
-    TokenRange(66, 87, gTa) -> Set(EdgeLabel(22)),
-    TokenRange(0, 21, gTa) -> Set(EdgeLabel(22)),
-    TokenRange(22, 43, gTa) -> Set(EdgeLabel(22))
-  )
+    Set.empty
 )
 
   (gTa, hg1Sample, hg2Sample)

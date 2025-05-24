@@ -29,7 +29,7 @@ class HypergraphTest extends AnyFunSuite:
 
     val expectedVertices = Set(1, 2, 3, 4)
     val expectedHyperedges = Set("edge1", "edge2")
-    assert(result.vertices == expectedVertices)
+    assert(result.verticesIterator.toSet == expectedVertices)
     assert(result.hyperedgeLabels == expectedHyperedges)
 
   test("overlay with a duplicate hyperedge"):
@@ -54,7 +54,7 @@ class HypergraphTest extends AnyFunSuite:
     assert(result.edges(1) == Set("edge1"))
     assert(result.edges(2) == Set("edge1"))
     assert(result.edges(3) == Set.empty)
-    assert(result.vertices == expectedVertices)
+    assert(result.verticesIterator.toSet == expectedVertices)
 
   test("connect; basic connect plus lonely vertices; the other way around"):
     val hg1 = Hypergraph.vertices[String, Int](2)
@@ -68,7 +68,7 @@ class HypergraphTest extends AnyFunSuite:
     assert(result.edges(1) == Set("edge1"))
     assert(result.edges(2) == Set("edge1"))
     assert(result.edges(3) == Set.empty)
-    assert(result.vertices == expectedVertices)
+    assert(result.verticesIterator.toSet == expectedVertices)
 
   // Checks if there are edges in one, but no vertices in other
   test("connect; basic connect plus lonely hyperedges"):
@@ -101,7 +101,7 @@ class HypergraphTest extends AnyFunSuite:
     val result = hg1 * hg2
 
     assert(result.hyperedgeLabels == Set("edge1"))
-    assert(result.vertices == Set(1, 2))
+    assert(result.verticesIterator.toSet == Set(1, 2))
     assert(result.members("edge1") == Set(1, 2))
     assert(result.edges(1) == Set("edge1"))
     assert(result.edges(2) == Set("edge1"))
@@ -113,7 +113,7 @@ class HypergraphTest extends AnyFunSuite:
     val result = hg1 * hg2
 
     assert(result.hyperedgeLabels == Set("edge1", "edge2"))
-    assert(result.vertices == Set(1))
+    assert(result.verticesIterator.toSet == Set(1))
     assert(result.members("edge1") == Set(1))
     assert(result.members("edge2") == Set(1))
     assert(result.edges(1) == Set("edge1", "edge2"))

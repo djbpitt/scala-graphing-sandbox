@@ -1,5 +1,6 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.TokenEnum.Token
 import net.collatex.reptilian.TokenRange.*
 
 import scala.collection.mutable
@@ -39,19 +40,32 @@ object AlignmentPoint {
       .values // we don't care about the shared text after we've used it for grouping
       .toSet
     AlignmentPoint(wr, wg)
+  def apply(gTa: Vector[TokenEnum], m: WitnessReadings): AlignmentPoint =
+    val wg = m
+      .groupBy((_, offsets) =>
+        gTa
+          .slice(offsets.start, offsets.until)
+          .map(_.n)
+      ) // groups readings by shared text (n property); can we improve the performance here?
+      .values // we don't care about the shared text after we've used it for grouping
+      .toSet
+    AlignmentPoint(m, wg)
+
 }
 
 /** Zone to be processed in phase two
   *
   * Same input as AlignmentPoint (varargs of (Siglum, TokenRange)) but create only WitnessReadings and no WitnessGroups
   */
-final case class UnalignedZone(witnessReadings: WitnessReadings) extends AlignmentUnit
+final case class UnalignedZone(witnessReadings: WitnessReadings) extends AlignmentUnit:
+  def convertToTokenLists(): List[List[Token]] =
+    val sortedKeys = this.witnessReadings.keys.toSeq.sorted
+    sortedKeys.map(e => this.witnessReadings(e).tokens.map(_.asInstanceOf[Token]).toList).toList
 
-object UnalignedZone {
+object UnalignedZone
   def apply(m: (Siglum, TokenRange)*): UnalignedZone =
     val wr = m.toMap
     UnalignedZone(wr)
-}
 
 /** AlignmentRibbon
   *

@@ -9,18 +9,16 @@ object AlignmentHyperedge:
     val edgeLabel = EdgeLabel(tokenRanges.map(_.start).min)
     Hyperedge[EdgeLabel, TokenRange](edgeLabel, tokenRanges)
 
-/*
- * Extend hyperedge to add slice and split methods
- */
 extension (he: Hyperedge[EdgeLabel, TokenRange])
   def slice(startOffset: Int, untilOffset: Int): Hypergraph[EdgeLabel, TokenRange] =
     if startOffset == untilOffset then Hypergraph.empty
     else
       Hyperedge(
-        EdgeLabel(he.vertices.map(_.start).min + startOffset),
-        he.vertices.map(t =>
+        EdgeLabel(he.verticesIterator.map(_.start).min + startOffset),
+        he.verticesIterator.map(t =>
           t.slice(startOffset, untilOffset)
             .getOrElse(
+//              throw RuntimeException(s"Creating illegal token range: $t $startOffset $untilOffset")
               IllegalTokenRange(
                 t.start +
                   startOffset,
@@ -28,7 +26,7 @@ extension (he: Hyperedge[EdgeLabel, TokenRange])
                 t.ta
               )
             )
-        )
+        ).toSet
       )
 
   def split(
@@ -43,5 +41,11 @@ extension (he: Hyperedge[EdgeLabel, TokenRange])
         he.slice(preLength + blockLength, preLength + blockLength + postLength)
 
   def toText: Set[String] =
-    val result = he.vertices.map(e => e.tString)
+    val result = he.verticesIterator.map(e => e.tString).toSet
+    result
+
+  // FIXME: Needs to be generic, since witness identifier is not always int
+  def witnesses: Set[Int] =
+    val gTa = he.verticesIterator.next.ta
+    val result: Set[Int] = he.verticesIterator.map(_.start).map(e => gTa(e).w).toSet
     result

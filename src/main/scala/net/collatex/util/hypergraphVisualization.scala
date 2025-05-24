@@ -20,15 +20,13 @@ def hypergraphToText(h: Map[Int, Hypergraph[String, TokenRange]]): Unit =
 /** Stringified sample readings from each hyperedge, alphabetized
   * @param h:
   *   Hypergraph[EdgeLabel, TokenRange]
-  * @param gTa:
-  *   Global token array (TokenEnum.Token)
   * @return
   *   String
   */
 def hypergraphToReadings(h: Hypergraph[EdgeLabel, TokenRange]): String =
   val result = h.hyperedges.toSeq
-    .sortBy(_.vertices.head.tString)
-    .map(e => s" (${e.vertices.size.toString}) " + s"${e.vertices.head.tString}")
+    .sortBy(_.verticesIterator.next.tString)
+    .map(e => s" (${e.verticesIterator.size.toString}) " + s"${e.verticesIterator.next.tString}")
   result.mkString("\n")
 
 /** Create Graphviz dot representation of domain-specific graph

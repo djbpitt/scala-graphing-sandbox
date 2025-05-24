@@ -146,7 +146,7 @@ def dependencyGraphToDot(
     depGraph: Graph[NodeType],
     hg: Hypergraph[EdgeLabel, TokenRange]
 ): Unit =
-  val gTa = hg.vertices.head.ta
+  val gTa = hg.verticesIterator.next.ta
   val hgId = hg.hyperedgeLabels.map(_.toString).toSeq.sorted.mkString("-").slice(0, 200)
   val prologue = "digraph G {\n\t"
   val epilogue = "\n}"
@@ -172,4 +172,6 @@ def dependencyGraphToDot(
     os.pwd / "src" / "main" / "outputs" /
       s"${System.currentTimeMillis()}-dependency-graph-$hgId.dot"
   val dotValue = prologue + dotEdges + dotNodes + epilogue
+  println("Writing the dependency graph visualisation of the hypergraph to: "+dotPath.toString)
+  println(dotValue)
   os.write.over(dotPath, dotValue)

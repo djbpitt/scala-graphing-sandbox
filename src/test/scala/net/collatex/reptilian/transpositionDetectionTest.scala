@@ -7,9 +7,11 @@ import net.collatex.util.Hypergraph.{FullHypergraph, Hyperedge}
 import org.scalatest.funsuite.AnyFunSuite
 
 class transpositionDetectionTest extends AnyFunSuite:
-  test("Test splitAllHyperedges"):
+  //NOTE: INPUT DATA IS WRONG! GTA IS SMALLER THAN TOKEN RANGES SPECIFIED IN AlignmentHyperedge
+  //FURTHERMORE THERE ARE NO ASSERTS AT THE END!
+  ignore("Test splitAllHyperedges"):
     val gTa: Vector[TokenEnum] = returnSampleData()._1
-    val hg: Hypergraph[EdgeLabel, TokenRange] =
+    val bothHgs: Hypergraph[EdgeLabel, TokenRange] =
       // Token ranges in hyperedge are from different witnesses; must be same length
       // HE1 < W1 = TokenRange(0, 100), W2 = TokenRange(100, 200),
       // HE2 < W3 = TokenRange(200, 300), W4 = TokenRange(300, 400)
@@ -26,7 +28,7 @@ class transpositionDetectionTest extends AnyFunSuite:
       FullDepthBlock(Vector(40, 356), 3), // W1, W4
       FullDepthBlock(Vector(160, 252), 3) // W2, W3
     )
-    val outcome = validateData(hg, blocks)
+    val outcome = validateData(bothHgs, blocks)
     assert(outcome == ValidationResult.Valid)
     val expected = (
       FullHypergraph(
@@ -43,30 +45,7 @@ class transpositionDetectionTest extends AnyFunSuite:
           EdgeLabel(256) -> Set(LegalTokenRange(256, 259, gTa), LegalTokenRange(356, 359, gTa)), // Block 1
           EdgeLabel(259) -> Set(LegalTokenRange(259, 260, gTa), LegalTokenRange(359, 360, gTa))
         ),
-        Map(
-          LegalTokenRange(10, 20, gTa) -> Set(EdgeLabel(10)),
-          LegalTokenRange(30, 40, gTa) -> Set(EdgeLabel(30)),
-          LegalTokenRange(40, 43, gTa) -> Set(EdgeLabel(40)),
-          LegalTokenRange(43, 60, gTa) -> Set(EdgeLabel(43)),
-          LegalTokenRange(60, 63, gTa) -> Set(EdgeLabel(60)),
-          LegalTokenRange(63, 70, gTa) -> Set(EdgeLabel(63)),
-          LegalTokenRange(110, 120, gTa) -> Set(EdgeLabel(10)),
-          LegalTokenRange(130, 140, gTa) -> Set(EdgeLabel(30)),
-          LegalTokenRange(140, 143, gTa) -> Set(EdgeLabel(40)),
-          LegalTokenRange(143, 160, gTa) -> Set(EdgeLabel(43)),
-          LegalTokenRange(160, 163, gTa) -> Set(EdgeLabel(60)),
-          LegalTokenRange(163, 170, gTa) -> Set(EdgeLabel(63)),
-          LegalTokenRange(250, 252, gTa) -> Set(EdgeLabel(250)),
-          LegalTokenRange(252, 255, gTa) -> Set(EdgeLabel(252)),
-          LegalTokenRange(255, 256, gTa) -> Set(EdgeLabel(255)),
-          LegalTokenRange(256, 259, gTa) -> Set(EdgeLabel(256)),
-          LegalTokenRange(259, 260, gTa) -> Set(EdgeLabel(259)),
-          LegalTokenRange(350, 352, gTa) -> Set(EdgeLabel(250)),
-          LegalTokenRange(352, 355, gTa) -> Set(EdgeLabel(252)),
-          LegalTokenRange(355, 356, gTa) -> Set(EdgeLabel(255)),
-          LegalTokenRange(356, 359, gTa) -> Set(EdgeLabel(256)),
-          LegalTokenRange(359, 360, gTa) -> Set(EdgeLabel(259))
-        )
+        Set.empty
       ),
       Set(
         HyperedgeMatch(
@@ -104,7 +83,10 @@ class transpositionDetectionTest extends AnyFunSuite:
       )
     )
 
-    val result = splitAllHyperedges(hg, blocks)
+    val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
+    val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] =
+      createAlignedPatternsPhaseTwo(lTa, -1)
+    val result = splitHesOnAlignedPatterns(bothHgs, patterns)
     println("Actual Set[HypergraphMatches]")
     result._2.foreach(println)
 //    assert(result._1 == expected._1)

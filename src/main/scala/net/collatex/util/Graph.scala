@@ -1,10 +1,10 @@
 package net.collatex.util
 
 import cats.implicits.catsSyntaxSemigroup
+import net.collatex.reptilian.{DGNodeType, NodeInfo}
 
 import scala.annotation.{tailrec, targetName}
 import scala.collection.immutable.Set
-import scala.collection.mutable
 
 // @author: Ronald Haentjens Dekker
 // This class represents a Directed Acyclic Graph.
@@ -83,12 +83,14 @@ enum Graph[N]:
     (this, other) match
       case (_: EmptyGraph[N], other: Graph[N]) => other
       case (one: Graph[N], _: EmptyGraph[N])   => one
-      case (one: Graph[N], other: Graph[N])    =>
-        // convert graphs into two maps so that we can merge the graphs
-        val m1 = one.toMap
-        val m2 = other.toMap
-        // create a new graph with the entries combined
-        DirectedGraph(m1 |+| m2)
+      case (one: Graph[N], other: Graph[N]) =>
+        if one == other then one
+        else
+          // convert graphs into two maps so that we can merge the graphs
+          val m1 = one.toMap
+          val m2 = other.toMap
+          // create a new graph with the entries combined
+          DirectedGraph(m1 |+| m2)
 
   // Connects two graphs with one or more edges.
   @targetName("connect")
@@ -108,28 +110,28 @@ enum Graph[N]:
         // We create two maps, one with all the outgoing relations
         // And one with all the incoming relations. Incoming becomes the first part of
         // Tuple in the result map, outgoing becomes the second.
-        val outgoing: mutable.Map[N, Set[N]] = mutable.HashMap.empty
-        val incoming: mutable.Map[N, Set[N]] = mutable.HashMap.empty
+        // Start with existing edges from other
+        val incoming: Map[N, Set[N]] = other.toMap.map((k, v) => k -> v._1)
+        val outgoing: Map[N, Set[N]] = other.toMap.map((k, v) => k -> v._2)
 
         // We are missing the backlinks for each of the root nodes here
         // We are also missing non-root nodes here from other in the result
         // all the other.nodes need to point back to one.node
-        other.roots().foreach(node => incoming(node) = Set(one.node))
-        outgoing(one.node) = other.roots()
+        val incomingWithNew: Map[N, Set[N]] =
+          incoming ++ other.roots().map(root => root -> Set(one.node))
+        val outgoingWithNew: Map[N, Set[N]] =
+          outgoing ++ Map(one.node -> other.roots())
         // val result = the combination of outgoing and incoming per node
-        val keys = outgoing.keySet union incoming.keySet
-        val pairs = for key <- keys yield key -> (incoming(key), outgoing(key))
+        val keys = outgoingWithNew.keySet union incomingWithNew.keySet
+        val pairs = for key <- keys yield key -> (incomingWithNew.getOrElse(key, Set()), outgoingWithNew(key))
         val result = pairs.toMap
+        // println(s"result (adjacency map): $result")
+        DirectedGraph(result) + other
 
-        DirectedGraph(result)
       case (one: Graph[N], other: SingleNodeGraph[N]) =>
-        // connect the node from other to all the leaves of one
-        // we update the pairing for other graph.
-        val result = Map(other.node -> (one.leafs(), Set.empty[N]))
-        // We are missing the forward links for each the root nodes here
-        // We are also missing non-root nodes here from one in the result
-        DirectedGraph(result)
-      case (one: DirectedGraph[N], other: DirectedGraph[N]) =>
+        other * one
+
+      case (_: DirectedGraph[N], _: DirectedGraph[N]) =>
         throw new RuntimeException("Not implemented yet! Would be one leaves x other roots")
 
   def topologicalSort: Vector[N] =
@@ -140,7 +142,8 @@ enum Graph[N]:
       if todo.isEmpty then
         assert(
           sorted.size == this.nodeSize,
-          s"Cycle detected: ${sorted.size} nodes in sort but ${this.nodeSize} nodes in graph")
+          s"Cycle detected: ${sorted.size} nodes in sort but ${this.nodeSize} nodes in graph"
+        )
         sorted
       else
         val current = todo.head

@@ -6,19 +6,23 @@ import scala.collection.mutable.ListBuffer
 import scala.xml.dtd.DocType
 
 def createSecondAlignmentPhaseVisualization(hg: Hypergraph[EdgeLabel, TokenRange]): Unit =
-  val gTa = hg.vertices.head.ta
+  val gTa = hg.verticesIterator.next.ta
   val id: String = hg.hyperedges.head.label.toString // unique id for hg
   // println(s"hypergraph: $hg")
-  val ranking: Map[NodeType, Int] = rankHg(hg, false)
+  val ranking: Map[NodeType, Int] = hg.rank()
   val hyperedgesByRank = hg.hyperedges.groupBy(e => ranking(NodeType(e.label))) // unsorted
   val sortedRanks = hyperedgesByRank.keySet.toSeq.sorted
   val aps: ListBuffer[AlignmentUnit] = sortedRanks
     .map(e =>
       val wg = hyperedgesByRank(e) // set of hyperedges, one per witness group on alignment point
         .map(f =>
-          f.vertices
+          f.verticesIterator
             .map(tr =>
-              val witness: Siglum = Siglum(gTa(tr.start).w.toString)
+              val witness: Siglum = {
+                val inSiglum: String = gTa(tr.start).w.toString
+                if inSiglum.length == 1 then Siglum(intToSiglum(inSiglum.toInt))
+                else Siglum(inSiglum)
+              }
               witness -> tr
             )
             .toMap

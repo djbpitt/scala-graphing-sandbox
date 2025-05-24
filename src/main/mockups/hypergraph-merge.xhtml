@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Merging hypergraphs</title>
+        <link type="text/css" rel="stylesheet" href="hypergraph-merge.css" />
+        <script type="text/javascript" src="hypergraph-merge.js"></script>
+    </head>
+    <body>
+        <h1>Merging hypergraphs</h1>
+        <fieldset>
+            <legend>Choose <i>before merge</i> or <i>after merge</i> state</legend>
+            <label><input type="radio" name="state" id="before" value="before" checked="checked" />
+                Before merge</label>
+            <br />
+            <label><input type="radio" name="state" id="after" value="after" /> After merge</label>
+        </fieldset>
+        <svg width="500" height="400" xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
+            <g transform="scale(2)">
+                <!-- HG1 -->
+                <g id="Aa">
+                    <!-- HG1HE1: A: a width=45-->
+                    <rect width="45" height="16" x="0" y="0" fill="orange"/>
+                    <text x="0" y="13">A: a</text>
+                </g>
+                <g id="Bany">
+                    <!-- HG1HE2: B; any width=45-->
+                    <rect width="45" height="16" x="0" y="32" fill="limegreen"/>
+                    <text x="0" y="45">B: any</text>
+                </g>
+                <g id="ABline" transform="translate(0,0)">
+                    <g>
+                        <!-- HG1HE3-21: A: line width=48 -->
+                        <rect width="48" height="16" x="95" y="0" fill="orange"/>
+                        <text x="96" y="13">A: line</text>
+                    </g>
+                    <g>
+                        <!-- HG1HE3-22: B: line width=48 -->
+                        <rect width="48" height="16" x="95" y="16" fill="limegreen"/>
+                        <text x="96" y="29">B: line</text>
+                    </g>
+                </g>
+                <g id="ABclear">
+                    <g>
+                        <!-- HG1HE3-11: A: clear width=55 -->
+                        <rect width="55" height="16" x="60" y="0" fill="orange"/>
+                        <text x="61" y="13">A: clear</text>
+                    </g>
+                    <g>
+                        <!-- HG1HE3-12: B: clear width=55 -->
+                        <rect width="55" height="16" x="60" y="16" fill="limegreen"/>
+                        <text x="61" y="29">B: clear</text>
+                    </g>
+                </g>
+                <!-- HG2HE1: C: a width=45 -->
+                <g id="Ca" transform="translate(0,0)">
+                    <!-- HG2HE1: C: a -->
+                    <rect width="45" height="16" x="0" y="120" fill="dodgerblue"/>
+                    <text x="0" y="133">C: a</text>
+                </g>
+                <g id="Dany" transform="translate(0,0)">
+                    <!-- HG2HE2: D; any width=45 -->
+                    <rect width="45" height="16" x="0" y="152" fill="violet"/>
+                    <text x="0" y="165">D: any</text>
+                </g>
+                <g id="CDline">
+                    <g>
+                        <!-- HG2HE3-1: C: line width=48 -->
+                        <rect width="48" height="16" x="111" y="120" fill="dodgerblue"/>
+                        <text x="112" y="133">C: line</text>
+                    </g>
+                    <g>
+                        <!-- HG2HE3-1: D: line width=48 -->
+                        <rect width="48" height="16" x="111" y="136" fill="violet"/>
+                        <text x="112" y="149">D: line</text>
+                    </g>
+                </g>
+                <g id="CDdistinct">
+                    <g>
+                        <!-- HG2HE3-1: C: distinct width=65 -->
+                        <rect width="69" height="16" x="60" y="120" fill="dodgerblue"/>
+                        <text x="61" y="133">C: distinct</text>
+                    </g>
+                    <g>
+                        <!-- HG2HE3-1: D: distinct width=65-->
+                        <rect width="69" height="16" x="60" y="136" fill="violet"/>
+                        <text x="61" y="149">D: distinct</text>
+                    </g>
+                </g>
+            </g>
+        </svg>
+    </body>
+</html>

@@ -16,21 +16,20 @@ import scala.collection.immutable.MultiDict
 // algebraic datatype
 // Hypergraph has hyperedges with labels of type L and vertices of type V
 enum Hypergraph[L, V]:
-  case EmptyHypergraph()
-  case OnlyVerticesHypergraph(v: Set[V])
+  private case EmptyHypergraph()
+  private case OnlyVerticesHypergraph(v: Set[V])
   case Hyperedge(label: L, v: Set[V])
   // Might be better to have a single map instead of two
-  case FullHypergraph(im1: Map[L, Set[V]], im2: Map[V, Set[L]])
+  case FullHypergraph(im1: Map[L, Set[V]], orphanedVertices: Set[V])
 
   // turns any Hypergraph subtype into an incidence map
-  def toMap: (Map[L, Set[V]], Map[V, Set[L]]) =
+  def toMap: (Map[L, Set[V]], Set[V]) =
     this match
-      case _: EmptyHypergraph[L, V] => (Map.empty, Map.empty)
+      case _: EmptyHypergraph[L, V] => (Map.empty, Set.empty)
       case OnlyVerticesHypergraph(vertices) =>
-        (Map.empty, vertices.map(_ -> Set.empty).toMap)
+        (Map.empty, vertices)
       case Hyperedge(label, vertices) =>
-        val vToL = vertices.map(_ -> Set(label)).toMap
-        (Map.apply(label -> vertices), vToL)
+        (Map.apply(label -> vertices), Set.empty)
       case FullHypergraph(im1, im2) => (im1, im2)
 
   // converts the hyperedges into incidence pairs
@@ -77,12 +76,12 @@ enum Hypergraph[L, V]:
       case FullHypergraph(im1, _) => im1(hyperedge)
 
   // returns all the vertices in this hypergraph
-  def vertices: Set[V] =
+  def verticesIterator: Iterator[V] =
     this match
-      case _: EmptyHypergraph[L, V]         => Set.empty
-      case OnlyVerticesHypergraph(vertices) => vertices
-      case Hyperedge(_, vertices)           => vertices
-      case FullHypergraph(_, im2)           => im2.keySet
+      case _: EmptyHypergraph[L, V]         => Iterator.empty
+      case OnlyVerticesHypergraph(vertices) => vertices.iterator
+      case Hyperedge(_, vertices)           => vertices.iterator
+      case FullHypergraph(im1, ov)           => im1.values.flatten.iterator.distinct ++ ov.iterator
 
   // returns all the hyperedges contained in this hypergraph
   def hyperedges: Set[Hyperedge[L, V]] =
@@ -108,7 +107,7 @@ enum Hypergraph[L, V]:
       case _: OnlyVerticesHypergraph[L, V] => Set.empty
       case Hyperedge(label, vertices) =>
         if vertices.contains(vertex) then Set(label) else Set.empty
-      case FullHypergraph(_, im2) => im2(vertex)
+      case x: FullHypergraph[L, V] => x.hyperedges.filter(_.v.contains(vertex)).map(_.label)
 
   // return the hyperedge stored in the hypergraph for the label L
   // or None if not present
@@ -144,12 +143,12 @@ enum Hypergraph[L, V]:
         val (otherIm1, otherIm2) = other.toMap
         // every L of this should connect to every V of other.
         // every L of other should connect to every V of this.
-        val new_hyperedges_to_vertex_map = thisIm1.map((label, vertices) => label -> (vertices | other.vertices))
-          |+| otherIm1.map((label, vertices) => label -> (vertices | this.vertices))
-        // And of course the second mapping (V->L) needs to be updated too
-        val new_vertices_to_label_map = thisIm2.map((vertex, labels) => vertex -> (labels | other.hyperedgeLabels))
-          |+| otherIm2.map((vertex, labels) => vertex -> (labels | this.hyperedgeLabels))
-        FullHypergraph(new_hyperedges_to_vertex_map, new_vertices_to_label_map)
+        val new_hyperedges_to_vertex_map = thisIm1.map((label, vertices) => label -> (vertices | other.verticesIterator.toSet))
+          |+| otherIm1.map((label, vertices) => label -> (vertices | this.verticesIterator.toSet))
+        // Updated orphaned vertices
+        // In theory it is possible that a vertex that is orphaned in one map is not orphaned in the other
+        val new_orphaned_vertices = thisIm2 ++ otherIm2
+        FullHypergraph(new_hyperedges_to_vertex_map, new_orphaned_vertices)
 
 // constructor
 object Hypergraph:
@@ -161,14 +160,14 @@ object Hypergraph:
   def hyperedge[L, V](label: L, vertices: V*): Hypergraph[L, V] =
     Hyperedge(label, vertices.toSet)
 
-  def fromIncidencePairs[L, V](input: Set[(L, V)]): Hypergraph[L, V] =
+  private def fromIncidencePairs[L, V](input: Set[(L, V)]): Hypergraph[L, V] =
     val incidenceMap = MultiDict.from(input).sets
     if incidenceMap.size == 1 then
       Hyperedge(incidenceMap.head._1, incidenceMap.head._2)
     else
-      FullHypergraph(incidenceMap, MultiDict.from(input.map((l, v) => (v, l))).sets)
+      FullHypergraph(incidenceMap, Set.empty)
 
-@main def main(): Unit =
-  val hypergraph = Hypergraph.vertices[String, Int](1)
-  val hypergraph2 = Hypergraph.hyperedge[String, Int]("")
-  val outerHypergraph = Hypergraph.hyperedge[String, Hyperedge[String, Int]]("alignment point")
+//@main def main(): Unit =
+//  val hypergraph = Hypergraph.vertices[String, Int](1)
+//  val hypergraph2 = Hypergraph.hyperedge[String, Int]("")
+//  val outerHypergraph = Hypergraph.hyperedge[String, Hyperedge[String, Int]]("alignment point")

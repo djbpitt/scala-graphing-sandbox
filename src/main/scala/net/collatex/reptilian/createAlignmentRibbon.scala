@@ -129,24 +129,7 @@ def alignTokenArray(
         blocksGTa
       )
 
-    // TODO: Create test for consecutive overlaps
-
-    def adjustBlockOverlap(originalBlocks: Iterable[FullDepthBlock]): Seq[FullDepthBlock] =
-      val sortedBlocks = originalBlocks.toSeq.sortBy(_.instances.head)
-      @tailrec
-      def adjustForOverlap(
-          blocksToProcess: Seq[FullDepthBlock],
-          currentFirst: FullDepthBlock,
-          acc: Seq[FullDepthBlock]
-      ): Seq[FullDepthBlock] =
-        if blocksToProcess.isEmpty
-        then acc :+ currentFirst
-        else
-          val (newFirst, newSecond) = allocateOverlappingTokens(currentFirst, blocksToProcess.head, gTa)
-          adjustForOverlap(blocksToProcess.tail, newSecond, acc :+ newFirst)
-      adjustForOverlap(sortedBlocks.tail, sortedBlocks.head, Seq[FullDepthBlock]())
-
-    val adjustedBlocks = adjustBlockOverlap(alignmentBlocks)
+    val adjustedBlocks = adjustBlockOverlap(alignmentBlocks, gTa)
 
     // Examine difference between original blocks and blocks after overlap adjustment
     // alignmentBlocks.toSeq.sortBy(_.instances.head).zip(adjustedBlocks).filterNot((e, f) => e == f).foreach(println)
@@ -207,21 +190,57 @@ def createAlignmentRibbon(
 def setupNodeExpansion(
     sigla: List[Siglum], // all sigla (global, not just current zone)
     selection: UnalignedZone // pre
-) =
+): AlignmentRibbon =
   val gTa = selection.witnessReadings.values.head.ta
+  //  println(selection.witnessReadings)
+  //  println(gTa.head.w)
   val alignmentPointsForSection = alignTokenArray(sigla, selection)
   val result: AlignmentRibbon =
     if alignmentPointsForSection.isEmpty
     then
-      val wg = selection.witnessReadings
-        .groupBy((_, offsets) =>
-          gTa
-            .slice(offsets.start, offsets.until)
-            .map(_.n)
-        ) // groups readings by shared text (n property)
-        .values // we don't care about the shared text after we've used it for grouping
-        .toSet
-      AlignmentRibbon(ListBuffer(AlignmentPoint(selection.witnessReadings, wg))) // one-item ribbon
+      val darwinReadings: List[List[Token]] = selection.convertToTokenLists()
+      // println(s"darwinReadings: $darwinReadings")
+      val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
+      // println(s"clusters: $nodesToCluster")
+      if nodesToCluster.isEmpty then { // One witness, so construct local ribbon directly
+        val wg: Set[Map[Siglum, TokenRange]] = Set(selection.witnessReadings)
+        AlignmentRibbon(ListBuffer(AlignmentPoint(selection.witnessReadings, wg)))
+      } else // Variation node with … er … variation
+        val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
+        val ranking: Map[NodeType, Int] = hg.rank()
+        val hyperedgesByRank = hg.hyperedges.groupBy(e => ranking(NodeType(e.label))) // unsorted
+        val sortedRanks = hyperedgesByRank.keySet.toSeq.sorted
+        val aps: ListBuffer[AlignmentUnit] = sortedRanks
+          .map(e =>
+            val wg = hyperedgesByRank(e) // set of hyperedges, one per witness group on alignment point
+              .map(f =>
+                f.verticesIterator
+                  .map(tr =>
+                    val witness: Siglum = {
+                      val inSiglum: String = gTa(tr.start).w.toString
+                      if inSiglum.length == 1 then Siglum(intToSiglum(inSiglum.toInt))
+                      else Siglum(inSiglum)
+                    }
+                    witness -> tr
+                  )
+                  .toMap
+              )
+            val wr = wg.reduce(_ ++ _)
+            AlignmentPoint(wr, wg)
+          )
+          .to(ListBuffer)
+        val result = AlignmentRibbon(aps)
+        result
+
+    //        val wg = selection.witnessReadings
+    //          .groupBy((_, offsets) =>
+    //            gTa
+    //              .slice(offsets.start, offsets.until)
+    //              .map(_.n)
+    //          ) // groups readings by shared text (n property)
+    //          .values // we don't care about the shared text after we've used it for grouping
+    //          .toSet
+    //        AlignmentRibbon(ListBuffer(AlignmentPoint(selection.witnessReadings, wg))) // one-item ribbon
     else // alignment points, so children are a sequence of one or more nodes of possibly different types
       val expansion = recursiveBuildAlignment(
         result = ListBuffer(),
@@ -254,7 +273,8 @@ def recursiveBuildAlignment(
 
   val expandedPre: AlignmentRibbon =
     if pre.witnessReadings.nonEmpty then setupNodeExpansion(sigla, pre)
-    else AlignmentRibbon(ListBuffer(pre)) // single-item ribbon in else case
+    else
+      AlignmentRibbon(ListBuffer(pre)) // single-item ribbon in else case
 
   result.appendAll(Seq(expandedPre, firstRemainingAlignmentPoint))
 
