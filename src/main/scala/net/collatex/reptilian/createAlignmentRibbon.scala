@@ -93,35 +93,37 @@ def splitWitnessGroup(
 def removeEmptyTokenRanges(before: Map[Siglum, TokenRange]): Map[Siglum, TokenRange] =
   before.filter((_, v) => v.isInstanceOf[LegalTokenRange])
 
+def createLocalTokenArrayForUnalignedZone(selection: UnalignedZone) =
+  // Create a local token array by filtering the global one
+  // Selection comes in unsorted, so sort by siglum first
+  val localTokenArrayByWitness: Seq[Vector[TokenEnum]] = {
+    val orderedWitnessReadings =
+      for siglum <- selection.witnessReadings.keys.toSeq.sorted
+        yield selection.witnessReadings(siglum)
+    for r <- orderedWitnessReadings yield r.tokens
+  }
+  // Replacement that uses witnessGroups instead of witnessReadings
+  val lTa = localTokenArrayByWitness.head ++
+    localTokenArrayByWitness.tail.zipWithIndex
+      .flatMap((e, index) =>
+        Vector(
+          TokenSep(t = s" #$index ", n = s" #$index ", w = index, g = index)
+        ) ++ e
+      )
+  lTa
 
 def alignTokenArray(
-    sigla: List[Siglum],
-    selection: UnalignedZone
-) =
+     sigla: List[Siglum],
+     selection: UnalignedZone
+   ): List[AlignmentPoint] =
   val gTa: Vector[TokenEnum] = selection.witnessReadings.values.head.ta
   // find the full depth blocks for the alignment
   // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
   // ??: Modify createAlignedBlocks() not to return unused values
   // ??: Count witnesses (via separators) instead of passing in count
   // TODO: Simplify where we need single token array and where we need witness-set metadata
+  val lTa = createLocalTokenArrayForUnalignedZone(selection)
   val witnessCount = selection.witnessReadings.size
-
-  // Create a local token array by filtering the global one
-  // Selection comes in unsorted, so sort by siglum first
-  val localTokenArraybyWitness: Seq[Vector[TokenEnum]] = {
-    val orderedWitnessReadings =
-      for siglum <- selection.witnessReadings.keys.toSeq.sorted
-      yield selection.witnessReadings(siglum)
-    for r <- orderedWitnessReadings yield r.tokens
-  }
-  // Replacement that uses witnessGroups instead of witnessReadings
-  val lTa = localTokenArraybyWitness.head ++
-    localTokenArraybyWitness.tail.zipWithIndex
-      .flatMap((e, index) =>
-        Vector(
-          TokenSep(t = s" #$index ", n = s" #$index ", w = index, g = index)
-        ) ++ e
-      )
   val (_, _, longestFullDepthNonRepeatingBlocks) =
     createAlignedBlocks(lTa, witnessCount)
   if longestFullDepthNonRepeatingBlocks.isEmpty
