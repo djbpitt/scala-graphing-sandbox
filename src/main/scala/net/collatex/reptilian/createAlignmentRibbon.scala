@@ -65,7 +65,8 @@ def removeEmptyTokenRanges(before: Map[Siglum, TokenRange]): Map[Siglum, TokenRa
 
 def splitUnalignedZone(
     current: UnalignedZone,
-    alignment_point_for_split: AlignmentPoint
+    alignment_point_for_split: AlignmentPoint,
+    global: Boolean
 ): (UnalignedZone, UnalignedZone) =
   // We filter out all the witnesses that have an empty range after the split
   val preAndPost = current.witnessReadings
@@ -77,7 +78,7 @@ def splitUnalignedZone(
     preAndPost
       .map((k, v) => k -> v._2)
   )
-  (UnalignedZone(pre), UnalignedZone(post))
+  (UnalignedZone(pre, global), UnalignedZone(post, global))
 
 def alignTokenArray(
     sigla: List[Siglum],
@@ -166,7 +167,7 @@ def createGlobalUnalignedZone(sigla: List[Siglum], gTa: Vector[TokenEnum]) = {
       ) // +1 is for exclusive until
   // mutable map is local to the function, to convert to immutable before return
   val witnessReadings = witnessRanges.toMap
-  val globalUnalignedZone = UnalignedZone(witnessReadings)
+  val globalUnalignedZone = UnalignedZone(witnessReadings, true)
   globalUnalignedZone
 }
 
@@ -251,6 +252,7 @@ def setupNodeExpansion(
       expansion
   result
 
+// NOTE: I think this function is part of the splitting of the global unaligned zone
 @tailrec
 def recursiveBuildAlignment(
     result: ListBuffer[AlignmentUnit],
@@ -265,7 +267,8 @@ def recursiveBuildAlignment(
   val firstRemainingAlignmentPoint = remainingAlignment.head // current block
   val (pre, post): (UnalignedZone, UnalignedZone) = splitUnalignedZone(
     unalignedZone,
-    firstRemainingAlignmentPoint
+    firstRemainingAlignmentPoint,
+    true
   )
   // Expand pre recursively and add to result
   // Then add block to result

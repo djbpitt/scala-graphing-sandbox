@@ -57,15 +57,12 @@ object AlignmentPoint {
   *
   * Same input as AlignmentPoint (varargs of (Siglum, TokenRange)) but create only WitnessReadings and no WitnessGroups
   */
-final case class UnalignedZone(witnessReadings: WitnessReadings) extends AlignmentUnit:
+final case class UnalignedZone(witnessReadings: WitnessReadings, global: Boolean) extends AlignmentUnit:
   def convertToTokenLists(): List[List[Token]] =
     val sortedKeys = this.witnessReadings.keys.toSeq.sorted
     sortedKeys.map(e => this.witnessReadings(e).tokens.map(_.asInstanceOf[Token]).toList).toList
 
-object UnalignedZone
-  def apply(m: (Siglum, TokenRange)*): UnalignedZone =
-    val wr = m.toMap
-    UnalignedZone(wr)
+
 
 /** AlignmentRibbon
   *
