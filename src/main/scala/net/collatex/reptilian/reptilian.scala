@@ -49,7 +49,7 @@ def createGTa = {
 
   /** Create alignment ribbon
     */
-  val root: AlignmentRibbon = createAlignment(sigla, gTa)
+  val root: AlignmentRibbon = createAlignmentRibbon(sigla, gTa)
 
   // To write unaligned zone data to separate JSON files during
   // development run writePhaseTwoJSONData(root) here
