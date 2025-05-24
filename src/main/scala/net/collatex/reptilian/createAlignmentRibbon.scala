@@ -90,28 +90,6 @@ def splitWitnessGroup(
   )
   (lefts, rights)
 
-def removeEmptyTokenRanges(before: Map[Siglum, TokenRange]): Map[Siglum, TokenRange] =
-  before.filter((_, v) => v.isInstanceOf[LegalTokenRange])
-
-def createLocalTokenArrayForUnalignedZone(selection: UnalignedZone) =
-  // Create a local token array by filtering the global one
-  // Selection comes in unsorted, so sort by siglum first
-  val localTokenArrayByWitness: Seq[Vector[TokenEnum]] = {
-    val orderedWitnessReadings =
-      for siglum <- selection.witnessReadings.keys.toSeq.sorted
-        yield selection.witnessReadings(siglum)
-    for r <- orderedWitnessReadings yield r.tokens
-  }
-  // Replacement that uses witnessGroups instead of witnessReadings
-  val lTa = localTokenArrayByWitness.head ++
-    localTokenArrayByWitness.tail.zipWithIndex
-      .flatMap((e, index) =>
-        Vector(
-          TokenSep(t = s" #$index ", n = s" #$index ", w = index, g = index)
-        ) ++ e
-      )
-  lTa
-
 def alignTokenArray(
      sigla: List[Siglum],
      selection: UnalignedZone
@@ -122,29 +100,24 @@ def alignTokenArray(
   // ??: Modify createAlignedBlocks() not to return unused values
   // ??: Count witnesses (via separators) instead of passing in count
   // TODO: Simplify where we need single token array and where we need witness-set metadata
-  val lTa = createLocalTokenArrayForUnalignedZone(selection)
+  val lTa = selection.createLocalTokenArrayForUnalignedZone
   val witnessCount = selection.witnessReadings.size
   val (_, _, longestFullDepthNonRepeatingBlocks) =
     createAlignedBlocks(lTa, witnessCount)
   if longestFullDepthNonRepeatingBlocks.isEmpty
-  then List()
+  then List.empty
   else
     // blocks come back with lTa; map to gTa
     // create navigation graph and filter out transposed nodes
     val blocksGTa =
       longestFullDepthNonRepeatingBlocks.map(e => FullDepthBlock(e.instances.map(f => lTa(f).g), e.length))
     val graph = createTraversalGraph(blocksGTa)
-    val alignment: List[Int] = findOptimalAlignment(
-      graph
-    ) // Int identifiers of full-depth blocks
-    val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(
-      alignment: List[Int]
-    ) // We lose the sorting here
+    // Int identifiers of full-depth blocks
+    val alignment: List[Int] = findOptimalAlignment(graph)
+    // We lose the sorting here
+    val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment)
     val alignmentBlocks: Iterable[FullDepthBlock] =
-      alignmentIntsToBlocks(
-        alignmentBlocksSet,
-        blocksGTa
-      )
+      alignmentIntsToBlocks(alignmentBlocksSet, blocksGTa)
 
     val adjustedBlocks = adjustBlockOverlap(alignmentBlocks, gTa)
 

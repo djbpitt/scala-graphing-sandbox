@@ -1,10 +1,11 @@
 package net.collatex.reptilian
 
-import net.collatex.reptilian.TokenEnum.Token
+import net.collatex.reptilian.TokenEnum.{Token, TokenSep}
 import net.collatex.reptilian.TokenRange.*
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import scala.language.postfixOps
 import scala.math.Ordering
 
 opaque type Siglum = String
@@ -38,14 +39,33 @@ final case class UnalignedZone(witnessReadings: WitnessReadings, global: Boolean
     // We filter out all the witnesses that have an empty range after the split
     val preAndPost = this.witnessReadings
       .map((k, v) => k -> v.splitTokenRange(alignment_point_for_split.witnessReadings(k)))
-    val pre = preAndPost
-      .map((k, v) => k -> v._1)
-      .filter((k, v) => v.isInstanceOf[LegalTokenRange])
-    val post: Map[Siglum, TokenRange] = removeEmptyTokenRanges(
-      preAndPost
-        .map((k, v) => k -> v._2)
-    )
+    val unfilteredPre = preAndPost.map((k, v) => k -> v._1)
+    val unfilteredPost = preAndPost.map((k, v) => k -> v._2)
+    val pre  = removeEmptyTokenRanges(unfilteredPre)
+    val post = removeEmptyTokenRanges(unfilteredPost)
     (UnalignedZone(pre, global), UnalignedZone(post, global))
+
+  private def removeEmptyTokenRanges(before: Map[Siglum, TokenRange]): Map[Siglum, TokenRange] =
+    before.filter((_, v) => v.isInstanceOf[LegalTokenRange])
+
+  def createLocalTokenArrayForUnalignedZone: Vector[TokenEnum] =
+    // Create a local token array by filtering the global one
+    // Selection comes in unsorted, so sort by siglum first
+    val localTokenArrayByWitness: Seq[Vector[TokenEnum]] = {
+      val orderedWitnessReadings =
+        for siglum <- this.witnessReadings.keys.toSeq.sorted
+          yield this.witnessReadings(siglum)
+      for r <- orderedWitnessReadings yield r.tokens
+    }
+    // Replacement that uses witnessGroups instead of witnessReadings
+    val lTa = localTokenArrayByWitness.head ++
+      localTokenArrayByWitness.tail.zipWithIndex
+        .flatMap((e, index) =>
+          Vector(
+            TokenSep(t = s" #$index ", n = s" #$index ", w = index, g = index)
+          ) ++ e
+        )
+    lTa
 
 
 final case class AlignmentPoint(witnessReadings: WitnessReadings, witnessGroups: Set[WitnessReadings])
