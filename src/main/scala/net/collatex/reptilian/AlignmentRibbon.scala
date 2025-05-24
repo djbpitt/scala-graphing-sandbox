@@ -21,13 +21,40 @@ type WitnessReadings = Map[Siglum, TokenRange] // type alias
 
 sealed trait AlignmentUnit // supertype AlignmentRibbon (with children) and AlignmentPoint (with groups)
 
+/** Zone to be processed in phase two
+ *
+ * Same input as AlignmentPoint (varargs of (Siglum, TokenRange)) but create only WitnessReadings and no WitnessGroups
+ */
+final case class UnalignedZone(witnessReadings: WitnessReadings, global: Boolean) extends AlignmentUnit:
+  def convertToTokenLists(): List[List[Token]] =
+    val sortedKeys = this.witnessReadings.keys.toSeq.sorted
+    sortedKeys.map(e => this.witnessReadings(e).tokens.map(_.asInstanceOf[Token]).toList).toList
+
+  def splitUnalignedZone(
+      alignment_point_for_split: AlignmentPoint,
+      global: Boolean
+    ): (UnalignedZone, UnalignedZone) =
+
+    // We filter out all the witnesses that have an empty range after the split
+    val preAndPost = this.witnessReadings
+      .map((k, v) => k -> v.splitTokenRange(alignment_point_for_split.witnessReadings(k)))
+    val pre = preAndPost
+      .map((k, v) => k -> v._1)
+      .filter((k, v) => v.isInstanceOf[LegalTokenRange])
+    val post: Map[Siglum, TokenRange] = removeEmptyTokenRanges(
+      preAndPost
+        .map((k, v) => k -> v._2)
+    )
+    (UnalignedZone(pre, global), UnalignedZone(post, global))
+
+
 final case class AlignmentPoint(witnessReadings: WitnessReadings, witnessGroups: Set[WitnessReadings])
-    extends AlignmentUnit
+  extends AlignmentUnit
 
 /** Custom constructor to simplify creation of AlignmentPoint
-  *
-  * Input is a varargs of (Siglum, TokenRange). Will eventually create only WitnessGroups and no WitnessReadings
-  */
+ *
+ * Input is a varargs of (Siglum, TokenRange). Will eventually create only WitnessGroups and no WitnessReadings
+ */
 object AlignmentPoint {
   def apply(gTa: Vector[TokenEnum], m: (Siglum, TokenRange)*): AlignmentPoint =
     val wr = m.toMap
@@ -40,6 +67,7 @@ object AlignmentPoint {
       .values // we don't care about the shared text after we've used it for grouping
       .toSet
     AlignmentPoint(wr, wg)
+
   def apply(gTa: Vector[TokenEnum], m: WitnessReadings): AlignmentPoint =
     val wg = m
       .groupBy((_, offsets) =>
@@ -53,16 +81,6 @@ object AlignmentPoint {
 
 }
 
-/** Zone to be processed in phase two
-  *
-  * Same input as AlignmentPoint (varargs of (Siglum, TokenRange)) but create only WitnessReadings and no WitnessGroups
-  */
-final case class UnalignedZone(witnessReadings: WitnessReadings, global: Boolean) extends AlignmentUnit:
-  def convertToTokenLists(): List[List[Token]] =
-    val sortedKeys = this.witnessReadings.keys.toSeq.sorted
-    sortedKeys.map(e => this.witnessReadings(e).tokens.map(_.asInstanceOf[Token]).toList).toList
-
-
 
 /** AlignmentRibbon
   *
@@ -75,32 +93,3 @@ final case class AlignmentRibbon(
     children: ListBuffer[AlignmentUnit] = ListBuffer.empty
 ) extends AlignmentUnit
 
-def blocksToNodes(
-    blocks: Iterable[FullDepthBlock],
-    lTa: Vector[TokenEnum],
-    gTa: Vector[TokenEnum],
-    sigla: List[Siglum]
-): Iterable[AlignmentPoint] =
-  val result = blocks
-    .map(e => fullDepthBlockToAlignmentPoint(e, gTa, sigla))
-  result
-// Convert local alignment offsets to global token-array offsets for the reading node
-def fullDepthBlockToAlignmentPoint(
-    block: FullDepthBlock,
-    lTa: Vector[TokenEnum], // local
-    sigla: List[Siglum]
-): AlignmentPoint =
-//  println(s"block: $block")
-  val readings = block.instances
-    .map(e =>
-      sigla(lTa(e).w) -> TokenRange(
-        start = lTa(e).g,
-        until = lTa(
-          e
-        ).g + block.length,
-        ta = lTa
-      )
-    )
-    .toMap
-  val wg = Set(readings)
-  AlignmentPoint(readings, wg)

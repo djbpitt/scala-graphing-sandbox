@@ -15,6 +15,36 @@ import net.collatex.reptilian.TokenEnum.{Token, TokenSep}
 // yet to be aligned and that it then calls the suffix array, traversal graph code itself
 // Basically an inverse of the current control flow.
 
+def blocksToNodes(
+                   blocks: Iterable[FullDepthBlock],
+                   gTa: Vector[TokenEnum],
+                   sigla: List[Siglum]
+                 ): Iterable[AlignmentPoint] =
+  val result = blocks
+    .map(e => fullDepthBlockToAlignmentPoint(e, gTa, sigla))
+  result
+
+// Convert local alignment offsets to global token-array offsets for the reading node
+def fullDepthBlockToAlignmentPoint(
+                                    block: FullDepthBlock,
+                                    lTa: Vector[TokenEnum], // local
+                                    sigla: List[Siglum]
+                                  ): AlignmentPoint =
+  //  println(s"block: $block")
+  val readings = block.instances
+    .map(e =>
+      sigla(lTa(e).w) -> TokenRange(
+        start = lTa(e).g,
+        until = lTa(
+          e
+        ).g + block.length,
+        ta = lTa
+      )
+    )
+    .toMap
+  val wg = Set(readings)
+  AlignmentPoint(readings, wg)
+
 /** splitWitnessGroup()
   *
   * Split single witness group from AlignmentPoint into two (one of which may be empty)
@@ -63,22 +93,6 @@ def splitWitnessGroup(
 def removeEmptyTokenRanges(before: Map[Siglum, TokenRange]): Map[Siglum, TokenRange] =
   before.filter((_, v) => v.isInstanceOf[LegalTokenRange])
 
-def splitUnalignedZone(
-    current: UnalignedZone,
-    alignment_point_for_split: AlignmentPoint,
-    global: Boolean
-): (UnalignedZone, UnalignedZone) =
-  // We filter out all the witnesses that have an empty range after the split
-  val preAndPost = current.witnessReadings
-    .map((k, v) => k -> v.splitTokenRange(alignment_point_for_split.witnessReadings(k)))
-  val pre = preAndPost
-    .map((k, v) => k -> v._1)
-    .filter((k, v) => v.isInstanceOf[LegalTokenRange])
-  val post: Map[Siglum, TokenRange] = removeEmptyTokenRanges(
-    preAndPost
-      .map((k, v) => k -> v._2)
-  )
-  (UnalignedZone(pre, global), UnalignedZone(post, global))
 
 def alignTokenArray(
     sigla: List[Siglum],
@@ -135,7 +149,7 @@ def alignTokenArray(
     // Examine difference between original blocks and blocks after overlap adjustment
     // alignmentBlocks.toSeq.sortBy(_.instances.head).zip(adjustedBlocks).filterNot((e, f) => e == f).foreach(println)
 
-    val alignmentPoints = blocksToNodes(adjustedBlocks, lTa, gTa, sigla)
+    val alignmentPoints = blocksToNodes(adjustedBlocks, gTa, sigla)
     // We need to restore the sorting that we destroyed when we created the set
     // Called repeatedly, so there is always a w0, although not always the same one
     //   (tokens know their global witness membership, so we can recover original witness membership when needed)
@@ -265,8 +279,7 @@ def recursiveBuildAlignment(
   // Take the first reading node from the sorted full-depth alignment points
   //   (= converted blocks from alignment)
   val firstRemainingAlignmentPoint = remainingAlignment.head // current block
-  val (pre, post): (UnalignedZone, UnalignedZone) = splitUnalignedZone(
-    unalignedZone,
+  val (pre, post): (UnalignedZone, UnalignedZone) = unalignedZone.splitUnalignedZone(
     firstRemainingAlignmentPoint,
     true
   )
