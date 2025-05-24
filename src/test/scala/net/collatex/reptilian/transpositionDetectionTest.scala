@@ -6,6 +6,8 @@ import net.collatex.util.Hypergraph
 import net.collatex.util.Hypergraph.{FullHypergraph, Hyperedge}
 import org.scalatest.funsuite.AnyFunSuite
 
+import scala.util.chaining.scalaUtilChainingOps
+
 class transpositionDetectionTest extends AnyFunSuite:
   //NOTE: INPUT DATA IS WRONG! GTA IS SMALLER THAN TOKEN RANGES SPECIFIED IN AlignmentHyperedge
   //FURTHERMORE THERE ARE NO ASSERTS AT THE END!
@@ -84,8 +86,8 @@ class transpositionDetectionTest extends AnyFunSuite:
     )
 
     val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
-    val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] =
-      createAlignedPatternsPhaseTwo(lTa, -1)
+    val patterns =
+      createAlignedPatternsPhaseTwo(lTa, -1) pipe groupPatternsTogetherByHyperedge
     val result = splitHesOnAlignedPatterns(bothHgs, patterns)
     println("Actual Set[HypergraphMatches]")
     result._2.foreach(println)

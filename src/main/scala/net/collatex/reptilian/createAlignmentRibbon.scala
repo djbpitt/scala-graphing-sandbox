@@ -45,51 +45,6 @@ def fullDepthBlockToAlignmentPoint(
   val wg = Set(readings)
   AlignmentPoint(readings, wg)
 
-/** splitWitnessGroup()
-  *
-  * Split single witness group from AlignmentPoint into two (one of which may be empty)
-  *
-  * Called by splitAlignmentPoint(); relies on splitTokenRange() to process individual witness data
-  *
-  * NB: wg is witness readings for a single group, but positionsToSplit is positions for all witnesses in all groups
-  *
-  * @param wg:
-  *   WitnessReadings (for just one witness group)
-  * @param positionsToSplit:
-  *   Map[Siglum, Int]
-  * @return
-  *   (WitnessReadings, WitnessReadings)
-  */
-def splitWitnessGroup(
-    wg: WitnessReadings,
-    positionsToSplit: immutable.Map[Siglum, Int]
-) =
-  val splits =
-    wg.collect { case (e: Siglum, f: LegalTokenRange) =>
-      e -> f.splitTokenRangeOnPosition(positionsToSplit(e))
-    }
-  // TODO: Can we combine all rights with one another and all lefts with one another?
-  // What happens, with lefts, if we hit a SecondOnlyPopulated? Currently we do nothing;
-  //   if we merge, we'll add an empty token range, which we probably don't want — but
-  //   which we could filter out later.
-  // FIXME: We throw away IllegalSplitValue errors silently. Log? Incorporate
-  //   into visualization?
-  val lefts = splits.foldLeft(immutable.Map.empty[Siglum, TokenRange])((acc, kv) =>
-    kv match {
-      case (e: Siglum, Right(f: BothPopulated))      => acc + (e -> f.preTokenRange)
-      case (e: Siglum, Right(f: FirstOnlyPopulated)) => acc + (e -> f.preTokenRange)
-      case _                                         => acc
-    }
-  )
-  val rights = splits.foldLeft(immutable.Map.empty[Siglum, TokenRange])((acc, kv) =>
-    kv match {
-      case (e: Siglum, Right(f: BothPopulated))       => acc + (e -> f.postTokenRange)
-      case (e: Siglum, Right(f: SecondOnlyPopulated)) => acc + (e -> f.postTokenRange)
-      case _                                          => acc
-    }
-  )
-  (lefts, rights)
-
 def alignTokenArray(
      sigla: List[Siglum],
      selection: UnalignedZone
