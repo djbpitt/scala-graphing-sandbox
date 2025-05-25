@@ -78,7 +78,9 @@ def recursiveBuildAlignment(
       sigla
     )
   else
+    result.append(firstRemainingAlignmentPoint)
     // TODO: Should probably recurse here as well by calling alignFullDepth
+    // TODO: Should probably check whether post is empty
     result.append(post)
     result.toList
 
