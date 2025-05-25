@@ -4,8 +4,6 @@ import scala.annotation.tailrec
 import scala.collection.{immutable, mutable}
 import scala.collection.mutable.ListBuffer
 import TokenRange.*
-import SplitTokenRangeResult.*
-import net.collatex.reptilian.TokenEnum.{Token, TokenSep}
 
 // This method transform an alignment on the global level of the fullest depth blocks
 // into an alignment tree by splitting
@@ -15,12 +13,122 @@ import net.collatex.reptilian.TokenEnum.{Token, TokenSep}
 // yet to be aligned and that it then calls the suffix array, traversal graph code itself
 // Basically an inverse of the current control flow.
 
+
+def createAlignmentRibbon(
+       sigla: List[Siglum],
+       gTa: Vector[TokenEnum]
+     ): AlignmentRibbon =
+  val globalUnalignedZone: UnalignedZone = createGlobalUnalignedZone(sigla, gTa)
+  // align, recursively full depth blocks in this unaligned zone
+  val alignment = ListBuffer().appendAll(alignFullDepthBlocks(globalUnalignedZone, sigla))
+  AlignmentRibbon(alignment)
+
+def alignFullDepthBlocks(unalignedZone: UnalignedZone, sigla: List[Siglum]): List[AlignmentUnit] =
+  val gTa: Vector[TokenEnum] = unalignedZone.witnessReadings.values.head.ta
+  // find the full depth blocks for the alignment
+  // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
+  // ??: Modify createAlignedBlocks() not to return unused values
+  // ??: Count witnesses (via separators) instead of passing in count
+  // TODO: Simplify where we need single token array and where we need witness-set metadata
+  val lTa = unalignedZone.createLocalTokenArrayForUnalignedZone
+  val witnessCount = unalignedZone.witnessReadings.size
+  val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(lTa, witnessCount)
+  if longestFullDepthNonRepeatingBlocks.isEmpty
+  then alignByClustering(unalignedZone)
+  else {
+    // There are full depth blocks, align by creating a navigation graph
+    val fullDepthAlignmentPoints: List[AlignmentPoint] = getAlignmentPointsByTraversingNavigationGraph(longestFullDepthNonRepeatingBlocks, lTa, gTa, sigla)
+    val alignment = recursiveBuildAlignment(
+      ListBuffer(),
+      unalignedZone,
+      fullDepthAlignmentPoints,
+      sigla
+    )
+    alignment
+  }
+
+
+@tailrec
+def recursiveBuildAlignment(
+     result: ListBuffer[AlignmentUnit],
+     unalignedZone: UnalignedZone,
+     remainingAlignment: List[AlignmentPoint],
+     sigla: List[Siglum]
+   ): List[AlignmentUnit] =
+
+  // On first run, unalignedZone contains full token ranges (globalUnalignedZone) and
+  // remainingAlignment contains all original full-depth alignment points.
+  // Take the first reading node from the sorted full-depth alignment points
+  //   (= converted blocks from alignment)
+  val firstRemainingAlignmentPoint = remainingAlignment.head // current block
+  val (pre, post): (UnalignedZone, UnalignedZone) =
+    unalignedZone.splitUnalignedZone(firstRemainingAlignmentPoint, true)
+  // Expand pre recursively and add to result
+  // Then add block to result
+  // Then either recurse on post with next block or, in no more blocks, add post
+
+  if pre.witnessReadings.nonEmpty then
+    result.appendAll(alignFullDepthBlocks(pre, sigla))
+
+  if remainingAlignment.tail.nonEmpty then
+    recursiveBuildAlignment(
+      result,
+      post,
+      remainingAlignment.tail,
+      sigla
+    )
+  else
+    result.append(post)
+    result.toList
+
+
+
+def getAlignmentPointsByTraversingNavigationGraph(longestFullDepthNonRepeatingBlocks: List[FullDepthBlock], lTa: Vector[TokenEnum], gTa: Vector[TokenEnum], sigla: List[Siglum]) =
+  // blocks come back with lTa; map to gTa
+  // create navigation graph and filter out transposed nodes
+  val blocksGTa =
+    longestFullDepthNonRepeatingBlocks.map(e => FullDepthBlock(e.instances.map(f => lTa(f).g), e.length))
+  val graph = createTraversalGraph(blocksGTa)
+  // Int identifiers of full-depth blocks
+  val alignment: List[Int] = findOptimalAlignment(graph)
+  // We lose the sorting here
+  val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment)
+  val alignmentBlocks: Iterable[FullDepthBlock] =
+    alignmentIntsToBlocks(alignmentBlocksSet, blocksGTa)
+
+  val adjustedBlocks = adjustBlockOverlap(alignmentBlocks, gTa)
+
+  // Examine difference between original blocks and blocks after overlap adjustment
+  // alignmentBlocks.toSeq.sortBy(_.instances.head).zip(adjustedBlocks).filterNot((e, f) => e == f).foreach(println)
+
+  val alignmentPoints = blocksToNodes(adjustedBlocks, gTa, sigla)
+  // We need to restore the sorting that we destroyed when we created the set
+  // Called repeatedly, so there is always a w0, although not always the same one
+  //   (tokens know their global witness membership, so we can recover original witness membership when needed)
+  val siglumForSorting: Siglum = alignmentPoints.head.witnessReadings.keys.head
+  val sortedReadingNodes = alignmentPoints // Sort reading nodes in token order
+    .toVector
+    .sortBy(_.witnessReadings(siglumForSorting).start)
+    .toList
+  sortedReadingNodes
+
+
+def alignByClustering(zone: UnalignedZone) =
+  val wg = zone.witnessReadings
+    .groupBy((_, offsets) =>
+      offsets.nString
+    ) // groups readings by shared text (n property)
+    .values // we don't care about the shared text after we've used it for grouping
+    .toSet
+  List(AlignmentPoint(zone.witnessReadings, wg)) // one-item ribbon
+
 def blocksToNodes(
                    blocks: Iterable[FullDepthBlock],
                    gTa: Vector[TokenEnum],
                    sigla: List[Siglum]
                  ): Iterable[AlignmentPoint] =
   val result = blocks
+    // THERE IS LTA AND GTA CONFUSION HERE, MAPPING IS REDUNDANT. IS DONE EARLIER
     .map(e => fullDepthBlockToAlignmentPoint(e, gTa, sigla))
   result
 
@@ -44,51 +152,6 @@ def fullDepthBlockToAlignmentPoint(
     .toMap
   val wg = Set(readings)
   AlignmentPoint(readings, wg)
-
-def alignTokenArray(
-     sigla: List[Siglum],
-     selection: UnalignedZone
-   ): List[AlignmentPoint] =
-  val gTa: Vector[TokenEnum] = selection.witnessReadings.values.head.ta
-  // find the full depth blocks for the alignment
-  // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
-  // ??: Modify createAlignedBlocks() not to return unused values
-  // ??: Count witnesses (via separators) instead of passing in count
-  // TODO: Simplify where we need single token array and where we need witness-set metadata
-  val lTa = selection.createLocalTokenArrayForUnalignedZone
-  val witnessCount = selection.witnessReadings.size
-  val (_, _, longestFullDepthNonRepeatingBlocks) =
-    createAlignedBlocks(lTa, witnessCount)
-  if longestFullDepthNonRepeatingBlocks.isEmpty
-  then List.empty
-  else
-    // blocks come back with lTa; map to gTa
-    // create navigation graph and filter out transposed nodes
-    val blocksGTa =
-      longestFullDepthNonRepeatingBlocks.map(e => FullDepthBlock(e.instances.map(f => lTa(f).g), e.length))
-    val graph = createTraversalGraph(blocksGTa)
-    // Int identifiers of full-depth blocks
-    val alignment: List[Int] = findOptimalAlignment(graph)
-    // We lose the sorting here
-    val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment)
-    val alignmentBlocks: Iterable[FullDepthBlock] =
-      alignmentIntsToBlocks(alignmentBlocksSet, blocksGTa)
-
-    val adjustedBlocks = adjustBlockOverlap(alignmentBlocks, gTa)
-
-    // Examine difference between original blocks and blocks after overlap adjustment
-    // alignmentBlocks.toSeq.sortBy(_.instances.head).zip(adjustedBlocks).filterNot((e, f) => e == f).foreach(println)
-
-    val alignmentPoints = blocksToNodes(adjustedBlocks, gTa, sigla)
-    // We need to restore the sorting that we destroyed when we created the set
-    // Called repeatedly, so there is always a w0, although not always the same one
-    //   (tokens know their global witness membership, so we can recover original witness membership when needed)
-    val siglumForSorting: Siglum = alignmentPoints.head.witnessReadings.keys.head
-    val sortedReadingNodes = alignmentPoints // Sort reading nodes in token order
-      .toVector
-      .sortBy(_.witnessReadings(siglumForSorting).start)
-      .toList
-    sortedReadingNodes
 
 def createGlobalUnalignedZone(sigla: List[Siglum], gTa: Vector[TokenEnum]) = {
   // NB: We are embarrassed by the mutable map (and by other things, such has having to scan token array)
@@ -115,126 +178,50 @@ def createGlobalUnalignedZone(sigla: List[Siglum], gTa: Vector[TokenEnum]) = {
   globalUnalignedZone
 }
 
-def createAlignmentRibbon(
-    sigla: List[Siglum],
-    gTa: Vector[TokenEnum]
-): AlignmentRibbon =
-  val globalUnalignedZone: UnalignedZone = createGlobalUnalignedZone(sigla, gTa)
+//def setupNodeExpansion(
+//    sigla: List[Siglum], // all sigla (global, not just current zone)
+//    selection: UnalignedZone // pre
+//): AlignmentRibbon =
+//  val gTa = selection.witnessReadings.values.head.ta
+//  //  println(selection.witnessReadings)
+//  //  println(gTa.head.w)
+//  val alignmentPointsForSection = alignTokenArray(sigla, selection)
+//  val result: AlignmentRibbon =
+//    if alignmentPointsForSection.isEmpty
+//    then
+//      val darwinReadings: List[List[Token]] = selection.convertToTokenLists()
+//      // println(s"darwinReadings: $darwinReadings")
+//      val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
+//      // println(s"clusters: $nodesToCluster")
+//      if nodesToCluster.isEmpty then { // One witness, so construct local ribbon directly
+//        val wg: Set[Map[Siglum, TokenRange]] = Set(selection.witnessReadings)
+//        AlignmentRibbon(ListBuffer(AlignmentPoint(selection.witnessReadings, wg)))
+//      } else // Variation node with … er … variation
+//        val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
+//        val ranking: Map[NodeType, Int] = hg.rank()
+//        val hyperedgesByRank = hg.hyperedges.groupBy(e => ranking(NodeType(e.label))) // unsorted
+//        val sortedRanks = hyperedgesByRank.keySet.toSeq.sorted
+//        val aps: ListBuffer[AlignmentUnit] = sortedRanks
+//          .map(e =>
+//            val wg = hyperedgesByRank(e) // set of hyperedges, one per witness group on alignment point
+//              .map(f =>
+//                f.verticesIterator
+//                  .map(tr =>
+//                    val witness: Siglum = {
+//                      val inSiglum: String = gTa(tr.start).w.toString
+//                      if inSiglum.length == 1 then Siglum(intToSiglum(inSiglum.toInt))
+//                      else Siglum(inSiglum)
+//                    }
+//                    witness -> tr
+//                  )
+//                  .toMap
+//              )
+//            val wr = wg.reduce(_ ++ _)
+//            AlignmentPoint(wr, wg)
+//          )
+//          .to(ListBuffer)
+//        val result = AlignmentRibbon(aps)
+//        result
 
-  // Execute first alignment phase recursively
-  val fulldepthAlignmentPoints: List[AlignmentPoint] = // not yet handling intervening unaligned zones
-    alignTokenArray(sigla, globalUnalignedZone)
-  val rootNode = recursiveBuildAlignment(
-    ListBuffer(),
-    globalUnalignedZone,
-    fulldepthAlignmentPoints,
-    sigla
-  )
-  rootNode
+//    else // alignment points, so children are a sequence of one or more nodes of possibly different types
 
-def setupNodeExpansion(
-    sigla: List[Siglum], // all sigla (global, not just current zone)
-    selection: UnalignedZone // pre
-): AlignmentRibbon =
-  val gTa = selection.witnessReadings.values.head.ta
-  //  println(selection.witnessReadings)
-  //  println(gTa.head.w)
-  val alignmentPointsForSection = alignTokenArray(sigla, selection)
-  val result: AlignmentRibbon =
-    if alignmentPointsForSection.isEmpty
-    then
-      val darwinReadings: List[List[Token]] = selection.convertToTokenLists()
-      // println(s"darwinReadings: $darwinReadings")
-      val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
-      // println(s"clusters: $nodesToCluster")
-      if nodesToCluster.isEmpty then { // One witness, so construct local ribbon directly
-        val wg: Set[Map[Siglum, TokenRange]] = Set(selection.witnessReadings)
-        AlignmentRibbon(ListBuffer(AlignmentPoint(selection.witnessReadings, wg)))
-      } else // Variation node with … er … variation
-        val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-        val ranking: Map[NodeType, Int] = hg.rank()
-        val hyperedgesByRank = hg.hyperedges.groupBy(e => ranking(NodeType(e.label))) // unsorted
-        val sortedRanks = hyperedgesByRank.keySet.toSeq.sorted
-        val aps: ListBuffer[AlignmentUnit] = sortedRanks
-          .map(e =>
-            val wg = hyperedgesByRank(e) // set of hyperedges, one per witness group on alignment point
-              .map(f =>
-                f.verticesIterator
-                  .map(tr =>
-                    val witness: Siglum = {
-                      val inSiglum: String = gTa(tr.start).w.toString
-                      if inSiglum.length == 1 then Siglum(intToSiglum(inSiglum.toInt))
-                      else Siglum(inSiglum)
-                    }
-                    witness -> tr
-                  )
-                  .toMap
-              )
-            val wr = wg.reduce(_ ++ _)
-            AlignmentPoint(wr, wg)
-          )
-          .to(ListBuffer)
-        val result = AlignmentRibbon(aps)
-        result
-
-    //        val wg = selection.witnessReadings
-    //          .groupBy((_, offsets) =>
-    //            gTa
-    //              .slice(offsets.start, offsets.until)
-    //              .map(_.n)
-    //          ) // groups readings by shared text (n property)
-    //          .values // we don't care about the shared text after we've used it for grouping
-    //          .toSet
-    //        AlignmentRibbon(ListBuffer(AlignmentPoint(selection.witnessReadings, wg))) // one-item ribbon
-    else // alignment points, so children are a sequence of one or more nodes of possibly different types
-      val expansion = recursiveBuildAlignment(
-        result = ListBuffer(),
-        unalignedZone = selection,
-        remainingAlignment = alignmentPointsForSection,
-        sigla = sigla
-      )
-      expansion
-  result
-
-// NOTE: I think this function is part of the splitting of the global unaligned zone
-@tailrec
-def recursiveBuildAlignment(
-    result: ListBuffer[AlignmentUnit],
-    unalignedZone: UnalignedZone,
-    remainingAlignment: List[AlignmentPoint],
-    sigla: List[Siglum]
-): AlignmentRibbon =
-  // On first run, unalignedZone contains full token ranges (globalUnalignedZone) and
-  // remainingAlignment contains all original full-depth alignment points.
-  // Take the first reading node from the sorted full-depth alignment points
-  //   (= converted blocks from alignment)
-  val firstRemainingAlignmentPoint = remainingAlignment.head // current block
-  val (pre, post): (UnalignedZone, UnalignedZone) = unalignedZone.splitUnalignedZone(
-    firstRemainingAlignmentPoint,
-    true
-  )
-  // Expand pre recursively and add to result
-  // Then add block to result
-  // Then either recurse on post with next block or, in no more blocks, add post
-
-  val expandedPre: AlignmentRibbon =
-    if pre.witnessReadings.nonEmpty then setupNodeExpansion(sigla, pre)
-    else
-      AlignmentRibbon(ListBuffer(pre)) // single-item ribbon in else case
-
-  result.appendAll(Seq(expandedPre, firstRemainingAlignmentPoint))
-
-  if remainingAlignment.tail.nonEmpty then
-    recursiveBuildAlignment(
-      result,
-      post,
-      remainingAlignment.tail,
-      sigla
-    )
-  else
-    result.append(post)
-    // result.slice(0, 10).foreach(println)
-    val rootNode = AlignmentRibbon(
-      children = result
-    )
-    rootNode
