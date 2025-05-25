@@ -92,15 +92,8 @@ def flattenNodeSeq(
                 (id, i)
               }.toList
             nextNode(newNodesToProcess ::: inList.tail, outVector)
-          case (nodeNo, node: UnalignedZone) =>
-            if node.witnessReadings.isEmpty
-            then nextNode(inList.tail, outVector)
-            else // convert UnalignedZone to AlignmentPoint if not empty
-              println("Unexpected unaligned zone!")
-              node.witnessReadings.foreach(e => println(e._2.nString))
-              val gTa = node.witnessReadings.head._2.ta
-              val newNode = AlignmentPoint(gTa, node.witnessReadings)
-              nextNode(inList.tail, outVector :+ NumberedNode(newNode, nodeNo))
+          case (_, _: UnalignedZone) =>
+              throw new RuntimeException("Unexpected unaligned zone!")
     nextNode(nodesToProcess, Vector.empty)
   flattenedNodeSeq
 
