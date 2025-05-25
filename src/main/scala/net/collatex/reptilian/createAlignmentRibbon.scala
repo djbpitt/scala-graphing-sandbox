@@ -72,12 +72,13 @@ def recursiveBuildAlignment(
 
   if remainingAlignment.tail.nonEmpty then
     recursiveBuildAlignment(
-      result,
+      result.append(firstRemainingAlignmentPoint),
       post,
       remainingAlignment.tail,
       sigla
     )
   else
+    // TODO: Should probably recurse here as well by calling alignFullDepth
     result.append(post)
     result.toList
 
