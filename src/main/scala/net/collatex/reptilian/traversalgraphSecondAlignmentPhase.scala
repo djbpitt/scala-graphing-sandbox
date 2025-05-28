@@ -58,8 +58,8 @@ def traversalGraphPhase2(
     order2: List[HyperedgeMatch]
 ): Graph[DecisionGraphStepPhase2] =
   // DEBUG!
-  println(order1.map(_.head.label))
-  println(order2.map(_.head.label))
+  // println(order1.map(_.head.label))
+  // println(order2.map(_.head.label))
   val max = order1.size // for end position
   val start = DecisionGraphStepPhase2(-1, -1, Alignment, null)
   val end = DecisionGraphStepPhase2(max, max, Alignment, null)
@@ -98,17 +98,19 @@ def traversalGraphPhase2(
         .filterNot(e => nodeAtEnd(e, max))
       val newNodesToProcess: Set[DecisionGraphStepPhase2] =
         nodesToProcess.tail ++ newNodesNotAtEnd
+      val nodesToConnectToEnd =
+        if validDecisions.nonEmpty then
+          validDecisions -- newNodesNotAtEnd
+        else Set(currentNode)
       val newEdgesToEnd: Graph[DecisionGraphStepPhase2] =
-        (validDecisions -- newNodesNotAtEnd)
+        nodesToConnectToEnd
           .foldLeft(Graph.empty[DecisionGraphStepPhase2])((y, x) => Graph.edge(source = x, target = end) + y)
       val newGraph: Graph[DecisionGraphStepPhase2] = graph + newSubgraph + newEdgesToEnd
       step(newNodesToProcess, newGraph)
 
   val result = step(nodesToProcess = Set(start), graph = g)
   // Nodes
-
   println(result.asDot(toNodeInfo))
-  throw RuntimeException("Investigation why the graph is wrong")
   result
 
 extension [N](graph: Graph[N])
@@ -170,6 +172,7 @@ def greedy(
   val matchOrder1: List[HyperedgeMatch] = ml.head
   val startNode: DecisionGraphStepPhase2 = dgSorted.head
   val endNode: DecisionGraphStepPhase2 = dgSorted.last
+  // println(endNode)
   //println(s"ml: $ml")
 
   /** score()
@@ -208,6 +211,8 @@ def greedy(
   val newMatches: Set[HyperedgeMatch] =
     nodeList.tail.map(e => decisionGraphStepPhase2ToHyperedgeMatch(e)).toSet
   println(s"new matches: ${newMatches.map(_.head.label)}")
+  // NOTE: The matches can be improved by using a beam search instead of a greedy search!
+  // throw new RuntimeException("Check the matches!")
   val newNonmatches: Set[HyperedgeMatch] = matchOrder1.filterNot(e => newMatches.contains(e)).toSet
   val newHypergraph: Hypergraph[EdgeLabel, TokenRange] = newMatches
     .map(e => AlignmentHyperedge(e.head.verticesIterator.toSet ++ e.last.verticesIterator.toSet)) // NB: new hyperedge
