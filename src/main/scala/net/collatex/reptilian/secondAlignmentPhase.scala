@@ -314,7 +314,7 @@ def isSpuriousMatch(candidate: HyperedgeMatch): Boolean =
     .map(_.tokens.head.w)
     .toSet
     .intersect(
-      candidate.last.verticesIterator
+      candidate.last.verticesIterator.filter(_.tokens.nonEmpty)
         .map(_.tokens.head.w)
         .toSet
     )
