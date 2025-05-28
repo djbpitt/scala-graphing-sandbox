@@ -77,14 +77,14 @@ def mergeHgHg(
   if spuriousMatches.nonEmpty then println(s"Spurious matches: $spuriousMatches")
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
     matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
-  val transpositionBool =
+  val (transpositionBool, matchesOrderedByHead, matchesOrderedByLast) =
     detectTransposition(matchesAsSet, matchesAsHg, true)
   if transpositionBool
   then
-    val (decisionGraph, matchLists): (Graph[DecisionGraphStepPhase2], List[List[HyperedgeMatch]]) =
-      traversalGraphPhase2(hg1, hg2, matchesAsSet)
+    val decisionGraph: Graph[DecisionGraphStepPhase2] =
+      traversalGraphPhase2(matchesOrderedByHead.toList, matchesOrderedByLast.toList)
     // TODO: Perform a* over newAlignment to resolve transposition (only if transposition previously detected)
-
+    val matchLists = List(matchesOrderedByHead.toList, matchesOrderedByLast.toList)
     val greedyResult: Hypergraph[EdgeLabel, TokenRange] = greedy(decisionGraph, matchLists)
     val result = allSplitHyperedgesNew._1 + greedyResult
     //val tmp = result.hyperedges.toVector
