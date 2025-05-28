@@ -89,7 +89,7 @@ def traversalGraphPhase2(
         else Some(DecisionGraphStepPhase2(newDecision1.pos1, newDecision2.pos2, Skip, null))
       val validDecisions =
         Set(Some(newDecision1), Some(newDecision2), skipNode).flatten // remove skipNode if None
-          .filter(e => e.pos1 >= currentNode.pos1 && e.pos2 >= currentNode.pos2)
+          .filter(e => e.pos1 > currentNode.pos1 && e.pos2 > currentNode.pos2)
       val newSubgraph: Graph[DecisionGraphStepPhase2] =
         Graph.node(currentNode) * validDecisions
           .map(e => Graph.node(e))
