@@ -86,6 +86,7 @@ def mergeHgHg(
     // TODO: Perform a* over newAlignment to resolve transposition (only if transposition previously detected)
     val matchLists = List(matchesOrderedByHead.toList, matchesOrderedByLast.toList)
     val greedyResult: Hypergraph[EdgeLabel, TokenRange] = greedy(decisionGraph, matchLists)
+    // FIXME: Adding allSplitHyperedgeNew._1 to the greedyResult causes a cycle where it shouldn't be.
     // val result = allSplitHyperedgesNew._1 + greedyResult
     val result = greedyResult
     //val tmp = result.hyperedges.toVector
@@ -143,7 +144,7 @@ def createGlobalTokenArray(darwinReadings: List[List[Token]]) =
         .toVector
   tokenArray
 
-// FIXME: Used only in text; we create lTa elsewhere in real code.
+// FIXME: Used only in test; we create lTa elsewhere in real code.
 // Remove this function and update the test to point to the real one
 def createLocalTA(
     singletonTokens: Vector[TokenEnum],

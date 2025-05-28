@@ -125,7 +125,7 @@ def alignByClustering(zone: UnalignedZone, gTa: Vector[TokenEnum]): List[Alignme
     val wg: Set[Map[Siglum, TokenRange]] = Set(zone.witnessReadings)
     List(AlignmentPoint(zone.witnessReadings, wg))
   } else // Variation node with … er … variation
-    println("Align by clustering")
+    // println("Align by clustering")
     val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
     val ranking: Map[NodeType, Int] = hg.rank()
     val hyperedgesByRank = hg.hyperedges.groupBy(e => ranking(NodeType(e.label))) // unsorted
@@ -150,7 +150,7 @@ def alignByClustering(zone: UnalignedZone, gTa: Vector[TokenEnum]): List[Alignme
       )
       .to(List)
     aps
-
+// fallback: group by n value
 //  val wg = zone.witnessReadings
 //    .groupBy((_, offsets) =>
 //      offsets.nString

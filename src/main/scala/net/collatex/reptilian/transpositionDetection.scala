@@ -53,10 +53,10 @@ def detectTransposition(
     val matchesSortedLast =
       matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.last.label)))
     val transpositionBool = matchesSortedHead != matchesSortedLast
-    if transpositionBool then
-      println("Found a transposition")
-      println(matchesSortedHead.map(_.head.label))
-      println(matchesSortedLast.map(_.head.label))
+      // if transpositionBool then
+      // println("Found a transposition")
+      // println(matchesSortedHead.map(_.head.label))
+      // println(matchesSortedLast.map(_.head.label))
     (transpositionBool, matchesSortedHead, matchesSortedLast)
   else (false, null, null)
 
