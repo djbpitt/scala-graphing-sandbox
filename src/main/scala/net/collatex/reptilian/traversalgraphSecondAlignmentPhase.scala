@@ -208,9 +208,10 @@ def greedy(
       traverseGreedy(newN, newOut)
   val nodeList: List[DecisionGraphStepPhase2] = // NB: We no longer need the order by this stage
     traverseGreedy(startNode, List.empty[DecisionGraphStepPhase2])
+  println(s"nodelist: ${nodeList.reverse.map(e => (e.pos1, e.pos2))}")
   val newMatches: Set[HyperedgeMatch] =
     nodeList.tail.map(e => decisionGraphStepPhase2ToHyperedgeMatch(e)).toSet
-  println(s"new matches: ${newMatches.map(_.head.label)}")
+  println("new matches sorted numerically : "+newMatches.map(_.head.label).toList.sorted)
   // NOTE: The matches can be improved by using a beam search instead of a greedy search!
   // throw new RuntimeException("Check the matches!")
   val newNonmatches: Set[HyperedgeMatch] = matchOrder1.filterNot(e => newMatches.contains(e)).toSet
@@ -218,6 +219,16 @@ def greedy(
     .map(e => AlignmentHyperedge(e.head.verticesIterator.toSet ++ e.last.verticesIterator.toSet)) // NB: new hyperedge
     .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
   val result = newNonmatches.flatten.foldLeft(newHypergraph)((y, x) => y + x)
+  // DEBUG
+  val ranking: Map[NodeType, Int] = newHypergraph.rank(false)
+  println(ranking)
+  val matchesSortedHead =
+    newMatches.toSeq.sortBy(e => ranking(NodeType(e.head.label)))
+  val matchesSortedLast =
+    newMatches.toSeq.sortBy(e => ranking(NodeType(e.last.label)))
+
+  println(s"new matches: ${matchesSortedHead.map(_.head.label)}")
+  println(s"new matches: ${matchesSortedLast.map(_.head.label)}")
   result
 
 /* TODO: Write and use
