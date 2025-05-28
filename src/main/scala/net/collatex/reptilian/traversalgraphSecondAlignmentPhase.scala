@@ -223,9 +223,9 @@ def greedy(
   val ranking: Map[NodeType, Int] = newHypergraph.rank(false)
   println(ranking)
   val matchesSortedHead =
-    newMatches.toSeq.sortBy(e => ranking(NodeType(e.head.label)))
+    newMatches.toSeq.sortBy(e => ranking.getOrElse(NodeType(e.head.label), ranking(NodeType(e.last.label))))
   val matchesSortedLast =
-    newMatches.toSeq.sortBy(e => ranking(NodeType(e.last.label)))
+    newMatches.toSeq.sortBy(e => ranking.getOrElse(NodeType(e.last.label), ranking(NodeType(e.head.label))))
 
   println(s"new matches: ${matchesSortedHead.map(_.head.label)}")
   println(s"new matches: ${matchesSortedLast.map(_.head.label)}")
