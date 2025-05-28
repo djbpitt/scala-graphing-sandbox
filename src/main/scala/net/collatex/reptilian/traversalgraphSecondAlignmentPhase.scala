@@ -219,6 +219,8 @@ def greedy(
     .map(e => AlignmentHyperedge(e.head.verticesIterator.toSet ++ e.last.verticesIterator.toSet)) // NB: new hyperedge
     .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
   val result = newNonmatches.flatten.foldLeft(newHypergraph)((y, x) => y + x)
+  // val result = newHypergraph
+
   // DEBUG
   val ranking: Map[NodeType, Int] = newHypergraph.rank(false)
   println(ranking)

@@ -86,7 +86,8 @@ def mergeHgHg(
     // TODO: Perform a* over newAlignment to resolve transposition (only if transposition previously detected)
     val matchLists = List(matchesOrderedByHead.toList, matchesOrderedByLast.toList)
     val greedyResult: Hypergraph[EdgeLabel, TokenRange] = greedy(decisionGraph, matchLists)
-    val result = allSplitHyperedgesNew._1 + greedyResult
+    // val result = allSplitHyperedgesNew._1 + greedyResult
+    val result = greedyResult
     //val tmp = result.hyperedges.toVector
     //  .sortBy(e => e.verticesIterator.map(_.start).min)
     //  .map(_.verticesIterator.next())
