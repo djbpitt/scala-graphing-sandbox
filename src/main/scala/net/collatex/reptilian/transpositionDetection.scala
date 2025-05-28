@@ -44,7 +44,7 @@ def detectTransposition(
     matchesAsSet: Set[HyperedgeMatch],
     matchesAsHg: Hypergraph[EdgeLabel, TokenRange],
     debug: Boolean
-): Boolean =
+): (Boolean, Seq[HyperedgeMatch], Seq[HyperedgeMatch]) =
   if matchesAsSet.size > 1 // more than one block means possible transposition
   then
     val ranking: Map[NodeType, Int] = matchesAsHg.rank(debug)
@@ -53,12 +53,12 @@ def detectTransposition(
     val matchesSortedLast =
       matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.last.label)))
     val transpositionBool = matchesSortedHead != matchesSortedLast
-    if transpositionBool then
-      println("Found a transposition")
-      println(matchesSortedHead.map(_.head.label))
-      println(matchesSortedLast.map(_.head.label))
-    transpositionBool
-  else false
+      // if transpositionBool then
+      // println("Found a transposition")
+      // println(matchesSortedHead.map(_.head.label))
+      // println(matchesSortedLast.map(_.head.label))
+    (transpositionBool, matchesSortedHead, matchesSortedLast)
+  else (false, null, null)
 
 def realMainFunction(debug: Boolean): Unit =
   val (_, hg1, hg2) = returnSampleData() // don’t use (global) names of hgs because real data isn’t global

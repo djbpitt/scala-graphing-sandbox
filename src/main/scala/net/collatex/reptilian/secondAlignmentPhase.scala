@@ -77,21 +77,23 @@ def mergeHgHg(
   if spuriousMatches.nonEmpty then println(s"Spurious matches: $spuriousMatches")
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
     matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
-  val transpositionBool =
+  val (transpositionBool, matchesOrderedByHead, matchesOrderedByLast) =
     detectTransposition(matchesAsSet, matchesAsHg, true)
   if transpositionBool
   then
-    val (decisionGraph, matchLists): (Graph[DecisionGraphStepPhase2], List[List[HyperedgeMatch]]) =
-      traversalGraphPhase2(hg1, hg2, matchesAsSet)
+    val decisionGraph: Graph[DecisionGraphStepPhase2] =
+      traversalGraphPhase2(matchesOrderedByHead.toList, matchesOrderedByLast.toList)
     // TODO: Perform a* over newAlignment to resolve transposition (only if transposition previously detected)
-
+    val matchLists = List(matchesOrderedByHead.toList, matchesOrderedByLast.toList)
     val greedyResult: Hypergraph[EdgeLabel, TokenRange] = greedy(decisionGraph, matchLists)
-    val result = allSplitHyperedgesNew._1 + greedyResult
-    val tmp = result.hyperedges.toVector
-      .sortBy(e => e.verticesIterator.map(_.start).min)
-      .map(_.verticesIterator.next())
-      .map(_.tString)
-    tmp.foreach(println)
+    // FIXME: Adding allSplitHyperedgeNew._1 to the greedyResult causes a cycle where it shouldn't be.
+    // val result = allSplitHyperedgesNew._1 + greedyResult
+    val result = greedyResult
+    //val tmp = result.hyperedges.toVector
+    //  .sortBy(e => e.verticesIterator.map(_.start).min)
+    //  .map(_.verticesIterator.next())
+    //  .map(_.tString)
+    //tmp.foreach(println)
     spuriousMatches.flatten.foldLeft(result)(_ + _)
   else
     val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
@@ -142,7 +144,7 @@ def createGlobalTokenArray(darwinReadings: List[List[Token]]) =
         .toVector
   tokenArray
 
-// FIXME: Used only in text; we create lTa elsewhere in real code.
+// FIXME: Used only in test; we create lTa elsewhere in real code.
 // Remove this function and update the test to point to the real one
 def createLocalTA(
     singletonTokens: Vector[TokenEnum],
@@ -314,7 +316,7 @@ def isSpuriousMatch(candidate: HyperedgeMatch): Boolean =
     .map(_.tokens.head.w)
     .toSet
     .intersect(
-      candidate.last.verticesIterator
+      candidate.last.verticesIterator.filter(_.tokens.nonEmpty)
         .map(_.tokens.head.w)
         .toSet
     )

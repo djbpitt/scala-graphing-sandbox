@@ -314,7 +314,3 @@ def alignmentIntsToBlocks(alignment: Set[Int], blocks: Iterable[FullDepthBlock])
   val alignmentBlocks: Iterable[FullDepthBlock] = blocks
     .filter(e => alignment.contains(e.instances.head))
   alignmentBlocks
-
-// Find blocks (vectorize, create suffix array and lcp array, create blocks, find depth)
-def createAlignment(sigla: List[Siglum], gTa: Vector[TokenEnum]): AlignmentRibbon =
-  createAlignmentRibbon(sigla, gTa)

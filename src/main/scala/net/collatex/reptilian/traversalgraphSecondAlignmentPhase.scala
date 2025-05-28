@@ -14,7 +14,8 @@ type OrderPosition = Int
 case class DecisionGraphStepPhase2(
     pos1: OrderPosition,
     pos2: OrderPosition,
-    nodeType: DGNodeType
+    nodeType: DGNodeType,
+    HEMatch: HyperedgeMatch
 )
 
 case class NodeInfo(id: String, nodeType: DGNodeType)
@@ -35,14 +36,12 @@ enum MatchesSide:
 def nodeAtEnd(node: DecisionGraphStepPhase2, max: Int): Boolean =
   node.pos1 == max - 1 || node.pos2 == max - 1
 
-/** Adjust set of hyperedge matches to remove transpositions
+/** Adjust two sequences of hyperedge matches to remove transpositions
   *
-  * @param hg1:
-  *   Hyperedge[EdgeLabel, TokenRange]
-  * @param hg2:
-  *   Hyperedge[EdgeLabel, TokenRange]
-  * @param matches
-  *   Set[HyperedgeMatch]
+  * @param order1:
+  *   Seq[HyperedgeMatch]
+  * @param order2:
+  *   Seq[HyperedgeMatch]
   *
   * Called only when transposition detected, so there are always at least two matches
   *
@@ -55,75 +54,22 @@ def nodeAtEnd(node: DecisionGraphStepPhase2, max: Int): Boolean =
   * it.
   */
 def traversalGraphPhase2(
-    hg1: Hypergraph[EdgeLabel, TokenRange],
-    hg2: Hypergraph[EdgeLabel, TokenRange],
-    matches: Set[HyperedgeMatch]
-): (Graph[DecisionGraphStepPhase2], List[List[HyperedgeMatch]]) =
-  // debug
-  // combine the incoming hypergraphs into one and visualize it as a directed graph
-  // val combinedHG = hg1 + hg2
-  // val _dg = combinedHG.toDependencyGraph()
-  // println("Combined HG input"
-  // dependencyGraphToDot(_dg, combinedHG)
-
-
-
-
-
-
-
-
-  val siglumToHyperedge: Map[Int, MatchesSide] =
-    hg1.witnessSet.map(e => e -> MatchesSide.first).toMap ++
-      hg2.witnessSet.map(e => e -> MatchesSide.second).toMap
-  val reconstructedHgs: List[Hypergraph[EdgeLabel, TokenRange]] =
-    matches.toSeq
-      .foldLeft(
-        List(Hypergraph.empty[EdgeLabel, TokenRange], Hypergraph.empty[EdgeLabel, TokenRange])
-      )((y, x) =>
-        siglumToHyperedge(x.head.witnesses.head) match
-          case MatchesSide.first => List(y.head + x.head, y.last + x.last)
-          case _                 => List(y.head + x.last, y.last + x.head)
-      )
-  // reconstructedHgs.foreach(e => println(s"${e.hyperedges.size}: ${e.hyperedges}"))
-  val rankingsAsList = reconstructedHgs
-    .map(_.rank())
-    .map(e =>
-      e.toList
-        .sortBy(_._2) // sort by rank
-        .map(_._1) // keep only hes
-        .tail // drop start …
-        .dropRight(1) // … and end
-    )
-  //    println("sorted rankings")
-  //    rankingsAsList.foreach(println)
-  // rankingsAsList.map(e => matches.find(_.contains(e.asInstanceOf[NodeType.Internal].label)).get)
-  // Find original match that contains edge label from ranking
-  val matchLists: List[List[HyperedgeMatch]] = rankingsAsList
-    .zip(reconstructedHgs)
-    .map((r, h) =>
-      r.map(e =>
-        matches
-          .find(_.contains(h(EdgeLabel(e.asInstanceOf[NodeType.Internal].label)).get))
-          .get
-      )
-    )
-  val dg = createDecisionGraphPhase2(matchLists.head, matchLists.last)
-  (dg, matchLists)
-
-def createDecisionGraphPhase2(
     order1: List[HyperedgeMatch],
     order2: List[HyperedgeMatch]
 ): Graph[DecisionGraphStepPhase2] =
+  // DEBUG!
+  // println(order1.map(_.head.label))
+  // println(order2.map(_.head.label))
   val max = order1.size // for end position
-  val start = DecisionGraphStepPhase2(-1, -1, Alignment)
-  val end = DecisionGraphStepPhase2(max, max, Alignment)
+  val start = DecisionGraphStepPhase2(-1, -1, Alignment, null)
+  val end = DecisionGraphStepPhase2(max, max, Alignment, null)
   val g = Graph.node(start) + Graph.node(end)
+
   @tailrec
   def step(
-      nodesToProcess: Set[DecisionGraphStepPhase2],
-      graph: Graph[DecisionGraphStepPhase2]
-  ): Graph[DecisionGraphStepPhase2] =
+            nodesToProcess: Set[DecisionGraphStepPhase2],
+            graph: Graph[DecisionGraphStepPhase2]
+          ): Graph[DecisionGraphStepPhase2] =
     if nodesToProcess.isEmpty
     then graph
     else
@@ -131,18 +77,19 @@ def createDecisionGraphPhase2(
       val newDecision1: DecisionGraphStepPhase2 =
         val newPos1 = currentNode.pos1 + 1
         val newPos2 = order2.indexOf(order1(newPos1))
-        DecisionGraphStepPhase2(newPos1, newPos2, Alignment)
+        DecisionGraphStepPhase2(newPos1, newPos2, Alignment, order1(newPos1))
       val newDecision2: DecisionGraphStepPhase2 =
         val newPos2 = currentNode.pos2 + 1
         val newPos1 = order1.indexOf(order2(newPos2))
-        DecisionGraphStepPhase2(newPos1, newPos2, Alignment)
+        DecisionGraphStepPhase2(newPos1, newPos2, Alignment, order2(newPos2))
+      // println("current node is :"+currentNode+" newD1: "+newDecision1+" newD2: "+newDecision2)
       val skipNode: Option[DecisionGraphStepPhase2] =
         if currentNode.nodeType == Skip || newDecision1 == newDecision2
         then None
-        else Some(DecisionGraphStepPhase2(newDecision1.pos1, newDecision2.pos2, Skip))
+        else Some(DecisionGraphStepPhase2(newDecision1.pos1, newDecision2.pos2, Skip, null))
       val validDecisions =
         Set(Some(newDecision1), Some(newDecision2), skipNode).flatten // remove skipNode if None
-          .filter(e => e.pos1 >= currentNode.pos1 && e.pos2 >= currentNode.pos2)
+          .filter(e => e.pos1 > currentNode.pos1 && e.pos2 > currentNode.pos2)
       val newSubgraph: Graph[DecisionGraphStepPhase2] =
         Graph.node(currentNode) * validDecisions
           .map(e => Graph.node(e))
@@ -151,16 +98,19 @@ def createDecisionGraphPhase2(
         .filterNot(e => nodeAtEnd(e, max))
       val newNodesToProcess: Set[DecisionGraphStepPhase2] =
         nodesToProcess.tail ++ newNodesNotAtEnd
+      val nodesToConnectToEnd =
+        if validDecisions.nonEmpty then
+          validDecisions -- newNodesNotAtEnd
+        else Set(currentNode)
       val newEdgesToEnd: Graph[DecisionGraphStepPhase2] =
-        (validDecisions -- newNodesNotAtEnd)
+        nodesToConnectToEnd
           .foldLeft(Graph.empty[DecisionGraphStepPhase2])((y, x) => Graph.edge(source = x, target = end) + y)
       val newGraph: Graph[DecisionGraphStepPhase2] = graph + newSubgraph + newEdgesToEnd
       step(newNodesToProcess, newGraph)
 
   val result = step(nodesToProcess = Set(start), graph = g)
-  // Nodes
-
-  println(result.asDot(toNodeInfo))
+  // Debug Nodes
+  // println(result.asDot(toNodeInfo))
   result
 
 extension [N](graph: Graph[N])
@@ -189,15 +139,19 @@ def asDotLines[N](toNodeInfo: N => NodeInfo)(node: N, adjacentNodes: (Set[N], Se
       val bgColor = node.asInstanceOf[DecisionGraphStepPhase2].nodeType match
         case Alignment => "lightblue"
         case Skip      => "lightpink"
-      val id = s"L${node.asInstanceOf[DecisionGraphStepPhase2].pos1}R${node.asInstanceOf[DecisionGraphStepPhase2].pos2}"
+      val id = s"${toNodeInfo(node).id}"
       s"${id.replace('-', 'm')} [style=\"filled\"; fillcolor=\"$bgColor\"]"
     ))
 }
 
 def indent(l: String): String = s"  $l"
 
-def toNodeInfo(n: DecisionGraphStepPhase2) =
-  NodeInfo(s"L${n.pos1}R${n.pos2}", n.nodeType)
+def toNodeInfo(n: DecisionGraphStepPhase2) = {
+  if (n.nodeType == DGNodeType.Alignment && n.HEMatch != null)
+    NodeInfo(s"L${n.pos1}R${n.pos2}M${n.HEMatch.head.label}", n.nodeType)
+  else
+    NodeInfo(s"L${n.pos1}R${n.pos2}", n.nodeType)
+}
 
 /** greedy(): Align decisions greedily
   *
@@ -218,7 +172,8 @@ def greedy(
   val matchOrder1: List[HyperedgeMatch] = ml.head
   val startNode: DecisionGraphStepPhase2 = dgSorted.head
   val endNode: DecisionGraphStepPhase2 = dgSorted.last
-  println(s"ml: $ml")
+  // println(endNode)
+  //println(s"ml: $ml")
 
   /** score()
     *
@@ -227,7 +182,7 @@ def greedy(
     * @return
     */
   def score(dgCurrent: DecisionGraphStepPhase2): Double =
-    println(s"dgNode: $dgCurrent")
+    //println(s"dgNode: $dgCurrent")
     val result: Int = dgCurrent.nodeType match
       case Skip => 0
       case _ =>
@@ -253,15 +208,26 @@ def greedy(
       traverseGreedy(newN, newOut)
   val nodeList: List[DecisionGraphStepPhase2] = // NB: We no longer need the order by this stage
     traverseGreedy(startNode, List.empty[DecisionGraphStepPhase2])
+  // Debug
+  // println(s"nodelist: ${nodeList.reverse.map(e => (e.pos1, e.pos2))}")
   val newMatches: Set[HyperedgeMatch] =
     nodeList.tail.map(e => decisionGraphStepPhase2ToHyperedgeMatch(e)).toSet
-  println(s"new matches: $newMatches")
+  // Debug
+  // println("new matches sorted numerically : "+newMatches.map(_.head.label).toList.sorted)
+  // NOTE: The matches can be improved by using a beam search instead of a greedy search!
+  // throw new RuntimeException("Check the matches!")
   val newNonmatches: Set[HyperedgeMatch] = matchOrder1.filterNot(e => newMatches.contains(e)).toSet
   val newHypergraph: Hypergraph[EdgeLabel, TokenRange] = newMatches
     .map(e => AlignmentHyperedge(e.head.verticesIterator.toSet ++ e.last.verticesIterator.toSet)) // NB: new hyperedge
     .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
-//  val result = newNonmatches.flatten.foldLeft(newHypergraph)((y, x) => y + x)
-  val result = newHypergraph
+  val result = newNonmatches.flatten.foldLeft(newHypergraph)((y, x) => y + x)
+
+  // DEBUG
+  // val ranking: Map[NodeType, Int] = newHypergraph.rank(false)
+  // println(ranking)
+  // val matchesSortedHead =
+  //  newMatches.toSeq.sortBy(e => ranking.getOrElse(NodeType(e.head.label), ranking(NodeType(e.last.label))))
+  // println(s"new matches: ${matchesSortedHead.map(_.head.label)}")
   result
 
 /* TODO: Write and use
