@@ -14,7 +14,8 @@ type OrderPosition = Int
 case class DecisionGraphStepPhase2(
     pos1: OrderPosition,
     pos2: OrderPosition,
-    nodeType: DGNodeType
+    nodeType: DGNodeType,
+    HEMatch: HyperedgeMatch
 )
 
 case class NodeInfo(id: String, nodeType: DGNodeType)
@@ -116,8 +117,8 @@ def createDecisionGraphPhase2(
     order2: List[HyperedgeMatch]
 ): Graph[DecisionGraphStepPhase2] =
   val max = order1.size // for end position
-  val start = DecisionGraphStepPhase2(-1, -1, Alignment)
-  val end = DecisionGraphStepPhase2(max, max, Alignment)
+  val start = DecisionGraphStepPhase2(-1, -1, Alignment, null)
+  val end = DecisionGraphStepPhase2(max, max, Alignment, null)
   val g = Graph.node(start) + Graph.node(end)
   @tailrec
   def step(
@@ -131,15 +132,15 @@ def createDecisionGraphPhase2(
       val newDecision1: DecisionGraphStepPhase2 =
         val newPos1 = currentNode.pos1 + 1
         val newPos2 = order2.indexOf(order1(newPos1))
-        DecisionGraphStepPhase2(newPos1, newPos2, Alignment)
+        DecisionGraphStepPhase2(newPos1, newPos2, Alignment, order1(newPos1))
       val newDecision2: DecisionGraphStepPhase2 =
         val newPos2 = currentNode.pos2 + 1
         val newPos1 = order1.indexOf(order2(newPos2))
-        DecisionGraphStepPhase2(newPos1, newPos2, Alignment)
+        DecisionGraphStepPhase2(newPos1, newPos2, Alignment, order2(newPos2))
       val skipNode: Option[DecisionGraphStepPhase2] =
         if currentNode.nodeType == Skip || newDecision1 == newDecision2
         then None
-        else Some(DecisionGraphStepPhase2(newDecision1.pos1, newDecision2.pos2, Skip))
+        else Some(DecisionGraphStepPhase2(newDecision1.pos1, newDecision2.pos2, Skip, null))
       val validDecisions =
         Set(Some(newDecision1), Some(newDecision2), skipNode).flatten // remove skipNode if None
           .filter(e => e.pos1 >= currentNode.pos1 && e.pos2 >= currentNode.pos2)
@@ -161,6 +162,7 @@ def createDecisionGraphPhase2(
   // Nodes
 
   println(result.asDot(toNodeInfo))
+  throw RuntimeException("Investigation why the graph is wrong")
   result
 
 extension [N](graph: Graph[N])
@@ -189,15 +191,19 @@ def asDotLines[N](toNodeInfo: N => NodeInfo)(node: N, adjacentNodes: (Set[N], Se
       val bgColor = node.asInstanceOf[DecisionGraphStepPhase2].nodeType match
         case Alignment => "lightblue"
         case Skip      => "lightpink"
-      val id = s"L${node.asInstanceOf[DecisionGraphStepPhase2].pos1}R${node.asInstanceOf[DecisionGraphStepPhase2].pos2}"
+      val id = s"${toNodeInfo(node).id}"
       s"${id.replace('-', 'm')} [style=\"filled\"; fillcolor=\"$bgColor\"]"
     ))
 }
 
 def indent(l: String): String = s"  $l"
 
-def toNodeInfo(n: DecisionGraphStepPhase2) =
-  NodeInfo(s"L${n.pos1}R${n.pos2}", n.nodeType)
+def toNodeInfo(n: DecisionGraphStepPhase2) = {
+  if (n.nodeType == DGNodeType.Alignment && n.HEMatch != null)
+    NodeInfo(s"L${n.pos1}R${n.pos2}M${n.HEMatch.head.label}", n.nodeType)
+  else
+    NodeInfo(s"L${n.pos1}R${n.pos2}", n.nodeType)
+}
 
 /** greedy(): Align decisions greedily
   *
