@@ -4,6 +4,7 @@ import scala.annotation.tailrec
 import scala.collection.{immutable, mutable}
 import scala.collection.mutable.ListBuffer
 import TokenRange.*
+import net.collatex.reptilian.TokenEnum.Token
 
 // This method transform an alignment on the global level of the fullest depth blocks
 // into an alignment tree by splitting
@@ -34,7 +35,7 @@ def alignFullDepthBlocks(unalignedZone: UnalignedZone, sigla: List[Siglum]): Lis
   val witnessCount = unalignedZone.witnessReadings.size
   val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(lTa, witnessCount)
   if longestFullDepthNonRepeatingBlocks.isEmpty
-  then alignByClustering(unalignedZone)
+  then alignByClustering(unalignedZone, gTa)
   else {
     // There are full depth blocks, align by creating a navigation graph
     val fullDepthAlignmentPoints: List[AlignmentPoint] = getAlignmentPointsByTraversingNavigationGraph(longestFullDepthNonRepeatingBlocks, lTa, gTa, sigla)
@@ -115,14 +116,48 @@ def getAlignmentPointsByTraversingNavigationGraph(longestFullDepthNonRepeatingBl
   sortedReadingNodes
 
 
-def alignByClustering(zone: UnalignedZone) =
-  val wg = zone.witnessReadings
-    .groupBy((_, offsets) =>
-      offsets.nString
-    ) // groups readings by shared text (n property)
-    .values // we don't care about the shared text after we've used it for grouping
-    .toSet
-  List(AlignmentPoint(zone.witnessReadings, wg)) // one-item ribbon
+def alignByClustering(zone: UnalignedZone, gTa: Vector[TokenEnum]): List[AlignmentUnit] =
+  val darwinReadings: List[List[Token]] = zone.convertToTokenLists()
+  // println(s"darwinReadings: $darwinReadings")
+  val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
+  // println(s"clusters: $nodesToCluster")
+  if nodesToCluster.isEmpty then { // One witness, so construct local ribbon directly
+    val wg: Set[Map[Siglum, TokenRange]] = Set(zone.witnessReadings)
+    List(AlignmentPoint(zone.witnessReadings, wg))
+  } else // Variation node with … er … variation
+    println("Align by clustering")
+    val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
+    val ranking: Map[NodeType, Int] = hg.rank()
+    val hyperedgesByRank = hg.hyperedges.groupBy(e => ranking(NodeType(e.label))) // unsorted
+    val sortedRanks = hyperedgesByRank.keySet.toSeq.sorted
+    val aps: List[AlignmentUnit] = sortedRanks
+      .map(e =>
+        val wg = hyperedgesByRank(e) // set of hyperedges, one per witness group on alignment point
+          .map(f =>
+            f.verticesIterator
+              .map(tr =>
+                val witness: Siglum = {
+                  val inSiglum: String = gTa(tr.start).w.toString
+                  if inSiglum.length == 1 then Siglum(intToSiglum(inSiglum.toInt))
+                  else Siglum(inSiglum)
+                }
+                witness -> tr
+              )
+              .toMap
+          )
+        val wr = wg.reduce(_ ++ _)
+        AlignmentPoint(wr, wg)
+      )
+      .to(List)
+    aps
+
+//  val wg = zone.witnessReadings
+//    .groupBy((_, offsets) =>
+//      offsets.nString
+//    ) // groups readings by shared text (n property)
+//    .values // we don't care about the shared text after we've used it for grouping
+//    .toSet
+//  List(AlignmentPoint(zone.witnessReadings, wg)) // one-item ribbon
 
 def blocksToNodes(
                    blocks: Iterable[FullDepthBlock],
@@ -179,51 +214,4 @@ def createGlobalUnalignedZone(sigla: List[Siglum], gTa: Vector[TokenEnum]) = {
   val globalUnalignedZone = UnalignedZone(witnessReadings, true)
   globalUnalignedZone
 }
-
-//def setupNodeExpansion(
-//    sigla: List[Siglum], // all sigla (global, not just current zone)
-//    selection: UnalignedZone // pre
-//): AlignmentRibbon =
-//  val gTa = selection.witnessReadings.values.head.ta
-//  //  println(selection.witnessReadings)
-//  //  println(gTa.head.w)
-//  val alignmentPointsForSection = alignTokenArray(sigla, selection)
-//  val result: AlignmentRibbon =
-//    if alignmentPointsForSection.isEmpty
-//    then
-//      val darwinReadings: List[List[Token]] = selection.convertToTokenLists()
-//      // println(s"darwinReadings: $darwinReadings")
-//      val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
-//      // println(s"clusters: $nodesToCluster")
-//      if nodesToCluster.isEmpty then { // One witness, so construct local ribbon directly
-//        val wg: Set[Map[Siglum, TokenRange]] = Set(selection.witnessReadings)
-//        AlignmentRibbon(ListBuffer(AlignmentPoint(selection.witnessReadings, wg)))
-//      } else // Variation node with … er … variation
-//        val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-//        val ranking: Map[NodeType, Int] = hg.rank()
-//        val hyperedgesByRank = hg.hyperedges.groupBy(e => ranking(NodeType(e.label))) // unsorted
-//        val sortedRanks = hyperedgesByRank.keySet.toSeq.sorted
-//        val aps: ListBuffer[AlignmentUnit] = sortedRanks
-//          .map(e =>
-//            val wg = hyperedgesByRank(e) // set of hyperedges, one per witness group on alignment point
-//              .map(f =>
-//                f.verticesIterator
-//                  .map(tr =>
-//                    val witness: Siglum = {
-//                      val inSiglum: String = gTa(tr.start).w.toString
-//                      if inSiglum.length == 1 then Siglum(intToSiglum(inSiglum.toInt))
-//                      else Siglum(inSiglum)
-//                    }
-//                    witness -> tr
-//                  )
-//                  .toMap
-//              )
-//            val wr = wg.reduce(_ ++ _)
-//            AlignmentPoint(wr, wg)
-//          )
-//          .to(ListBuffer)
-//        val result = AlignmentRibbon(aps)
-//        result
-
-//    else // alignment points, so children are a sequence of one or more nodes of possibly different types
 

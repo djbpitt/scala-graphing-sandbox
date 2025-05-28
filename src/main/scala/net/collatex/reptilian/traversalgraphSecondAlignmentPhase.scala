@@ -218,7 +218,7 @@ def greedy(
   val matchOrder1: List[HyperedgeMatch] = ml.head
   val startNode: DecisionGraphStepPhase2 = dgSorted.head
   val endNode: DecisionGraphStepPhase2 = dgSorted.last
-  println(s"ml: $ml")
+  //println(s"ml: $ml")
 
   /** score()
     *
@@ -227,7 +227,7 @@ def greedy(
     * @return
     */
   def score(dgCurrent: DecisionGraphStepPhase2): Double =
-    println(s"dgNode: $dgCurrent")
+    //println(s"dgNode: $dgCurrent")
     val result: Int = dgCurrent.nodeType match
       case Skip => 0
       case _ =>
@@ -255,7 +255,7 @@ def greedy(
     traverseGreedy(startNode, List.empty[DecisionGraphStepPhase2])
   val newMatches: Set[HyperedgeMatch] =
     nodeList.tail.map(e => decisionGraphStepPhase2ToHyperedgeMatch(e)).toSet
-  println(s"new matches: $newMatches")
+  println(s"new matches: ${newMatches.map(_.head.label)}")
   val newNonmatches: Set[HyperedgeMatch] = matchOrder1.filterNot(e => newMatches.contains(e)).toSet
   val newHypergraph: Hypergraph[EdgeLabel, TokenRange] = newMatches
     .map(e => AlignmentHyperedge(e.head.verticesIterator.toSet ++ e.last.verticesIterator.toSet)) // NB: new hyperedge

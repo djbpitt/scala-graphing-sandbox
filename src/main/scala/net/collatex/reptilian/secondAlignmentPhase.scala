@@ -87,11 +87,11 @@ def mergeHgHg(
 
     val greedyResult: Hypergraph[EdgeLabel, TokenRange] = greedy(decisionGraph, matchLists)
     val result = allSplitHyperedgesNew._1 + greedyResult
-    val tmp = result.hyperedges.toVector
-      .sortBy(e => e.verticesIterator.map(_.start).min)
-      .map(_.verticesIterator.next())
-      .map(_.tString)
-    tmp.foreach(println)
+    //val tmp = result.hyperedges.toVector
+    //  .sortBy(e => e.verticesIterator.map(_.start).min)
+    //  .map(_.verticesIterator.next())
+    //  .map(_.tString)
+    //tmp.foreach(println)
     spuriousMatches.flatten.foldLeft(result)(_ + _)
   else
     val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
