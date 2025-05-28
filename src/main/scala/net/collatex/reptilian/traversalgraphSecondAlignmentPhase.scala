@@ -116,6 +116,9 @@ def createDecisionGraphPhase2(
     order1: List[HyperedgeMatch],
     order2: List[HyperedgeMatch]
 ): Graph[DecisionGraphStepPhase2] =
+  // DEBUG!
+  println(order1.map(_.head.label))
+  println(order2.map(_.head.label))
   val max = order1.size // for end position
   val start = DecisionGraphStepPhase2(-1, -1, Alignment, null)
   val end = DecisionGraphStepPhase2(max, max, Alignment, null)
@@ -137,6 +140,7 @@ def createDecisionGraphPhase2(
         val newPos2 = currentNode.pos2 + 1
         val newPos1 = order1.indexOf(order2(newPos2))
         DecisionGraphStepPhase2(newPos1, newPos2, Alignment, order2(newPos2))
+      // println("current node is :"+currentNode+" newD1: "+newDecision1+" newD2: "+newDecision2)
       val skipNode: Option[DecisionGraphStepPhase2] =
         if currentNode.nodeType == Skip || newDecision1 == newDecision2
         then None
