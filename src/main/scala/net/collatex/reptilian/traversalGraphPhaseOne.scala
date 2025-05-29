@@ -282,7 +282,7 @@ def scoreAllOptions(graph: Graph[Int, WDiEdge], current: BeamOption): Vector[Bea
     (graph get currentLast).outgoing.toVector
       .map(e => BeamOption(path = e.to :: current.path, score = current.score + e.weight))
 
-def findOptimalAlignment(graph: Graph[Int, WDiEdge]) = // specify return type?
+def findOptimalAlignment(graph: Graph[Int, WDiEdge]): Nothing = // specify return type?
   // Call scoreAllOptions() to … er … score all options for each item on beam
   //
   // If number of new options is smaller than beam size, assign all options to new beam
@@ -295,12 +295,14 @@ def findOptimalAlignment(graph: Graph[Int, WDiEdge]) = // specify return type?
   var beam: Vector[BeamOption] = Vector(start) // initialize beam to hold just start node (zero tokens)
 
   while !beam.map(_.path.head).forall(_ == endNodeId) do
+    println("Beam is now: "+beam)
     val newOptions = beam.flatMap(e => scoreAllOptions(graph = graph, current = e))
     if newOptions.size <= beamMax then beam = newOptions
     else beam = newOptions.sortBy(_.score * -1).slice(from = 0, until = beamMax)
 
-  beam.minBy(_.score * -1).path.reverse // Exit once all options on the beam until at the until node
-
+  val result = beam.minBy(_.score * -1).path.reverse // Exit once all options on the beam until at the until node
+  println("RESULT:" +result)
+  throw RuntimeException("end of beam search")
 /** Use Int representation from alignment to create iterable of full-depth blocks
   *
   * Convert alignment from list to set for speedier filtering Filter all full-depth blocks to keep only those in optimal
