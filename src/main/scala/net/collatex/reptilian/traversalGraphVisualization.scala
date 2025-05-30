@@ -53,5 +53,6 @@ def visualizeTraversalGraph(
                            ): Unit =
   val traversalGraphAsDot = traversalGraphToDot(graph, blockTexts, alignmentNodes)
   val graphOutputPath = os.pwd / "src" / "main" / "output" / "traversal.dot"
+  println("Writing to "+graphOutputPath)
   os.write.over(graphOutputPath, traversalGraphAsDot) // Create SVG output and write to specified path
 
