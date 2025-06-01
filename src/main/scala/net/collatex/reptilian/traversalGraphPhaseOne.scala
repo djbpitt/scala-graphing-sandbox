@@ -147,7 +147,7 @@ def createOutgoingEdgesForBlock(
       .toVector
     val neighborEdges: Vector[WDiEdge[Int]] =
       neighborTargets
-        .map(e => WDiEdge(id, e)(1))
+        .map(e => WDiEdge(id, e)(block.length))
         .filter(e => checkForCycles(e, blockOffsets))
     neighborEdges
 
