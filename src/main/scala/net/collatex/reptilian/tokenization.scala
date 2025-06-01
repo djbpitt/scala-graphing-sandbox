@@ -5,6 +5,8 @@ import upickle.default.*
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.matching.Regex
+import scalax.collection.ChainingOps
+
 
 /** Token as complex object
   *
@@ -82,11 +84,11 @@ def createTokenArray(tokenLists: List[List[String]]): Vector[String] =
   */
 def createTokenWitnessMapping(tokenLists: List[List[String]]): Vector[Int] =
   val buffer: ArrayBuffer[Int] = ArrayBuffer[Int]()
-  buffer.appendAll(Array.fill(tokenLists.head.length)(0))
+  buffer.appendAll(Array.fill(math.min(99, tokenLists.head.length))(0))
   tokenLists.tail.zipWithIndex
     .foreach { (tokens, index) =>
       buffer.append(-1)
-      buffer.appendAll(Array.fill(tokens.length)(index + 1))
+      buffer.appendAll(Array.fill(math.min(99, tokens.length))(index + 1))
     }
   buffer.toVector
 
@@ -98,7 +100,8 @@ def tokenize(tokenizer: String => List[String]) =
         plainWitnesses
           .map(tokenizer) // List of one list of strings per witness
   ).andThen(e =>
-    createTokenArray(e)
+    (e.map(item => item.slice(0, 99)) pipe
+    createTokenArray)
       .zip(createTokenWitnessMapping(e))
       .zipWithIndex
       .map { case ((a, b), i) => (a, b, i) }
