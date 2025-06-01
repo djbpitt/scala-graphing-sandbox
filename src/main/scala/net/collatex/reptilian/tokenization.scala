@@ -1,6 +1,5 @@
 package net.collatex.reptilian
 
-import upickle.core.Types
 import upickle.default.*
 
 import scala.collection.mutable.ArrayBuffer
@@ -82,27 +81,27 @@ def createTokenArray(tokenLists: List[List[String]]): Vector[String] =
   *
   * Insert -1 as witness separator because all values must be Int and witnesses begin at 0
   */
-def createTokenWitnessMapping(tokenLists: List[List[String]]): Vector[Int] =
+def createTokenWitnessMapping(tokenLists: List[List[String]], tokensPerWitnessLimit: Int): Vector[Int] =
   val buffer: ArrayBuffer[Int] = ArrayBuffer[Int]()
-  buffer.appendAll(Array.fill(math.min(99, tokenLists.head.length))(0))
+  buffer.appendAll(Array.fill(math.min(tokensPerWitnessLimit, tokenLists.head.length))(0))
   tokenLists.tail.zipWithIndex
     .foreach { (tokens, index) =>
       buffer.append(-1)
-      buffer.appendAll(Array.fill(math.min(99, tokens.length))(index + 1))
+      buffer.appendAll(Array.fill(math.min(tokensPerWitnessLimit, tokens.length))(index + 1))
     }
   buffer.toVector
 
 // https://stackoverflow.com/questions/1664439/can-i-zip-more-than-two-lists-together-in-scala
 // https://stackoverflow.com/questions/30984124/zipping-two-arrays-together-with-index-in-scala
-def tokenize(tokenizer: String => List[String]) =
+def tokenize(tokenizer: String => List[String], tokensPerWitnessLimit: Int) =
   (
       (plainWitnesses: List[String]) =>
         plainWitnesses
           .map(tokenizer) // List of one list of strings per witness
   ).andThen(e =>
-    (e.map(item => item.slice(0, 99)) pipe
+    (e.map(item => item.slice(0, tokensPerWitnessLimit)) pipe
     createTokenArray)
-      .zip(createTokenWitnessMapping(e))
+      .zip(createTokenWitnessMapping(e, tokensPerWitnessLimit))
       .zipWithIndex
       .map { case ((a, b), i) => (a, b, i) }
       .map((a, b, i) =>

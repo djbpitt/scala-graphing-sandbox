@@ -24,7 +24,8 @@ def readData(pathToData: Path): List[(String, String)] =
 def createGTa = {
   /** Select data */
   val pathToDarwin = os.pwd / "src" / "main" / "data" / "darwin"
-
+  val tokensPerWitnessLimit = 99
+  
   /** Prepare tokenizer
    *
    * Sequences of non-word characters (except spaces) are entire tokens Unlike in CollateX Python, where punctuation
@@ -41,7 +42,7 @@ def createGTa = {
   ) // One string per witness
   val witnessStrings = witnessInputInfo.map(_._2)
   val sigla: List[Siglum] = witnessInputInfo.map(_._1).map(Siglum(_))
-  val gTa: Vector[TokenEnum] = tokenize(tokenizer)(witnessStrings) // global token array
+  val gTa: Vector[TokenEnum] = tokenize(tokenizer, tokensPerWitnessLimit)(witnessStrings) // global token array
   (sigla, gTa)
 }
 @main def main(): Unit =

@@ -621,7 +621,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     ) // One string per witness
     val witnessStrings: List[String] = witnessInputInfo.map(_._2)
     val sigla: List[Siglum] = witnessInputInfo.map(_._1).map(Siglum(_))
-    val gTa: Vector[TokenEnum] = tokenize(tokenizer)(witnessStrings) // global token array
+    val gTa: Vector[TokenEnum] = tokenize(tokenizer, Int.MaxValue)(witnessStrings) // global token array
     val nodesToCluster = clusterWitnesses(mexicoData)
     // val expected = ???
     val result = mergeClustersIntoHG(nodesToCluster, mexicoData, gTa)
