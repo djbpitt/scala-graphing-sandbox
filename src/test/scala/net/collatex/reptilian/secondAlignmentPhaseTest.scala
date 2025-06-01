@@ -629,7 +629,7 @@ class secondAlignmentPhaseTest extends AnyFunSuite:
     assert(result == result)
 
   test("2965 example"):
-    val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
+    val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
     val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "2965.json"
     val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
     val nodesToCluster = clusterWitnesses(darwinReadings)

@@ -420,7 +420,7 @@ object HyperedgeMatch:
 
 @main def secondAlignmentPhaseExploration(): Unit =
   // Transpositions only in 3287
-  val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
+  val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
   val unalignedZonesDir = os.pwd / "src" / "main" / "outputs" / "unalignedZones"
   val JSONFiles = os.list(unalignedZonesDir).filter(e => os.isFile(e))
   for uzFilename <- JSONFiles do
@@ -433,7 +433,7 @@ object HyperedgeMatch:
     createSecondAlignmentPhaseVisualization(hg)
 
 @main def explore3287(): Unit =
-  val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
+  val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
   val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "3287.json"
   // val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "4154.json"
   val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
@@ -445,7 +445,7 @@ object HyperedgeMatch:
   dependencyGraphToDot(dg, hg)
 
 @main def explore7212(): Unit =
-  val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
+  val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
   val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "7212.json"
   val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
   // darwinReadings.foreach(e => println(e.map(_.t).mkString))
@@ -456,7 +456,7 @@ object HyperedgeMatch:
   dependencyGraphToDot(dg, hg)
 
 @main def explore2965(): Unit =
-  val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
+  val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
   val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "2965.json"
   val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
   // darwinReadings.foreach(e => println(e.map(_.t).mkString))
@@ -468,7 +468,7 @@ object HyperedgeMatch:
 
 // Example contains a transposition
 @main def explore4154(): Unit =
-  val (_, gTa: Vector[TokenEnum]) = createGTa // need true gTa for entire alignment
+  val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
   val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "4154.json"
   val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
   // darwinReadings.foreach(e => println(e.map(_.t).mkString))
