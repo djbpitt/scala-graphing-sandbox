@@ -97,7 +97,7 @@ def getAlignmentPointsByTraversingNavigationGraph(longestFullDepthNonRepeatingBl
   // We lose the sorting here
   val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment)
   // debug
-  visualizeTraversalGraph(graph, Map.empty, alignmentBlocksSet)
+  // visualizeTraversalGraph(graph, Map.empty, alignmentBlocksSet)
   // throw RuntimeException("end of beam search")
 
 
