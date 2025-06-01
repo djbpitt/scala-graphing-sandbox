@@ -21,7 +21,7 @@ def readData(pathToData: Path): List[(String, String)] =
     .toList
     .map(e => (e.last, os.read(e)))
 
-def createGTa = {
+def createGTa(tokensPerWitnessLimit:Int) = {
   /** Select data */
   val pathToDarwin = os.pwd / "src" / "main" / "data" / "darwin"
 
@@ -41,11 +41,12 @@ def createGTa = {
   ) // One string per witness
   val witnessStrings = witnessInputInfo.map(_._2)
   val sigla: List[Siglum] = witnessInputInfo.map(_._1).map(Siglum(_))
-  val gTa: Vector[TokenEnum] = tokenize(tokenizer)(witnessStrings) // global token array
+  val gTa: Vector[TokenEnum] = tokenize(tokenizer, tokensPerWitnessLimit)(witnessStrings) // global token array
   (sigla, gTa)
 }
 @main def main(): Unit =
-  val (sigla: List[Siglum], gTa: Vector[TokenEnum]) = createGTa
+  val tokensPerWitnessLimit = 499
+  val (sigla: List[Siglum], gTa: Vector[TokenEnum]) = createGTa(tokensPerWitnessLimit)
 
   /** Create alignment ribbon
     */

@@ -31,7 +31,7 @@ import net.collatex.reptilian.{makeTokenizer, tokenize, vectorize, calculateLcpA
   val token_pattern: Regex = raw"(\w+|[^\w\s])\s*".r // From CollateX Python, syntax adjusted for Scala
   val tokenizer = makeTokenizer(token_pattern)
 
-  val token_array = tokenize(tokenizer)(witnesses01)
+  val token_array = tokenize(tokenizer, Int.MaxValue)(witnesses01)
   //  println(lTa)
 
   val (vectorization, voc_size) = vectorize(token_array)

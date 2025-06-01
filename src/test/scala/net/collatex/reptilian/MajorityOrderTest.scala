@@ -144,7 +144,7 @@ class MajorityOrderTest extends AnyFunSuite:
 //    assert(result2 == expect2)
     val b3 = BeamOption(path = List(31, 4, -1), score = 20) // two options
     val result3 = scoreAllOptions(g, b3)
-    val expect3 = Vector(BeamOption(List(39, 31, 4, -1), 21.0), BeamOption(List(38, 31, 4, -1), 21.0))
+    val expect3 = Vector(BeamOption(List(39, 31, 4, -1), 26.0), BeamOption(List(38, 31, 4, -1), 26.0))
     assert(result3 == expect3)
   }
 

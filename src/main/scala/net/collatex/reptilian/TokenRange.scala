@@ -26,10 +26,12 @@ enum TokenRange:
 
   def tokens: Vector[TokenEnum] =
     this match
-      // FIXME: Replace empty vectors for bad data with proper treatment
-      case x: IllegalTokenRange => Vector()
-      case x: EmptyTokenRange   => Vector()
-      case _                    => this.ta.slice(this.start, this.until)
+      case _: IllegalTokenRange => throw RuntimeException("Illegal Token Range!")
+      case _: EmptyTokenRange   => Vector()
+      case _                    =>
+        val result = this.ta.slice(this.start, this.until)
+        if result == Vector.empty then throw RuntimeException("Slice failed!")
+        result
 
   def contains(pos: Int): Boolean = // position in gTa
     this.start <= pos && this.until > pos
