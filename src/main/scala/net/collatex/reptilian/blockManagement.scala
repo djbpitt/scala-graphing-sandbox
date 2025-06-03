@@ -230,7 +230,9 @@ def createAlignedPatternsPhaseTwo(
     AlignedPatternPhaseTwo(occurrences)
   )
   // debug!
-  // patterns.map(_.occurrences.head.patternTr.tString).foreach(e => println(s"  $e"))
+  // debug the blocks
+  xxBlocks.map(x => x.remapBlockToGTa(lTa)).map(x => x.toTokenRanges(gTa)).map(x => x.toString).foreach(println)
+  // patterns.map(_.occurrences.head.patternTr.tString).foreach(e => println(s"Pattern  $e"))
   patterns
 
 
