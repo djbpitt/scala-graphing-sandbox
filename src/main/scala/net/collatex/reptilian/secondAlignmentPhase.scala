@@ -435,3 +435,12 @@ object HyperedgeMatch:
         val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
         mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
     createSecondAlignmentPhaseVisualization(hg)
+
+@main def explore1122(): Unit = // longest unaligned zone
+  val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
+  val filename = os.pwd / "src" / "main" / "outputs" / "unalignedZones_2025-06-03" / "1122.json"
+  val darwinReadings: List[List[Token]] = readSpecifiedJsonData(filename)
+  val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
+  println(nodesToCluster)
+  val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
+  createSecondAlignmentPhaseVisualization(hg)
