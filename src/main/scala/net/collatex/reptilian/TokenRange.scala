@@ -26,7 +26,7 @@ enum TokenRange:
 
   def tokens: Vector[TokenEnum] =
     this match
-      case _: IllegalTokenRange => throw RuntimeException("Illegal Token Range!")
+      case x: IllegalTokenRange => throw RuntimeException("Illegal Token Range! "+x.toString)
       case _: EmptyTokenRange   => Vector()
       case _                    =>
         val result = this.ta.slice(this.start, this.until)
@@ -79,7 +79,7 @@ enum TokenRange:
   def slice(startOffset: Int, untilOffset: Int): Either[SliceTokenRangeError.type, TokenRange] =
     this match
       case _: (IllegalTokenRange | EmptyTokenRange) =>
-        // println("tokenRange.slice trying to split illegalTokenRange input")
+        println("tokenRange.slice trying to split illegalTokenRange input")
         Left(SliceTokenRangeError)
       case x: LegalTokenRange =>
         if startOffset < 0
@@ -87,17 +87,20 @@ enum TokenRange:
           || startOffset > x.length
           || untilOffset > x.length
         then
-          // println(s"tokenRange.slice error with input tr $this, startOffset $startOffset, and untilOffset $untilOffset")
+          println(s"tokenRange.slice error with input tr $this, startOffset $startOffset, and untilOffset $untilOffset")
           Left(SliceTokenRangeError)
         else Right(TokenRange(x.start + startOffset, x.start + untilOffset, x.ta))
 
 object TokenRange:
-  def apply(start: Int, until: Int, ta: Vector[TokenEnum]): TokenRange =
+  def apply(start: Int, until: Int, ta: Vector[TokenEnum]): TokenRange = {
+    // println("Calling TokenRange constructor")
     // if ta.size < 1000 then throw RuntimeException(s"ta = $ta")
     Ordering.Int.compare(start, until) match
       case -1 => LegalTokenRange(start, until, ta)
       case 0  => EmptyTokenRange(start, until, ta)
-      case 1  => IllegalTokenRange(start, until, ta) // Shouldn’t happen
+      case 1  => throw RuntimeException("Call below is trying an Illegal Token Range!")
+  }
+// IllegalTokenRange(start, until, ta) // Shouldn’t happen
 
 enum SplitTokenRangeResult:
   case BothPopulated(preTokenRange: LegalTokenRange, postTokenRange: LegalTokenRange)

@@ -46,11 +46,13 @@ def groupPatternsTogetherByHyperedge(
 ): Map[EdgeLabel, List[AlignedPatternOccurrencePhaseTwo]] =
   val resultUnsorted = patterns.flatMap(_.occurrences).groupBy(_.originalHe)
   val result = resultUnsorted.map((k, v) => k -> v.sortBy(_.patternTr.start))
+  result.foreach((k ,v) => if v.size > 1 then println(s"key: $k value: $v"))
+  //println(result.f)
   // debug
   // unmark to check conflicting blocks. If two blocks have the same end position in an occurrence then we have a problem
-  // val xxTmp = patterns.flatMap(_.occurrences).groupBy(_.patternTr.until)
-  // val xx = xxTmp.map((k, v) => k -> v.size)
-  // if xx.exists((k,v) => v>1) then throw RuntimeException("Two blocks conflict with each other!")
+   val xxTmp = patterns.flatMap(_.occurrences).groupBy(_.patternTr.until)
+   val xx = xxTmp.map((k, v) => k -> v.size)
+   if xx.exists((k,v) => v>1) then throw RuntimeException("Two blocks conflict with each other!")
   result
 
 def mergeHgHg(
@@ -240,6 +242,9 @@ def splitOneHyperedge(
       val nextOccurrence = occurrences.tail.head
       val newLengthOfPre: Int =
         nextOccurrence.patternTr.start - currentOccurrence.patternTr.until
+      println(s"Calculating preLength: ${nextOccurrence.patternTr.start} ${currentOccurrence.patternTr.until}")
+      if newLengthOfPre < 0 then
+        throw RuntimeException("Patterns either overlap or not sorted correctly!")
       val newLengthOfPost: Int =
         nextOccurrence.originalTr.until - nextOccurrence.patternTr.until
       val hyperedgePartsNew = hyperedgeParts + newPre
@@ -312,7 +317,7 @@ def splitHesOnAlignedPatterns(
 // involve two instances from the same witness / hyperedge
 // FIXME: Although we prevent the merge, we currently throw away the pieces. Oops!
 def isSpuriousMatch(candidate: HyperedgeMatch): Boolean =
-  candidate.head.verticesIterator
+  candidate.head.verticesIterator.filter(_.tokens.nonEmpty)
     .map(_.tokens.head.w)
     .toSet
     .intersect(

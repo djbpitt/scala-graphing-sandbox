@@ -239,8 +239,11 @@ case class AlignedPatternOccurrencePhaseTwo(
     originalHe: EdgeLabel,
     originalTr: TokenRange,
     patternTr: TokenRange // must be contained by originalTr
-)
+) {
 
+    override def toString: String = patternTr.toString
+
+}
 case class AlignedPatternPhaseTwo(
     occurrences: Vector[AlignedPatternOccurrencePhaseTwo]
 )

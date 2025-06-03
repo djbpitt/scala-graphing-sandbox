@@ -18,13 +18,13 @@ extension (he: Hyperedge[EdgeLabel, TokenRange])
         he.verticesIterator.map(t =>
           t.slice(startOffset, untilOffset)
             .getOrElse(
-//              throw RuntimeException(s"Creating illegal token range: $t $startOffset $untilOffset")
-              IllegalTokenRange(
-                t.start +
-                  startOffset,
-                t.start + untilOffset,
-                t.ta
-              )
+              throw RuntimeException(s"Creating illegal token range: $t $startOffset $untilOffset")
+//              IllegalTokenRange(
+//                t.start +
+//                  startOffset,
+//                t.start + untilOffset,
+//                t.ta
+//              )
             )
         ).toSet
       )
