@@ -36,7 +36,7 @@ case class FullDepthBlock(instances: Vector[Int], length: Int):
 
   // converts a block into n number of token ranges, where n is the number of instances
   def toTokenRanges(gTa: Vector[TokenEnum]): Seq[TokenRange] =
-    instances.map(e => TokenRange(e, e + length, gTa))
+    instances.map(e => TokenRange(e, e + length, gTa)).sortBy(_.start)
 
 case class OpenBlock(start: Int, length: Int)
 

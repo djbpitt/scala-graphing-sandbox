@@ -231,7 +231,14 @@ def createAlignedPatternsPhaseTwo(
   )
   // debug!
   // debug the blocks
-  xxBlocks.map(x => x.remapBlockToGTa(lTa)).map(x => x.toTokenRanges(gTa)).map(x => x.toString).foreach(println)
+  val blocksAsTokenRanges =xxBlocks.map(x => x.remapBlockToGTa(lTa)).map(x => x.toTokenRanges(gTa))
+  val debugBlockOverlapSortedByLast = blocksAsTokenRanges.sortBy(_.last.start).map(x => x.toString)
+  val debugBlockOverlapSortedByHead = blocksAsTokenRanges.sortBy(_.head.start).map(x => x.toString)
+  println("blocks as token ranges sorted by first")
+  debugBlockOverlapSortedByHead.foreach(println)
+  println("blocks as token ranges sorted by last")
+  debugBlockOverlapSortedByLast.foreach(println)
+
   // patterns.map(_.occurrences.head.patternTr.tString).foreach(e => println(s"Pattern  $e"))
   patterns
 
