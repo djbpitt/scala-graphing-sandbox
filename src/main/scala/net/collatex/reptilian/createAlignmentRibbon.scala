@@ -5,6 +5,7 @@ import scala.collection.{immutable, mutable}
 import scala.collection.mutable.ListBuffer
 import TokenRange.*
 import net.collatex.reptilian.TokenEnum.Token
+import upickle.default.write
 
 // This method transform an alignment on the global level of the fullest depth blocks
 // into an alignment tree by splitting
@@ -14,11 +15,10 @@ import net.collatex.reptilian.TokenEnum.Token
 // yet to be aligned and that it then calls the suffix array, traversal graph code itself
 // Basically an inverse of the current control flow.
 
-
 def createAlignmentRibbon(
-       sigla: List[Siglum],
-       gTa: Vector[TokenEnum]
-     ): AlignmentRibbon =
+    sigla: List[Siglum],
+    gTa: Vector[TokenEnum]
+): AlignmentRibbon =
   val globalUnalignedZone: UnalignedZone = createGlobalUnalignedZone(sigla, gTa)
   // align, recursively full depth blocks in this unaligned zone
   val alignment = ListBuffer().appendAll(alignFullDepthBlocks(globalUnalignedZone, sigla))
@@ -35,10 +35,20 @@ def alignFullDepthBlocks(unalignedZone: UnalignedZone, sigla: List[Siglum]): Lis
   val witnessCount = unalignedZone.witnessReadings.size
   val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(lTa, witnessCount)
   if longestFullDepthNonRepeatingBlocks.isEmpty
-  then alignByClustering(unalignedZone, gTa)
-  else {
+  then {
+    // 2025-06-03 djb Disable temporarily for debugging: write unaligned zones as json
+    // alignByClustering(unalignedZone, gTa)
+    val jsonToSave = unalignedZone.witnessReadings.values.toList
+      .sortBy(_.start)
+      .map(_.tokens.map(e => TokenJSON(e.t, e.n, e.w, e.g)).toList)
+    val fileName = unalignedZone.witnessReadings.map((k, v) => v.start).min.toString + ".json"
+    val outPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones_2025-06-03" / fileName
+    os.write.over(outPath, write(jsonToSave))
+    List.empty[AlignmentUnit]
+  } else {
     // There are full depth blocks, align by creating a navigation graph
-    val fullDepthAlignmentPoints: List[AlignmentPoint] = getAlignmentPointsByTraversingNavigationGraph(longestFullDepthNonRepeatingBlocks, lTa, gTa, sigla)
+    val fullDepthAlignmentPoints: List[AlignmentPoint] =
+      getAlignmentPointsByTraversingNavigationGraph(longestFullDepthNonRepeatingBlocks, lTa, gTa, sigla)
     val alignment = recursiveBuildAlignment(
       ListBuffer(),
       unalignedZone,
@@ -48,14 +58,13 @@ def alignFullDepthBlocks(unalignedZone: UnalignedZone, sigla: List[Siglum]): Lis
     alignment
   }
 
-
 @tailrec
 def recursiveBuildAlignment(
-     result: ListBuffer[AlignmentUnit],
-     unalignedZone: UnalignedZone,
-     remainingAlignment: List[AlignmentPoint],
-     sigla: List[Siglum]
-   ): List[AlignmentUnit] =
+    result: ListBuffer[AlignmentUnit],
+    unalignedZone: UnalignedZone,
+    remainingAlignment: List[AlignmentPoint],
+    sigla: List[Siglum]
+): List[AlignmentUnit] =
 
   // On first run, unalignedZone contains full token ranges (globalUnalignedZone) and
   // remainingAlignment contains all original full-depth alignment points.
@@ -68,8 +77,7 @@ def recursiveBuildAlignment(
   // Then add block to result
   // Then either recurse on post with next block or, in no more blocks, add post
 
-  if pre.witnessReadings.nonEmpty then
-    result.appendAll(alignFullDepthBlocks(pre, sigla))
+  if pre.witnessReadings.nonEmpty then result.appendAll(alignFullDepthBlocks(pre, sigla))
 
   if remainingAlignment.tail.nonEmpty then
     recursiveBuildAlignment(
@@ -80,13 +88,15 @@ def recursiveBuildAlignment(
     )
   else
     result.append(firstRemainingAlignmentPoint)
-    if post.witnessReadings.nonEmpty then
-      result.appendAll(alignFullDepthBlocks(post, sigla))
+    if post.witnessReadings.nonEmpty then result.appendAll(alignFullDepthBlocks(post, sigla))
     result.toList
 
-
-
-def getAlignmentPointsByTraversingNavigationGraph(longestFullDepthNonRepeatingBlocks: List[FullDepthBlock], lTa: Vector[TokenEnum], gTa: Vector[TokenEnum], sigla: List[Siglum]) =
+def getAlignmentPointsByTraversingNavigationGraph(
+    longestFullDepthNonRepeatingBlocks: List[FullDepthBlock],
+    lTa: Vector[TokenEnum],
+    gTa: Vector[TokenEnum],
+    sigla: List[Siglum]
+) =
   // blocks come back with lTa; map to gTa
   // create navigation graph and filter out transposed nodes
   val blocksGTa =
@@ -99,7 +109,6 @@ def getAlignmentPointsByTraversingNavigationGraph(longestFullDepthNonRepeatingBl
   // debug
   // visualizeTraversalGraph(graph, Map.empty, alignmentBlocksSet)
   // throw RuntimeException("end of beam search")
-
 
   val alignmentBlocks: Iterable[FullDepthBlock] =
     alignmentIntsToBlocks(alignmentBlocksSet, blocksGTa)
@@ -119,7 +128,6 @@ def getAlignmentPointsByTraversingNavigationGraph(longestFullDepthNonRepeatingBl
     .sortBy(_.witnessReadings(siglumForSorting).start)
     .toList
   sortedReadingNodes
-
 
 def alignByClustering(zone: UnalignedZone, gTa: Vector[TokenEnum]): List[AlignmentUnit] =
   val darwinReadings: List[List[Token]] = zone.convertToTokenLists()
@@ -165,10 +173,10 @@ def alignByClustering(zone: UnalignedZone, gTa: Vector[TokenEnum]): List[Alignme
 //  List(AlignmentPoint(zone.witnessReadings, wg)) // one-item ribbon
 
 def blocksToNodes(
-                   blocks: Iterable[FullDepthBlock],
-                   gTa: Vector[TokenEnum],
-                   sigla: List[Siglum]
-                 ): Iterable[AlignmentPoint] =
+    blocks: Iterable[FullDepthBlock],
+    gTa: Vector[TokenEnum],
+    sigla: List[Siglum]
+): Iterable[AlignmentPoint] =
   val result = blocks
     // THERE IS LTA AND GTA CONFUSION HERE, MAPPING IS REDUNDANT. IS DONE EARLIER
     .map(e => fullDepthBlockToAlignmentPoint(e, gTa, sigla))
@@ -176,10 +184,10 @@ def blocksToNodes(
 
 // Convert local alignment offsets to global token-array offsets for the reading node
 def fullDepthBlockToAlignmentPoint(
-                                    block: FullDepthBlock,
-                                    lTa: Vector[TokenEnum], // local
-                                    sigla: List[Siglum]
-                                  ): AlignmentPoint =
+    block: FullDepthBlock,
+    lTa: Vector[TokenEnum], // local
+    sigla: List[Siglum]
+): AlignmentPoint =
   //  println(s"block: $block")
   val readings = block.instances
     .map(e =>
@@ -219,4 +227,3 @@ def createGlobalUnalignedZone(sigla: List[Siglum], gTa: Vector[TokenEnum]) = {
   val globalUnalignedZone = UnalignedZone(witnessReadings, true)
   globalUnalignedZone
 }
-

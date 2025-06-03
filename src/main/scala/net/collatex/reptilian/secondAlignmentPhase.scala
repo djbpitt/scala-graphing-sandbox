@@ -419,9 +419,8 @@ object HyperedgeMatch:
     new HyperedgeMatch(he1, he2)
 
 @main def secondAlignmentPhaseExploration(): Unit =
-  // Transpositions only in 3287
   val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
-  val unalignedZonesDir = os.pwd / "src" / "main" / "outputs" / "unalignedZones"
+  val unalignedZonesDir = os.pwd / "src" / "main" / "outputs" / "unalignedZones_2025-06-03"
   val JSONFiles = os.list(unalignedZonesDir).filter(e => os.isFile(e))
   for uzFilename <- JSONFiles do
     println(uzFilename)
