@@ -425,8 +425,13 @@ object HyperedgeMatch:
   for uzFilename <- JSONFiles do
     println(uzFilename)
     val darwinReadings: List[List[Token]] = readSpecifiedJsonData(uzFilename)
-    val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
-    val hg: Hypergraph[EdgeLabel, TokenRange] =
-      mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-    // Transform hypergraph to alignment ribbon and visualize
+    val hg =
+      if darwinReadings.size == 1 then // Don’t try to cluster if there’s only one witness
+        Hyperedge(
+          EdgeLabel(darwinReadings.head.head.w.toString),
+          Set(TokenRange(darwinReadings.head.head.g, darwinReadings.head.last.g + 1, gTa))
+        )
+      else // Transform hypergraph to alignment ribbon and visualize
+        val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
+        mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
     createSecondAlignmentPhaseVisualization(hg)
