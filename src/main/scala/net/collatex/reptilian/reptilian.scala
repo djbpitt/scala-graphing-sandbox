@@ -45,7 +45,7 @@ def createGTa(tokensPerWitnessLimit:Int) = {
   (sigla, gTa)
 }
 @main def main(): Unit =
-  val tokensPerWitnessLimit = 499
+  val tokensPerWitnessLimit = 1000
   val (sigla: List[Siglum], gTa: Vector[TokenEnum]) = createGTa(tokensPerWitnessLimit)
 
   /** Create alignment ribbon
