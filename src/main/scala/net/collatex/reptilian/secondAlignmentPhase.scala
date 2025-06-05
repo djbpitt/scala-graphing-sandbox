@@ -89,11 +89,11 @@ def mergeHgHg(
     // FIXME: Adding allSplitHyperedgeNew._1 to the greedyResult causes a cycle where it shouldn't be.
     // val result = allSplitHyperedgesNew._1 + greedyResult
     val result = greedyResult
-    //val tmp = result.hyperedges.toVector
+    // val tmp = result.hyperedges.toVector
     //  .sortBy(e => e.verticesIterator.map(_.start).min)
     //  .map(_.verticesIterator.next())
     //  .map(_.tString)
-    //tmp.foreach(println)
+    // tmp.foreach(println)
     spuriousMatches.flatten.foldLeft(result)(_ + _)
   else
     val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
@@ -316,7 +316,8 @@ def isSpuriousMatch(candidate: HyperedgeMatch): Boolean =
     .map(_.tokens.head.w)
     .toSet
     .intersect(
-      candidate.last.verticesIterator.filter(_.tokens.nonEmpty)
+      candidate.last.verticesIterator
+        .filter(_.tokens.nonEmpty)
         .map(_.tokens.head.w)
         .toSet
     )
