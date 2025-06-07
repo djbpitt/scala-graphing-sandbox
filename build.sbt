@@ -1,7 +1,15 @@
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
-//ThisBuild / scalaVersion := "3.2.2"
 ThisBuild / scalaVersion := "3.3.3"
+
+ThisBuild / assembly / assemblyMergeStrategy := {
+  case PathList("META-INF", _*) => MergeStrategy.discard
+  case x => MergeStrategy.first
+}
+
+// https://alvinalexander.com/scala/sbt-how-specify-main-method-class-to-run-in-project/
+Compile / mainClass := Some("net.collatex.reptilian.manifest")
+assembly / mainClass := Some("net.collatex.reptilian.manifest")
 
 lazy val root = (project in file("."))
   .settings(

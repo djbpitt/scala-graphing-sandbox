@@ -2,7 +2,9 @@ package net.collatex.reptilian
 
 import os.Path
 
+import scala.util.CommandLineParser
 import scala.util.matching.Regex
+import scala.xml._
 import scala.xml.dtd.DocType // Create tokenization regex here but tokenize in tokenization.scala
 
 /** Read data files from supplied path to directory (one file per witness)
@@ -60,3 +62,9 @@ def createGTa(tokensPerWitnessLimit:Int) = {
   val horizontalRibbonsPath =
     os.pwd / "src" / "main" / "outputs" / "horizontal-ribbons-full.xhtml" // "horizontal-ribbons.xhtml"
   scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true, doctypeHtml)
+
+@main def manifest(arg0: String): Unit =
+  val manifestPath = os.RelPath(arg0)
+  // val manifestContent = os.read(os.pwd / manifestPath)
+  val manifestXml: Elem = XML.loadFile((os.pwd / manifestPath).toString)
+  println(manifestXml)
