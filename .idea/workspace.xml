@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d9c0e26e-b41a-4ae2-9eb5-77465e757608" name="Changes" comment="Create new mainfest() @main method to read input files from user-supplied XML manifest&#10;&#10;Accepts relative path as argument, which is read as XML; currently untested with absolute path (local and remote)&#10;&#10;Currently just echos the XML (reads no files)&#10;&#10;TODO: Use manifest contents to identify and read plain-text input files&#10;&#10;TODO: Support absolute paths, including remote (http)" />
+    <list default="true" id="d9c0e26e-b41a-4ae2-9eb5-77465e757608" name="Changes" comment="Reads files from manifest with relative local paths&#10;&#10;Absolute local paths and remote uris are untested">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/net/collatex/reptilian/reptilian.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/net/collatex/reptilian/reptilian.scala" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -167,6 +170,15 @@
       <workItem from="1749289624386" duration="173000" />
       <workItem from="1749289815334" duration="5333000" />
     </task>
+    <task id="LOCAL-00001" summary="Intellij updates to workspace.xml (???)">
+      <option name="closed" value="true" />
+      <created>1749300420166</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1749300420166</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -175,7 +187,9 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Create new mainfest() @main method to identify input files from user-supplied XML manifest&#10;&#10;Accepts relative path as argument, which is read as XML&#10;&#10;Currently just echos the XML&#10;&#10;TODO: Use manifest contents to identify and read plain-text input files&#10;&#10;TODO: Support absolute paths, including remote (http)" />
     <MESSAGE value="Create new mainfest() @main method to read input files from user-supplied XML manifest&#10;&#10;Accepts relative path as argument, which is read as XML; currently untested with absolute path (local and remote)&#10;&#10;Currently just echos the XML (reads no files)&#10;&#10;TODO: Use manifest contents to identify and read plain-text input files&#10;&#10;TODO: Support absolute paths, including remote (http)" />
-    <option name="LAST_COMMIT_MESSAGE" value="Create new mainfest() @main method to read input files from user-supplied XML manifest&#10;&#10;Accepts relative path as argument, which is read as XML; currently untested with absolute path (local and remote)&#10;&#10;Currently just echos the XML (reads no files)&#10;&#10;TODO: Use manifest contents to identify and read plain-text input files&#10;&#10;TODO: Support absolute paths, including remote (http)" />
+    <MESSAGE value="Intellij updates to workspace.xml (???)" />
+    <MESSAGE value="Reads files from manifest with relative local paths&#10;&#10;Absolute local paths and remote uris are untested" />
+    <option name="LAST_COMMIT_MESSAGE" value="Reads files from manifest with relative local paths&#10;&#10;Absolute local paths and remote uris are untested" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

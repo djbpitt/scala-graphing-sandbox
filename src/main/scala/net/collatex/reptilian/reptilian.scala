@@ -4,8 +4,9 @@ import os.Path
 
 import scala.util.CommandLineParser
 import scala.util.matching.Regex
-import scala.xml._
-import scala.xml.dtd.DocType // Create tokenization regex here but tokenize in tokenization.scala
+import scala.xml.*
+import scala.xml.dtd.DocType
+import scala.io.Source
 
 /** Read data files from supplied path to directory (one file per witness)
   *
@@ -23,15 +24,16 @@ def readData(pathToData: Path): List[(String, String)] =
     .toList
     .map(e => (e.last, os.read(e)))
 
-def createGTa(tokensPerWitnessLimit:Int) = {
+def createGTa(tokensPerWitnessLimit: Int) = {
+
   /** Select data */
   val pathToDarwin = os.pwd / "src" / "main" / "data" / "darwin"
 
   /** Prepare tokenizer
-   *
-   * Sequences of non-word characters (except spaces) are entire tokens Unlike in CollateX Python, where punctuation
-   * characters are their own tokens
-   */
+    *
+    * Sequences of non-word characters (except spaces) are entire tokens Unlike in CollateX Python, where punctuation
+    * characters are their own tokens
+    */
   val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
   val tokenizer = makeTokenizer(
     tokenPattern
@@ -63,8 +65,27 @@ def createGTa(tokensPerWitnessLimit:Int) = {
     os.pwd / "src" / "main" / "outputs" / "horizontal-ribbons-full.xhtml" // "horizontal-ribbons.xhtml"
   scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true, doctypeHtml)
 
-@main def manifest(arg0: String): Unit =
+@main def manifest(arg0: String): Seq[CollateXWitnessData] =
   val manifestPath = os.RelPath(arg0)
   // val manifestContent = os.read(os.pwd / manifestPath)
   val manifestXml: Elem = XML.loadFile((os.pwd / manifestPath).toString)
-  println(manifestXml)
+  val manifestParent: String = (os.pwd / manifestPath).toString.split("/").dropRight(1).mkString("/")
+  val witnessData =
+    (manifestXml \ "_").map(e => // Element children, but not text() node children
+      CollateXWitnessData(
+        (e \ "@siglum").head.toString,
+        (e \ "@url").head.toString match {
+          // TODO: Trap not-found errors
+          // TODO: Use Using to close files cleanly
+          // TODO: BufferedSource instead of String to accommodate large input files?
+          case x if x.startsWith("http://") || x.startsWith("https://") => Source.fromURL(x).getLines().mkString(" ")
+          case x =>
+            val absolutePath = List(manifestParent, x).mkString("/")
+            Source.fromFile(absolutePath).getLines().mkString(" ")
+        }
+      )
+    )
+  println(witnessData)
+  witnessData
+
+case class CollateXWitnessData(siglum: String, content: String)
