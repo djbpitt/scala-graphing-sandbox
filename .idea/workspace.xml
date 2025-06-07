@@ -4,12 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d9c0e26e-b41a-4ae2-9eb5-77465e757608" name="Changes" comment="Create new mainfest() @main method to read input files from user-supplied XML manifest&#10;&#10;Accepts relative path as argument, which is read as XML; currently untested with absolute path (local and remote)&#10;&#10;Currently just echos the XML (reads no files)&#10;&#10;TODO: Use manifest contents to identify and read plain-text input files&#10;&#10;TODO: Support absolute paths, including remote (http)">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.sbt" beforeDir="false" afterPath="$PROJECT_DIR$/build.sbt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/project/plugins.sbt" beforeDir="false" afterPath="$PROJECT_DIR$/project/plugins.sbt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/net/collatex/reptilian/reptilian.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/net/collatex/reptilian/reptilian.scala" afterDir="false" />
-    </list>
+    <list default="true" id="d9c0e26e-b41a-4ae2-9eb5-77465e757608" name="Changes" comment="Create new mainfest() @main method to read input files from user-supplied XML manifest&#10;&#10;Accepts relative path as argument, which is read as XML; currently untested with absolute path (local and remote)&#10;&#10;Currently just echos the XML (reads no files)&#10;&#10;TODO: Use manifest contents to identify and read plain-text input files&#10;&#10;TODO: Support absolute paths, including remote (http)" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
