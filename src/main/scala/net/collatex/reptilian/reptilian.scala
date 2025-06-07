@@ -2,7 +2,7 @@ package net.collatex.reptilian
 
 import os.Path
 
-import scala.util.CommandLineParser
+import scala.util.{CommandLineParser, Using}
 import scala.util.matching.Regex
 import scala.xml.*
 import scala.xml.dtd.DocType
@@ -78,14 +78,18 @@ def createGTa(tokensPerWitnessLimit: Int) = {
           // TODO: Trap not-found errors
           // TODO: Use Using to close files cleanly
           // TODO: BufferedSource instead of String to accommodate large input files?
-          case x if x.startsWith("http://") || x.startsWith("https://") => Source.fromURL(x).getLines().mkString(" ")
+          case x if x.startsWith("http://") || x.startsWith("https://") =>
+            Using(Source.fromURL(x)) { source =>
+              source.getLines().mkString(" ")
+            }.get
           case x =>
             val absolutePath = List(manifestParent, x).mkString("/")
-            Source.fromFile(absolutePath).getLines().mkString(" ")
+            Using(Source.fromFile(absolutePath)) { source =>
+              source.getLines().mkString(" ")
+            }.get
         }
       )
     )
-  println(witnessData)
   witnessData
 
 case class CollateXWitnessData(siglum: String, content: String)
