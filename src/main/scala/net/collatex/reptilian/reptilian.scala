@@ -80,18 +80,17 @@ def createGTa(tokensPerWitnessLimit: Int) = {
       // https://contributors.scala-lang.org/t/for-comprehension-requires-withfilter-to-destructure-tuples/5953
       result <- parseArgs(args)
       (manifestPathString, debug) = result
-    } yield {
-      val witnessData = parseManifest(manifestPathString)
-      if debug then
-        witnessData.foreach(e => // Diagnostic
-          println(List(e.siglum, e.content.slice(0, 30)).mkString(": "))
-        )
-    }
+      witnessData <- parseManifest(manifestPathString)
+      witnessSlice <- previewWitness(witnessData)
+    } yield witnessData
   parsedInput match {
     case Left(e) => println(e)
     case Right(witnessData) =>
       println("Continue here")
   }
+
+def previewWitness(wd: CollateXWitnessData): Either[String, String] =
+  Right(List(wd.siglum, wd.content.slice(0, 30)).mkString(": "))
 
 def parseArgs(args: Seq[String]): Either[String, (String, Boolean)] =
   if args.isEmpty then {
