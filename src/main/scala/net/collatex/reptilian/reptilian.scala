@@ -82,15 +82,18 @@ def createGTa(tokensPerWitnessLimit: Int) = {
       (manifestPathString, debug) = result
       witnessData <- parseManifest(manifestPathString)
       witnessSlice <- previewWitness(witnessData)
-    } yield witnessData
+    } yield witnessSlice
+
+  parsedInput.foreach(println)
+
   parsedInput match {
     case Left(e) => println(e)
     case Right(witnessData) =>
       println("Continue here")
   }
 
-def previewWitness(wd: CollateXWitnessData): Either[String, String] =
-  Right(List(wd.siglum, wd.content.slice(0, 30)).mkString(": "))
+def previewWitness(wd: Seq[CollateXWitnessData]): Either[String, Seq[String]] =
+  Right(wd.map(e => List(e.siglum, e.content.slice(0, 30)).mkString(": ")))
 
 def parseArgs(args: Seq[String]): Either[String, (String, Boolean)] =
   if args.isEmpty then {
@@ -111,7 +114,7 @@ def parseArgs(args: Seq[String]): Either[String, (String, Boolean)] =
   * @return
   *   sequence of CollateXWitnessData instances
   */
-def parseManifest(manifestPathString: String): Seq[CollateXWitnessData] =
+def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnessData]] =
   // TODO: Currently assumes relative path, but might be absolute or remote
   // TODO: Trap bad path to manifest (missing path already caught)
   // TODO: Trap bad paths to witness
@@ -134,6 +137,6 @@ def parseManifest(manifestPathString: String): Seq[CollateXWitnessData] =
         Using(inputSource) { source => source.getLines().mkString(" ") }.get
       )
     )
-  witnessData
+  Right(witnessData)
 
 case class CollateXWitnessData(siglum: String, content: String)
