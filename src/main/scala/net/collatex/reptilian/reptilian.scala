@@ -74,20 +74,22 @@ def createGTa(tokensPerWitnessLimit: Int) = {
   */
 @main def manifest(
     args: String*
-): Option[Seq[CollateXWitnessData]] =
-  parseArgs(args) match
-    case None =>
-      Some(Seq())
-    case _ =>
-      val (manifestPathString: String, debug: Boolean) = parseArgs(args).get
+): Unit =
+  val parsedInput: Either[String, Seq[CollateXWitnessData]] = parseArgs(args) match
+    case Left(e) => Left(e)
+    case Right((manifestPathString, debug)) =>
       val witnessData: Seq[CollateXWitnessData] = parseManifest(manifestPathString)
       if debug then
         witnessData.foreach(e => // Diagnostic
           println(List(e.siglum, e.content.slice(0, 30)).mkString(": "))
         )
-      Some(witnessData)
+      Right(witnessData)
+  parsedInput match {
+    case Left(e)  => println(e)
+    case Right(x) => println("Continue here")
+  }
 
-def parseArgs(args: Seq[String]): Option[(String, Boolean)] =
+def parseArgs(args: Seq[String]): Either[String, (String, Boolean)] =
   if args.isEmpty then {
     println("""
               |Usage: java -jar manifest.jar manifest.xml [debug]
@@ -95,10 +97,10 @@ def parseArgs(args: Seq[String]): Option[(String, Boolean)] =
               | For manifest.xml format see TBA
               | To display debug reports specify the string debug (no quotes) as a second parameter
               |""".stripMargin)
-    None
+    Left("Oops")
   } else
     val debug: Boolean = args.size > 1 && args(1) == "debug"
-    Some(args.head, debug)
+    Right(args.head, debug)
 
 /** Locate manifest from path string and parse into CollateXWitnessData
   *
