@@ -6,7 +6,7 @@ import scala.util.{CommandLineParser, Using}
 import scala.util.matching.Regex
 import scala.xml.*
 import scala.xml.dtd.DocType
-import scala.io.Source
+import scala.io.{BufferedSource, Source}
 
 /** Read data files from supplied path to directory (one file per witness)
   *
@@ -65,29 +65,41 @@ def createGTa(tokensPerWitnessLimit: Int) = {
     os.pwd / "src" / "main" / "outputs" / "horizontal-ribbons-full.xhtml" // "horizontal-ribbons.xhtml"
   scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true, doctypeHtml)
 
+/** Obtain input via manifest and process
+  *
+  * @param arg0
+  *   location of manifest (relative local, absolute local, remote url)
+  * @return
+  */
 @main def manifest(arg0: String): Seq[CollateXWitnessData] =
-  val manifestPath = os.RelPath(arg0)
-  // val manifestContent = os.read(os.pwd / manifestPath)
+  val witnessData = parseManifest(arg0)
+  witnessData.foreach(e => println(List(e.siglum, e.content.slice(0, 30)).mkString(": ")))
+  witnessData
+
+/** Locate manifest from path string and parse into CollateXWitnessData
+  *
+  * @param manifestPathString
+  *   location of manifest
+  * @return
+  *   sequence of CollateXWitnessData instances
+  */
+def parseManifest(manifestPathString: String): Seq[CollateXWitnessData] =
+  // TODO: Currently assumes relative path, but might be absolute or remote
+  val manifestPath = os.RelPath(manifestPathString)
   val manifestXml: Elem = XML.loadFile((os.pwd / manifestPath).toString)
   val manifestParent: String = (os.pwd / manifestPath).toString.split("/").dropRight(1).mkString("/")
-  val witnessData =
+  val witnessData: Seq[CollateXWitnessData] =
     (manifestXml \ "_").map(e => // Element children, but not text() node children
+      // TODO: Trap not-found errors
+      val inputSource: BufferedSource = (e \ "@url").head.toString match {
+        case x if x.startsWith("http://") || x.startsWith("https://") => Source.fromURL(x)
+        case x =>
+          val absolutePath = List(manifestParent, x).mkString("/")
+          Source.fromFile(absolutePath)
+      }
       CollateXWitnessData(
         (e \ "@siglum").head.toString,
-        (e \ "@url").head.toString match {
-          // TODO: Trap not-found errors
-          // TODO: Use Using to close files cleanly
-          // TODO: BufferedSource instead of String to accommodate large input files?
-          case x if x.startsWith("http://") || x.startsWith("https://") =>
-            Using(Source.fromURL(x)) { source =>
-              source.getLines().mkString(" ")
-            }.get
-          case x =>
-            val absolutePath = List(manifestParent, x).mkString("/")
-            Using(Source.fromFile(absolutePath)) { source =>
-              source.getLines().mkString(" ")
-            }.get
-        }
+        Using(inputSource) { source => source.getLines().mkString(" ") }.get
       )
     )
   witnessData
