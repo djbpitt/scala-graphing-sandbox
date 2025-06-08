@@ -73,7 +73,10 @@ def createGTa(tokensPerWitnessLimit: Int) = {
   */
 @main def manifest(arg0: String): Seq[CollateXWitnessData] =
   val witnessData = parseManifest(arg0)
-  witnessData.foreach(e => println(List(e.siglum, e.content.slice(0, 30)).mkString(": ")))
+
+  witnessData.foreach(e => // Diagnostic
+    println(List(e.siglum, e.content.slice(0, 30)).mkString(": "))
+  )
   witnessData
 
 /** Locate manifest from path string and parse into CollateXWitnessData
