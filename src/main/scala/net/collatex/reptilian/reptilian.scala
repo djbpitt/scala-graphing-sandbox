@@ -97,7 +97,7 @@ def parseArgs(args: Seq[String]): Option[(String, Boolean)] =
               |""".stripMargin)
     None
   } else
-    val debug: Boolean = if args.size > 1 && args(1) == "debug" then true else false
+    val debug: Boolean = args.size > 1 && args(1) == "debug"
     Some(args.head, debug)
 
 /** Locate manifest from path string and parse into CollateXWitnessData
@@ -110,10 +110,11 @@ def parseArgs(args: Seq[String]): Option[(String, Boolean)] =
 def parseManifest(manifestPathString: String): Seq[CollateXWitnessData] =
   // TODO: Currently assumes relative path, but might be absolute or remote
   // TODO: Trap bad path to manifest (missing path already caught)
-  // TODO: Trap baths paths to witness
+  // TODO: Trap bad paths to witness
   // TODO: Trap existing but invalid manifest (xsd and Schematron)
   // Java library to validate against Schematron: https://github.com/phax/ph-schematron
   val manifestPath = os.RelPath(manifestPathString)
+  println(s"Does it exist? ${os.exists(os.pwd / manifestPath)}")
   val manifestXml: Elem = XML.loadFile((os.pwd / manifestPath).toString)
   val manifestParent: String = (os.pwd / manifestPath).toString.split("/").dropRight(1).mkString("/")
   val witnessData: Seq[CollateXWitnessData] =
