@@ -75,29 +75,32 @@ def createGTa(tokensPerWitnessLimit: Int) = {
 @main def manifest(
     args: String*
 ): Unit =
-  val parsedInput: Either[String, Seq[CollateXWitnessData]] = parseArgs(args) match
-    case Left(e) => Left(e)
-    case Right((manifestPathString, debug)) =>
-      val witnessData: Seq[CollateXWitnessData] = parseManifest(manifestPathString)
+  val parsedInput =
+    for {
+      // https://contributors.scala-lang.org/t/for-comprehension-requires-withfilter-to-destructure-tuples/5953
+      result <- parseArgs(args)
+      (manifestPathString, debug) = result
+    } yield {
+      val witnessData = parseManifest(manifestPathString)
       if debug then
         witnessData.foreach(e => // Diagnostic
           println(List(e.siglum, e.content.slice(0, 30)).mkString(": "))
         )
-      Right(witnessData)
+    }
   parsedInput match {
-    case Left(e)  => println(e)
-    case Right(x) => println("Continue here")
+    case Left(e) => println(e)
+    case Right(witnessData) =>
+      println("Continue here")
   }
 
 def parseArgs(args: Seq[String]): Either[String, (String, Boolean)] =
   if args.isEmpty then {
-    println("""
+    Left("""
               |Usage: java -jar manifest.jar manifest.xml [debug]
               |
               | For manifest.xml format see TBA
               | To display debug reports specify the string debug (no quotes) as a second parameter
               |""".stripMargin)
-    Left("Oops")
   } else
     val debug: Boolean = args.size > 1 && args(1) == "debug"
     Right(args.head, debug)
@@ -116,7 +119,6 @@ def parseManifest(manifestPathString: String): Seq[CollateXWitnessData] =
   // TODO: Trap existing but invalid manifest (xsd and Schematron)
   // Java library to validate against Schematron: https://github.com/phax/ph-schematron
   val manifestPath = os.RelPath(manifestPathString)
-  println(s"Does it exist? ${os.exists(os.pwd / manifestPath)}")
   val manifestXml: Elem = XML.loadFile((os.pwd / manifestPath).toString)
   val manifestParent: String = (os.pwd / manifestPath).toString.split("/").dropRight(1).mkString("/")
   val witnessData: Seq[CollateXWitnessData] =
