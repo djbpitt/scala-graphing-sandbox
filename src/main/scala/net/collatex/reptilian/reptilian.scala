@@ -67,17 +67,38 @@ def createGTa(tokensPerWitnessLimit: Int) = {
 
 /** Obtain input via manifest and process
   *
-  * @param arg0
-  *   location of manifest (relative local, absolute local, remote url)
+  * @param args
+  *   args: location of manifest and optional toggle for debug output
+  *
   * @return
   */
-@main def manifest(arg0: String): Seq[CollateXWitnessData] =
-  val witnessData = parseManifest(arg0)
+@main def manifest(
+    args: String*
+): Option[Seq[CollateXWitnessData]] =
+  parseArgs(args) match
+    case None =>
+      Some(Seq())
+    case _ =>
+      val (manifestPathString: String, debug: Boolean) = parseArgs(args).get
+      val witnessData: Seq[CollateXWitnessData] = parseManifest(manifestPathString)
+      if debug then
+        witnessData.foreach(e => // Diagnostic
+          println(List(e.siglum, e.content.slice(0, 30)).mkString(": "))
+        )
+      Some(witnessData)
 
-  witnessData.foreach(e => // Diagnostic
-    println(List(e.siglum, e.content.slice(0, 30)).mkString(": "))
-  )
-  witnessData
+def parseArgs(args: Seq[String]): Option[(String, Boolean)] =
+  if args.isEmpty then {
+    println("""
+              |Usage: java -jar manifest.jar manifest.xml [debug]
+              |
+              | For manifest.xml format see TBA
+              | To display debug reports specify the string debug (no quotes) as a second parameter
+              |""".stripMargin)
+    None
+  } else
+    val debug: Boolean = if args.size > 1 && args(1) == "debug" then true else false
+    Some(args.head, debug)
 
 /** Locate manifest from path string and parse into CollateXWitnessData
   *
@@ -88,6 +109,10 @@ def createGTa(tokensPerWitnessLimit: Int) = {
   */
 def parseManifest(manifestPathString: String): Seq[CollateXWitnessData] =
   // TODO: Currently assumes relative path, but might be absolute or remote
+  // TODO: Trap bad path to manifest (missing path already caught)
+  // TODO: Trap baths paths to witness
+  // TODO: Trap existing but invalid manifest (xsd and Schematron)
+  // Java library to validate against Schematron: https://github.com/phax/ph-schematron
   val manifestPath = os.RelPath(manifestPathString)
   val manifestXml: Elem = XML.loadFile((os.pwd / manifestPath).toString)
   val manifestParent: String = (os.pwd / manifestPath).toString.split("/").dropRight(1).mkString("/")
