@@ -82,10 +82,10 @@ def createGTa(tokensPerWitnessLimit: Int) = {
       (manifestPathString, debug) = result
       witnessData <- parseManifest(manifestPathString)
       witnessSlice <- previewWitness(witnessData)
-    } yield if debug then witnessSlice.foreach(println)
+    } yield if debug then witnessSlice.foreach(System.err.println)
 
   parsedInput match {
-    case Left(e)            => println(e)
+    case Left(e) => System.err.println(e)
     case Right(_) =>
       println("Continue here")
   }
@@ -94,16 +94,15 @@ def previewWitness(wd: Seq[CollateXWitnessData]): Either[String, Seq[String]] =
   Right(wd.map(e => List(e.siglum, e.content.slice(0, 30)).mkString(": ")))
 
 def parseArgs(args: Seq[String]): Either[String, (String, Boolean)] =
-  if args.isEmpty then {
-    Left("""
+  if args.isEmpty then
+    return Left("""
               |Usage: java -jar manifest.jar manifest.xml [debug]
               |
               | For manifest.xml format see TBA
               | To display debug reports specify the string debug (no quotes) as a second parameter
               |""".stripMargin)
-  } else
-    val debug: Boolean = args.size > 1 && args(1) == "debug"
-    Right(args.head, debug)
+  val debug: Boolean = args.size > 1 && args(1) == "debug"
+  Right(args.head, debug)
 
 /** Locate manifest from path string and parse into CollateXWitnessData
   *
@@ -114,7 +113,6 @@ def parseArgs(args: Seq[String]): Either[String, (String, Boolean)] =
   */
 def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnessData]] =
   // TODO: Currently assumes relative path, but might be absolute or remote
-  // TODO: Trap bad path to manifest (missing path already caught)
   // TODO: Trap bad paths to witness
   // TODO: Trap existing but invalid manifest (xsd and Schematron)
   // Java library to validate against Schematron: https://github.com/phax/ph-schematron
