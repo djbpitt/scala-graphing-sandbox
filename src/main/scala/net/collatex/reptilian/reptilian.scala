@@ -119,6 +119,8 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
   // TODO: Trap existing but invalid manifest (xsd and Schematron)
   // Java library to validate against Schematron: https://github.com/phax/ph-schematron
   val manifestPath = os.RelPath(manifestPathString)
+  if !os.exists(os.pwd / manifestPath) then
+    return Left(s"Manifest file cannot be found: ${os.pwd / manifestPath}") // early return
   val manifestXml: Elem = XML.loadFile((os.pwd / manifestPath).toString)
   val manifestParent: String = (os.pwd / manifestPath).toString.split("/").dropRight(1).mkString("/")
   val witnessData: Seq[CollateXWitnessData] =
