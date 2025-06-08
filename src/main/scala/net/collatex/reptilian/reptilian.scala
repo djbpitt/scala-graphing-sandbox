@@ -82,13 +82,11 @@ def createGTa(tokensPerWitnessLimit: Int) = {
       (manifestPathString, debug) = result
       witnessData <- parseManifest(manifestPathString)
       witnessSlice <- previewWitness(witnessData)
-    } yield witnessSlice
-
-  parsedInput.foreach(println)
+    } yield if debug then witnessSlice.foreach(println)
 
   parsedInput match {
-    case Left(e) => println(e)
-    case Right(witnessData) =>
+    case Left(e)            => println(e)
+    case Right(_) =>
       println("Continue here")
   }
 
