@@ -122,18 +122,19 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
     return Left(s"Manifest file cannot be found: $absoluteManifestPath") // early return
   val manifestXml: Elem = {
     try XML.loadFile(absoluteManifestPath.toString)
-    catch case _: Exception =>
-      return Left(s"Manifest was found at $absoluteManifestPath, but it is not an XML document")
+    catch
+      case _: Exception =>
+        return Left(s"Manifest was found at $absoluteManifestPath, but it is not an XML document")
   }
-  val manifestParent: String = absoluteManifestPath.toString.split("/").dropRight(1).mkString("/")
+  val manifestParent: String =
+    absoluteManifestPath.toString.split("/").dropRight(1).mkString("/")
   val witnessData: Seq[CollateXWitnessData] = {
-    // TODO: Is there a better way to extract Elem from Right[Elem] than fake getOrElse()?
     (manifestXml \ "_").map(e => // Element children, but not text() node children
       // TODO: Trap not-found errors
       val inputSource: BufferedSource = (e \ "@url").head.toString match {
         case x if x.startsWith("http://") || x.startsWith("https://") => Source.fromURL(x)
         case x =>
-          val absolutePath = List(manifestParent, x).mkString("/")
+          val absolutePath = os.Path(x, os.Path(manifestParent)).toString
           Source.fromFile(absolutePath)
       }
       CollateXWitnessData(
