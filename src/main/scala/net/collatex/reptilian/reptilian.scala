@@ -117,8 +117,7 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
   // TODO: Trap bad paths to witness
   // TODO: Trap existing but invalid manifest (xsd and Schematron)
   // Java library to validate against Schematron: https://github.com/phax/ph-schematron
-  val manifestPath = os.RelPath(manifestPathString)
-  val absoluteManifestPath = os.pwd / manifestPath
+  val absoluteManifestPath = os.Path(manifestPathString, os.pwd)
   if !os.exists(absoluteManifestPath) then
     return Left(s"Manifest file cannot be found: $absoluteManifestPath") // early return
   val manifestXml: Elem = {
@@ -126,7 +125,7 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
     catch case _: Exception =>
       return Left(s"Manifest was found at $absoluteManifestPath, but it is not an XML document")
   }
-  val manifestParent: String = (os.pwd / manifestPath).toString.split("/").dropRight(1).mkString("/")
+  val manifestParent: String = absoluteManifestPath.toString.split("/").dropRight(1).mkString("/")
   val witnessData: Seq[CollateXWitnessData] = {
     // TODO: Is there a better way to extract Elem from Right[Elem] than fake getOrElse()?
     (manifestXml \ "_").map(e => // Element children, but not text() node children
