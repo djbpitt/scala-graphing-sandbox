@@ -7,6 +7,8 @@ import scala.util.matching.Regex
 import scala.xml.*
 import scala.xml.dtd.DocType
 import scala.io.{BufferedSource, Source}
+import cats.syntax.all._
+import cats.Monad
 
 /** Read data files from supplied path to directory (one file per witness)
   *
@@ -119,15 +121,15 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
   val absoluteManifestPath = os.pwd / manifestPath
   if !os.exists(absoluteManifestPath) then
     return Left(s"Manifest file cannot be found: $absoluteManifestPath") // early return
-  val manifestXml: Either[String, Elem] = {
-    try Right(XML.loadFile(absoluteManifestPath.toString))
+  val manifestXml: Elem = {
+    try XML.loadFile(absoluteManifestPath.toString)
     catch case _: Exception =>
       return Left(s"Manifest was found at $absoluteManifestPath, but it is not an XML document")
   }
   val manifestParent: String = (os.pwd / manifestPath).toString.split("/").dropRight(1).mkString("/")
   val witnessData: Seq[CollateXWitnessData] = {
     // TODO: Is there a better way to extract Elem from Right[Elem] than fake getOrElse()?
-    (manifestXml.getOrElse(<empty/>) \ "_").map(e => // Element children, but not text() node children
+    (manifestXml \ "_").map(e => // Element children, but not text() node children
       // TODO: Trap not-found errors
       val inputSource: BufferedSource = (e \ "@url").head.toString match {
         case x if x.startsWith("http://") || x.startsWith("https://") => Source.fromURL(x)

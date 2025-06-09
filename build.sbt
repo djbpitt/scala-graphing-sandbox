@@ -18,6 +18,8 @@ lazy val root = (project in file("."))
 // Enabling deprecation requires enabling unchecked
 scalacOptions := Seq("-unchecked", "-deprecation")
 
+// https://mvnrepository.com/artifact/org.relaxng/jing
+// libraryDependencies += "org.relaxng" %% "jing" % "20241231"
 libraryDependencies += ("org.scala-graph" %% "graph-core" % "1.13.6").cross(CrossVersion.for3Use2_13)
 libraryDependencies += ("org.scala-graph" %% "graph-dot" % "1.13.3").cross(CrossVersion.for3Use2_13)
 libraryDependencies += "com.lihaoyi" %% "os-lib" % "0.10.1" // path manipulation and io
@@ -37,4 +39,4 @@ libraryDependencies += ("nl.gn0s1s" %% "osita" % "0.0.2").cross(CrossVersion.for
 libraryDependencies += "de.sciss" %% "linkernighantsp" % "0.1.3"
 libraryDependencies += "org.typelevel" %% "cats-core" % "2.12.0"
 libraryDependencies += "org.scala-lang.modules" %% "scala-collection-contrib" % "0.3.0"
-
+libraryDependencies += "net.sf.saxon" % "Saxon-HE" % "12.7"
