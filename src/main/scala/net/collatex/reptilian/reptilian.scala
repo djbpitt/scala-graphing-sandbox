@@ -94,8 +94,7 @@ def previewWitness(wd: Seq[CollateXWitnessData]): Either[String, Seq[String]] =
   Right(wd.map(e => List(e.siglum, e.content.slice(0, 30)).mkString(": ")))
 
 def parseArgs(args: Seq[String]): Either[String, (String, Boolean)] =
-  if args.isEmpty then
-    return Left("""
+  if args.isEmpty then return Left("""
               |Usage: java -jar manifest.jar manifest.xml [debug]
               |
               | For manifest.xml format see TBA
@@ -117,12 +116,18 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
   // TODO: Trap existing but invalid manifest (xsd and Schematron)
   // Java library to validate against Schematron: https://github.com/phax/ph-schematron
   val manifestPath = os.RelPath(manifestPathString)
-  if !os.exists(os.pwd / manifestPath) then
-    return Left(s"Manifest file cannot be found: ${os.pwd / manifestPath}") // early return
-  val manifestXml: Elem = XML.loadFile((os.pwd / manifestPath).toString)
+  val absoluteManifestPath = os.pwd / manifestPath
+  if !os.exists(absoluteManifestPath) then
+    return Left(s"Manifest file cannot be found: $absoluteManifestPath") // early return
+  val manifestXml: Either[String, Elem] = {
+    try Right(XML.loadFile(absoluteManifestPath.toString))
+    catch case _: Exception =>
+      return Left(s"Manifest was found at $absoluteManifestPath, but it is not an XML document")
+  }
   val manifestParent: String = (os.pwd / manifestPath).toString.split("/").dropRight(1).mkString("/")
-  val witnessData: Seq[CollateXWitnessData] =
-    (manifestXml \ "_").map(e => // Element children, but not text() node children
+  val witnessData: Seq[CollateXWitnessData] = {
+    // TODO: Is there a better way to extract Elem from Right[Elem] than fake getOrElse()?
+    (manifestXml.getOrElse(<empty/>) \ "_").map(e => // Element children, but not text() node children
       // TODO: Trap not-found errors
       val inputSource: BufferedSource = (e \ "@url").head.toString match {
         case x if x.startsWith("http://") || x.startsWith("https://") => Source.fromURL(x)
@@ -135,6 +140,7 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
         Using(inputSource) { source => source.getLines().mkString(" ") }.get
       )
     )
+  }
   Right(witnessData)
 
 case class CollateXWitnessData(siglum: String, content: String)
