@@ -19,6 +19,11 @@ import com.thaiopensource.util.{PropertyMap, PropertyMapBuilder}
 import com.thaiopensource.validate.prop.rng.RngProperty
 import org.xml.sax.InputSource
 
+// Schematron (via XSLT) validation
+import net.sf.saxon.s9api._
+import java.io.File
+import javax.xml.transform.stream.StreamSource
+
 /** Read data files from supplied path to directory (one file per witness)
   *
   * @param pathToData
@@ -117,8 +122,8 @@ def parseArgs(args: Seq[String]): Either[String, (String, Boolean)] =
 /** Validate an XML string against a Relax NG XML schema (files) */
 
 def validateRnc(xmlElem: Elem, rncSchema: String): Either[String, Boolean] =
+  // TODO: Get validation error report from Jing, instead of just Boolean
   val datatypeLibraryFactory = new DatatypeLibraryFactoryImpl()
-
   val propertyMapBuilder = new PropertyMapBuilder()
   propertyMapBuilder.put(RngProperty.DATATYPE_LIBRARY_FACTORY, datatypeLibraryFactory)
   val propertyMap: PropertyMap = propertyMapBuilder.toPropertyMap
@@ -126,43 +131,60 @@ def validateRnc(xmlElem: Elem, rncSchema: String): Either[String, Boolean] =
   val schemaInput = new InputSource(new StringReader(rncSchema))
   val schemaLoaded = driver.loadSchema(schemaInput)
   if (!schemaLoaded)
-    throw new RuntimeException("Failed to load RNC schema from string.")
-  val xmlString = xmlElem.toString()
-  val xmlInput = new InputSource(new StringReader(xmlString))
+    Left("Failed to load RNC schema from string.")
+  val xmlInput = new InputSource(new StringReader(xmlElem.toString()))
   val result = driver.validate(xmlInput)
   result match
     case true => Right(result)
-    case _ => Left("Validation failed")
+    case _    => Left("RNC validation failed")
 
-/** Locate manifest from path string and parse into CollateXWitnessData
-  *
-  * @param manifestPathString
-  *   location of manifest
-  * @return
-  *   sequence of CollateXWitnessData instances
-  */
-def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnessData]] =
-  // TODO: Currently assumes relative path, but might be absolute or remote
-  // TODO: Trap bad paths to witness
-  // TODO: Trap existing but invalid manifest (xsd and Schematron)
-  // Java library to validate against Schematron: https://github.com/phax/ph-schematron
+// TODO: Schematron validation in progress, not yet integrated or tested
+def validateSchematron(xmlElem: Elem, schematronXslt: Elem): String =
+  val processor = new Processor(false) // Saxon processor
+  val compiler = processor.newXsltCompiler()
+  val builder = processor.newDocumentBuilder()
+
+  // Load compiled Schematron validator (from Schxslt)
+  val xsltExecutable =
+    compiler.compile(new StreamSource(new StringReader(schematronXslt.toString())))
+  val transformer = xsltExecutable.load()
+
+  // Load the XML to validate
+  val xmlDoc = builder.build(new StreamSource(new StringReader(xmlElem.toString())))
+  transformer.setInitialContextNode(xmlDoc)
+
+  // Output the SVRL (Schematron Validation Report Language)
+  val serializer = processor.newSerializer(System.out)
+  serializer.setOutputProperty(Serializer.Property.METHOD, "xml")
+  serializer.setOutputProperty(Serializer.Property.INDENT, "yes")
+  transformer.setDestination(serializer)
+
+  // Run validation
+  transformer.transform()
+
+  // Output result
+  serializer.toString
+
+def resolveManifestString(manifestPathString: String): Either[String, Path] =
+  // TODO: Manifest could be remote http:// or https:// resource; currently assumes local
   val absoluteManifestPath = os.Path(manifestPathString, os.pwd)
-  if !os.exists(absoluteManifestPath) then
-    return Left(s"Manifest file cannot be found: $absoluteManifestPath") // early return
-  val manifestXml: Elem = {
-    try XML.loadFile(absoluteManifestPath.toString)
+  if os.exists(absoluteManifestPath) then Right(absoluteManifestPath)
+  else Left(s"Manifest file cannot be found: $absoluteManifestPath")
+
+def retrieveManifestXml(path: Path): Either[String, Elem] =
+  val manifestXml: Elem =
+    try XML.loadFile(path.toString)
     catch
       case _: Exception =>
-        return Left(s"Manifest was found at $absoluteManifestPath, but it is not an XML document")
-  }
-  // Validate manifestXml here against Relax NG and Schematron
-  val rnc: String = Source.fromResource("manifest.rnc").getLines().mkString("\n")
-  val relaxngValidationResult: Either[String, Boolean] = validateRnc(manifestXml, rnc)
+        return Left(s"Manifest was found at $path, but it is not an XML document")
+  Right(manifestXml)
+
+def retrieveWitnessData(manifest: Elem, manifestPath: Path): Either[String, Seq[CollateXWitnessData]] =
   val manifestParent: String =
-    absoluteManifestPath.toString.split("/").dropRight(1).mkString("/")
-  val witnessData: Seq[CollateXWitnessData] = {
-    (manifestXml \ "_").map(e => // Element children, but not text() node children
-      // TODO: Trap not-found errors
+    manifestPath.toString.split("/").dropRight(1).mkString("/")
+  val witnessData: Seq[CollateXWitnessData] =
+    (manifest \ "_").map(e => // Element children, but not text() node children
+      // TODO: Trap not-found errors for witness data
       val inputSource: BufferedSource = (e \ "@url").head.toString match {
         case x if x.startsWith("http://") || x.startsWith("https://") => Source.fromURL(x)
         case x =>
@@ -174,7 +196,27 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
         Using(inputSource) { source => source.getLines().mkString(" ") }.get
       )
     )
-  }
   Right(witnessData)
+
+/** Locate manifest from path string and parse into CollateXWitnessData
+  *
+  * @param manifestPathString
+  *   location of manifest (may be remote, local absolute, or local relative)
+  * @return
+  *   sequence of CollateXWitnessData instances
+  */
+def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnessData]] =
+  val witnessData = for {
+    // Retrieve XML manifest
+    manifestPath <- resolveManifestString(manifestPathString)
+    manifestXml <- retrieveManifestXml(manifestPath)
+    // Validate XML manifest with Relax NG and Schematron
+    manifestRnc = Source.fromResource("manifest.rnc").getLines().mkString("\n")
+    relaxngResult <- validateRnc(manifestXml, manifestRnc) // Ignore Right(true)
+    // TODO: Validate against Schematron here
+    // Retrieve witness data as Seq[CollateXWitnessData
+    witnessData <- retrieveWitnessData(manifestXml, manifestPath)
+  } yield witnessData
+  witnessData
 
 case class CollateXWitnessData(siglum: String, content: String)
