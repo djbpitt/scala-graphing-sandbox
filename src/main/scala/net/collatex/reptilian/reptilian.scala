@@ -18,8 +18,6 @@ import com.thaiopensource.datatype.xsd.DatatypeLibraryFactoryImpl
 import com.thaiopensource.util.{PropertyMap, PropertyMapBuilder}
 import com.thaiopensource.validate.prop.rng.RngProperty
 import org.xml.sax.InputSource
-import scala.util.{Try, Success, Failure}
-import java.io.FileInputStream
 
 /** Read data files from supplied path to directory (one file per witness)
   *
@@ -131,8 +129,10 @@ def validateRnc(xmlElem: Elem, rncSchema: String): Either[String, Boolean] =
     throw new RuntimeException("Failed to load RNC schema from string.")
   val xmlString = xmlElem.toString()
   val xmlInput = new InputSource(new StringReader(xmlString))
-  try Right(driver.validate(xmlInput))
-  catch case e: Exception => return Left(s"e.message")
+  val result = driver.validate(xmlInput)
+  result match
+    case true => Right(result)
+    case _ => Left("Validation failed")
 
 /** Locate manifest from path string and parse into CollateXWitnessData
   *
@@ -157,8 +157,7 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
   }
   // Validate manifestXml here against Relax NG and Schematron
   val rnc: String = Source.fromResource("manifest.rnc").getLines().mkString("\n")
-  val relaxngValidationResult = validateRnc(manifestXml, rnc)
-
+  val relaxngValidationResult: Either[String, Boolean] = validateRnc(manifestXml, rnc)
   val manifestParent: String =
     absoluteManifestPath.toString.split("/").dropRight(1).mkString("/")
   val witnessData: Seq[CollateXWitnessData] = {
