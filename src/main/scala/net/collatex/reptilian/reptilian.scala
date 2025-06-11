@@ -22,7 +22,6 @@ import org.xml.sax.InputSource
 
 // Schematron (via XSLT) validation
 import net.sf.saxon.s9api._
-import java.io.File
 import javax.xml.transform.stream.StreamSource
 
 /** Read data files from supplied path to directory (one file per witness)
@@ -179,12 +178,19 @@ def resolveManifestString(manifestPathString: String): Either[String, Path|URL] 
     if os.exists(absoluteManifestPath) then Right(absoluteManifestPath)
     else Left(s"Manifest file cannot be found: $absoluteManifestPath")
 
-def retrieveManifestXml(path: Path|URL): Either[String, Elem] =
+def retrieveManifestXml(manifestSource: Path|URL): Either[String, Elem] =
   val manifestXml: Elem =
-    try XML.loadFile(path.toString)
-    catch
-      case _: Exception =>
-        return Left(s"Manifest was found at $path, but it is not an XML document")
+    manifestSource match
+      case x:Path =>
+        try XML.loadFile(x.toString)
+        catch
+          case _: Exception =>
+            return Left(s"Manifest was found at $x, but could not be loaded as an XML document")
+      case x:URL =>
+        try XML.load(x)
+        catch
+          case _: Exception =>
+            return Left(s"Url $x was found but could not be loaded as an XML document")
   Right(manifestXml)
 
 def retrieveWitnessData(manifest: Elem, manifestPath: Path): Either[String, Seq[CollateXWitnessData]] =

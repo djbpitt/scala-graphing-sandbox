@@ -24,8 +24,14 @@ class manifestTest extends AnyFunSuite:
     val expected = Right(Path("/Users/djb/IdeaProjects/scala-graphing-sandbox/src/main/data/manifest/darwin-manifest.xml"))
     val result = resolveManifestString(localPath)
     assert(result == expected)
-  test("Retrieve manifest from path"):
+  test("Retrieve manifest from manifestSource"):
     val manifestPath = Path("src/main/data/manifest/darwin-manifest.xml", os.pwd)
     val expected = Right(XML.loadFile(manifestPath.toString))
     val result = retrieveManifestXml(manifestPath)
+    assert(result == expected)
+  test("Retrieve manifest from url"): // Remote file must exist and must match local
+    val manifestUrl = URL("http://obdurodon.org/~djb/darwin-manifest.xml")
+    val manifestPath = Path("src/main/data/manifest/darwin-manifest.xml", os.pwd)
+    val expected = Right(XML.loadFile(manifestPath.toString)) // compare to local file
+    val result = retrieveManifestXml(manifestUrl)
     assert(result == expected)
