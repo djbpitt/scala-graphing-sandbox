@@ -3,7 +3,7 @@ package net.collatex.reptilian
 import org.scalatest.funsuite.AnyFunSuite
 import os.Path
 
-import java.net.URL
+import java.net.{URI, URL}
 import scala.xml.XML
 
 // import scala.util.matching.Regex
@@ -12,7 +12,7 @@ class manifestTest extends AnyFunSuite:
   test("Resolve http:// manifest url"):
     val urlString = "http://obdurodon.org"
     val result = resolveManifestString(urlString)
-    val expected = Right(URL("http://obdurodon.org"))
+    val expected = Right(URI.create("http://obdurodon.org").toURL)
     assert(result == expected)
   test("Resolve local relative manifest path"):
     val localPath = "src/main/data/manifest/darwin-manifest.xml"
@@ -30,7 +30,7 @@ class manifestTest extends AnyFunSuite:
     val result = retrieveManifestXml(manifestPath)
     assert(result == expected)
   test("Retrieve manifest from url"): // Remote file must exist and must match local
-    val manifestUrl = URL("http://obdurodon.org/~djb/darwin-manifest.xml")
+    val manifestUrl = URI.create("http://obdurodon.org/~djb/darwin-manifest.xml").toURL
     val manifestPath = Path("src/main/data/manifest/darwin-manifest.xml", os.pwd)
     val expected = Right(XML.loadFile(manifestPath.toString)) // compare to local file
     val result = retrieveManifestXml(manifestUrl)

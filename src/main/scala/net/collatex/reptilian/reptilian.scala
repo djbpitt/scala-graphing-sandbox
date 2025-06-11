@@ -10,7 +10,7 @@ import scala.io.{BufferedSource, Source}
 import cats.syntax.all.*
 
 import java.io.StringReader
-import java.net.URL
+import java.net.{URI, URL}
 
 // Relax NG validation
 import com.thaiopensource.validate.ValidationDriver
@@ -169,7 +169,7 @@ def validateSchematron(xmlElem: Elem, schematronXslt: Elem): String =
 
 def resolveManifestString(manifestPathString: String): Either[String, Path|URL] =
   if manifestPathString.startsWith("http://") || manifestPathString.startsWith("https://") then
-    try Right(new URL(manifestPathString))
+    try Right(URI.create(manifestPathString).toURL)
     catch
       case ex: Exception =>
         Left(s"Invalid URL: ${ex.getMessage}")
@@ -232,6 +232,6 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
     // witnessData <- retrieveWitnessData(manifestXml, manifestPath)
   } yield relaxngResult
   // witnessData
-  Left("Stuff")
+  Left("placeholder")
 
 case class CollateXWitnessData(siglum: String, content: String)
