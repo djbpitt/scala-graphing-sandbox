@@ -2,11 +2,11 @@ package net.collatex.reptilian
 
 import os.Path
 
-import scala.util.{CommandLineParser, Using}
+import scala.util.{CommandLineParser, Try, Using}
 import scala.util.matching.Regex
 import scala.xml.*
 import scala.xml.dtd.DocType
-import scala.io.{BufferedSource, Source}
+import scala.io.Source
 import cats.syntax.all.*
 
 import java.io.StringReader
@@ -196,32 +196,37 @@ def retrieveManifestXml(manifestSource: Path | URL): Either[String, Elem] =
 def retrieveWitnessData(manifest: Elem, manifestSource: Path | URL): Either[String, Seq[CollateXWitnessData]] =
   val manifestParent: String =
     manifestSource.toString.split("/").dropRight(1).mkString("/")
-  val witnessData: Seq[CollateXWitnessData] =
-    (manifest \ "_").map(e => // Element children, but not text() node children
-      // TODO: Trap not-found errors for witness data
-      val inputSource = (e \ "@url").head.toString match {
-        // always a string, but must distinguish whether manifest is Path or URL
-        case witnessUrl if witnessUrl.startsWith("http://") || witnessUrl.startsWith("https://") =>
-          Source.fromURL(witnessUrl)
-        case witnessPath => // string, but might be relative to Path or URL
-          val absoluteSource = manifestSource match
-            case _: URL =>
-              val absoluteUrl = URI.create(Array(manifestParent, witnessPath).mkString("/")).toURL
-              Source.fromURL(absoluteUrl)
-            case _: Path =>
-              // where manifest is remote http, paths to witnesses must be relative to manifest
-              // TODO: Should we support absolute remote paths, e.g., a manifest at a url
-              //   that points to an absolute location on the remote site?
-              val absolutePath = os.Path(witnessPath, os.Path(manifestParent)).toString
-              Source.fromFile(absolutePath)
-          absoluteSource
-      }
-      CollateXWitnessData(
-        (e \ "@siglum").head.toString,
-        Using(inputSource) { source => source.getLines().mkString(" ") }.get
-      )
-    )
-  Right(witnessData)
+
+  val results: Seq[Either[String, CollateXWitnessData]] =
+    (manifest \ "_").map { e =>
+      val siglum = (e \ "@siglum").headOption.map(_.text).getOrElse("")
+      val maybeWitness: Either[String, CollateXWitnessData] = Try {
+        // Try (unlike try) does not throw an immediate exception; it wraps
+        //   the code and returns Success(value) or Failure(exception)
+        val witnessUrlAttr = (e \ "@url").head.text // might be url or file system path (relative to manifest)
+        val inputSource = witnessUrlAttr match
+          case remote if remote.startsWith("http://") || remote.startsWith("https://") =>
+            Source.fromURL(remote)
+          case pathLike =>
+            manifestSource match // it's a relative path, but relative to url or to file system resource?
+              case baseUrl: URL =>
+                val resolvedUrl = baseUrl.toURI.resolve(witnessUrlAttr)
+                Source.fromURI(resolvedUrl)
+              case basePath: Path =>
+                val resolvedPath = os.Path(pathLike, os.Path(manifestParent))
+                Source.fromFile(resolvedPath.toString)
+        Using(inputSource) { source =>
+          CollateXWitnessData(siglum, source.getLines().mkString(" "))
+        }.get // Throws if resource can't be read
+      }.toEither.left.map(ex => s"Error reading witness '$siglum' at ${(e \ "@url").head.text}: ${ex.getMessage}")
+
+      maybeWitness
+    }
+
+  val (errors, witnesses) = results.partitionMap(identity)
+
+  if errors.nonEmpty then Left(errors.mkString("\n"))
+  else Right(witnesses)
 
 /** Locate manifest from path string and parse into CollateXWitnessData
   *
