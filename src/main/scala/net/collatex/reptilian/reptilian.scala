@@ -167,7 +167,7 @@ def validateSchematron(xmlElem: Elem, schematronXslt: Elem): String =
   // Output result
   serializer.toString
 
-def resolveManifestString(manifestPathString: String): Either[String, Path|URL] =
+def resolveManifestString(manifestPathString: String): Either[String, Path | URL] =
   if manifestPathString.startsWith("http://") || manifestPathString.startsWith("https://") then
     try Right(URI.create(manifestPathString).toURL)
     catch
@@ -178,32 +178,43 @@ def resolveManifestString(manifestPathString: String): Either[String, Path|URL] 
     if os.exists(absoluteManifestPath) then Right(absoluteManifestPath)
     else Left(s"Manifest file cannot be found: $absoluteManifestPath")
 
-def retrieveManifestXml(manifestSource: Path|URL): Either[String, Elem] =
+def retrieveManifestXml(manifestSource: Path | URL): Either[String, Elem] =
   val manifestXml: Elem =
     manifestSource match
-      case x:Path =>
+      case x: Path =>
         try XML.loadFile(x.toString)
         catch
           case _: Exception =>
             return Left(s"Manifest was found at $x, but could not be loaded as an XML document")
-      case x:URL =>
+      case x: URL =>
         try XML.load(x)
         catch
           case _: Exception =>
             return Left(s"Url $x was found but could not be loaded as an XML document")
   Right(manifestXml)
 
-def retrieveWitnessData(manifest: Elem, manifestPath: Path): Either[String, Seq[CollateXWitnessData]] =
+def retrieveWitnessData(manifest: Elem, manifestSource: Path | URL): Either[String, Seq[CollateXWitnessData]] =
   val manifestParent: String =
-    manifestPath.toString.split("/").dropRight(1).mkString("/")
+    manifestSource.toString.split("/").dropRight(1).mkString("/")
   val witnessData: Seq[CollateXWitnessData] =
     (manifest \ "_").map(e => // Element children, but not text() node children
       // TODO: Trap not-found errors for witness data
-      val inputSource: BufferedSource = (e \ "@url").head.toString match {
-        case x if x.startsWith("http://") || x.startsWith("https://") => Source.fromURL(x)
-        case x =>
-          val absolutePath = os.Path(x, os.Path(manifestParent)).toString
-          Source.fromFile(absolutePath)
+      val inputSource = (e \ "@url").head.toString match {
+        // always a string, but must distinguish whether manifest is Path or URL
+        case witnessUrl if witnessUrl.startsWith("http://") || witnessUrl.startsWith("https://") =>
+          Source.fromURL(witnessUrl)
+        case witnessPath => // string, but might be relative to Path or URL
+          val absoluteSource = manifestSource match
+            case _: URL =>
+              val absoluteUrl = URI.create(Array(manifestParent, witnessPath).mkString("/")).toURL
+              Source.fromURL(absoluteUrl)
+            case _: Path =>
+              // where manifest is remote http, paths to witnesses must be relative to manifest
+              // TODO: Should we support absolute remote paths, e.g., a manifest at a url
+              //   that points to an absolute location on the remote site?
+              val absolutePath = os.Path(witnessPath, os.Path(manifestParent)).toString
+              Source.fromFile(absolutePath)
+          absoluteSource
       }
       CollateXWitnessData(
         (e \ "@siglum").head.toString,
@@ -229,9 +240,8 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
     relaxngResult <- validateRnc(manifestXml, manifestRnc) // Ignore Right(true)
     // TODO: Validate against Schematron here
     // Retrieve witness data as Seq[CollateXWitnessData
-    // witnessData <- retrieveWitnessData(manifestXml, manifestPath)
-  } yield relaxngResult
-  // witnessData
-  Left("placeholder")
+    witnessData <- retrieveWitnessData(manifestXml, manifestPath)
+  } yield witnessData
+  witnessData
 
 case class CollateXWitnessData(siglum: String, content: String)
