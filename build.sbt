@@ -2,8 +2,12 @@ ThisBuild / version := "0.1.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "3.3.3"
 
+// Don't accept IntelliJ's suggestoin to replace `xs @ _*` with `xs*`, where
+// it disparages the former as Scala 2 syntax with -Xsource:3 . Accepting the
+// change somehow expels the W3C datatype library (needed by Relax NG) from
+// the build. djb 2025-06-11
 ThisBuild / assembly / assemblyMergeStrategy := {
-  case PathList("META-INF", _*) => MergeStrategy.discard
+  case PathList("META-INF", xs @ _*) => MergeStrategy.discard
   case x                        => MergeStrategy.first
 }
 
