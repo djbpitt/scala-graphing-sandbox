@@ -10,6 +10,7 @@ import scala.io.{BufferedSource, Source}
 import cats.syntax.all.*
 
 import java.io.StringReader
+import java.net.URL
 
 // Relax NG validation
 import com.thaiopensource.validate.ValidationDriver
@@ -134,9 +135,11 @@ def validateRnc(xmlElem: Elem, rncSchema: String): Either[String, Boolean] =
     Left("Failed to load RNC schema from string.")
   val xmlInput = new InputSource(new StringReader(xmlElem.toString()))
   val result = driver.validate(xmlInput)
-  result match
-    case true => Right(result)
-    case _    => Left("RNC validation failed")
+  if (result) {
+    Right(result)
+  } else {
+    Left("RNC validation failed")
+  }
 
 // TODO: Schematron validation in progress, not yet integrated or tested
 def validateSchematron(xmlElem: Elem, schematronXslt: Elem): String =
@@ -165,13 +168,18 @@ def validateSchematron(xmlElem: Elem, schematronXslt: Elem): String =
   // Output result
   serializer.toString
 
-def resolveManifestString(manifestPathString: String): Either[String, Path] =
-  // TODO: Manifest could be remote http:// or https:// resource; currently assumes local
-  val absoluteManifestPath = os.Path(manifestPathString, os.pwd)
-  if os.exists(absoluteManifestPath) then Right(absoluteManifestPath)
-  else Left(s"Manifest file cannot be found: $absoluteManifestPath")
+def resolveManifestString(manifestPathString: String): Either[String, Path|URL] =
+  if manifestPathString.startsWith("http://") || manifestPathString.startsWith("https://") then
+    try Right(new URL(manifestPathString))
+    catch
+      case ex: Exception =>
+        Left(s"Invalid URL: ${ex.getMessage}")
+  else
+    val absoluteManifestPath = os.Path(manifestPathString, os.pwd)
+    if os.exists(absoluteManifestPath) then Right(absoluteManifestPath)
+    else Left(s"Manifest file cannot be found: $absoluteManifestPath")
 
-def retrieveManifestXml(path: Path): Either[String, Elem] =
+def retrieveManifestXml(path: Path|URL): Either[String, Elem] =
   val manifestXml: Elem =
     try XML.loadFile(path.toString)
     catch
@@ -215,8 +223,9 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
     relaxngResult <- validateRnc(manifestXml, manifestRnc) // Ignore Right(true)
     // TODO: Validate against Schematron here
     // Retrieve witness data as Seq[CollateXWitnessData
-    witnessData <- retrieveWitnessData(manifestXml, manifestPath)
-  } yield witnessData
-  witnessData
+    // witnessData <- retrieveWitnessData(manifestXml, manifestPath)
+  } yield relaxngResult
+  // witnessData
+  Left("Stuff")
 
 case class CollateXWitnessData(siglum: String, content: String)
