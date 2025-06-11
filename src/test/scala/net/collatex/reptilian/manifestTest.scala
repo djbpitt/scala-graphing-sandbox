@@ -4,6 +4,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import os.Path
 
 import java.net.URL
+import scala.xml.XML
 
 // import scala.util.matching.Regex
 
@@ -22,4 +23,9 @@ class manifestTest extends AnyFunSuite:
     val localPath = "/Users/djb/IdeaProjects/scala-graphing-sandbox/src/main/data/manifest/darwin-manifest.xml"
     val expected = Right(Path("/Users/djb/IdeaProjects/scala-graphing-sandbox/src/main/data/manifest/darwin-manifest.xml"))
     val result = resolveManifestString(localPath)
+    assert(result == expected)
+  test("Retrieve manifest from path"):
+    val manifestPath = Path("src/main/data/manifest/darwin-manifest.xml", os.pwd)
+    val expected = Right(XML.loadFile(manifestPath.toString))
+    val result = retrieveManifestXml(manifestPath)
     assert(result == expected)
