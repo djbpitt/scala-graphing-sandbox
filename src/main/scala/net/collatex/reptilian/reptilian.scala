@@ -106,8 +106,9 @@ def createGTa(tokensPerWitnessLimit: Int) = {
       println("Continue here")
   }
 
-def previewWitness(wd: Seq[CollateXWitnessData]): Either[String, Seq[String]] =
+def previewWitness(wd: Seq[CollateXWitnessData]): Either[String, Seq[String]] = {
   Right(wd.map(e => List(e.siglum, e.content.slice(0, 30)).mkString(": ")))
+}
 
 def parseArgs(args: Seq[String]): Either[String, (String, Boolean)] =
   if args.isEmpty then return Left("""
@@ -196,7 +197,6 @@ def retrieveManifestXml(manifestSource: Path | URL): Either[String, Elem] =
 def retrieveWitnessData(manifest: Elem, manifestSource: Path | URL): Either[String, Seq[CollateXWitnessData]] =
   val manifestParent: String =
     manifestSource.toString.split("/").dropRight(1).mkString("/")
-
   val results: Seq[Either[String, CollateXWitnessData]] =
     (manifest \ "_").map { e =>
       val siglum = (e \ "@siglum").headOption.map(_.text).getOrElse("")
@@ -210,10 +210,10 @@ def retrieveWitnessData(manifest: Elem, manifestSource: Path | URL): Either[Stri
           case pathLike =>
             manifestSource match // it's a relative path, but relative to url or to file system resource?
               case baseUrl: URL =>
-                val resolvedUrl = baseUrl.toURI.resolve(witnessUrlAttr)
-                Source.fromURI(resolvedUrl)
+                val resolvedUrl = URI.create(baseUrl.toString).resolve(pathLike).toURL
+                Source.fromURL(resolvedUrl) // Must be URL, not URI
               case basePath: Path =>
-                val resolvedPath = os.Path(pathLike, os.Path(manifestParent))
+                val resolvedPath = os.Path(basePath, os.Path(manifestParent))
                 Source.fromFile(resolvedPath.toString)
         Using(inputSource) { source =>
           CollateXWitnessData(siglum, source.getLines().mkString(" "))
