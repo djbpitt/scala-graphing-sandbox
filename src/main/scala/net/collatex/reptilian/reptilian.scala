@@ -142,31 +142,30 @@ def validateRnc(xmlElem: Elem, rncSchema: String): Either[String, Boolean] =
   }
 
 // TODO: Schematron validation in progress, not yet integrated or tested
-def validateSchematron(xmlElem: Elem, schematronXslt: Elem): String =
-  val processor = new Processor(false) // Saxon processor
-  val compiler = processor.newXsltCompiler()
-  val builder = processor.newDocumentBuilder()
-
-  // Load compiled Schematron validator (from Schxslt)
-  val xsltExecutable =
-    compiler.compile(new StreamSource(new StringReader(schematronXslt.toString())))
-  val transformer = xsltExecutable.load()
-
-  // Load the XML to validate
-  val xmlDoc = builder.build(new StreamSource(new StringReader(xmlElem.toString())))
-  transformer.setInitialContextNode(xmlDoc)
-
-  // Output the SVRL (Schematron Validation Report Language)
-  val serializer = processor.newSerializer(System.out)
-  serializer.setOutputProperty(Serializer.Property.METHOD, "xml")
-  serializer.setOutputProperty(Serializer.Property.INDENT, "yes")
-  transformer.setDestination(serializer)
-
-  // Run validation
-  transformer.transform()
-
-  // Output result
-  serializer.toString
+//def validateSchematron(xmlElem: Elem, schematronXslt: Elem): String =
+//  val processor = new Processor(false) // Saxon processor
+//  val compiler = processor.newXsltCompiler()
+//  val builder = processor.newDocumentBuilder()
+//
+//  // Load compiled Schematron validator (from Schxslt)
+//  val xsltExecutable = compiler.compile(new StreamSource(new StringReader(schematronXslt.toString())))
+//  val transformer = xsltExecutable.load()
+//
+//  // Load the XML to validate
+//  val xmlDoc = builder.build(new StreamSource(new StringReader(xmlElem.toString())))
+//  transformer.setInitialContextNode(xmlDoc)
+//
+//  // Output the SVRL (Schematron Validation Report Language)
+//  val serializer = processor.newSerializer(System.out)
+//  serializer.setOutputProperty(Serializer.Property.METHOD, "xml")
+//  serializer.setOutputProperty(Serializer.Property.INDENT, "yes")
+//  transformer.setDestination(serializer)
+//
+//  transformer.transform()
+//
+//  // If you want to return the SVRL instead, capture it from the transformer destination
+//  true
+//}.toEither.left.map(_.getMessage)
 
 def resolveManifestString(manifestPathString: String): Either[String, Path | URL] =
   if manifestPathString.startsWith("http://") || manifestPathString.startsWith("https://") then
@@ -227,6 +226,12 @@ def retrieveWitnessData(manifest: Elem, manifestSource: Path | URL): Either[Stri
   if errors.nonEmpty then Left(errors.mkString("\n"))
   else Right(witnesses)
 
+// Helper to extract root Elem if possible
+def extractRootElement(node: Node): Option[Elem] = node match {
+  case e: Elem => Some(e)
+  case other => other.child.collectFirst { case e: Elem => e }
+}
+
 /** Locate manifest from path string and parse into CollateXWitnessData
   *
   * @param manifestPathString
@@ -239,10 +244,23 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
     // Retrieve XML manifest
     manifestPath <- resolveManifestString(manifestPathString)
     manifestXml <- retrieveManifestXml(manifestPath)
-    // Validate XML manifest with Relax NG and Schematron
+    // Validate XML manifest with Relax NG
     manifestRnc = Source.fromResource("manifest.rnc").getLines().mkString("\n")
-    relaxngResult <- validateRnc(manifestXml, manifestRnc) // Ignore Right(true)
-    // TODO: Validate against Schematron here
+    _ <- validateRnc(manifestXml, manifestRnc) // Ignore success
+    // Validate XML manifest with Schematron
+
+    // Safely load and parse the Schematron XSLT resource as Either
+//    val schematronXsltEither: Either[String, Elem] =
+//      Using(Source.fromResource("manifest-sch-compiled.xsl")) { source =>
+//        val xmlString = source.mkString
+//        XML.loadString(xmlString)
+//      }.toEither
+//        .left.map(t => s"Failed to read Schematron XSLT resource: ${t.getMessage}")
+//        .flatMap { node =>
+//          extractRootElement(node).toRight("Unable to parse Schematron XSLT or locate root element")
+//        }
+//    schematronXslt <- schematronXsltEither
+//    _ <- validateSchematron(manifestXml, schematronXslt) // Ignore success
     // Retrieve witness data as Seq[CollateXWitnessData
     witnessData <- retrieveWitnessData(manifestXml, manifestPath)
   } yield witnessData
