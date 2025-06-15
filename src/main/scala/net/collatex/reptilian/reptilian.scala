@@ -23,7 +23,9 @@ import org.xml.sax.InputSource
 // Schematron (via XSLT) validation
 import net.sf.saxon.s9api.{Processor, Serializer}
 import javax.xml.transform.stream.StreamSource
-import scala.jdk.CollectionConverters._
+
+// Mimic XPath normalize-space()
+extension (s: String) def normalizeSpace: String = s.replaceAll("\\s+", " ").trim
 
 /** Read data files from supplied path to directory (one file per witness)
   *
@@ -178,9 +180,11 @@ def validateSchematron(
           // Capture output in memory
           val outputStream = new java.io.ByteArrayOutputStream()
           transformer.setDestination(
-            processor.newSerializer(outputStream).tap(
-              _.setOutputProperty(Serializer.Property.METHOD, "xml")
-            )
+            processor
+              .newSerializer(outputStream)
+              .tap(
+                _.setOutputProperty(Serializer.Property.METHOD, "xml")
+              )
           )
 
           // Perform the transformation
@@ -191,8 +195,8 @@ def validateSchematron(
 
           // Extract failed assertions and reports
           val failedMessages = (svrlXml \\ "failed-assert").map(node =>
-            (node \ "text").text.trim
-          ) ++ (svrlXml \\ "successful-report").map(node => (node \ "text").text.trim)
+            (node \ "text").text.normalizeSpace
+          ) ++ (svrlXml \\ "successful-report").map(node => (node \ "text").text.normalizeSpace)
 
           if (failedMessages.isEmpty) Right(true)
           else Left(failedMessages)
@@ -284,7 +288,7 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
     manifestXml <- retrieveManifestXml(manifestPath)
     manifestRnc = Source.fromResource("manifest.rnc").getLines().mkString("\n")
     _ <- validateRnc(manifestXml, manifestRnc)
-    _ <- validateSchematron(manifestXml, "manifest-sch-compiled.xsl", manifestUri).left.map(_.mkString(", "))
+    _ <- validateSchematron(manifestXml, "manifest-sch-compiled.xsl", manifestUri).left.map(_.mkString("\n"))
     witnessData <- retrieveWitnessData(manifestXml, manifestPath)
   } yield witnessData
 
