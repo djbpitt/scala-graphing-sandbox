@@ -45,18 +45,23 @@ def createGTa(tokensPerWitnessLimit:Int) = {
   (sigla, gTa)
 }
 @main def main(): Unit =
-  val tokensPerWitnessLimit = 499
-  val (sigla: List[Siglum], gTa: Vector[TokenEnum]) = createGTa(tokensPerWitnessLimit)
+    for (x <- 1 to 500)
+      println(s"Iteration $x")
+      val tokensPerWitnessLimit = x
+      val (sigla: List[Siglum], gTa: Vector[TokenEnum]) = createGTa(tokensPerWitnessLimit)
 
-  /** Create alignment ribbon
-    */
-  val root: AlignmentRibbon = createAlignmentRibbon(sigla, gTa)
+      /** Create alignment ribbon
+      */
+      val root: AlignmentRibbon = createAlignmentRibbon(sigla, gTa)
 
-  // To write unaligned zone data to separate JSON files during
-  // development run writePhaseTwoJSONData(root) here
+      // To write unaligned zone data to separate JSON files during
+      // development run writePhaseTwoJSONData(root) here
 
-  val doctypeHtml: DocType = DocType("html")
-  val horizontalRibbons = createHorizontalRibbons(root, sigla.toSet, gTa)
-  val horizontalRibbonsPath =
-    os.pwd / "src" / "main" / "outputs" / "horizontal-ribbons-full.xhtml" // "horizontal-ribbons.xhtml"
-  scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true, doctypeHtml)
+      val doctypeHtml: DocType = DocType("html")
+      val horizontalRibbons = createHorizontalRibbons(root, sigla.toSet, gTa)
+      val horizontalRibbonsPath =
+      os.pwd / "src" / "main" / "outputs" / "horizontal-ribbons-full.xhtml" // "horizontal-ribbons.xhtml"
+      scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true, doctypeHtml)
+
+
+
