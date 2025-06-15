@@ -36,7 +36,7 @@
       <!-- Currently ignores fragment identifiers and query strings       -->
       <!-- ============================================================== -->
 
-      <sch:let name="my-base-uri" value="string((document-uri(/), base-uri(/), '')[. ne ''][1])"/>
+      <sch:let name="my-base-uri" value="string((document-uri(/), base-uri(/))[. ne ''][1])"/>
 
       <sch:let name="my-resolved-uri" value="resolve-uri(., $my-base-uri)"/>
 
