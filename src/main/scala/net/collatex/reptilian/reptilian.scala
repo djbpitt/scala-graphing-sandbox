@@ -24,7 +24,12 @@ import org.xml.sax.InputSource
 import net.sf.saxon.s9api.{Processor, Serializer}
 import javax.xml.transform.stream.StreamSource
 
-// Mimic XPath normalize-space()
+/** Mimic XPath normalize-space()
+  *
+  *   1. Convert all newlines to space characters
+  *   1. Collapse all sequences of space characters to single space
+  *   1. Remove leading and trailing space characters
+  */
 extension (s: String) def normalizeSpace: String = s.replaceAll("\\s+", " ").trim
 
 /** Read data files from supplied path to directory (one file per witness)
