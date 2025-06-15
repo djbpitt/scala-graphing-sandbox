@@ -239,6 +239,24 @@ def createAlignedPatternsPhaseTwo(
   println("blocks as token ranges sorted by last")
   debugBlockOverlapSortedByLast.foreach(x => println(x.toString()+" "+x.head.nString))
 
+  def checkOverlap(first: TokenRange, second: TokenRange) = {
+    println("checking overlap between: "+first+" :"+second)
+    second.start < first.until
+  }
+
+  // we go over both sets of sorted blocks and identify the overlapping blocks and remove them
+  // we find the conflicting pairs first and remove both parts
+
+  if debugBlockOverlapSortedByHead.size>1 then
+    val slidingWindow = debugBlockOverlapSortedByHead.sliding(2)
+    val containsOverlap = slidingWindow.filter(p => checkOverlap(p.head.last, p.last.head)).toList
+    if containsOverlap.nonEmpty then {
+      println("The overlapping ones sorted by head are: "+containsOverlap)
+      throw RuntimeException("STOP!")
+    }
+
+
+
   // patterns.map(_.occurrences.head.patternTr.tString).foreach(e => println(s"Pattern  $e"))
   patterns
 
