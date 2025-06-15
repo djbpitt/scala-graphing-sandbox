@@ -45,9 +45,11 @@ def createGTa(tokensPerWitnessLimit:Int) = {
   (sigla, gTa)
 }
 @main def main(): Unit =
+  // 390 is the first case that causes a crash...
+  // a split token crash to be specific.
   // 999 causes a crash
   // 4000 seemed to be a crash
-  val tokensPerWitnessLimit = 5000
+  val tokensPerWitnessLimit = 390
   val (sigla: List[Siglum], gTa: Vector[TokenEnum]) = createGTa(tokensPerWitnessLimit)
 
   /** Create alignment ribbon
