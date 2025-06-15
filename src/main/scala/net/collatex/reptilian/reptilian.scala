@@ -109,10 +109,27 @@ def createGTa(tokensPerWitnessLimit: Int) = {
       println("Continue here")
   }
 
+/** Display siglum and initial slice of text of all witnesses
+  *
+  * Used when debugging manifest processing. Active if second command line argument is "debug".
+  *
+  * @param wd
+  *   Sequence of CollateXWitnessData instances, one per witness
+  * @return
+  *   Sequence of strings if successful; string with error report if not.
+  */
 def previewWitness(wd: Seq[CollateXWitnessData]): Either[String, Seq[String]] = {
   Right(wd.map(e => List(e.siglum, e.content.slice(0, 30)).mkString(": ")))
 }
 
+/** Parse command line arguments
+  *
+  * @param args
+  *   First argument is treated as path or url for manifest. Second, if present, turns on debug reporting if equal to
+  *   "debug"; otherwise ignored.
+  * @return
+  *   Tuple of manifest path as string and debug as Boolean
+  */
 def parseArgs(args: Seq[String]): Either[String, (String, Boolean)] =
   if args.isEmpty then return Left("""
               |Usage: java -jar manifest.jar manifest.xml [debug]
@@ -123,8 +140,15 @@ def parseArgs(args: Seq[String]): Either[String, (String, Boolean)] =
   val debug: Boolean = args.size > 1 && args(1) == "debug"
   Right(args.head, debug)
 
-/** Validate an XML string against a Relax NG XML schema (files) */
-
+/** Validate manifest xml against a Relax NG XML schema
+  *
+  * @param xmlElem
+  *   manifest as xml document (XML.Elem)
+  * @param rncSchema
+  *   Relax NG compact systax schema as string
+  * @return
+  *   Boolean result, which is ignored, if success; error report if not.
+  */
 def validateRnc(xmlElem: Elem, rncSchema: String): Either[String, Boolean] =
   // TODO: Get validation error report from Jing, instead of just Boolean
   val datatypeLibraryFactory = new DatatypeLibraryFactoryImpl()
@@ -144,6 +168,17 @@ def validateRnc(xmlElem: Elem, rncSchema: String): Either[String, Boolean] =
     Left("RNC validation failed")
   }
 
+/** Validate manifest against precompiled xslt version of Schematron schema
+  *
+  * @param xml
+  *   manifest as xml element
+  * @param xsltResourcePath
+  *   Location of precompiled xslt version of Schematron, supplied as string
+  * @param baseUri
+  *   Determined from computed manifest uri
+  * @return
+  *   Boolean result, which is ignored, if success; error report (from Schematron report and assert statements) if not.
+  */
 def validateSchematron(
     xml: Elem,
     xsltResourcePath: String,
@@ -212,6 +247,13 @@ def validateSchematron(
   }
 }
 
+/** Resolves manifest location (input as string) as absolute path (if local) or URL (if remote)
+  *
+  * @param manifestPathString
+  *   Location of manifest from command line (absolute file system path, relative file system path, or remote url)
+  * @return
+  *   Absolute file system path or url if success; string with error report if not.
+  */
 def resolveManifestString(manifestPathString: String): Either[String, Path | URL] =
   if manifestPathString.startsWith("http://") || manifestPathString.startsWith("https://") then
     try Right(URI.create(manifestPathString).toURL)
@@ -223,6 +265,13 @@ def resolveManifestString(manifestPathString: String): Either[String, Path | URL
     if os.exists(absoluteManifestPath) then Right(absoluteManifestPath)
     else Left(s"Manifest file cannot be found: $absoluteManifestPath")
 
+/** Retrieves manifest from eith file system path or remote url
+  *
+  * @param manifestSource
+  *   Location of manifest as file system path (absolute or relative to manifest file) or remote url
+  * @return
+  *   Manifest as xml if successful; error report as string if not.
+  */
 def retrieveManifestXml(manifestSource: Path | URL): Either[String, Elem] =
   val manifestXml: Elem =
     manifestSource match
@@ -238,6 +287,15 @@ def retrieveManifestXml(manifestSource: Path | URL): Either[String, Elem] =
             return Left(s"Url $x was found but could not be loaded as an XML document")
   Right(manifestXml)
 
+/** Retrieves witness data from witness sources in manifest
+  *
+  * @param manifest
+  *   manifest as xml document
+  * @param manifestSource
+  *   location of manifest: file system path or remote (http:// or https://) url.
+  * @return
+  *   Sequence of CollateXWitnessData instances if successful; otherwise error messages as string
+  */
 def retrieveWitnessData(manifest: Elem, manifestSource: Path | URL): Either[String, Seq[CollateXWitnessData]] =
   val results: Seq[Either[String, CollateXWitnessData]] =
     (manifest \ "_").map { e =>
@@ -271,12 +329,16 @@ def retrieveWitnessData(manifest: Elem, manifestSource: Path | URL): Either[Stri
   if errors.nonEmpty then Left(errors.mkString("\n"))
   else Right(witnesses)
 
-/** Locate manifest from path string and parse into CollateXWitnessData
+/** Locates manifest from path string and reads witnesses into CollateXWitnessData
+  *
+  * Combines helper methods into for comprehension to 1) resolve the manifest path string; 2) load the manifest as xml;
+  * 3) validate the manifest with Relax NG and Schematron; and 4) retrieve witness data from witness sources identified
+  * in manifest.
   *
   * @param manifestPathString
   *   location of manifest (may be remote, local absolute, or local relative)
   * @return
-  *   sequence of CollateXWitnessData instances
+  *   sequence of CollateXWitnessData instances if success; string with error message if failure
   */
 def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnessData]] =
   for {
