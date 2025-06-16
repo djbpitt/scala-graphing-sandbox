@@ -8,7 +8,7 @@ import scala.util.matching.Regex
 import scala.xml.*
 import scala.xml.dtd.DocType
 import scala.io.Source
-import java.io.{InputStream, StringReader}
+import java.io.{InputStream, PrintWriter, StringReader}
 import java.net.{URI, URL}
 
 // Relax NG validation
@@ -127,20 +127,23 @@ def createGTaManifest(data: Seq[CollateXWitnessData], tokensPerWitnessLimit: Int
       val (data, debug) = e
       val gTa = createGTaManifest(data, tokensPerWitnessLimit)
       if debug then gTa.foreach(println)
-      // FIXME: Visualization module is not yet able to manage sigla that don't match w properties in the gTa
-      val sigla: List[Siglum] = data.indices.map(e => Siglum(e.toString)).toList // hack (see above)
+      val gTaSigla: List[Siglum] = data.indices.map(e => Siglum(e.toString)).toList
+      val displaySigla: List[Siglum] = data.map(e => Siglum(e.siglum)).toList
       // NB: Code below here is copied from main() except for ribbon filename
       // Create alignment ribbon
-      val root: AlignmentRibbon = createAlignmentRibbon(sigla, gTa)
-      // To write unaligned zone data to separate JSON files during
-      // development run writePhaseTwoJSONData(root) here
-
+      val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
+      // Write to stdout
+      val writer = new PrintWriter(Console.out)
       val doctypeHtml: DocType = DocType("html")
-      val horizontalRibbons = createHorizontalRibbons(root, sigla.toSet, gTa)
-      val horizontalRibbonsPath =
-        os.pwd / "src" / "main" / "outputs" / "manifest-horizontal-ribbons-full.xhtml"
-      scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true, doctypeHtml)
-
+      val horizontalRibbons = createHorizontalRibbons(root, gTaSigla, displaySigla, gTa)
+      XML.write(
+        writer,
+        horizontalRibbons,        // xml.Node
+        "UTF-8",                  // encoding (for declaration)
+        xmlDecl = true,           // emit <?xml ... ?>
+        doctype = doctypeHtml     // emit <!DOCTYPE html>
+      )
+      writer.flush()
   }
 
 /** Display siglum and initial slice of text of all witnesses

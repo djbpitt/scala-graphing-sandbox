@@ -5,7 +5,7 @@ import net.collatex.util.Hypergraph
 import scala.collection.mutable.ListBuffer
 import scala.xml.dtd.DocType
 
-def createSecondAlignmentPhaseVisualization(hg: Hypergraph[EdgeLabel, TokenRange]): Unit =
+def createSecondAlignmentPhaseVisualization(hg: Hypergraph[EdgeLabel, TokenRange], displaySigla: List[Siglum]): Unit =
   val gTa = hg.verticesIterator.next.ta
   val id: String = hg.hyperedges.head.label.toString // unique id for hg
   // println(s"hypergraph: $hg")
@@ -33,8 +33,8 @@ def createSecondAlignmentPhaseVisualization(hg: Hypergraph[EdgeLabel, TokenRange
     .to(ListBuffer)
   val result = AlignmentRibbon(aps)
   // aps.foreach(e => println(e))
-  val localSigla = (0 until 6).map(e => Siglum(intToSiglum(e))).toSet
-  val horizontalRibbons = createHorizontalRibbons(result, localSigla, gTa)
+  val localSigla = (0 until 6).map(e => Siglum(intToSiglum(e))).toList
+  val horizontalRibbons = createHorizontalRibbons(result, localSigla, displaySigla, gTa)
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html")
   val horizontalRibbonsPath =
     os.pwd / "src" / "main" / "outputs" / s"secondAlignmentPhase-$id.xhtml" // unique names

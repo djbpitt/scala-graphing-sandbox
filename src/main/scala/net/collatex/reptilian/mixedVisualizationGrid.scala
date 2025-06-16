@@ -122,7 +122,7 @@ def computeAlignmentNodeRenderingWidth(n: AlignmentPoint): Double =
 
 def createHorizNodeData(
     nodeSequence: Vector[NumberedNode],
-    sigla: Set[Siglum]
+    sigla: List[Siglum]
 ): Vector[HorizNodeData] =
   @tailrec
   def nextNode(
@@ -141,7 +141,7 @@ def createHorizNodeData(
       val missing: Vector[Siglum] = {
 //        println(s"sigla on node: ${nodes.head.node}")
 //        println(s"sigla from val: $sigla")
-        val result = findMissingWitnesses(nodes.head.node, sigla)
+        val result = findMissingWitnesses(nodes.head.node, sigla.toSet)
         result
       }
       val newNode =
@@ -233,7 +233,8 @@ def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   */
 def createHorizontalRibbons(
     root: AlignmentRibbon,
-    sigla: Set[Siglum],
+    sigla: List[Siglum],
+    displaySigla: List[Siglum],
     gTa: Vector[TokenEnum]
 ): scala.xml.Node =
   /** Constants */
@@ -294,12 +295,12 @@ def createHorizontalRibbons(
 
   // FIXME: Get rid of hard-coded sigla values
   val witnessToGradient: Map[Siglum, String] = Map(
-    Siglum("darwin1859.txt") -> "url(#peruGradient)",
-    Siglum("darwin1860.txt") -> "url(#orangeGradient)",
-    Siglum("darwin1861.txt") -> "url(#yellowGradient)",
-    Siglum("darwin1866.txt") -> "url(#limegreenGradient)",
-    Siglum("darwin1869.txt") -> "url(#dodgerblueGradient)",
-    Siglum("darwin1872.txt") -> "url(#violetGradient)",
+//    Siglum("darwin1859.txt") -> "url(#peruGradient)",
+//    Siglum("darwin1860.txt") -> "url(#orangeGradient)",
+//    Siglum("darwin1861.txt") -> "url(#yellowGradient)",
+//    Siglum("darwin1866.txt") -> "url(#limegreenGradient)",
+//    Siglum("darwin1869.txt") -> "url(#dodgerblueGradient)",
+//    Siglum("darwin1872.txt") -> "url(#violetGradient)",
     Siglum("0") -> "url(#peruGradient)",
     Siglum("1") -> "url(#orangeGradient)",
     Siglum("2") -> "url(#yellowGradient)",
@@ -310,10 +311,7 @@ def createHorizontalRibbons(
 
   // FIXME: Hard-coded for darwin18xx.txt or single-character sigla
   def formatSiglum(siglum: Siglum): String =
-    val result =
-      if siglum.value.length == 1
-      then intToSiglum(siglum.value.toInt).slice(8, 10)
-      else siglum.value.slice(8, 10)
+    val result = displaySigla(siglum.value.toInt).value
     result
 
   def plotRect(vOffset: Double, node: HorizNodeData, fillColor: String, top: Double) =
@@ -426,7 +424,7 @@ def createHorizontalRibbons(
 
     val leftYPosMap = computeRibbonYPos(precedingNode)
     val rightYPosMap = computeRibbonYPos(currentNode)
-    val ribbons = sigla.toSeq.sorted.map(e =>
+    val ribbons = sigla.sorted.map(e =>
       val leftYPos = leftYPosMap(e)
       val rightYPos = rightYPosMap(e) + 0.0001
       <path d={

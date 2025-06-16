@@ -401,15 +401,15 @@ def mergeClustersIntoHG(
   val hg = hgMap(hgMap.keySet.max)
   hg
 
-@main def secondAlignmentPhase(): Unit =
-  val darwinReadings: List[List[Token]] = readJsonData
-  val gTa: Vector[TokenEnum] = createGlobalTokenArray(darwinReadings)
-  val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
-  val hg: Hypergraph[EdgeLabel, TokenRange] =
-    mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-  createDependencyGraphEdgeLabels(hg)
-  // Transform hypergraph to alignment ribbon and visualize
-  createSecondAlignmentPhaseVisualization(hg)
+//@main def secondAlignmentPhase(): Unit =
+//  val darwinReadings: List[List[Token]] = readJsonData
+//  val gTa: Vector[TokenEnum] = createGlobalTokenArray(darwinReadings)
+//  val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
+//  val hg: Hypergraph[EdgeLabel, TokenRange] =
+//    mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
+//  createDependencyGraphEdgeLabels(hg)
+//  // Transform hypergraph to alignment ribbon and visualize
+//  createSecondAlignmentPhaseVisualization(hg)
 
 type HyperedgeMatch = SetOf2[Hyperedge[EdgeLabel, TokenRange]]
 
@@ -419,29 +419,29 @@ object HyperedgeMatch:
   def apply(he1: Hyperedge[EdgeLabel, TokenRange], he2: Hyperedge[EdgeLabel, TokenRange]) =
     new HyperedgeMatch(he1, he2)
 
-@main def secondAlignmentPhaseExploration(): Unit =
-  val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
-  val unalignedZonesDir = os.pwd / "src" / "main" / "outputs" / "unalignedZones_2025-06-03"
-  val JSONFiles = os.list(unalignedZonesDir).filter(e => os.isFile(e))
-  for uzFilename <- JSONFiles do
-    println(uzFilename)
-    val darwinReadings: List[List[Token]] = readSpecifiedJsonData(uzFilename)
-    val hg =
-      if darwinReadings.size == 1 then // Don’t try to cluster if there’s only one witness
-        Hyperedge(
-          EdgeLabel(darwinReadings.head.head.w.toString),
-          Set(TokenRange(darwinReadings.head.head.g, darwinReadings.head.last.g + 1, gTa))
-        )
-      else // Transform hypergraph to alignment ribbon and visualize
-        val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
-        mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-    createSecondAlignmentPhaseVisualization(hg)
+//@main def secondAlignmentPhaseExploration(): Unit =
+//  val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
+//  val unalignedZonesDir = os.pwd / "src" / "main" / "outputs" / "unalignedZones_2025-06-03"
+//  val JSONFiles = os.list(unalignedZonesDir).filter(e => os.isFile(e))
+//  for uzFilename <- JSONFiles do
+//    println(uzFilename)
+//    val darwinReadings: List[List[Token]] = readSpecifiedJsonData(uzFilename)
+//    val hg =
+//      if darwinReadings.size == 1 then // Don’t try to cluster if there’s only one witness
+//        Hyperedge(
+//          EdgeLabel(darwinReadings.head.head.w.toString),
+//          Set(TokenRange(darwinReadings.head.head.g, darwinReadings.head.last.g + 1, gTa))
+//        )
+//      else // Transform hypergraph to alignment ribbon and visualize
+//        val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
+//        mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
+//    createSecondAlignmentPhaseVisualization(hg)
 
-@main def explore1122(): Unit = // longest unaligned zone
-  val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
-  val filename = os.pwd / "src" / "main" / "outputs" / "unalignedZones_2025-06-03" / "1122.json"
-  val darwinReadings: List[List[Token]] = readSpecifiedJsonData(filename)
-  val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
-  println(nodesToCluster)
-  val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-  createSecondAlignmentPhaseVisualization(hg)
+//@main def explore1122(): Unit = // longest unaligned zone
+//  val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
+//  val filename = os.pwd / "src" / "main" / "outputs" / "unalignedZones_2025-06-03" / "1122.json"
+//  val darwinReadings: List[List[Token]] = readSpecifiedJsonData(filename)
+//  val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
+//  println(nodesToCluster)
+//  val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
+//  createSecondAlignmentPhaseVisualization(hg)
