@@ -252,10 +252,24 @@ def createAlignedPatternsPhaseTwo(
     val containsOverlap = slidingWindow.filter(p => checkOverlap(p.head.last, p.last.head)).toList
     if containsOverlap.nonEmpty then {
       println("The overlapping ones sorted by head are: "+containsOverlap)
-      throw RuntimeException("STOP!")
+
+      // how te remove the things from patterns?
+      // blocksAsTokenRanges
+      // throw RuntimeException("STOP!")
     }
 
+    // attempt to remove non-valid results. For now we remove both parts of the overlap
+    // THIS DOES NOT YET WORK!
+    val result = patterns.filterNot(p =>
+      {
+        println("LOOKING FOR:"+ p.occurrences.head.patternTr)
+        containsOverlap.contains(p.occurrences.head.patternTr) || containsOverlap.contains(p.occurrences.last.patternTr)
 
+      })
+
+    if containsOverlap.nonEmpty then
+      println("NEW RESULT IS: "+result)
+      throw RuntimeException("STOP!")
 
   // patterns.map(_.occurrences.head.patternTr.tString).foreach(e => println(s"Pattern  $e"))
   patterns
