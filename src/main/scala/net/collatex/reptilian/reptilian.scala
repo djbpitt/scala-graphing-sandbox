@@ -71,6 +71,7 @@ def createGTa(tokensPerWitnessLimit: Int) = {
   val gTa: Vector[TokenEnum] = tokenize(tokenizer, tokensPerWitnessLimit)(witnessStrings) // global token array
   (sigla, gTa)
 }
+
 @main def main(): Unit =
   val tokensPerWitnessLimit = Int.MaxValue
   val (sigla: List[Siglum], gTa: Vector[TokenEnum]) = createGTa(tokensPerWitnessLimit)
@@ -90,6 +91,7 @@ def createGTa(tokensPerWitnessLimit: Int) = {
 
 def createGTaManifest(data: Seq[CollateXWitnessData], tokensPerWitnessLimit: Int): Vector[TokenEnum] =
   val witnessStrings: List[String] = data.map(e => e.content).toList
+
   /** Prepare tokenizer
     *
     * Tokens include trailing whitespace.
@@ -121,11 +123,10 @@ def createGTaManifest(data: Seq[CollateXWitnessData], tokensPerWitnessLimit: Int
   parsedInput match {
     case Left(e) => System.err.println(e)
     case Right(e) =>
-      val (data, debug) = e
-      if debug then println("TODO: Move debug handling here")
-      else
-        val gTa = createGTaManifest(data, 10)
-        gTa.foreach(println)
+      val tokensPerWitnessLimit = Int.MaxValue
+      val (data, debug) = e // TODO: Currently not using debug. Do we still want it?
+      val gTa = createGTaManifest(data, tokensPerWitnessLimit)
+      gTa.foreach(println)
   }
 
 /** Display siglum and initial slice of text of all witnesses
