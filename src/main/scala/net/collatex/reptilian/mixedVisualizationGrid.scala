@@ -139,14 +139,14 @@ def createHorizNodeData(
         case None    => 0d
       }
       val missing: Vector[Siglum] = {
-//        println(s"sigla on node: ${nodes.head.node}")
-//        println(s"sigla from val: $sigla")
+//        System.err.println(s"sigla on node: ${nodes.head.node}")
+//        System.err.println(s"sigla from val: $sigla")
         val result = findMissingWitnesses(nodes.head.node, sigla.toSet)
         result
       }
       val newNode =
-        // println(nodes.head.node.witnessGroups)
-        // println(nodes.head.node.witnessGroups.head.map((k, v) => v.ta.size))
+        // System.err.println(nodes.head.node.witnessGroups)
+        // System.err.println(nodes.head.node.witnessGroups.head.map((k, v) => v.ta.size))
         HorizNodeData(
           treeNumber = nodes.head.nodeNo,
           seqNumber = pos,
@@ -257,7 +257,7 @@ def createHorizontalRibbons(
   val maxDistance = witnessSimilarities.values.max
   /* Look at the results; the sorting is for legibility, and not otherwise needed */
   val keys = witnessSimilarities.keySet.toSeq.flatten.distinct.sorted // sorted list of sigla
-  println(keys)
+  System.err.println(keys)
   val keyCount = keys.size
   val m = Array.ofDim[Double](keyCount, keyCount) // will hold distance matrix of witnesses
   val cells = for
@@ -281,14 +281,14 @@ def createHorizontalRibbons(
     m(loc1.head)(loc1.last) = weight
     m(loc2.head)(loc2.last) = weight
   }
-  println(DataFrame.of(m)) // take a look
+  System.err.println(DataFrame.of(m)) // take a look
 
   val tour0 = LinKernighan.createRandomTour(keys.size, seed = 0L)
   val lk = LinKernighan(m, tour0)
   lk.run()
-  println(lk.tour.map(e => keys(e).mkString).toVector)
+  System.err.println(lk.tour.map(e => keys(e).mkString).toVector)
 
-  // cells.map(e => witnessSimilarities(e)).foreach(println)
+  // cells.map(e => witnessSimilarities(e)).foreach(System.err.println)
    */
   /* End of computing optimal witness order */
   val totalHeight = ribbonWidth * (witnessCount * 3) - ribbonWidth / 2
@@ -343,7 +343,7 @@ def createHorizontalRibbons(
     */
   def plotOneAlignmentPoint(node: HorizNodeData): xml.Elem =
     def processGroups(groups: Vector[HorizNodeGroup]): Vector[Elem] =
-      // println(groups)
+      // System.err.println(groups)
       @tailrec
       def nextGroup(groups: Vector[HorizNodeGroup], top: Double, acc: Vector[Elem]): Vector[Elem] =
         if groups.isEmpty then acc

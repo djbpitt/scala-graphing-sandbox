@@ -53,13 +53,13 @@ def visualizeTraversalGraph(
                            ): Unit =
   val traversalGraphAsDot = traversalGraphToDot(graph, blockTexts, alignmentNodes)
   val graphOutputPath = os.pwd / "src" / "main" / "output" / "traversal.dot"
-  println("Writing to "+graphOutputPath)
+  System.err.println("Writing to "+graphOutputPath)
   os.write.over(graphOutputPath, traversalGraphAsDot) // Create SVG output and write to specified path
   import sys.process._
   val pathAsString = graphOutputPath.toString
   val svgOutputPath = os.pwd / "src" / "main" / "output" / "traversal.svg"
   val svgPathAsString = svgOutputPath.toString
   val pb = Process("dot -Tsvg "+pathAsString+" -o"+svgPathAsString)
-  println("Writing to " + svgOutputPath)
+  System.err.println("Writing to " + svgOutputPath)
   val result = pb.!!
-  println(result)
+  System.err.println(result)
