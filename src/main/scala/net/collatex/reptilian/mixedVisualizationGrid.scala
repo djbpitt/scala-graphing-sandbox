@@ -3,7 +3,6 @@ package net.collatex.reptilian
 import scala.annotation.{tailrec, unused}
 import scala.xml.{Elem, Node, NodeSeq}
 import math.Ordered.orderingToOrdered
-import scala.sys.exit
 
 /* Constants */
 // FIXME: Hard-coded witness identifiers!
@@ -110,10 +109,7 @@ def computeReadingTextLength(in: Vector[TokenEnum]): Double =
   */
 def findMissingWitnesses(n: AlignmentPoint, sigla: Set[Siglum]): Vector[Siglum] =
   val missingWitnessesRaw = sigla.diff(n.witnessReadings.keySet).toVector.sorted
-  val result = missingWitnessesRaw.map(s =>
-    if s.value.length == 1 then Siglum(intToSiglum(s.value.toInt))
-    else s
-  )
+  val result = missingWitnessesRaw
   result
 
 def computeAlignmentNodeRenderingWidth(n: AlignmentPoint): Double =
@@ -145,7 +141,8 @@ def createHorizNodeData(
       val missing: Vector[Siglum] = {
 //        println(s"sigla on node: ${nodes.head.node}")
 //        println(s"sigla from val: $sigla")
-        findMissingWitnesses(nodes.head.node, sigla)
+        val result = findMissingWitnesses(nodes.head.node, sigla)
+        result
       }
       val newNode =
         // println(nodes.head.node.witnessGroups)
@@ -420,11 +417,12 @@ def createHorizontalRibbons(
     def missings(missings: Vector[Siglum], top: Double): Map[Siglum, Double] =
       missings.zipWithIndex.map(e => e._1 -> (top + e._2 * ribbonWidth)).toMap
     def computeRibbonYPos(node: HorizNodeData): Map[Siglum, Double] =
-      nextGroup(node.groups, ribbonWidth / 2, Map.empty[Siglum, Double]) ++
+      val result = nextGroup(node.groups, ribbonWidth / 2, Map.empty[Siglum, Double]) ++
         missings(
           node.missing,
           missingTop + ribbonWidth / 2
         )
+      result
 
     val leftYPosMap = computeRibbonYPos(precedingNode)
     val rightYPosMap = computeRibbonYPos(currentNode)
@@ -463,7 +461,7 @@ def createHorizontalRibbons(
             plotOneAlignmentPoint(nodes.last),
             plotGroupNodeWrappers(nodes.last)
           )
-          }</div>
+        }</div>
       else
         nodes
           .sliding(2)

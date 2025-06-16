@@ -38,12 +38,12 @@ def alignFullDepthBlocks(unalignedZone: UnalignedZone, sigla: List[Siglum]): Lis
   then {
     // 2025-06-03 djb Disable temporarily for debugging: write unaligned zones as json
     // alignByClustering(unalignedZone, gTa)
-    val jsonToSave = unalignedZone.witnessReadings.values.toList
-      .sortBy(_.start)
-      .map(_.tokens.map(e => TokenJSON(e.t, e.n, e.w, e.g)).toList)
-    val fileName = unalignedZone.witnessReadings.map((k, v) => v.start).min.toString + ".json"
-    val outPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones_2025-06-03" / fileName
-    os.write.over(outPath, write(jsonToSave))
+//    val jsonToSave = unalignedZone.witnessReadings.values.toList
+//      .sortBy(_.start)
+//      .map(_.tokens.map(e => TokenJSON(e.t, e.n, e.w, e.g)).toList)
+//    val fileName = unalignedZone.witnessReadings.map((k, v) => v.start).min.toString + ".json"
+//    val outPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones_2025-06-03" / fileName
+//    os.write.over(outPath, write(jsonToSave))
     List.empty[AlignmentUnit]
   } else {
     // There are full depth blocks, align by creating a navigation graph
@@ -151,8 +151,7 @@ def alignByClustering(zone: UnalignedZone, gTa: Vector[TokenEnum]): List[Alignme
               .map(tr =>
                 val witness: Siglum = {
                   val inSiglum: String = gTa(tr.start).w.toString
-                  if inSiglum.length == 1 then Siglum(intToSiglum(inSiglum.toInt))
-                  else Siglum(inSiglum)
+                  Siglum(inSiglum)
                 }
                 witness -> tr
               )

@@ -72,22 +72,22 @@ def createGTa(tokensPerWitnessLimit: Int) = {
   (sigla, gTa)
 }
 
-@main def main(): Unit =
-  val tokensPerWitnessLimit = Int.MaxValue
-  val (sigla: List[Siglum], gTa: Vector[TokenEnum]) = createGTa(tokensPerWitnessLimit)
-
-  /** Create alignment ribbon
-    */
-  val root: AlignmentRibbon = createAlignmentRibbon(sigla, gTa)
-
-  // To write unaligned zone data to separate JSON files during
-  // development run writePhaseTwoJSONData(root) here
-
-  val doctypeHtml: DocType = DocType("html")
-  val horizontalRibbons = createHorizontalRibbons(root, sigla.toSet, gTa)
-  val horizontalRibbonsPath =
-    os.pwd / "src" / "main" / "outputs" / "horizontal-ribbons-full.xhtml" // "horizontal-ribbons.xhtml"
-  scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true, doctypeHtml)
+//@main def main(): Unit =
+//  val tokensPerWitnessLimit = 100
+//  val (sigla: List[Siglum], gTa: Vector[TokenEnum]) = createGTa(tokensPerWitnessLimit)
+//
+//  /** Create alignment ribbon
+//    */
+//  val root: AlignmentRibbon = createAlignmentRibbon(sigla, gTa)
+//
+//  // To write unaligned zone data to separate JSON files during
+//  // development run writePhaseTwoJSONData(root) here
+//
+//  val doctypeHtml: DocType = DocType("html")
+//  val horizontalRibbons = createHorizontalRibbons(root, sigla.toSet, gTa)
+//  val horizontalRibbonsPath =
+//    os.pwd / "src" / "main" / "outputs" / "horizontal-ribbons-full.xhtml" // "horizontal-ribbons.xhtml"
+//  scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true, doctypeHtml)
 
 def createGTaManifest(data: Seq[CollateXWitnessData], tokensPerWitnessLimit: Int): Vector[TokenEnum] =
   val witnessStrings: List[String] = data.map(e => e.content).toList
@@ -123,10 +123,24 @@ def createGTaManifest(data: Seq[CollateXWitnessData], tokensPerWitnessLimit: Int
   parsedInput match {
     case Left(e) => System.err.println(e)
     case Right(e) =>
-      val tokensPerWitnessLimit = Int.MaxValue
-      val (data, debug) = e // TODO: Currently not using debug. Do we still want it?
+      val tokensPerWitnessLimit = 100
+      val (data, debug) = e
       val gTa = createGTaManifest(data, tokensPerWitnessLimit)
-      gTa.foreach(println)
+      if debug then gTa.foreach(println)
+      // FIXME: Visualization module is not yet able to manage sigla that don't match w properties in the gTa
+      val sigla: List[Siglum] = data.indices.map(e => Siglum(e.toString)).toList // hack (see above)
+      // NB: Code below here is copied from main() except for ribbon filename
+      // Create alignment ribbon
+      val root: AlignmentRibbon = createAlignmentRibbon(sigla, gTa)
+      // To write unaligned zone data to separate JSON files during
+      // development run writePhaseTwoJSONData(root) here
+
+      val doctypeHtml: DocType = DocType("html")
+      val horizontalRibbons = createHorizontalRibbons(root, sigla.toSet, gTa)
+      val horizontalRibbonsPath =
+        os.pwd / "src" / "main" / "outputs" / "manifest-horizontal-ribbons-full.xhtml"
+      scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true, doctypeHtml)
+
   }
 
 /** Display siglum and initial slice of text of all witnesses
