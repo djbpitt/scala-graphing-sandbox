@@ -123,20 +123,19 @@ def createGTaManifest(data: Seq[CollateXWitnessData], tokensPerWitnessLimit: Int
   parsedInput match {
     case Left(e) => System.err.println(e)
     case Right(e) =>
-      val tokensPerWitnessLimit = 100
-      val (data, debug) = e
+      val tokensPerWitnessLimit = 100 // Set to Int.MaxValue for production
+      val (data: Seq[CollateXWitnessData], debug) = e
       val gTa = createGTaManifest(data, tokensPerWitnessLimit)
-      if debug then gTa.foreach(println)
-      val gTaSigla: List[Siglum] = data.indices.map(e => Siglum(e.toString)).toList
-      val displaySigla: List[Siglum] = data.map(e => Siglum(e.siglum)).toList
-      // NB: Code below here is copied from main() except for ribbon filename
+      if debug then gTa.foreach(System.err.println)
+      val gTaSigla: List[Siglum] = data.indices.map(e => Siglum(e.toString)).toList // integers
+      val displaySigla: List[Siglum] = data.map(e => Siglum(e.siglum)).toList // user-supplied for rendering
       // Create alignment ribbon
       val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
       // Write to stdout
       val writer = new PrintWriter(Console.out)
       val doctypeHtml: DocType = DocType("html")
       val horizontalRibbons = createHorizontalRibbons(root, gTaSigla, displaySigla, gTa)
-      XML.write(
+      XML.write( // pretty-printed by scala.xml.PrettyPrinter by default
         writer,
         horizontalRibbons,        // xml.Node
         "UTF-8",                  // encoding (for declaration)
