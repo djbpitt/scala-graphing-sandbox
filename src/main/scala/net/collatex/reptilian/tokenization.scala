@@ -6,7 +6,6 @@ import scala.collection.mutable.ArrayBuffer
 import scala.util.matching.Regex
 import scalax.collection.ChainingOps
 
-
 /** Token as complex object
   *
   * @param t
@@ -100,14 +99,13 @@ def tokenize(tokenizer: String => List[String], tokensPerWitnessLimit: Int) =
           .map(tokenizer) // List of one list of strings per witness
   ).andThen(e =>
     (e.map(item => item.slice(0, tokensPerWitnessLimit)) pipe
-    createTokenArray)
-      .zip(createTokenWitnessMapping(e, tokensPerWitnessLimit))
+      createTokenArray)
+      .zip(createTokenWitnessMapping(e, tokensPerWitnessLimit)) // FIXME: https://github.com/djbpitt/scala-graphing-sandbox/issues/44
       .zipWithIndex
       .map { case ((a, b), i) => (a, b, i) }
       .map((a, b, i) =>
-        if a.startsWith(" #") then // FIXME: Don’t rely on magic string value
+        if a.startsWith(" #") then // FIXME: https://github.com/djbpitt/scala-graphing-sandbox/issues/43
           TokenSep(t = a, n = normalize(a), w = b, g = i)
-        else
-          Token(t = a, n = normalize(a), w = b, g = i)
+        else Token(t = a, n = normalize(a), w = b, g = i)
       )
   )

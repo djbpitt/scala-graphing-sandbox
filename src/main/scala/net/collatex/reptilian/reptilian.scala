@@ -3,13 +3,12 @@ package net.collatex.reptilian
 import os.Path
 
 import scala.util.{CommandLineParser, Try, Using}
-import scala.util.chaining._
+import scala.util.chaining.*
 import scala.util.matching.Regex
-import scala.xml._
+import scala.xml.*
 import scala.xml.dtd.DocType
 import scala.io.Source
-
-import java.io.{StringReader, InputStream}
+import java.io.{InputStream, StringReader}
 import java.net.{URI, URL}
 
 // Relax NG validation
@@ -89,6 +88,17 @@ def createGTa(tokensPerWitnessLimit: Int) = {
     os.pwd / "src" / "main" / "outputs" / "horizontal-ribbons-full.xhtml" // "horizontal-ribbons.xhtml"
   scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true, doctypeHtml)
 
+def createGTaManifest(data: Seq[CollateXWitnessData], tokensPerWitnessLimit: Int): Vector[TokenEnum] =
+  val witnessStrings: List[String] = data.map(e => e.content).toList
+  /** Prepare tokenizer
+    *
+    * Tokens include trailing whitespace.
+    */
+  val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
+  val tokenizer = makeTokenizer(tokenPattern) // Tokenizer function with user-supplied regex
+  val gTa: Vector[TokenEnum] = tokenize(tokenizer, tokensPerWitnessLimit)(witnessStrings)
+  gTa
+
 /** Obtain input via manifest and process
   *
   * @param args
@@ -105,13 +115,17 @@ def createGTa(tokensPerWitnessLimit: Int) = {
       result <- parseArgs(args)
       (manifestPathString, debug) = result
       witnessData <- parseManifest(manifestPathString)
-      witnessSlice <- previewWitness(witnessData)
-    } yield if debug then witnessSlice.foreach(System.err.println)
+      witnessSlice <- previewWitness(witnessData) // TODO: Remove this? Used only for early debug?
+    } yield (witnessData, debug)
 
   parsedInput match {
     case Left(e) => System.err.println(e)
-    case Right(_) =>
-      println("Continue here")
+    case Right(e) =>
+      val (data, debug) = e
+      if debug then println("TODO: Move debug handling here")
+      else
+        val gTa = createGTaManifest(data, 10)
+        gTa.foreach(println)
   }
 
 /** Display siglum and initial slice of text of all witnesses
