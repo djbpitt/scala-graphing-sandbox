@@ -33,7 +33,7 @@ val allSigla: Set[Siglum] =
 val flowLength = 80d
 
 /* Constants for computeTokenTextLength() */
-val tnr16Metrics = xml.XML.loadFile("src/main/python/tnr_16_metrics.xml")
+val tnr16Metrics = scala.xml.XML.load(getClass.getResourceAsStream("/tnr_16_metrics.xml"))
 val tnrCharLengths = ((tnr16Metrics \ "character")
   .map(e => ((e \ "@str").text.head, (e \ "@width").toString.toDouble))
   ++ Seq(("\u000a".head, 0.0))).toMap
