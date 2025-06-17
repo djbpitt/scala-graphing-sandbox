@@ -1,5 +1,3 @@
-ThisBuild / version := "0.1.0-SNAPSHOT"
-
 ThisBuild / scalaVersion := "3.3.3"
 
 // Don't accept IntelliJ's suggestoin to replace `xs @ _*` with `xs*`, where
@@ -10,6 +8,10 @@ ThisBuild / assembly / assemblyMergeStrategy := {
   case PathList("META-INF", xs @ _*) => MergeStrategy.discard
   case x                        => MergeStrategy.first
 }
+
+name := "collatex-reptilian"
+version := "0.1.0-SNAPSHOT"
+assemblyJarName := s"${name.value}-${version.value}.jar"
 
 // https://alvinalexander.com/scala/sbt-how-specify-main-method-class-to-run-in-project/
 Compile / mainClass := Some("net.collatex.reptilian.manifest")
@@ -45,4 +47,5 @@ libraryDependencies += "org.typelevel" %% "cats-core" % "2.12.0"
 libraryDependencies += "org.scala-lang.modules" %% "scala-collection-contrib" % "0.3.0"
 libraryDependencies += "net.sf.saxon" % "Saxon-HE" % "12.7"
 libraryDependencies += "com.lihaoyi" %% "requests" % "0.9.0"
+
 
