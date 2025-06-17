@@ -123,7 +123,7 @@ def createGTaManifest(data: Seq[CollateXWitnessData], tokensPerWitnessLimit: Int
   parsedInput match {
     case Left(e) => System.err.println(e)
     case Right(e) =>
-      val tokensPerWitnessLimit = 100 // Set to Int.MaxValue for production
+      val tokensPerWitnessLimit = 2500 // Low values for debug; set to Int.MaxValue for production
       val (data: Seq[CollateXWitnessData], debug) = e
       val gTa = createGTaManifest(data, tokensPerWitnessLimit)
       if debug then gTa.foreach(System.err.println)
