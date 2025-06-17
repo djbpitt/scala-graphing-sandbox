@@ -91,13 +91,10 @@ def createGTa(tokensPerWitnessLimit: Int) = {
 
 def createGTaManifest(data: Seq[CollateXWitnessData], tokensPerWitnessLimit: Int): Vector[TokenEnum] =
   val witnessStrings: List[String] = data.map(e => e.content).toList
-
-  /** Prepare tokenizer
-    *
-    * Tokens include trailing whitespace.
-    */
+  // Prepare tokenizer; tokens include trailing whitespace.
   val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
-  val tokenizer = makeTokenizer(tokenPattern) // Tokenizer function with user-supplied regex
+  val tokenizer = makeTokenizer(tokenPattern)
+  // Create TokenEnum instances, including TokenSep
   val gTa: Vector[TokenEnum] = tokenize(tokenizer, tokensPerWitnessLimit)(witnessStrings)
   gTa
 
@@ -126,7 +123,11 @@ def createGTaManifest(data: Seq[CollateXWitnessData], tokensPerWitnessLimit: Int
       val tokensPerWitnessLimit = 2500 // Low values for debug; set to Int.MaxValue for production
       val (data: Seq[CollateXWitnessData], debug) = e
       val gTa = createGTaManifest(data, tokensPerWitnessLimit)
-      if debug then gTa.foreach(System.err.println)
+      if debug then
+        System.err.println("\nWitness preview:")
+        data.foreach(e => System.err.println(List(e.siglum, e.content.slice(0, 30)).mkString(": "))) // mimics previewWitness (above)
+        System.err.println("\nTokens:")
+        gTa.foreach(System.err.println)
       val gTaSigla: List[Siglum] = data.indices.map(e => Siglum(e.toString)).toList // integers
       val displaySigla: List[Siglum] = data.map(e => Siglum(e.siglum)).toList // user-supplied for rendering
       // Create alignment ribbon
