@@ -47,48 +47,6 @@ def readData(pathToData: Path): List[(String, String)] =
     .toList
     .map(e => (e.last, os.read(e)))
 
-def createGTa(tokensPerWitnessLimit: Int) = {
-
-  /** Select data */
-  val pathToDarwin = os.pwd / "src" / "main" / "data" / "darwin"
-
-  /** Prepare tokenizer
-    *
-    * Sequences of non-word characters (except spaces) are entire tokens Unlike in CollateX Python, where punctuation
-    * characters are their own tokens
-    */
-  val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
-  val tokenizer = makeTokenizer(
-    tokenPattern
-  ) // Tokenizer function with user-supplied regex
-
-  /** Read data into token array */
-  val witnessInputInfo = readData(
-    pathToDarwin
-  ) // One string per witness
-  val witnessStrings = witnessInputInfo.map(_._2)
-  val sigla: List[Siglum] = witnessInputInfo.map(_._1).map(Siglum(_))
-  val gTa: Vector[TokenEnum] = tokenize(tokenizer, tokensPerWitnessLimit)(witnessStrings) // global token array
-  (sigla, gTa)
-}
-
-//@main def main(): Unit =
-//  val tokensPerWitnessLimit = 100
-//  val (sigla: List[Siglum], gTa: Vector[TokenEnum]) = createGTa(tokensPerWitnessLimit)
-//
-//  /** Create alignment ribbon
-//    */
-//  val root: AlignmentRibbon = createAlignmentRibbon(sigla, gTa)
-//
-//  // To write unaligned zone data to separate JSON files during
-//  // development run writePhaseTwoJSONData(root) here
-//
-//  val doctypeHtml: DocType = DocType("html")
-//  val horizontalRibbons = createHorizontalRibbons(root, sigla.toSet, gTa)
-//  val horizontalRibbonsPath =
-//    os.pwd / "src" / "main" / "outputs" / "horizontal-ribbons-full.xhtml" // "horizontal-ribbons.xhtml"
-//  scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true, doctypeHtml)
-
 def createGTaManifest(data: Seq[CollateXWitnessData], tokensPerWitnessLimit: Int): Vector[TokenEnum] =
   val witnessStrings: List[String] = data.map(e => e.content).toList
   // Prepare tokenizer; tokens include trailing whitespace.
@@ -114,7 +72,6 @@ def createGTaManifest(data: Seq[CollateXWitnessData], tokensPerWitnessLimit: Int
       result <- parseArgs(args)
       (manifestPathString, debug) = result
       witnessData <- parseManifest(manifestPathString)
-      witnessSlice <- previewWitness(witnessData) // TODO: Remove this? Used only for early debug?
     } yield (witnessData, debug)
 
   parsedInput match {
@@ -125,7 +82,7 @@ def createGTaManifest(data: Seq[CollateXWitnessData], tokensPerWitnessLimit: Int
       val gTa = createGTaManifest(data, tokensPerWitnessLimit)
       if debug then
         System.err.println("\nWitness preview:")
-        data.foreach(e => System.err.println(List(e.siglum, e.content.slice(0, 30)).mkString(": "))) // mimics previewWitness (above)
+        previewWitness(data).foreach(System.err.println)
         System.err.println("\nTokens:")
         gTa.foreach(System.err.println)
       val gTaSigla: List[Siglum] = data.indices.map(e => Siglum(e.toString)).toList // integers
@@ -138,26 +95,25 @@ def createGTaManifest(data: Seq[CollateXWitnessData], tokensPerWitnessLimit: Int
       val horizontalRibbons = createHorizontalRibbons(root, gTaSigla, displaySigla, gTa)
       XML.write( // pretty-printed by scala.xml.PrettyPrinter by default
         writer,
-        horizontalRibbons,        // xml.Node
-        "UTF-8",                  // encoding (for declaration)
-        xmlDecl = true,           // emit <?xml ... ?>
-        doctype = doctypeHtml     // emit <!DOCTYPE html>
+        horizontalRibbons, // xml.Node
+        "UTF-8", // encoding (for declaration)
+        xmlDecl = true, // emit <?xml ... ?>
+        doctype = doctypeHtml // emit <!DOCTYPE html>
       )
       writer.flush()
   }
 
 /** Display siglum and initial slice of text of all witnesses
   *
-  * Used when debugging manifest processing. Active if second command line argument is "debug".
+  * Used only for debugging
   *
   * @param wd
   *   Sequence of CollateXWitnessData instances, one per witness
   * @return
   *   Sequence of strings if successful; string with error report if not.
   */
-def previewWitness(wd: Seq[CollateXWitnessData]): Either[String, Seq[String]] = {
-  Right(wd.map(e => List(e.siglum, e.content.slice(0, 30)).mkString(": ")))
-}
+def previewWitness(wd: Seq[CollateXWitnessData]): Seq[String] =
+  wd.map(e => List(e.siglum, e.content.slice(0, 30)).mkString(": "))
 
 /** Parse command line arguments
   *
@@ -195,15 +151,11 @@ def validateRnc(xmlElem: Elem, rncSchema: String): Either[String, Boolean] =
   val driver = new ValidationDriver(propertyMap, CompactSchemaReader.getInstance())
   val schemaInput = new InputSource(new StringReader(rncSchema))
   val schemaLoaded = driver.loadSchema(schemaInput)
-  if (!schemaLoaded)
-    Left("Failed to load RNC schema from string.")
+  if !schemaLoaded then Left("Failed to load RNC schema from string.")
   val xmlInput = new InputSource(new StringReader(xmlElem.toString()))
   val result = driver.validate(xmlInput)
-  if (result) {
-    Right(result)
-  } else {
-    Left("RNC validation failed")
-  }
+  if result then Right(result)
+  else Left("RNC validation failed")
 
 /** Validate manifest against precompiled xslt version of Schematron schema
   *
@@ -270,7 +222,7 @@ def validateSchematron(
             (node \ "text").text.normalizeSpace
           ) ++ (svrlXml \\ "successful-report").map(node => (node \ "text").text.normalizeSpace)
 
-          if (failedMessages.isEmpty) Right(true)
+          if failedMessages.isEmpty then Right(true)
           else Left(failedMessages)
 
         }
