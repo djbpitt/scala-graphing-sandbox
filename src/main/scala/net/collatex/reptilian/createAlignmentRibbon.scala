@@ -35,16 +35,8 @@ def alignFullDepthBlocks(unalignedZone: UnalignedZone, sigla: List[Siglum]): Lis
   val witnessCount = unalignedZone.witnessReadings.size
   val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(lTa, witnessCount)
   if longestFullDepthNonRepeatingBlocks.isEmpty
-  then {
-    // 2025-06-03 djb Disable temporarily for debugging: write unaligned zones as json
-    // alignByClustering(unalignedZone, gTa)
-//    val jsonToSave = unalignedZone.witnessReadings.values.toList
-//      .sortBy(_.start)
-//      .map(_.tokens.map(e => TokenJSON(e.t, e.n, e.w, e.g)).toList)
-//    val fileName = unalignedZone.witnessReadings.map((k, v) => v.start).min.toString + ".json"
-//    val outPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones_2025-06-03" / fileName
-//    os.write.over(outPath, write(jsonToSave))
-    List.empty[AlignmentUnit]
+  then { // align unaligned zones
+     alignByClustering(unalignedZone, gTa)
   } else {
     // There are full depth blocks, align by creating a navigation graph
     val fullDepthAlignmentPoints: List[AlignmentPoint] =

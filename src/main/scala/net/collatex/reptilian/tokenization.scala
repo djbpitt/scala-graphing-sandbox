@@ -13,7 +13,7 @@ import scalax.collection.ChainingOps
   * @param n
   *   Normalized token, e.g., lower-case and trim
   * @param w
-  *   Witness identifier, zero-based
+  *   Witness identifier, zero-based integer
   * @param g
   *   Offset of token in global token array
   *
