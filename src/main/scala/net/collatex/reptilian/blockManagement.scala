@@ -198,8 +198,6 @@ def createAlignedBlocks(
 ) =
   val (suffixArray: Array[Int], blocks: List[Block], blockLengths: List[Int], blockStartPositions: List[Array[Int]]) =
     getPatternsFromTokenArray(tokenArray, witnessCount, keepOnlyFullDepth)
-  // RESUME HERE 2025-04-18 Perhaps keep code above but, for phase 2,
-  // include hyperedge and token range information
   val annoyingInterimVariable = (blockStartPositions lazyZip blockLengths)
     .map((starts, length) => FullDepthBlock(starts.toVector, length))
   (blocks, suffixArray, removeOverlappingBlocks(annoyingInterimVariable))
@@ -229,8 +227,40 @@ def createAlignedPatternsPhaseTwo(
     )
     AlignedPatternPhaseTwo(occurrences)
   )
-  // debug!
-  // patterns.map(_.occurrences.head.patternTr.tString).foreach(e => println(s"  $e"))
+  val blocksAsTokenRanges =xxBlocks.map(x => x.remapBlockToGTa(lTa)).map(x => x.toTokenRanges(gTa))
+  //val debugBlockOverlapSortedByLast = blocksAsTokenRanges.sortBy(_.last.start)
+  val debugBlockOverlapSortedByHead = blocksAsTokenRanges.sortBy(_.head.start)
+  //println("blocks as token ranges sorted by first")
+  //debugBlockOverlapSortedByHead.foreach(x => println(x.toString()+" "+x.head.nString))
+  //println("blocks as token ranges sorted by last")
+  //debugBlockOverlapSortedByLast.foreach(x => println(x.toString()+" "+x.head.nString))
+
+  def checkOverlap(first: TokenRange, second: TokenRange) = {
+    //println("checking overlap between: "+first+" :"+second)
+    second.start < first.until
+  }
+
+  // we go over both sets of sorted blocks and identify the overlapping blocks and remove them
+  // we find the conflicting pairs first and remove both parts
+
+  if debugBlockOverlapSortedByHead.size>1 then
+    val slidingWindow = debugBlockOverlapSortedByHead.sliding(2)
+    val containsOverlap = slidingWindow.filter(p => checkOverlap(p.head.last, p.last.head)).flatMap(e => Seq(e.head, e.last)).flatten.toList
+//    println("Contains overlap contents looks like")
+//    println(containsOverlap)
+
+    // Remove non-valid results. For now we remove both parts of the overlap
+    val result = patterns.filterNot(p => {
+        // println("LOOKING FOR:"+ p.occurrences.head.patternTr)
+        containsOverlap.contains(p.occurrences.head.patternTr) || containsOverlap.contains(p.occurrences.last.patternTr)
+      })
+
+    // if containsOverlap.nonEmpty then
+    //   println("NEW RESULT IS: "+result)
+    // throw RuntimeException("STOP!")
+
+    return result
+  // patterns.map(_.occurrences.head.patternTr.tString).foreach(e => println(s"Pattern  $e"))
   patterns
 
 
@@ -239,8 +269,11 @@ case class AlignedPatternOccurrencePhaseTwo(
     originalHe: EdgeLabel,
     originalTr: TokenRange,
     patternTr: TokenRange // must be contained by originalTr
-)
+) {
 
+    override def toString: String = patternTr.toString
+
+}
 case class AlignedPatternPhaseTwo(
     occurrences: Vector[AlignedPatternOccurrencePhaseTwo]
 )
