@@ -33,7 +33,7 @@ def createSecondAlignmentPhaseVisualization(hg: Hypergraph[EdgeLabel, TokenRange
     .to(ListBuffer)
   val result = AlignmentRibbon(aps)
   // aps.foreach(e => println(e))
-  val localSigla = (0 until 6).map(e => Siglum(e.toString)).toSet
+  val localSigla = (0 until 6).map(e => Siglum(intToSiglum(e))).toSet
   val horizontalRibbons = createHorizontalRibbons(result, localSigla, gTa)
   val doctypeHtml: scala.xml.dtd.DocType = DocType("html")
   val horizontalRibbonsPath =

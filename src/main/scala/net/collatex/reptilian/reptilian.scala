@@ -62,6 +62,3 @@ def createGTa(tokensPerWitnessLimit:Int) = {
       val horizontalRibbonsPath =
       os.pwd / "src" / "main" / "outputs" / "horizontal-ribbons-full.xhtml" // "horizontal-ribbons.xhtml"
       scala.xml.XML.save(horizontalRibbonsPath.toString, horizontalRibbons, "UTF-8", true, doctypeHtml)
-
-
-
