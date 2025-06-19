@@ -45,7 +45,7 @@ def createGTa(tokensPerWitnessLimit:Int) = {
   (sigla, gTa)
 }
 @main def main(): Unit =
-    for (x <- 1 to 500)
+    for (x <- (500 to 1 by -1))
       println(s"Iteration $x")
       val tokensPerWitnessLimit = x
       val (sigla: List[Siglum], gTa: Vector[TokenEnum]) = createGTa(tokensPerWitnessLimit)
