@@ -1,0 +1,200 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html >
+<html xmlns="http://www.w3.org/1999/xhtml">
+      <head>
+        <title>Alignments</title>
+        <style type="text/css">header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+#set_all {
+  display: flex;
+  gap: .5em;
+  flex-direction: column;
+  margin: auto 0 auto 0;
+  padding: .1em .3em .2em .2em;
+  font-size: .8rem;
+}
+#wrapper {
+  padding: 2px;
+  overflow-x: scroll;
+  display: flex;
+  flex-direction: row;
+  height: 321px;
+  width: 100%;
+  background: linear-gradient(
+    to bottom,
+    gainsboro 0,
+    gainsboro 216px,
+    gray 216px,
+    gray 100%
+  );
+}
+div {
+  position: relative;
+}
+.group {
+  display: flex;
+  flex-direction: row;
+}
+.innerWrapper {
+  position: absolute;
+  display: block;
+  top: -1px;
+  left: -1px;
+  height: 317px;
+}
+.sigla {
+  font-weight: bold;
+  font-size: small;
+}
+foreignObject &gt; div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: &quot;Times New Roman&quot;; /* Match font metrics */
+  font-size: 16px; /* needed by Safari */
+  padding: .1em .1em 0 .1em;
+  line-height: 17px;
+}</style>
+        <script type="text/javascript">&quot;use strict&quot;;
+document.addEventListener(&quot;DOMContentLoaded&quot;, function () {
+  const groups = document.getElementsByClassName(&quot;group&quot;);
+  for (var i = 0, len = groups.length; i &lt; len; i++) {
+    groups[i].addEventListener(&quot;click&quot;, toggleSize);
+  }
+  document.getElementById(&quot;expand_all&quot;).addEventListener(&quot;click&quot;, expandAll);
+  document.getElementById(&quot;truncate_all&quot;).addEventListener(&quot;click&quot;, truncateAll);
+})
+function toggleSize() {
+  var newWidth, newWrapperWidth, apTargets, innerWrapTargets, i, len;
+  if (this.dataset.maxwidth &gt; 160) {
+    apTargets = this.querySelectorAll(&quot;rect, foreignObject, div.ap &gt; svg.alignment&quot;);
+    // Determine width
+    if (apTargets[0].getAttribute(&quot;width&quot;) == this.dataset.maxwidth) {
+      newWidth = 160;
+    } else {
+      newWidth = this.dataset.maxwidth;
+    }
+    // Reset width of alignment point groups
+    for (i = 0, len = apTargets.length; i &lt; len; i++) {
+      toggleOne(apTargets[i], newWidth);
+    }
+    // Reset width of wrapper rects
+    innerWrapTargets = this.querySelectorAll(&quot;div.innerWrapper &gt; svg&quot;);
+    if (newWidth == 160) {
+      newWrapperWidth = 162;
+    } else {
+      newWrapperWidth = parseFloat(newWidth) + 2;
+    }
+    for (i = 0, len = innerWrapTargets.length; i &lt; len; i++) {
+      toggleOne(innerWrapTargets[i], newWrapperWidth);
+    }
+  }
+}
+function truncateAll() {
+  var i, j, groupLen, aps, apsLen, wrappers, wrapperLen, fullWidth, wrapperWidth;
+  const allGroups = document.getElementsByClassName(&quot;group&quot;);
+  for (i = 0, groupLen = allGroups.length; i &lt; groupLen; i++) {
+    if (allGroups[i].dataset.maxwidth &gt; 160) {
+    aps = allGroups[i].querySelectorAll(&quot;rect, foreignObject, div.ap &gt; svg.alignment&quot;);
+    wrappers = allGroups[i].querySelectorAll(&quot;div.innerWrapper &gt; svg&quot;);
+      for (j = 0, apsLen = aps.length; j &lt; apsLen; j++) {
+        toggleOne(aps[j], 160);
+      }
+      for (j = 0, wrapperLen = wrappers.length; j &lt; wrapperLen; j++) {
+        toggleOne(wrappers[j], 162);
+      }
+    }
+  }
+}
+function expandAll() {
+  var i, j, groupLen, aps, apsLen, wrappers, wrapperLen, fullWidth, wrapperWidth;
+  const allGroups = document.getElementsByClassName(&quot;group&quot;);
+  for (i = 0, groupLen = allGroups.length; i &lt; groupLen; i++) {
+    fullWidth = allGroups[i].dataset.maxwidth;
+    if (fullWidth &gt; 160) {
+      wrapperWidth = parseFloat(fullWidth) + 2;
+      aps = allGroups[i].querySelectorAll(&quot;rect, foreignObject, div.ap &gt; svg.alignment&quot;);
+      wrappers = allGroups[i].querySelectorAll(&quot;div.innerWrapper &gt; svg&quot;);
+      for (j = 0, apsLen = aps.length; j &lt; apsLen; j++) {
+        toggleOne(aps[j], fullWidth);
+      }
+      for (j = 0, wrapperLen = wrappers.length; j &lt; wrapperLen; j++) {
+        toggleOne(wrappers[j], wrapperWidth);
+      }
+    }
+  }
+}
+function toggleOne(target, width) {
+  target.setAttribute(&quot;width&quot;, width);
+}</script>
+      </head>
+      <body>
+        <header>
+          <h1>Alignments</h1>
+          <div id="set_all">
+            <button id="expand_all" type="button">Expand all</button>
+            <button id="truncate_all" type="button">Truncate all</button>
+          </div>
+        </header>
+        <main>
+          <div id="wrapper">
+            <svg width="0" height="0" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <defs><linearGradient id="yellowGradient" x1="0%" x2="100%" y1="0%" y2="0%"><stop offset="0%" stop-color="yellow" stop-opacity="1.0"/><stop offset="6%" stop-color="yellow" stop-opacity="1.0"/><stop offset="20%" stop-color="yellow" stop-opacity="0.6"/><stop offset="35%" stop-color="yellow" stop-opacity="0.4"/><stop offset="50%" stop-color="yellow" stop-opacity="0.3"/><stop offset="65%" stop-color="yellow" stop-opacity="0.4"/><stop offset="80%" stop-color="yellow" stop-opacity="0.6"/><stop offset="94%" stop-color="yellow" stop-opacity="1.0"/><stop offset="100%" stop-color="yellow" stop-opacity="1.0"/></linearGradient><linearGradient id="dodgerblueGradient" x1="0%" x2="100%" y1="0%" y2="0%"><stop offset="0%" stop-color="dodgerblue" stop-opacity="1.0"/><stop offset="6%" stop-color="dodgerblue" stop-opacity="1.0"/><stop offset="20%" stop-color="dodgerblue" stop-opacity="0.6"/><stop offset="35%" stop-color="dodgerblue" stop-opacity="0.4"/><stop offset="50%" stop-color="dodgerblue" stop-opacity="0.3"/><stop offset="65%" stop-color="dodgerblue" stop-opacity="0.4"/><stop offset="80%" stop-color="dodgerblue" stop-opacity="0.6"/><stop offset="94%" stop-color="dodgerblue" stop-opacity="1.0"/><stop offset="100%" stop-color="dodgerblue" stop-opacity="1.0"/></linearGradient><linearGradient id="violetGradient" x1="0%" x2="100%" y1="0%" y2="0%"><stop offset="0%" stop-color="violet" stop-opacity="1.0"/><stop offset="6%" stop-color="violet" stop-opacity="1.0"/><stop offset="20%" stop-color="violet" stop-opacity="0.6"/><stop offset="35%" stop-color="violet" stop-opacity="0.4"/><stop offset="50%" stop-color="violet" stop-opacity="0.3"/><stop offset="65%" stop-color="violet" stop-opacity="0.4"/><stop offset="80%" stop-color="violet" stop-opacity="0.6"/><stop offset="94%" stop-color="violet" stop-opacity="1.0"/><stop offset="100%" stop-color="violet" stop-opacity="1.0"/></linearGradient><linearGradient id="orangeGradient" x1="0%" x2="100%" y1="0%" y2="0%"><stop offset="0%" stop-color="orange" stop-opacity="1.0"/><stop offset="6%" stop-color="orange" stop-opacity="1.0"/><stop offset="20%" stop-color="orange" stop-opacity="0.6"/><stop offset="35%" stop-color="orange" stop-opacity="0.4"/><stop offset="50%" stop-color="orange" stop-opacity="0.3"/><stop offset="65%" stop-color="orange" stop-opacity="0.4"/><stop offset="80%" stop-color="orange" stop-opacity="0.6"/><stop offset="94%" stop-color="orange" stop-opacity="1.0"/><stop offset="100%" stop-color="orange" stop-opacity="1.0"/></linearGradient><linearGradient id="peruGradient" x1="0%" x2="100%" y1="0%" y2="0%"><stop offset="0%" stop-color="peru" stop-opacity="1.0"/><stop offset="6%" stop-color="peru" stop-opacity="1.0"/><stop offset="20%" stop-color="peru" stop-opacity="0.6"/><stop offset="35%" stop-color="peru" stop-opacity="0.4"/><stop offset="50%" stop-color="peru" stop-opacity="0.3"/><stop offset="65%" stop-color="peru" stop-opacity="0.4"/><stop offset="80%" stop-color="peru" stop-opacity="0.6"/><stop offset="94%" stop-color="peru" stop-opacity="1.0"/><stop offset="100%" stop-color="peru" stop-opacity="1.0"/></linearGradient><linearGradient id="limegreenGradient" x1="0%" x2="100%" y1="0%" y2="0%"><stop offset="0%" stop-color="limegreen" stop-opacity="1.0"/><stop offset="6%" stop-color="limegreen" stop-opacity="1.0"/><stop offset="20%" stop-color="limegreen" stop-opacity="0.6"/><stop offset="35%" stop-color="limegreen" stop-opacity="0.4"/><stop offset="50%" stop-color="limegreen" stop-opacity="0.3"/><stop offset="65%" stop-color="limegreen" stop-opacity="0.4"/><stop offset="80%" stop-color="limegreen" stop-opacity="0.6"/><stop offset="94%" stop-color="limegreen" stop-opacity="1.0"/><stop offset="100%" stop-color="limegreen" stop-opacity="1.0"/></linearGradient></defs>
+            </svg><div class="group" data-maxwidth="150.625"><div class="ap">
+      <svg preserveAspectRatio="none" width="150.625" height="317" class="alignment" xmlns="http://www.w3.org/2000/svg">
+      <g><rect x="0" y="0.0" width="150.625" height="18" fill="peru"/><foreignObject x="1" y="-2.0" width="150.625" height="18">
+      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">59: </span>
+        Any change </div>
+    </foreignObject><rect x="0" y="18.0" width="150.625" height="18" fill="orange"/><foreignObject x="1" y="16.0" width="150.625" height="18">
+      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">60: </span>
+        Any change </div>
+    </foreignObject><rect x="0" y="36.0" width="150.625" height="18" fill="yellow"/><foreignObject x="1" y="34.0" width="150.625" height="18">
+      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">61: </span>
+        Any change </div>
+    </foreignObject><rect x="0" y="54.0" width="150.625" height="18" fill="limegreen"/><foreignObject x="1" y="52.0" width="150.625" height="18">
+      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">66: </span>
+        Any change </div>
+    </foreignObject></g><g><rect x="0" y="90.0" width="150.625" height="18" fill="dodgerblue"/><foreignObject x="1" y="88.0" width="150.625" height="18">
+      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">69: </span>
+        Important changes </div>
+    </foreignObject><rect x="0" y="108.0" width="150.625" height="18" fill="violet"/><foreignObject x="1" y="106.0" width="150.625" height="18">
+      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">72: </span>
+        Important changes </div>
+    </foreignObject></g>
+      </svg>
+    </div><div class="flow">
+      <svg preserveAspectRatio="none" width="80" height="317" xmlns="http://www.w3.org/2000/svg"><path d="M 0,9.0 L 10,9.0 C 40,9.0 40,9.0001 70,9.0001 L 80,9.0001" stroke="url(#peruGradient)" stroke-width="18" fill="none"/><path d="M 0,27.0 L 10,27.0 C 40,27.0 40,27.0001 70,27.0001 L 80,27.0001" stroke="url(#orangeGradient)" stroke-width="18" fill="none"/><path d="M 0,45.0 L 10,45.0 C 40,45.0 40,45.0001 70,45.0001 L 80,45.0001" stroke="url(#yellowGradient)" stroke-width="18" fill="none"/><path d="M 0,63.0 L 10,63.0 C 40,63.0 40,63.0001 70,63.0001 L 80,63.0001" stroke="url(#limegreenGradient)" stroke-width="18" fill="none"/><path d="M 0,99.0 L 10,99.0 C 40,99.0 40,99.0001 70,99.0001 L 80,99.0001" stroke="url(#dodgerblueGradient)" stroke-width="18" fill="none"/><path d="M 0,117.0 L 10,117.0 C 40,117.0 40,117.0001 70,117.0001 L 80,117.0001" stroke="url(#violetGradient)" stroke-width="18" fill="none"/></svg>
+    </div><div class="innerWrapper">
+            <svg preserveAspectRatio="none" width="152.625" height="317" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1.0" width="150.625" height="72" fill="none" stroke="black" stroke-width="2" rx="3"/><rect x="1" y="91.0" width="150.625" height="36" fill="none" stroke="black" stroke-width="2" rx="3"/></svg>
+          </div></div><div class="group" data-maxwidth="150.625"><div class="ap">
+      <svg preserveAspectRatio="none" width="150.625" height="317" class="alignment" xmlns="http://www.w3.org/2000/svg">
+      <g><rect x="0" y="0.0" width="150.625" height="18" fill="peru"/><foreignObject x="1" y="-2.0" width="150.625" height="18">
+      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">59: </span>
+        Any change </div>
+    </foreignObject><rect x="0" y="18.0" width="150.625" height="18" fill="orange"/><foreignObject x="1" y="16.0" width="150.625" height="18">
+      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">60: </span>
+        Any change </div>
+    </foreignObject><rect x="0" y="36.0" width="150.625" height="18" fill="yellow"/><foreignObject x="1" y="34.0" width="150.625" height="18">
+      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">61: </span>
+        Any change </div>
+    </foreignObject><rect x="0" y="54.0" width="150.625" height="18" fill="limegreen"/><foreignObject x="1" y="52.0" width="150.625" height="18">
+      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">66: </span>
+        Any change </div>
+    </foreignObject></g><g><rect x="0" y="90.0" width="150.625" height="18" fill="dodgerblue"/><foreignObject x="1" y="88.0" width="150.625" height="18">
+      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">69: </span>
+        Important changes </div>
+    </foreignObject><rect x="0" y="108.0" width="150.625" height="18" fill="violet"/><foreignObject x="1" y="106.0" width="150.625" height="18">
+      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">72: </span>
+        Important changes </div>
+    </foreignObject></g>
+      </svg>
+    </div><div class="innerWrapper">
+            <svg preserveAspectRatio="none" width="152.625" height="317" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1.0" width="150.625" height="72" fill="none" stroke="black" stroke-width="2" rx="3"/><rect x="1" y="91.0" width="150.625" height="36" fill="none" stroke="black" stroke-width="2" rx="3"/></svg>
+          </div></div>
+          </div>
+        </main>
+      </body>
+    </html>

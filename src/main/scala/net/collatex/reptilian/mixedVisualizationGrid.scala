@@ -413,11 +413,9 @@ def createHorizontalRibbons(
     ): Map[Siglum, Double] =
       if groups.isEmpty then acc
       else
-        val newAcc = acc ++ groups
-          .head
-          .members
-          .zipWithIndex
-          .map(e => e._1.siglum -> (top + e._2 * ribbonWidth)).toMap
+        val newAcc = acc ++ groups.head.members.zipWithIndex
+          .map(e => e._1.siglum -> (top + e._2 * ribbonWidth))
+          .toMap
         nextGroup(groups.tail, top + (groups.head.members.size + 1) * ribbonWidth, newAcc)
     def missings(missings: Vector[Siglum], top: Double): Map[Siglum, Double] =
       missings.zipWithIndex.map(e => e._1 -> (top + e._2 * ribbonWidth)).toMap
@@ -458,22 +456,31 @@ def createHorizontalRibbons(
     *   Vector[Elem] <g> elements for all nodes and internode flows
     */
   def plotAllAlignmentPointsAndRibbons(nodes: Vector[HorizNodeData]) =
-    val result = nodes
-      .sliding(2)
-      .flatMap(e =>
-        <div class="group" data-maxwidth={e.head.alignmentWidth.toString}>{
+    val result =
+      if nodes.size == 1 then
+        <div class="group" data-maxwidth={nodes.last.alignmentWidth.toString}>{
           Vector(
-            plotOneAlignmentPoint(e.head),
-            plotLeadingRibbons(e.last, e.head),
-            plotGroupNodeWrappers(e.head)
+            plotOneAlignmentPoint(nodes.last),
+            plotGroupNodeWrappers(nodes.last)
+          )
+          }</div>
+      else
+        nodes
+          .sliding(2)
+          .flatMap(e =>
+            <div class="group" data-maxwidth={e.head.alignmentWidth.toString}>{
+              Vector(
+                plotOneAlignmentPoint(e.head),
+                plotLeadingRibbons(e.last, e.head),
+                plotGroupNodeWrappers(e.head)
+              )
+            }</div>
+          ) ++ <div class="group" data-maxwidth={nodes.last.alignmentWidth.toString}>{
+          Vector(
+            plotOneAlignmentPoint(nodes.last),
+            plotGroupNodeWrappers(nodes.last)
           )
         }</div>
-      ) ++ <div class="group" data-maxwidth={nodes.last.alignmentWidth.toString}>{
-      Vector(
-        plotOneAlignmentPoint(nodes.last),
-        plotGroupNodeWrappers(nodes.last)
-      )
-    }</div>
     result
 
   def plotGroupNodeWrappers(node: HorizNodeData): Elem =

@@ -4,7 +4,7 @@
         <filters directoryPatterns="" filePatterns="\Qflow-view.xhtml.xpr\E" positiveFilePatterns="" showHiddenFiles="false"/>
         <options/>
     </meta>
-    <projectTree name="flow-view.xhtml.xpr">
+    <projectTree name="collatex.xpr">
         <folder path="."/>
     </projectTree>
 </project>

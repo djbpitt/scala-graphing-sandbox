@@ -91,11 +91,11 @@ def mergeHgHg(
     // FIXME: Adding allSplitHyperedgeNew._1 to the greedyResult causes a cycle where it shouldn't be.
     // val result = allSplitHyperedgesNew._1 + greedyResult
     val result = greedyResult
-    //val tmp = result.hyperedges.toVector
+    // val tmp = result.hyperedges.toVector
     //  .sortBy(e => e.verticesIterator.map(_.start).min)
     //  .map(_.verticesIterator.next())
     //  .map(_.tString)
-    //tmp.foreach(println)
+    // tmp.foreach(println)
     spuriousMatches.flatten.foldLeft(result)(_ + _)
   else
     val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
@@ -321,7 +321,8 @@ def isSpuriousMatch(candidate: HyperedgeMatch): Boolean =
     .map(_.tokens.head.w)
     .toSet
     .intersect(
-      candidate.last.verticesIterator.filter(_.tokens.nonEmpty)
+      candidate.last.verticesIterator
+        .filter(_.tokens.nonEmpty)
         .map(_.tokens.head.w)
         .toSet
     )
@@ -424,63 +425,28 @@ object HyperedgeMatch:
     new HyperedgeMatch(he1, he2)
 
 @main def secondAlignmentPhaseExploration(): Unit =
-  // Transpositions only in 3287
   val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
-  val unalignedZonesDir = os.pwd / "src" / "main" / "outputs" / "unalignedZones"
+  val unalignedZonesDir = os.pwd / "src" / "main" / "outputs" / "unalignedZones_2025-06-03"
   val JSONFiles = os.list(unalignedZonesDir).filter(e => os.isFile(e))
   for uzFilename <- JSONFiles do
     println(uzFilename)
     val darwinReadings: List[List[Token]] = readSpecifiedJsonData(uzFilename)
-    val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
-    val hg: Hypergraph[EdgeLabel, TokenRange] =
-      mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-    // Transform hypergraph to alignment ribbon and visualize
+    val hg =
+      if darwinReadings.size == 1 then // Don’t try to cluster if there’s only one witness
+        Hyperedge(
+          EdgeLabel(darwinReadings.head.head.w.toString),
+          Set(TokenRange(darwinReadings.head.head.g, darwinReadings.head.last.g + 1, gTa))
+        )
+      else // Transform hypergraph to alignment ribbon and visualize
+        val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
+        mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
     createSecondAlignmentPhaseVisualization(hg)
 
-@main def explore3287(): Unit =
+@main def explore1122(): Unit = // longest unaligned zone
   val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
-  val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "3287.json"
-  // val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "4154.json"
-  val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
-  // darwinReadings.foreach(e => println(e.map(_.t).mkString))
-  val nodesToCluster = clusterWitnesses(darwinReadings)
-  // println(nodesToCluster)
+  val filename = os.pwd / "src" / "main" / "outputs" / "unalignedZones_2025-06-03" / "1122.json"
+  val darwinReadings: List[List[Token]] = readSpecifiedJsonData(filename)
+  val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
+  println(nodesToCluster)
   val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-  val dg = hg.toDependencyGraph()
-  dependencyGraphToDot(dg, hg)
-
-@main def explore7212(): Unit =
-  val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
-  val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "7212.json"
-  val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
-  // darwinReadings.foreach(e => println(e.map(_.t).mkString))
-  val nodesToCluster = clusterWitnesses(darwinReadings)
-  println(s"nodesToCluster: $nodesToCluster")
-  val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-  val dg = hg.toDependencyGraph()
-  dependencyGraphToDot(dg, hg)
-
-@main def explore2965(): Unit =
-  val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
-  val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "2965.json"
-  val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
-  // darwinReadings.foreach(e => println(e.map(_.t).mkString))
-  val nodesToCluster = clusterWitnesses(darwinReadings)
-  println(s"nodesToCluster: $nodesToCluster")
-  val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-  val dg = hg.toDependencyGraph()
-  dependencyGraphToDot(dg, hg)
-
-// Example contains a transposition
-@main def explore4154(): Unit =
-  val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
-  val brokenJsonPath = os.pwd / "src" / "main" / "outputs" / "unalignedZones" / "4154.json"
-  val darwinReadings = readSpecifiedJsonData(brokenJsonPath)
-  // darwinReadings.foreach(e => println(e.map(_.t).mkString))
-  val nodesToCluster = clusterWitnesses(darwinReadings)
-  println(s"nodesToCluster: $nodesToCluster")
-  val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-  val dg = hg.toDependencyGraph()
-  dependencyGraphToDot(dg, hg)
-  // Transform hypergraph to alignment ribbon and visualize
   createSecondAlignmentPhaseVisualization(hg)
