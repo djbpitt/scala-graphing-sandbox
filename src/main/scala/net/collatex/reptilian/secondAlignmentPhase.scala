@@ -242,7 +242,7 @@ def splitOneHyperedge(
       val nextOccurrence = occurrences.tail.head
       val newLengthOfPre: Int =
         nextOccurrence.patternTr.start - currentOccurrence.patternTr.until
-      println(s"Calculating preLength: ${nextOccurrence.patternTr.start} ${currentOccurrence.patternTr.until}")
+      // println(s"Calculating preLength: ${nextOccurrence.patternTr.start} ${currentOccurrence.patternTr.until}")
       if newLengthOfPre < 0 then
         throw RuntimeException("Patterns either overlap or not sorted correctly!")
       val newLengthOfPost: Int =
