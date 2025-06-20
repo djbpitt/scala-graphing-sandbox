@@ -71,5 +71,5 @@ type TokenState[A] = State[ParseState, A]
   val tokenizer = makeTokenizer(tp)
   val inputTokens: Vector[String] = tokenizer(wd)
   val program: TokenState[Vector[TokenEnum]] = inputTokens.traverse(processToken)
-  val (finalState, result) = program.run(ParseState(0, 0)).value
+  val result = program.runA(ParseState(0, 0)).value
   result.foreach(println)
