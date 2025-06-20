@@ -7,12 +7,6 @@ import math.Ordered.orderingToOrdered
 /* Constants */
 // FIXME: Hard-coded witness identifiers!
 val witnessToColor: Map[Siglum, String] = Map(
-  Siglum("darwin1859.txt") -> "peru",
-  Siglum("darwin1860.txt") -> "orange",
-  Siglum("darwin1861.txt") -> "yellow",
-  Siglum("darwin1866.txt") -> "limegreen",
-  Siglum("darwin1869.txt") -> "dodgerblue",
-  Siglum("darwin1872.txt") -> "violet",
   Siglum("0") -> "peru",
   Siglum("1") -> "orange",
   Siglum("2") -> "yellow",
@@ -20,8 +14,6 @@ val witnessToColor: Map[Siglum, String] = Map(
   Siglum("4") -> "dodgerblue",
   Siglum("5") -> "violet"
 )
-val allSigla: Set[Siglum] =
-  witnessToColor.keySet // TODO: Derive from nodes, but AlignmentUnit doesn't have a witnessReadings property
     /* End of constants*/
 
     /* ====================================================================== */
@@ -194,15 +186,6 @@ def selfCartesianProduct[A](input: Iterable[A]) =
     )
     .filter(_.size > 1)
   result
-
-def intToSiglum = Map(
-  0 -> "darwin1859.txt",
-  1 -> "darwin1860.txt",
-  2 -> "darwin1861.txt",
-  3 -> "darwin1866.txt",
-  4 -> "darwin1869.txt",
-  5 -> "darwin1872.txt"
-)
 
 @unused
 def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =

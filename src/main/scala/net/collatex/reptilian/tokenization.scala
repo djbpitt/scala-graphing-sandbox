@@ -22,14 +22,16 @@ import scalax.collection.ChainingOps
 // Read external JSON into TokenJSON to avoid reading into enum subtype; then remap
 case class TokenJSON(t: String, n: String, w: Int, g: Int) derives ReadWriter
 
+type witId = Int
+
 enum TokenEnum:
-  case Token(t: String, n: String, w: Int, g: Int) extends TokenEnum
-  case TokenSep(t: String, n: String, w: Int, g: Int) extends TokenEnum
-  case TokenSg(t: String, n: String, w: Int, g: Int) extends TokenEnum
-  case TokenHG(t: String, n: String, w: Int, g: Int, he: EdgeLabel, tr: TokenRange) extends TokenEnum
+  case Token(t: String, n: String, w: witId, g: Int) extends TokenEnum
+  case TokenSep(t: String, n: String, w: witId, g: Int) extends TokenEnum
+  case TokenSg(t: String, n: String, w: witId, g: Int) extends TokenEnum
+  case TokenHG(t: String, n: String, w: witId, g: Int, he: EdgeLabel, tr: TokenRange) extends TokenEnum
   def t: String
   def n: String
-  def w: Int
+  def w: witId
   def g: Int
 import TokenEnum.*
 
