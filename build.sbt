@@ -1,4 +1,4 @@
-ThisBuild / scalaVersion := "3.3.3"
+ThisBuild / scalaVersion := "3.7.1"
 
 // 2025-06-11 djb Don't accept IntelliJ's suggestion to replace
 // `xs @ _*` with `xs*`, where it disparages the former as Scala 2
