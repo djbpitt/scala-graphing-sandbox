@@ -47,10 +47,13 @@ def readData(pathToData: Path): List[(String, String)] =
     .toList
     .map(e => (e.last, os.read(e)))
 
-def createGTaManifest(data: Seq[CollateXWitnessData], tokensPerWitnessLimit: Int): Vector[TokenEnum] =
+def createGTaManifest(
+    data: Seq[CollateXWitnessData],
+    tokenPattern: Regex,
+    tokensPerWitnessLimit: Int
+): Vector[TokenEnum] =
   val witnessStrings: List[String] = data.map(e => e.content).toList
   // Prepare tokenizer; tokens include trailing whitespace.
-  val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
   val tokenizer = makeTokenizer(tokenPattern)
   // Create TokenEnum instances, including TokenSep
   val gTa: Vector[TokenEnum] = tokenize(tokenizer, tokensPerWitnessLimit)(witnessStrings)
@@ -79,7 +82,8 @@ def createGTaManifest(data: Seq[CollateXWitnessData], tokensPerWitnessLimit: Int
     case Right(e) =>
       val tokensPerWitnessLimit = 2500 // Low values for debug; set to Int.MaxValue for production
       val (data: Seq[CollateXWitnessData], debug) = e
-      val gTa = createGTaManifest(data, tokensPerWitnessLimit)
+      val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
+      val gTa = createGTaManifest(data, tokenPattern, tokensPerWitnessLimit)
       if debug then
         System.err.println("\nWitness preview:")
         previewWitness(data).foreach(System.err.println)
