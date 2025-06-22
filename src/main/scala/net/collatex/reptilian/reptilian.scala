@@ -8,8 +8,12 @@ import scala.util.matching.Regex
 import scala.xml.*
 import scala.xml.dtd.DocType
 import scala.io.Source
-import java.io.{InputStream, PrintWriter, StringReader}
+
+import java.io.{PrintWriter, StringReader}
 import java.net.{URI, URL}
+
+import cats.data.State
+import cats.syntax.all.*
 
 // Relax NG validation
 import com.thaiopensource.validate.ValidationDriver
@@ -47,18 +51,6 @@ def readData(pathToData: Path): List[(String, String)] =
     .toList
     .map(e => (e.last, os.read(e)))
 
-def createGTaManifest(
-    data: Seq[CollateXWitnessData],
-    tokenPattern: Regex,
-    tokensPerWitnessLimit: Int
-): Vector[TokenEnum] =
-  val witnessStrings: List[String] = data.map(e => e.content).toList
-  // Prepare tokenizer; tokens include trailing whitespace.
-  val tokenizer = makeTokenizer(tokenPattern)
-  // Create TokenEnum instances, including TokenSep
-  val gTa: Vector[TokenEnum] = tokenize(tokenizer, tokensPerWitnessLimit)(witnessStrings)
-  gTa
-
 /** Obtain input via manifest and process
   *
   * @param args
@@ -83,7 +75,10 @@ def createGTaManifest(
       val tokensPerWitnessLimit = 2500 // Low values for debug; set to Int.MaxValue for production
       val (data: Seq[CollateXWitnessData], debug) = e
       val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
-      val gTa = createGTaManifest(data, tokenPattern, tokensPerWitnessLimit)
+      val tokenizer = makeTokenizer(tokenPattern)
+      val inputTokens: Vector[String] = tokenizer(data)
+      val program: TokenState[Vector[TokenEnum]] = inputTokens.traverse(processToken)
+      val gTa = program.runA(ParseState(0, 0)).value
       if debug then
         System.err.println("\nWitness preview:")
         previewWitness(data).foreach(System.err.println)
@@ -347,4 +342,16 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
     witnessData <- retrieveWitnessData(manifestXml, manifestPath)
   } yield witnessData
 
+def processToken(str: String): TokenState[TokenEnum] = State { state =>
+  val ParseState(offset, emptyCount) = state
+  if str.isEmpty then
+    (
+      state.copy(offset = offset + 1, emptyCount = emptyCount + 1),
+      TokenEnum.TokenSep("sep" + offset.toString, "sep" + offset.toString, emptyCount, offset)
+    )
+  else (state.copy(offset = offset + 1), TokenEnum.Token(str, normalize(str), emptyCount, offset))
+}
+
 case class CollateXWitnessData(siglum: String, content: String)
+case class ParseState(offset: Int, emptyCount: Int)
+type TokenState[A] = State[ParseState, A]
