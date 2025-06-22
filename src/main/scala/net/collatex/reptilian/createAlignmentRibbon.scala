@@ -203,16 +203,17 @@ def createGlobalUnalignedZone(sigla: List[Siglum], gTa: Vector[TokenEnum]) = {
   // TODO: Could be simplified if the routine knew the token length of the witnesses
   for (tokenIndex <- gTa.indices)
     val token = gTa(tokenIndex)
-    if token.w != -1
-    then // witness separators have witness identifier values of -1
-      val tuple =
-        witnessRanges.getOrElse(sigla(token.w), TokenRange(tokenIndex, tokenIndex, gTa))
-      val minimum = tuple.start
-      val maximum = tokenIndex
-      witnessRanges.put(
-        sigla(token.w),
-        TokenRange(minimum, maximum + 1, gTa)
-      ) // +1 is for exclusive until
+    token match
+      case x:Token =>
+        val tuple =
+          witnessRanges.getOrElse(sigla(x.w), TokenRange(tokenIndex, tokenIndex, gTa))
+        val minimum = tuple.start
+        val maximum = tokenIndex
+        witnessRanges.put(
+          sigla(x.w),
+          TokenRange(minimum, maximum + 1, gTa)
+        ) // +1 is for exclusive until
+      case _ =>
   // mutable map is local to the function, to convert to immutable before return
   val witnessReadings = witnessRanges.toMap
   val globalUnalignedZone = UnalignedZone(witnessReadings, true)

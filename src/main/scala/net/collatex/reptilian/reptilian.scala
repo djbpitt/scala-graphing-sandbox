@@ -8,8 +8,12 @@ import scala.util.matching.Regex
 import scala.xml.*
 import scala.xml.dtd.DocType
 import scala.io.Source
-import java.io.{InputStream, PrintWriter, StringReader}
+
+import java.io.{PrintWriter, StringReader}
 import java.net.{URI, URL}
+
+import cats.data.State
+import cats.syntax.all.*
 
 // Relax NG validation
 import com.thaiopensource.validate.ValidationDriver
@@ -47,21 +51,12 @@ def readData(pathToData: Path): List[(String, String)] =
     .toList
     .map(e => (e.last, os.read(e)))
 
-def createGTaManifest(data: Seq[CollateXWitnessData], tokensPerWitnessLimit: Int): Vector[TokenEnum] =
-  val witnessStrings: List[String] = data.map(e => e.content).toList
-  // Prepare tokenizer; tokens include trailing whitespace.
-  val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
-  val tokenizer = makeTokenizer(tokenPattern)
-  // Create TokenEnum instances, including TokenSep
-  val gTa: Vector[TokenEnum] = tokenize(tokenizer, tokensPerWitnessLimit)(witnessStrings)
-  gTa
 
 /** Obtain input via manifest and process
   *
   * @param args
   *   args: location of manifest and optional toggle for debug output
-  *
-  * @return
+ * @return
   */
 @main def manifest(
     args: String*
@@ -77,9 +72,10 @@ def createGTaManifest(data: Seq[CollateXWitnessData], tokensPerWitnessLimit: Int
   parsedInput match {
     case Left(e) => System.err.println(e)
     case Right(e) =>
-      val tokensPerWitnessLimit = 2500 // Low values for debug; set to Int.MaxValue for production
+      val tokensPerWitnessLimit = 100 // Low values for debug; set to Int.MaxValue for production
       val (data: Seq[CollateXWitnessData], debug) = e
-      val gTa = createGTaManifest(data, tokensPerWitnessLimit)
+      val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
+      val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, data, tokenPattern)
       if debug then
         System.err.println("\nWitness preview:")
         previewWitness(data).foreach(System.err.println)
