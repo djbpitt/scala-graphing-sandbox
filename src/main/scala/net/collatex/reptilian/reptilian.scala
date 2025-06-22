@@ -348,7 +348,7 @@ def processToken(str: String): TokenState[TokenEnum] = State { state =>
   if str.isEmpty then
     (
       state.copy(offset = offset + 1, emptyCount = emptyCount + 1),
-      TokenEnum.TokenSep("sep" + offset.toString, "sep" + offset.toString, -1, offset) // -1 is hard-coded in createAlignmentRibbon
+      TokenEnum.TokenSep("sep" + offset.toString, "sep" + offset.toString, emptyCount, offset) // WitId isn't used; could be anything
     )
   else (state.copy(offset = offset + 1), TokenEnum.Token(str, normalize(str), emptyCount, offset))
 }
