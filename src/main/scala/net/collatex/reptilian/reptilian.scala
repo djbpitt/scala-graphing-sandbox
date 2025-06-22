@@ -75,7 +75,7 @@ def readData(pathToData: Path): List[(String, String)] =
       val tokensPerWitnessLimit = 100 // Low values for debug; set to Int.MaxValue for production
       val (data: Seq[CollateXWitnessData], debug) = e
       val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
-      val gTa: Vector[TokenEnum] = t(tokensPerWitnessLimit, data, tokenPattern)
+      val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, data, tokenPattern)
       gTa.foreach(System.err.println)
       if debug then
         System.err.println("\nWitness preview:")
