@@ -45,11 +45,12 @@ import TokenEnum.*
 def normalize(witnessData: String): String =
   witnessData.toLowerCase.trim
 
-def makeTokenizer(tokenPattern: Regex)(witnessData: Seq[CollateXWitnessData]): Vector[String] =
+def makeTokenizer(tokenPattern: Regex, tokenWitnessLimit: Int)(witnessData: Seq[CollateXWitnessData]): Vector[String] =
   val result = witnessData
     .map(_.content) // Use only witness string
-    .flatMap(e => "" :: tokenPattern.findAllIn(e).toList) // Prepend empty string to each group of witness tokens
+    .flatMap(e =>
+      "" :: tokenPattern.findAllIn(e).toList.slice(0, tokenWitnessLimit)
+    ) // Prepend empty string to each group of witness tokens
     .tail // Strip initial empty string; others will signal witness separation
     .toVector
   result
-

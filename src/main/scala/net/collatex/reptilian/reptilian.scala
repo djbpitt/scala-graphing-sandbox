@@ -72,13 +72,14 @@ def readData(pathToData: Path): List[(String, String)] =
   parsedInput match {
     case Left(e) => System.err.println(e)
     case Right(e) =>
-      val tokensPerWitnessLimit = 2500 // Low values for debug; set to Int.MaxValue for production
+      val tokensPerWitnessLimit = 100 // Low values for debug; set to Int.MaxValue for production
       val (data: Seq[CollateXWitnessData], debug) = e
       val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
-      val tokenizer = makeTokenizer(tokenPattern)
+      val tokenizer = makeTokenizer(tokenPattern, tokensPerWitnessLimit)
       val inputTokens: Vector[String] = tokenizer(data)
       val program: TokenState[Vector[TokenEnum]] = inputTokens.traverse(processToken)
       val gTa = program.runA(ParseState(0, 0)).value
+      gTa.foreach(println)
       if debug then
         System.err.println("\nWitness preview:")
         previewWitness(data).foreach(System.err.println)
