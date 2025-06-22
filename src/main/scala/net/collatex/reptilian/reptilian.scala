@@ -79,7 +79,7 @@ def readData(pathToData: Path): List[(String, String)] =
       val inputTokens: Vector[String] = tokenizer(data)
       val program: TokenState[Vector[TokenEnum]] = inputTokens.traverse(processToken)
       val gTa = program.runA(ParseState(0, 0)).value
-      gTa.foreach(println)
+      gTa.foreach(System.err.println)
       if debug then
         System.err.println("\nWitness preview:")
         previewWitness(data).foreach(System.err.println)
