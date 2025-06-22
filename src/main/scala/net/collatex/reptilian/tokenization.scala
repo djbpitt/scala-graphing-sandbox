@@ -1,10 +1,12 @@
 package net.collatex.reptilian
 
+import cats.data.State
+import cats.syntax.all.*
+
 import upickle.default.*
 
-import scala.collection.mutable.ArrayBuffer
+
 import scala.util.matching.Regex
-import scalax.collection.ChainingOps
 
 /** Token as complex object
   *
@@ -33,7 +35,6 @@ enum TokenEnum:
   def n: String
   def w: witId
   def g: Int
-import TokenEnum.*
 
 /** Normalize witness data
   *
@@ -54,3 +55,25 @@ def makeTokenizer(tokenPattern: Regex, tokenWitnessLimit: Int)(witnessData: Seq[
     .tail // Strip initial empty string; others will signal witness separation
     .toVector
   result
+
+// Create gTa using State monad
+case class ParseState(offset: Int, emptyCount: Int)
+type TokenState[A] = State[ParseState, A]
+
+def processToken(str: String): TokenState[TokenEnum] = State { state =>
+  val ParseState(offset, emptyCount) = state
+  if str.isEmpty then
+    (
+      state.copy(offset = offset + 1, emptyCount = emptyCount + 1),
+      TokenEnum.TokenSep("sep" + offset.toString, "sep" + offset.toString, emptyCount, offset) // WitId isn't used; could be anything
+    )
+  else (state.copy(offset = offset + 1), TokenEnum.Token(str, normalize(str), emptyCount, offset))
+}
+
+def t(tokensPerWitnessLimit: witId, data: Seq[CollateXWitnessData], tokenPattern: Regex) = {
+  val tokenizer = makeTokenizer(tokenPattern, tokensPerWitnessLimit)
+  val inputTokens: Vector[String] = tokenizer(data)
+  val program: TokenState[Vector[TokenEnum]] = inputTokens.traverse(processToken)
+  val gTa = program.runA(ParseState(0, 0)).value
+  gTa
+}

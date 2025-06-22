@@ -51,26 +51,7 @@ def readData(pathToData: Path): List[(String, String)] =
     .toList
     .map(e => (e.last, os.read(e)))
 
-case class ParseState(offset: Int, emptyCount: Int)
-type TokenState[A] = State[ParseState, A]
 
-def processToken(str: String): TokenState[TokenEnum] = State { state =>
-  val ParseState(offset, emptyCount) = state
-  if str.isEmpty then
-    (
-      state.copy(offset = offset + 1, emptyCount = emptyCount + 1),
-      TokenEnum.TokenSep("sep" + offset.toString, "sep" + offset.toString, emptyCount, offset) // WitId isn't used; could be anything
-    )
-  else (state.copy(offset = offset + 1), TokenEnum.Token(str, normalize(str), emptyCount, offset))
-}
-
-def t(tokensPerWitnessLimit: witId, data: Seq[CollateXWitnessData], tokenPattern: Regex) = {
-  val tokenizer = makeTokenizer(tokenPattern, tokensPerWitnessLimit)
-  val inputTokens: Vector[String] = tokenizer(data)
-  val program: TokenState[Vector[TokenEnum]] = inputTokens.traverse(processToken)
-  val gTa = program.runA(ParseState(0, 0)).value
-  gTa
-}
 /** Obtain input via manifest and process
   *
   * @param args
