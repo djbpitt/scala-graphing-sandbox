@@ -51,12 +51,11 @@ def readData(pathToData: Path): List[(String, String)] =
     .toList
     .map(e => (e.last, os.read(e)))
 
-
 /** Obtain input via manifest and process
   *
   * @param args
   *   args: location of manifest and optional toggle for debug output
- * @return
+  * @return
   */
 @main def manifest(
     args: String*
@@ -81,10 +80,10 @@ def readData(pathToData: Path): List[(String, String)] =
         previewWitness(data).foreach(System.err.println)
         System.err.println("\nTokens:")
         gTa.foreach(System.err.println)
-      val gTaSigla: List[Siglum] = data.indices.map(e => Siglum(e.toString)).toList // integers
+      val gTaSigla: List[WitId] = data.indices.toList // integers
       val displaySigla: List[Siglum] = data.map(e => Siglum(e.siglum)).toList // user-supplied for rendering
       // Create alignment ribbon
-      val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
+      val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, displaySigla, gTa)
       // Write to stdout
       val writer = new PrintWriter(Console.out)
       val doctypeHtml: DocType = DocType("html")
@@ -99,7 +98,7 @@ def readData(pathToData: Path): List[(String, String)] =
       writer.flush()
   }
 
-/** Display siglum and initial slice of text of all witnesses
+/** Display witId and initial slice of text of all witnesses
   *
   * Used only for debugging
   *
@@ -335,7 +334,7 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
     manifestXml <- retrieveManifestXml(manifestPath)
     manifestRnc = Source.fromResource("manifest.rnc").getLines().mkString("\n")
     _ <- validateRnc(manifestXml, manifestRnc)
-    _ <- validateSchematron(manifestXml, "manifest-sch-compiled.xsl", manifestUri).left.map(_.mkString("\n"))
+//    _ <- validateSchematron(manifestXml, "manifest-sch-compiled.xsl", manifestUri).left.map(_.mkString("\n"))
     witnessData <- retrieveWitnessData(manifestXml, manifestPath)
   } yield witnessData
 
