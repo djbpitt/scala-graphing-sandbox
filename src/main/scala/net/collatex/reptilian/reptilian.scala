@@ -334,7 +334,7 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
     manifestXml <- retrieveManifestXml(manifestPath)
     manifestRnc = Source.fromResource("manifest.rnc").getLines().mkString("\n")
     _ <- validateRnc(manifestXml, manifestRnc)
-//    _ <- validateSchematron(manifestXml, "manifest-sch-compiled.xsl", manifestUri).left.map(_.mkString("\n"))
+    _ <- validateSchematron(manifestXml, "manifest-sch-compiled.xsl", manifestUri).left.map(_.mkString("\n"))
     witnessData <- retrieveWitnessData(manifestXml, manifestPath)
   } yield witnessData
 
