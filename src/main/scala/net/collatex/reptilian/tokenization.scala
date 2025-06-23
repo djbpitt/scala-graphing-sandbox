@@ -24,16 +24,16 @@ import scala.util.matching.Regex
 // Read external JSON into TokenJSON to avoid reading into enum subtype; then remap
 case class TokenJSON(t: String, n: String, w: Int, g: Int) derives ReadWriter
 
-type witId = Int
+type WitId = Int
 
 enum TokenEnum:
-  case Token(t: String, n: String, w: witId, g: Int) extends TokenEnum
-  case TokenSep(t: String, n: String, w: witId, g: Int) extends TokenEnum
-  case TokenSg(t: String, n: String, w: witId, g: Int) extends TokenEnum
-  case TokenHG(t: String, n: String, w: witId, g: Int, he: EdgeLabel, tr: TokenRange) extends TokenEnum
+  case Token(t: String, n: String, w: WitId, g: Int) extends TokenEnum
+  case TokenSep(t: String, n: String, w: WitId, g: Int) extends TokenEnum
+  case TokenSg(t: String, n: String, w: WitId, g: Int) extends TokenEnum
+  case TokenHG(t: String, n: String, w: WitId, g: Int, he: EdgeLabel, tr: TokenRange) extends TokenEnum
   def t: String
   def n: String
-  def w: witId
+  def w: WitId
   def g: Int
 
 /** Normalize witness data
@@ -70,7 +70,7 @@ def processToken(str: String): TokenState[TokenEnum] = State { state =>
   else (state.copy(offset = offset + 1), TokenEnum.Token(str, normalize(str), emptyCount, offset))
 }
 
-def createGTa(tokensPerWitnessLimit: witId, data: Seq[CollateXWitnessData], tokenPattern: Regex) = {
+def createGTa(tokensPerWitnessLimit: WitId, data: Seq[CollateXWitnessData], tokenPattern: Regex) = {
   val tokenizer = makeTokenizer(tokenPattern, tokensPerWitnessLimit)
   val inputTokens: Vector[String] = tokenizer(data)
   val program: TokenState[Vector[TokenEnum]] = inputTokens.traverse(processToken)
