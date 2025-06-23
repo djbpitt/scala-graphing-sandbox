@@ -17,7 +17,6 @@ import upickle.default.write
 
 def createAlignmentRibbon(
     gTaSigla: List[WitId],
-    displaySigla: List[Siglum],
     gTa: Vector[TokenEnum]
 ): AlignmentRibbon =
   val globalUnalignedZone: UnalignedZone = createGlobalUnalignedZone(gTaSigla, gTa)

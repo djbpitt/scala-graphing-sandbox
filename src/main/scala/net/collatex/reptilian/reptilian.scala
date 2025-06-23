@@ -81,13 +81,15 @@ def readData(pathToData: Path): List[(String, String)] =
         System.err.println("\nTokens:")
         gTa.foreach(System.err.println)
       val gTaSigla: List[WitId] = data.indices.toList // integers
-      val displaySigla: List[Siglum] = data.map(e => Siglum(e.siglum)).toList // user-supplied for rendering
+      //User-supplied sigla and colors for rendering
+      val displaySigla: List[Siglum] = data.map(e => Siglum(e.siglum)).toList
+      val displayColors: List[String] = data.map(e => e.color).toList
       // Create alignment ribbon
-      val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, displaySigla, gTa)
+      val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
       // Write to stdout
       val writer = new PrintWriter(Console.out)
       val doctypeHtml: DocType = DocType("html")
-      val horizontalRibbons = createHorizontalRibbons(root, gTaSigla, displaySigla, gTa)
+      val horizontalRibbons = createHorizontalRibbons(root, gTaSigla, displaySigla, displayColors, gTa)
       XML.write( // pretty-printed by scala.xml.PrettyPrinter by default
         writer,
         horizontalRibbons, // xml.Node
@@ -284,6 +286,7 @@ def retrieveWitnessData(manifest: Elem, manifestSource: Path | URL): Either[Stri
   val results: Seq[Either[String, CollateXWitnessData]] =
     (manifest \ "_").map { e =>
       val siglum = (e \ "@siglum").headOption.map(_.text).getOrElse("")
+      val color = (e \ "@color").headOption.map(_.text).getOrElse("")
       val maybeWitness: Either[String, CollateXWitnessData] = Try {
         // Try (unlike try) does not throw an immediate exception; it wraps
         //   the code and returns Success(value) or Failure(exception)
@@ -301,7 +304,7 @@ def retrieveWitnessData(manifest: Elem, manifestSource: Path | URL): Either[Stri
                 val resolvedPath = os.Path(pathLike, manifestParent)
                 Source.fromFile(resolvedPath.toString)
         Using(inputSource) { source =>
-          CollateXWitnessData(siglum, source.getLines().mkString(" "))
+          CollateXWitnessData(siglum, color, source.getLines().mkString(" "))
         }.get // Throws if resource can't be read
       }.toEither.left.map(ex => s"Error reading witness '$siglum' at ${(e \ "@url").head.text}: ${ex.getMessage}")
 
@@ -338,4 +341,4 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
     witnessData <- retrieveWitnessData(manifestXml, manifestPath)
   } yield witnessData
 
-case class CollateXWitnessData(siglum: String, content: String)
+case class CollateXWitnessData(siglum: String, color: String, content: String)
