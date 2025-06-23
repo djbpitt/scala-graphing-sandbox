@@ -620,7 +620,7 @@
 //      pathToDarwin
 //    ) // One string per witness
 //    val witnessStrings: List[String] = witnessInputInfo.map(_._2)
-//    val sigla: List[Siglum] = witnessInputInfo.map(_._1).map(Siglum(_))
+//    val gTaSigla: List[Siglum] = witnessInputInfo.map(_._1).map(Siglum(_))
 //    val gTa: Vector[TokenEnum] = tokenize(tokenizer, Int.MaxValue)(witnessStrings) // global token array
 //    val nodesToCluster = clusterWitnesses(mexicoData)
 //    // val expected = ???

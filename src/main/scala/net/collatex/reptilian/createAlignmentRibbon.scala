@@ -16,15 +16,16 @@ import upickle.default.write
 // Basically an inverse of the current control flow.
 
 def createAlignmentRibbon(
-    sigla: List[Siglum],
+    gTaSigla: List[WitId],
+    displaySigla: List[Siglum],
     gTa: Vector[TokenEnum]
 ): AlignmentRibbon =
-  val globalUnalignedZone: UnalignedZone = createGlobalUnalignedZone(sigla, gTa)
+  val globalUnalignedZone: UnalignedZone = createGlobalUnalignedZone(gTaSigla, gTa)
   // align, recursively full depth blocks in this unaligned zone
-  val alignment = ListBuffer().appendAll(alignFullDepthBlocks(globalUnalignedZone, sigla))
+  val alignment = ListBuffer().appendAll(alignFullDepthBlocks(globalUnalignedZone, gTaSigla))
   AlignmentRibbon(alignment)
 
-def alignFullDepthBlocks(unalignedZone: UnalignedZone, sigla: List[Siglum]): List[AlignmentUnit] =
+def alignFullDepthBlocks(unalignedZone: UnalignedZone, gTaSigla: List[WitId]): List[AlignmentUnit] =
   val gTa: Vector[TokenEnum] = unalignedZone.witnessReadings.values.head.ta
   // find the full depth blocks for the alignment
   // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
@@ -36,16 +37,16 @@ def alignFullDepthBlocks(unalignedZone: UnalignedZone, sigla: List[Siglum]): Lis
   val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(lTa, witnessCount)
   if longestFullDepthNonRepeatingBlocks.isEmpty
   then { // align unaligned zones
-     alignByClustering(unalignedZone, gTa)
+    alignByClustering(unalignedZone, gTa)
   } else {
     // There are full depth blocks, align by creating a navigation graph
     val fullDepthAlignmentPoints: List[AlignmentPoint] =
-      getAlignmentPointsByTraversingNavigationGraph(longestFullDepthNonRepeatingBlocks, lTa, gTa, sigla)
+      getAlignmentPointsByTraversingNavigationGraph(longestFullDepthNonRepeatingBlocks, lTa, gTa, gTaSigla)
     val alignment = recursiveBuildAlignment(
       ListBuffer(),
       unalignedZone,
       fullDepthAlignmentPoints,
-      sigla
+      gTaSigla
     )
     alignment
   }
@@ -55,7 +56,7 @@ def recursiveBuildAlignment(
     result: ListBuffer[AlignmentUnit],
     unalignedZone: UnalignedZone,
     remainingAlignment: List[AlignmentPoint],
-    sigla: List[Siglum]
+    sigla: List[WitId]
 ): List[AlignmentUnit] =
 
   // On first run, unalignedZone contains full token ranges (globalUnalignedZone) and
@@ -87,7 +88,7 @@ def getAlignmentPointsByTraversingNavigationGraph(
     longestFullDepthNonRepeatingBlocks: List[FullDepthBlock],
     lTa: Vector[TokenEnum],
     gTa: Vector[TokenEnum],
-    sigla: List[Siglum]
+    sigla: List[WitId]
 ) =
   // blocks come back with lTa; map to gTa
   // create navigation graph and filter out transposed nodes
@@ -114,7 +115,7 @@ def getAlignmentPointsByTraversingNavigationGraph(
   // We need to restore the sorting that we destroyed when we created the set
   // Called repeatedly, so there is always a w0, although not always the same one
   //   (tokens know their global witness membership, so we can recover original witness membership when needed)
-  val siglumForSorting: Siglum = alignmentPoints.head.witnessReadings.keys.head
+  val siglumForSorting: WitId = alignmentPoints.head.witnessReadings.keys.head
   val sortedReadingNodes = alignmentPoints // Sort reading nodes in token order
     .toVector
     .sortBy(_.witnessReadings(siglumForSorting).start)
@@ -127,7 +128,7 @@ def alignByClustering(zone: UnalignedZone, gTa: Vector[TokenEnum]): List[Alignme
   val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
   // println(s"clusters: $nodesToCluster")
   if nodesToCluster.isEmpty then { // One witness, so construct local ribbon directly
-    val wg: Set[Map[Siglum, TokenRange]] = Set(zone.witnessReadings)
+    val wg: Set[Map[WitId, TokenRange]] = Set(zone.witnessReadings)
     List(AlignmentPoint(zone.witnessReadings, wg))
   } else // Variation node with … er … variation
     // println("Align by clustering")
@@ -141,10 +142,7 @@ def alignByClustering(zone: UnalignedZone, gTa: Vector[TokenEnum]): List[Alignme
           .map(f =>
             f.verticesIterator
               .map(tr =>
-                val witness: Siglum = {
-                  val inSiglum: String = gTa(tr.start).w.toString
-                  Siglum(inSiglum)
-                }
+                val witness: WitId = gTa(tr.start).w
                 witness -> tr
               )
               .toMap
@@ -166,7 +164,7 @@ def alignByClustering(zone: UnalignedZone, gTa: Vector[TokenEnum]): List[Alignme
 def blocksToNodes(
     blocks: Iterable[FullDepthBlock],
     gTa: Vector[TokenEnum],
-    sigla: List[Siglum]
+    sigla: List[WitId]
 ): Iterable[AlignmentPoint] =
   val result = blocks
     // THERE IS LTA AND GTA CONFUSION HERE, MAPPING IS REDUNDANT. IS DONE EARLIER
@@ -177,7 +175,7 @@ def blocksToNodes(
 def fullDepthBlockToAlignmentPoint(
     block: FullDepthBlock,
     lTa: Vector[TokenEnum], // local
-    sigla: List[Siglum]
+    sigla: List[WitId]
 ): AlignmentPoint =
   //  println(s"block: $block")
   val readings = block.instances
@@ -194,17 +192,17 @@ def fullDepthBlockToAlignmentPoint(
   val wg = Set(readings)
   AlignmentPoint(readings, wg)
 
-def createGlobalUnalignedZone(sigla: List[Siglum], gTa: Vector[TokenEnum]) = {
+def createGlobalUnalignedZone(sigla: List[WitId], gTa: Vector[TokenEnum]) = {
   // NB: We are embarrassed by the mutable map (and by other things, such has having to scan token array)
   // Housekeeping; TODO: Think about witness-set metadata
-  val witnessRanges: mutable.Map[Siglum, TokenRange] = mutable.Map.empty
+  val witnessRanges: mutable.Map[WitId, TokenRange] = mutable.Map.empty
   // go over the tokens and assign the lowest and the highest to the map
   // token doesn't know its position in a specific witness, so use indices
   // TODO: Could be simplified if the routine knew the token length of the witnesses
   for (tokenIndex <- gTa.indices)
     val token = gTa(tokenIndex)
     token match
-      case x:Token =>
+      case x: Token =>
         val tuple =
           witnessRanges.getOrElse(sigla(x.w), TokenRange(tokenIndex, tokenIndex, gTa))
         val minimum = tuple.start

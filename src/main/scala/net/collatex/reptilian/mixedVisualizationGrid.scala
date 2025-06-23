@@ -6,21 +6,21 @@ import math.Ordered.orderingToOrdered
 
 /* Constants */
 // FIXME: Hard-coded witness identifiers!
-val witnessToColor: Map[Siglum, String] = Map(
-  Siglum("0") -> "peru",
-  Siglum("1") -> "orange",
-  Siglum("2") -> "yellow",
-  Siglum("3") -> "limegreen",
-  Siglum("4") -> "dodgerblue",
-  Siglum("5") -> "violet"
+val witnessToColor: Map[WitId, String] = Map(
+  0 -> "peru",
+  1 -> "orange",
+  2 -> "yellow",
+  3 -> "limegreen",
+  4 -> "dodgerblue",
+  5 -> "violet"
 )
-    /* End of constants*/
+/* End of constants*/
 
-    /* ====================================================================== */
-    /* Horizontal ribbons                                                     */
-    /* ====================================================================== */
+/* ====================================================================== */
+/* Horizontal ribbons                                                     */
+/* ====================================================================== */
 
-    /* Constants for plotting */
+/* Constants for plotting */
 val flowLength = 80d
 
 /* Constants for computeTokenTextLength() */
@@ -67,9 +67,9 @@ def computeTokenTextLength(in: String): Double =
   * @param n
   *   Node with witness readings
   * @return
-  *   All witness readings on node as map from siglum (String) to vector of tokens
+  *   All witness readings on node as map from witId (String) to vector of tokens
   */
-def retrieveWitnessReadings(n: AlignmentPoint): Map[Siglum, Vector[TokenEnum]] =
+def retrieveWitnessReadings(n: AlignmentPoint): Map[WitId, Vector[TokenEnum]] =
   val witnessReadings =
     n.witnessReadings.map((k, v) => k -> v.tokens)
   witnessReadings
@@ -80,7 +80,7 @@ val memoizedComputeTokenTextLength = memoizeFnc(computeTokenTextLength)
   *
   * Sum of widths of t values of tokens (using memoizedComputeTokenTextLength() in reading)
   *
-  * TODO: Include width of siglum followed by colon
+  * TODO: Include width of witId followed by colon
   *
   * @param in
   *   Vector[Token] tokens in reading
@@ -97,15 +97,15 @@ def computeReadingTextLength(in: Vector[TokenEnum]): Double =
   * @param n
   *   Node with witness readings
   * @return
-  *   Vector of sigla of missing witnesses as strings
+  *   Vector of gTaSigla of missing witnesses as strings
   */
-def findMissingWitnesses(n: AlignmentPoint, sigla: Set[Siglum]): Vector[Siglum] =
-  val missingWitnessesRaw = sigla.diff(n.witnessReadings.keySet).toVector.sorted
+def findMissingWitnesses(n: AlignmentPoint, gTaSigla: Set[WitId]): Vector[WitId] =
+  val missingWitnessesRaw = gTaSigla.diff(n.witnessReadings.keySet).toVector.sorted
   val result = missingWitnessesRaw
   result
 
 def computeAlignmentNodeRenderingWidth(n: AlignmentPoint): Double =
-  // FIXME: Temporarily add 28 to allow for two-character siglum plus colon plus space
+  // FIXME: Temporarily add 28 to allow for two-character witId plus colon plus space
   val maxAlignmentPointWidth = 1000000000000d // 160.0
   List(
     retrieveWitnessReadings(n).values.map(computeReadingTextLength).max + 28,
@@ -114,7 +114,7 @@ def computeAlignmentNodeRenderingWidth(n: AlignmentPoint): Double =
 
 def createHorizNodeData(
     nodeSequence: Vector[NumberedNode],
-    sigla: List[Siglum]
+    gTaSigla: List[WitId]
 ): Vector[HorizNodeData] =
   @tailrec
   def nextNode(
@@ -130,10 +130,10 @@ def createHorizNodeData(
         case Some(e) => e.xOffset + e.alignmentWidth + flowLength
         case None    => 0d
       }
-      val missing: Vector[Siglum] = {
-//        System.err.println(s"sigla on node: ${nodes.head.node}")
-//        System.err.println(s"sigla from val: $sigla")
-        val result = findMissingWitnesses(nodes.head.node, sigla.toSet)
+      val missing: Vector[WitId] = {
+//        System.err.println(s"gTaSigla on node: ${nodes.head.node}")
+//        System.err.println(s"gTaSigla from val: $gTaSigla")
+        val result = findMissingWitnesses(nodes.head.node, gTaSigla.toSet)
         result
       }
       val newNode =
@@ -146,7 +146,7 @@ def createHorizNodeData(
           alignmentWidth = alignmentWidth,
           xOffset = xOffset,
           /* Create one HorizNodeGroup for each group, where HorizNodeGroupMember is a
-           * map from siglum to reading as string. Sort both groups and within groups. */
+           * map from witId to reading as string. Sort both groups and within groups. */
           groups = nodes.head.node.witnessGroups
             .map(f =>
               HorizNodeGroup(
@@ -207,7 +207,7 @@ def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   *
   * @param root
   *   Expanded node root of entire alignment tree
-  * @param sigla
+  * @param gTaSigla
   *   Set of Siglum instances
   * @param gTa
   *   Global token array
@@ -216,17 +216,17 @@ def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   */
 def createHorizontalRibbons(
     root: AlignmentRibbon,
-    sigla: List[Siglum],
+    gTaSigla: List[WitId],
     displaySigla: List[Siglum],
     gTa: Vector[TokenEnum]
 ): scala.xml.Node =
   /** Constants */
   val ribbonWidth = 18
   // val missingTop = allSigla.size * ribbonWidth * 2 + ribbonWidth / 2
-  val missingTop = sigla.size * ribbonWidth * 2 + ribbonWidth / 2
-  val witnessCount = sigla.size
+  val missingTop = gTaSigla.size * ribbonWidth * 2 + ribbonWidth / 2
+  val witnessCount = gTaSigla.size
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
-  val horizNodes = createHorizNodeData(nodeSequence, sigla)
+  val horizNodes = createHorizNodeData(nodeSequence, gTaSigla)
   /* Compute optimal witness order; finds distances but not order; not updated for new witnessGroups */
   /*
   val cartesianProducts: Vector[Iterable[Set[String]]] = nodeSequence.map(_.node) map {
@@ -239,7 +239,7 @@ def createHorizontalRibbons(
   val witnessSimilarities: Map[Set[String], Int] = computeWitnessSimilarities(cartesianProducts)
   val maxDistance = witnessSimilarities.values.max
   /* Look at the results; the sorting is for legibility, and not otherwise needed */
-  val keys = witnessSimilarities.keySet.toSeq.flatten.distinct.sorted // sorted list of sigla
+  val keys = witnessSimilarities.keySet.toSeq.flatten.distinct.sorted // sorted list of gTaSigla
   System.err.println(keys)
   val keyCount = keys.size
   val m = Array.ofDim[Double](keyCount, keyCount) // will hold distance matrix of witnesses
@@ -276,25 +276,19 @@ def createHorizontalRibbons(
   /* End of computing optimal witness order */
   val totalHeight = ribbonWidth * (witnessCount * 3) - ribbonWidth / 2
 
-  // FIXME: Get rid of hard-coded sigla values
-  val witnessToGradient: Map[Siglum, String] = Map(
-//    Siglum("darwin1859.txt") -> "url(#peruGradient)",
-//    Siglum("darwin1860.txt") -> "url(#orangeGradient)",
-//    Siglum("darwin1861.txt") -> "url(#yellowGradient)",
-//    Siglum("darwin1866.txt") -> "url(#limegreenGradient)",
-//    Siglum("darwin1869.txt") -> "url(#dodgerblueGradient)",
-//    Siglum("darwin1872.txt") -> "url(#violetGradient)",
-    Siglum("0") -> "url(#peruGradient)",
-    Siglum("1") -> "url(#orangeGradient)",
-    Siglum("2") -> "url(#yellowGradient)",
-    Siglum("3") -> "url(#limegreenGradient)",
-    Siglum("4") -> "url(#dodgerblueGradient)",
-    Siglum("5") -> "url(#violetGradient)"
+  // FIXME: Get rid of hard-coded gTaSigla values
+  val witnessToGradient: Map[WitId, String] = Map(
+    0 -> "url(#peruGradient)",
+    1 -> "url(#orangeGradient)",
+    2 -> "url(#yellowGradient)",
+    3 -> "url(#limegreenGradient)",
+    4 -> "url(#dodgerblueGradient)",
+    5 -> "url(#violetGradient)"
   )
 
-  // FIXME: Hard-coded for darwin18xx.txt or single-character sigla
-  def formatSiglum(siglum: Siglum): String =
-    val result = displaySigla(siglum.value.toInt).value
+  // FIXME: Hard-coded for darwin18xx.txt or single-character gTaSigla
+  def formatSiglum(witId: WitId): String =
+    val result = displaySigla(witId).value
     result
 
   def plotRect(vOffset: Double, node: HorizNodeData, fillColor: String, top: Double) =
@@ -310,7 +304,7 @@ def createHorizontalRibbons(
                    width={node.alignmentWidth.toString}
                    height={ribbonWidth.toString}>
       <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">{
-      s"${formatSiglum(hngm._1.siglum)}: "
+      s"${formatSiglum(hngm._1.witId)}: "
     }</span>
         {hngm._1.reading}</div>
     </foreignObject>
@@ -335,7 +329,7 @@ def createHorizontalRibbons(
           val newG =
             <g>{
               for e <- groups.head.members.zipWithIndex yield
-                val fillColor = witnessToColor(e._1.siglum)
+                val fillColor = witnessToColor(e._1.witId)
                 val vOffset = e._2
                 Seq(
                   plotRect(vOffset, node, fillColor, top),
@@ -387,18 +381,18 @@ def createHorizontalRibbons(
     def nextGroup(
         groups: Vector[HorizNodeGroup],
         top: Double,
-        acc: Map[Siglum, Double]
-    ): Map[Siglum, Double] =
+        acc: Map[WitId, Double]
+    ): Map[WitId, Double] =
       if groups.isEmpty then acc
       else
         val newAcc = acc ++ groups.head.members.zipWithIndex
-          .map(e => e._1.siglum -> (top + e._2 * ribbonWidth))
+          .map(e => e._1.witId -> (top + e._2 * ribbonWidth))
           .toMap
         nextGroup(groups.tail, top + (groups.head.members.size + 1) * ribbonWidth, newAcc)
-    def missings(missings: Vector[Siglum], top: Double): Map[Siglum, Double] =
+    def missings(missings: Vector[WitId], top: Double): Map[WitId, Double] =
       missings.zipWithIndex.map(e => e._1 -> (top + e._2 * ribbonWidth)).toMap
-    def computeRibbonYPos(node: HorizNodeData): Map[Siglum, Double] =
-      val result = nextGroup(node.groups, ribbonWidth / 2, Map.empty[Siglum, Double]) ++
+    def computeRibbonYPos(node: HorizNodeData): Map[WitId, Double] =
+      val result = nextGroup(node.groups, ribbonWidth / 2, Map.empty[WitId, Double]) ++
         missings(
           node.missing,
           missingTop + ribbonWidth / 2
@@ -407,7 +401,7 @@ def createHorizontalRibbons(
 
     val leftYPosMap = computeRibbonYPos(precedingNode)
     val rightYPosMap = computeRibbonYPos(currentNode)
-    val ribbons = sigla.sorted.map(e =>
+    val ribbons = gTaSigla.sorted.map(e =>
       val leftYPos = leftYPosMap(e)
       val rightYPos = rightYPosMap(e) + 0.0001
       <path d={
@@ -556,7 +550,7 @@ def createHorizontalRibbons(
                |  left: -1px;
                |  height: ${totalHeight + 2}px;
                |}
-               |.sigla {
+               |.gTaSigla {
                |  font-weight: bold;
                |  font-size: small;
                |}
@@ -677,7 +671,7 @@ case class HorizNodeData(
     alignmentWidth: Double,
     xOffset: Double,
     groups: Vector[HorizNodeGroup],
-    missing: Vector[Siglum]
+    missing: Vector[WitId]
 )
 
 case class HorizNodeGroup(members: Vector[HorizNodeGroupMember])
@@ -686,8 +680,8 @@ object HorizNodeGroup {
     (a: HorizNodeGroup, b: HorizNodeGroup) => a.members.head.compare(b.members.head)
 }
 
-case class HorizNodeGroupMember(siglum: Siglum, reading: String)
+case class HorizNodeGroupMember(witId: WitId, reading: String)
 object HorizNodeGroupMember {
   given Ordering[HorizNodeGroupMember] =
-    (a: HorizNodeGroupMember, b: HorizNodeGroupMember) => a.siglum.compare(b.siglum)
+    (a: HorizNodeGroupMember, b: HorizNodeGroupMember) => a.witId.compare(b.witId)
 }

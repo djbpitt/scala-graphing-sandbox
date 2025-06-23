@@ -7,6 +7,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.language.postfixOps
 import scala.math.Ordering
+import math.Ordered.orderingToOrdered
 
 opaque type Siglum = String
 object Siglum:
@@ -18,14 +19,14 @@ object Siglum:
     (a: Siglum, b: Siglum) => a.value.compare(b.value)
 given CanEqual[Siglum, Siglum] = CanEqual.derived
 
-type WitnessReadings = Map[Siglum, TokenRange] // type alias
+type WitnessReadings = Map[WitId, TokenRange] // type alias
 
 sealed trait AlignmentUnit // supertype AlignmentRibbon (with children) and AlignmentPoint (with groups)
 
 /** Zone to be processed in phase two
- *
- * Same input as AlignmentPoint (varargs of (Siglum, TokenRange)) but create only WitnessReadings and no WitnessGroups
- */
+  *
+  * Same input as AlignmentPoint (varargs of (Siglum, TokenRange)) but create only WitnessReadings and no WitnessGroups
+  */
 final case class UnalignedZone(witnessReadings: WitnessReadings, global: Boolean) extends AlignmentUnit:
   def convertToTokenLists(): List[List[Token]] =
     val sortedKeys = this.witnessReadings.keys.toSeq.sorted
@@ -34,27 +35,27 @@ final case class UnalignedZone(witnessReadings: WitnessReadings, global: Boolean
   def splitUnalignedZone(
       alignment_point_for_split: AlignmentPoint,
       global: Boolean
-    ): (UnalignedZone, UnalignedZone) =
+  ): (UnalignedZone, UnalignedZone) =
 
     // We filter out all the witnesses that have an empty range after the split
     val preAndPost = this.witnessReadings
       .map((k, v) => k -> v.splitTokenRange(alignment_point_for_split.witnessReadings(k)))
     val unfilteredPre = preAndPost.map((k, v) => k -> v._1)
     val unfilteredPost = preAndPost.map((k, v) => k -> v._2)
-    val pre  = removeEmptyTokenRanges(unfilteredPre)
+    val pre = removeEmptyTokenRanges(unfilteredPre)
     val post = removeEmptyTokenRanges(unfilteredPost)
     (UnalignedZone(pre, global), UnalignedZone(post, global))
 
-  private def removeEmptyTokenRanges(before: Map[Siglum, TokenRange]): Map[Siglum, TokenRange] =
+  private def removeEmptyTokenRanges(before: Map[WitId, TokenRange]): Map[WitId, TokenRange] =
     before.filter((_, v) => v.isInstanceOf[LegalTokenRange])
 
   def createLocalTokenArrayForUnalignedZone: Vector[TokenEnum] =
     // Create a local token array by filtering the global one
-    // Selection comes in unsorted, so sort by siglum first
+    // Selection comes in unsorted, so sort by witId first
     val localTokenArrayByWitness: Seq[Vector[TokenEnum]] = {
       val orderedWitnessReadings =
         for siglum <- this.witnessReadings.keys.toSeq.sorted
-          yield this.witnessReadings(siglum)
+        yield this.witnessReadings(siglum)
       for r <- orderedWitnessReadings yield r.tokens
     }
     // Replacement that uses witnessGroups instead of witnessReadings
@@ -67,16 +68,15 @@ final case class UnalignedZone(witnessReadings: WitnessReadings, global: Boolean
         )
     lTa
 
-
 final case class AlignmentPoint(witnessReadings: WitnessReadings, witnessGroups: Set[WitnessReadings])
-  extends AlignmentUnit
+    extends AlignmentUnit
 
 /** Custom constructor to simplify creation of AlignmentPoint
- *
- * Input is a varargs of (Siglum, TokenRange). Will eventually create only WitnessGroups and no WitnessReadings
- */
+  *
+  * Input is a varargs of (Siglum, TokenRange). Will eventually create only WitnessGroups and no WitnessReadings
+  */
 object AlignmentPoint {
-  def apply(gTa: Vector[TokenEnum], m: (Siglum, TokenRange)*): AlignmentPoint =
+  def apply(gTa: Vector[TokenEnum], m: (WitId, TokenRange)*): AlignmentPoint =
     val wr = m.toMap
     val wg = wr
       .groupBy((_, offsets) =>
@@ -101,7 +101,6 @@ object AlignmentPoint {
 
 }
 
-
 /** AlignmentRibbon
   *
   * Container for all alignment units
@@ -112,4 +111,3 @@ object AlignmentPoint {
 final case class AlignmentRibbon(
     children: ListBuffer[AlignmentUnit] = ListBuffer.empty
 ) extends AlignmentUnit
-
