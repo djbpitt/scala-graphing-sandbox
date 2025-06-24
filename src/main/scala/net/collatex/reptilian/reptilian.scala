@@ -12,9 +12,6 @@ import scala.io.Source
 import java.io.{PrintWriter, StringReader}
 import java.net.{URI, URL}
 
-import cats.data.State
-import cats.syntax.all.*
-
 // Relax NG validation
 import com.thaiopensource.validate.ValidationDriver
 import com.thaiopensource.validate.rng.CompactSchemaReader
@@ -71,34 +68,37 @@ def readData(pathToData: Path): List[(String, String)] =
   parsedInput match {
     case Left(e) => System.err.println(e)
     case Right(e) =>
-      val tokensPerWitnessLimit = 100 // Low values for debug; set to Int.MaxValue for production
-      val (data: Seq[CollateXWitnessData], debug) = e
-      val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
-      val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, data, tokenPattern)
-      if debug then
-        System.err.println("\nWitness preview:")
-        previewWitness(data).foreach(System.err.println)
-        System.err.println("\nTokens:")
-        gTa.foreach(System.err.println)
-      val gTaSigla: List[WitId] = data.indices.toList // integers
-      //User-supplied sigla and colors for rendering
-      val displaySigla: List[Siglum] = data.map(e => Siglum(e.siglum)).toList
-      val displayColors: List[String] = data.map(e => e.color).toList
-      // Create alignment ribbon
-      val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
-      // Write to stdout
-      val writer = new PrintWriter(Console.out)
-      val doctypeHtml: DocType = DocType("html")
-      val horizontalRibbons = createHorizontalRibbons(root, gTaSigla, displaySigla, displayColors, gTa)
-      XML.write( // pretty-printed by scala.xml.PrettyPrinter by default
-        writer,
-        horizontalRibbons, // xml.Node
-        "UTF-8", // encoding (for declaration)
-        xmlDecl = true, // emit <?xml ... ?>
-        doctype = doctypeHtml // emit <!DOCTYPE html>
-      )
-      writer.flush()
-  }
+      for (x <- 5000 to 1 by -1)
+        println(s"Iteration $x")
+        val tokensPerWitnessLimit = x
+
+        val (data: Seq[CollateXWitnessData], debug) = e
+        val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
+        val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, data, tokenPattern)
+        if debug then
+          System.err.println("\nWitness preview:")
+          previewWitness(data).foreach(System.err.println)
+          System.err.println("\nTokens:")
+          gTa.foreach(System.err.println)
+        val gTaSigla: List[WitId] = data.indices.toList // integers
+        //User-supplied sigla and colors for rendering
+        val displaySigla: List[Siglum] = data.map(e => Siglum(e.siglum)).toList
+        val displayColors: List[String] = data.map(e => e.color).toList
+        // Create alignment ribbon
+        val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
+        // Write to stdout
+        val writer = new PrintWriter(Console.out)
+        val doctypeHtml: DocType = DocType("html")
+        val horizontalRibbons = createHorizontalRibbons(root, gTaSigla, displaySigla, displayColors, gTa)
+        XML.write( // pretty-printed by scala.xml.PrettyPrinter by default
+          writer,
+          horizontalRibbons, // xml.Node
+          "UTF-8", // encoding (for declaration)
+          xmlDecl = true, // emit <?xml ... ?>
+          doctype = doctypeHtml // emit <!DOCTYPE html>
+        )
+        writer.flush()
+    }
 
 /** Display witId and initial slice of text of all witnesses
   *
