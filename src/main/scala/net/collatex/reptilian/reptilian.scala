@@ -84,6 +84,8 @@ def readData(pathToData: Path): List[(String, String)] =
       val displaySigla: List[Siglum] = data.map(e => Siglum(e.siglum)).toList // user-supplied for rendering
       // Create alignment ribbon
       val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, displaySigla, gTa)
+      createRhineDelta(root)
+      throw new RuntimeException("Stop here")
       // Write to stdout
       val writer = new PrintWriter(Console.out)
       val doctypeHtml: DocType = DocType("html")
