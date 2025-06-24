@@ -16,19 +16,21 @@ def createRdGroups(ar: AlignmentRibbon): Vector[RdGroup] =
   rdGroups.foreach(System.err.println) // debug
   rdGroups
 
-def createGraph(aps: Vector[RdGroup]): Graph[RdGroup] =
-  val start = RdGroup("-1.0", Map()) // Create start node
+def createGraph(aps: Vector[RdGroup]): Graph[String] =
+  val start = Graph.node("Start") // Create start node
   @tailrec
-  def nextRdGroup(rgs: Vector[RdGroup], rightMost: Map[WitId, RdGroup], acc: Graph[RdGroup]): Graph[RdGroup] =
+  def nextRdGroup(rgs: Vector[RdGroup], rightMost: Map[WitId, RdGroup], acc: Graph[String]): Graph[String] =
     if rgs.isEmpty then acc
     else {
       // TODO: Add new nodes with text
+      val nodeText = rgs.head.witnessReadings.head._2.nString
+      val newNode = Graph.node(nodeText)
       // TODO: Add new edges with labels from displaySigla
       val newRightMost: Map[WitId, RdGroup] = rightMost
-      val newAcc: Graph[RdGroup] = acc
+      val newAcc: Graph[String] = acc + newNode
       nextRdGroup(rgs.tail, newRightMost, newAcc)
     }
-  val acc = nextRdGroup(aps, Map(), Graph.node(start))
+  val acc = nextRdGroup(aps, Map(), start)
   acc
 
 /** Create and Rhine delta representation as SVG (entry point)
