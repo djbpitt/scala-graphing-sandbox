@@ -68,7 +68,7 @@ def readData(pathToData: Path): List[(String, String)] =
   parsedInput match {
     case Left(e) => System.err.println(e)
     case Right(e) =>
-      for (x <- 5000 to 1 by -1)
+      for (x <- 1000 to 1 by -1)
         println(s"Iteration $x")
         val tokensPerWitnessLimit = x
 
