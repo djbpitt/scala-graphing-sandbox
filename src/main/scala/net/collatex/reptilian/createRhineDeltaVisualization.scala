@@ -1,62 +1,70 @@
 package net.collatex.reptilian
 
-import net.collatex.util.Graph
-
 import scala.annotation.tailrec
 
-def createRdGroups(ar: AlignmentRibbon): Vector[RdGroup] =
-  val rdGroups: Vector[RdGroup] =
+def createNodes(ar: AlignmentRibbon): Vector[NodeProperties] =
+  val nodeInfos: Vector[NodeProperties] =
     ar.children.zipWithIndex.flatMap { case (data, apId) =>
       data
         .asInstanceOf[AlignmentPoint]
         .witnessGroups
         .zipWithIndex
-        .map((wr, gId) => RdGroup(List(apId, ".", gId).mkString, wr))
+        .map((wr, gId) => NodeProperties(List(apId, ".", gId).mkString, wr.keySet, wr.head._2.nString))
     }.toVector
-  rdGroups.foreach(System.err.println) // debug
-  rdGroups
+  nodeInfos
 
-def createGraph(aps: Vector[RdGroup]): Graph[String] =
-  val start = Graph.node("Start") // Create start node
+def createEdges(nodes: Vector[NodeProperties], displaySigla: List[Siglum]): Vector[EdgeProperties] =
+  val allWitIds = displaySigla.indices.toSet
+  val start = NodeProperties("-1.0", allWitIds, "Start")
+  val end = NodeProperties(Int.MaxValue.toString, allWitIds, "End")
   @tailrec
-  def nextRdGroup(rgs: Vector[RdGroup], rightMost: Map[WitId, RdGroup], acc: Graph[String]): Graph[String] =
-    if rgs.isEmpty then acc
-    else {
-      // TODO: Add new nodes with text
-      val nodeText = rgs.head.witnessReadings.head._2.nString
-      val newNode = Graph.node(nodeText)
-      // TODO: Add new edges with labels from displaySigla
-      val newRightMost: Map[WitId, RdGroup] = rightMost
-      val newAcc: Graph[String] = acc + newNode
-      nextRdGroup(rgs.tail, newRightMost, newAcc)
+  def nextNode(
+      rgs: Vector[NodeProperties],
+      rightmost: Map[WitId, NodeProperties],
+      acc: Vector[EdgeProperties]
+  ): Vector[EdgeProperties] =
+    if rgs.isEmpty then {
+      // FIXME: Create last edges, pointing to End node, and add to graph
+      val endEdges = Vector[EdgeProperties]()
+      acc ++ endEdges
+    } else {
+      val newNode = rgs.head
+      val rightmostChanges = rgs.head.witnesses.map(k => k -> newNode).toSeq // Update rightMost map
+      val newRightmost: Map[WitId, NodeProperties] = rightmost ++ rightmostChanges
+      // To create edges:
+      // 1. Retrieve rightmost nodes for all witnesses in new node
+      // 1. Use sourceEdgeGroups to find witnesses associated with each source (for labeling)
+      // 1. Retain only witness identifiers that are present in both source and target
+      val sourceEdgeGroups: Map[NodeProperties, Set[WitId]] =
+        rightmost.groupMap(_._2)(_._1).map { case (k, v) => k -> v.toSet }
+      val newEdges = newNode.witnesses.toVector.sorted
+        .map(e => rightmost(e)) // potential edge sources
+        .map(f => sourceEdgeGroups(f)) // witnesses for each potential edge source
+        .map(g => g.intersect(newNode.witnesses)) // only witnesses in both source and target
+        .map(h => EdgeProperties(rightmost(h.head).gId, newNode.gId, "hi"))
+      val newAcc: Vector[EdgeProperties] = acc ++ newEdges
+      nextNode(rgs.tail, newRightmost, newAcc)
     }
-  val acc = nextRdGroup(aps, Map(), start)
+  val acc = nextNode(nodes, displaySigla.indices.map(e => e -> start).toMap, Vector())
   acc
 
 /** Create and Rhine delta representation as SVG (entry point)
-  *
-  *   1. (Done) Extract, label, and flatten reading groups into vector (labels are strings consisting of alignment point
-  *      offset, dot, witness grouop offset within alignment point (arbitrary because Set), e.g. 2.2)
-  *   1. Create start node (id -1.0) and register as initial rightmost position for all witnesses
-  *   1. Traverse, creating one node for each reading group
-  *   1. During traversal, keep track of and update rightmost position for each witness
-  *   1. During traversal, create labeled edges from old rightmost position to new node (NB: must bundle witness ids to
-  *      create composite edge labels)
-  *   1. Create end node (id maxInt.0) that as target edge of real last node for every witness
-  *   1. Convert completed graph to GraphViz dot format
-  *   1. Convert dot to SVG (https://www.scala-lang.org/api/2.13.3/scala/sys/process/index.html)
-  *   1. Return SVG
   *
   * @param ar
   *   AlignmentRibbon
   * @return
   *   Rhine delta as SVG, created by Graphviz
   */
-def createRhineDelta(ar: AlignmentRibbon): Unit =
-  val rdGroups = createRdGroups(ar) // Extract, label, and flatten reading groups into vector
-  val g = createGraph(rdGroups)
-  println(g) // debug
+def createRhineDelta(ar: AlignmentRibbon, displaySigla: List[Siglum]): Unit =
+  val nodes = createNodes(ar) // Extract, label, and flatten reading groups into vector
+  nodes.foreach(println) // debug
+  val edges = createEdges(nodes, displaySigla)
+  edges.foreach(println)
+//  val g = createGraph(nodeProps, displaySigla)
+//  println(g) // debug
 
 // gId is stringified Int.Int, e.g. 2.5
-// first part is apId, second is integer offset of group (arbitrary, because Set)
-case class RdGroup(gId: String, witnessReadings: WitnessReadings)
+// gId is for development, the intersection of the witnesses on the source and target of an edge is the edge label
+type GId = String
+case class NodeProperties(gId: GId, witnesses: Set[WitId], content: String)
+case class EdgeProperties(source: GId, target: GId, label: String)
