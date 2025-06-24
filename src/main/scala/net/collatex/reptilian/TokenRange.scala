@@ -107,9 +107,6 @@ enum SplitTokenRangeResult:
   case FirstOnlyPopulated(preTokenRange: LegalTokenRange, postTokenRange: EmptyTokenRange)
   case SecondOnlyPopulated(preTokenRange: EmptyTokenRange, postTokenRange: LegalTokenRange)
 
-  def preTokenRange: TokenRange
-  def postTokenRange: TokenRange
-
 enum SplitTokenRangeError:
   case IllegalSplitValueError(start: Int, until: Int, splitPos: Int)
   case EmptyTokenRangeError

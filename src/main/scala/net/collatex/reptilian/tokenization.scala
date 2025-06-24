@@ -1,11 +1,12 @@
 package net.collatex.reptilian
 
+import cats.data.State
+import cats.syntax.all.*
+
 import upickle.default.*
 
-import scala.collection.mutable.ArrayBuffer
-import scala.util.matching.Regex
-import scalax.collection.ChainingOps
 
+import scala.util.matching.Regex
 
 /** Token as complex object
   *
@@ -14,7 +15,7 @@ import scalax.collection.ChainingOps
   * @param n
   *   Normalized token, e.g., lower-case and trim
   * @param w
-  *   Witness identifier, zero-based
+  *   Witness identifier (WitId), zero-based integer
   * @param g
   *   Offset of token in global token array
   *
@@ -23,29 +24,17 @@ import scalax.collection.ChainingOps
 // Read external JSON into TokenJSON to avoid reading into enum subtype; then remap
 case class TokenJSON(t: String, n: String, w: Int, g: Int) derives ReadWriter
 
+type WitId = Int
+
 enum TokenEnum:
-  case Token(t: String, n: String, w: Int, g: Int) extends TokenEnum
-  case TokenSep(t: String, n: String, w: Int, g: Int) extends TokenEnum
-  case TokenSg(t: String, n: String, w: Int, g: Int) extends TokenEnum
-  case TokenHG(t: String, n: String, w: Int, g: Int, he: EdgeLabel, tr: TokenRange) extends TokenEnum
+  case Token(t: String, n: String, w: WitId, g: Int) extends TokenEnum
+  case TokenSep(t: String, n: String, w: WitId, g: Int) extends TokenEnum
+  case TokenSg(t: String, n: String, w: WitId, g: Int) extends TokenEnum
+  case TokenHG(t: String, n: String, w: WitId, g: Int, he: EdgeLabel, tr: TokenRange) extends TokenEnum
   def t: String
   def n: String
-  def w: Int
+  def w: WitId
   def g: Int
-import TokenEnum.*
-
-/** Used as partially applied function to create tokenizer
-  *
-  * @param tokenPattern
-  *   Regex matching individual tokens
-  * @param witnessData
-  *   Individual witness as string
-  * @return
-  *   List of strings for single witness
-  */
-
-def makeTokenizer(tokenPattern: Regex)(witnessData: String) =
-  tokenPattern.findAllIn(witnessData).toList
 
 /** Normalize witness data
   *
@@ -53,61 +42,38 @@ def makeTokenizer(tokenPattern: Regex)(witnessData: String) =
   *   String with data for individual witness
   * @return
   *   Input string in all lower case and strip trailing whitespace
-  *
-  * TODO: Allow user to specify normalization rules
   */
 def normalize(witnessData: String): String =
   witnessData.toLowerCase.trim
 
-/** Return token array as single vector with token separators
-  *
-  * Token separators are unique and sequential
-  *
-  * @param tokenLists
-  *   list of lists of strings with one inner list per witness
-  * @return
-  *   Vector[String] with unique separators inserted between witnesses
-  */
-def createTokenArray(tokenLists: List[List[String]]): Vector[String] =
-  (tokenLists.head ++ tokenLists.tail.zipWithIndex
-    .flatMap((e, index) => List(s" #$index ") ++ e)).toVector
+def makeTokenizer(tokenPattern: Regex, tokenWitnessLimit: Int)(witnessData: Seq[CollateXWitnessData]): Vector[String] =
+  val result = witnessData
+    .map(_.content) // Use only witness string
+    .flatMap(e =>
+      "" :: tokenPattern.findAllIn(e).toList.slice(0, tokenWitnessLimit)
+    ) // Prepend empty string to each group of witness tokens
+    .tail // Strip initial empty string; others will signal witness separation
+    .toVector
+  result
 
-/** Create mapping from tokens to witnesses
-  *
-  * @param tokenLists
-  *   (one inner list per witness)
-  * @return
-  *   Vector[Int] with zero-based witness number for each token
-  *
-  * Insert -1 as witness separator because all values must be Int and witnesses begin at 0
-  */
-def createTokenWitnessMapping(tokenLists: List[List[String]], tokensPerWitnessLimit: Int): Vector[Int] =
-  val buffer: ArrayBuffer[Int] = ArrayBuffer[Int]()
-  buffer.appendAll(Array.fill(math.min(tokensPerWitnessLimit, tokenLists.head.length))(0))
-  tokenLists.tail.zipWithIndex
-    .foreach { (tokens, index) =>
-      buffer.append(-1)
-      buffer.appendAll(Array.fill(math.min(tokensPerWitnessLimit, tokens.length))(index + 1))
-    }
-  buffer.toVector
+// Create gTa using State monad
+case class ParseState(offset: Int, emptyCount: Int)
+type TokenState[A] = State[ParseState, A]
 
-// https://stackoverflow.com/questions/1664439/can-i-zip-more-than-two-lists-together-in-scala
-// https://stackoverflow.com/questions/30984124/zipping-two-arrays-together-with-index-in-scala
-def tokenize(tokenizer: String => List[String], tokensPerWitnessLimit: Int) =
-  (
-      (plainWitnesses: List[String]) =>
-        plainWitnesses
-          .map(tokenizer) // List of one list of strings per witness
-  ).andThen(e =>
-    (e.map(item => item.slice(0, tokensPerWitnessLimit)) pipe
-    createTokenArray)
-      .zip(createTokenWitnessMapping(e, tokensPerWitnessLimit))
-      .zipWithIndex
-      .map { case ((a, b), i) => (a, b, i) }
-      .map((a, b, i) =>
-        if a.startsWith(" #") then // FIXME: Don’t rely on magic string value
-          TokenSep(t = a, n = normalize(a), w = b, g = i)
-        else
-          Token(t = a, n = normalize(a), w = b, g = i)
-      )
-  )
+def processToken(str: String): TokenState[TokenEnum] = State { state =>
+  val ParseState(offset, emptyCount) = state
+  if str.isEmpty then
+    (
+      state.copy(offset = offset + 1, emptyCount = emptyCount + 1),
+      TokenEnum.TokenSep("sep" + offset.toString, "sep" + offset.toString, emptyCount, offset) // WitId isn't used; could be anything
+    )
+  else (state.copy(offset = offset + 1), TokenEnum.Token(str, normalize(str), emptyCount, offset))
+}
+
+def createGTa(tokensPerWitnessLimit: WitId, data: Seq[CollateXWitnessData], tokenPattern: Regex) = {
+  val tokenizer = makeTokenizer(tokenPattern, tokensPerWitnessLimit)
+  val inputTokens: Vector[String] = tokenizer(data)
+  val program: TokenState[Vector[TokenEnum]] = inputTokens.traverse(processToken)
+  val gTa = program.runA(ParseState(0, 0)).value
+  gTa
+}

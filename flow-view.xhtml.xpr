@@ -2,7 +2,20 @@
 <project>
     <meta>
         <filters directoryPatterns="" filePatterns="\Qflow-view.xhtml.xpr\E" positiveFilePatterns="" showHiddenFiles="false"/>
-        <options/>
+        <options>
+            <serialized xml:space="preserve">
+                <serializableOrderedMap>
+                    <entry>
+                        <String>disable.security.schematron</String>
+                        <Boolean>true</Boolean>
+                    </entry>
+                    <entry>
+                        <String>key.schematron.option.pane</String>
+                        <Boolean>true</Boolean>
+                    </entry>
+                </serializableOrderedMap>
+            </serialized>
+        </options>
     </meta>
     <projectTree name="flow-view.xhtml.xpr">
         <folder path="."/>
