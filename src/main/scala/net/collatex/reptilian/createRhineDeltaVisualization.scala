@@ -1,6 +1,8 @@
 package net.collatex.reptilian
 
 import scala.annotation.tailrec
+import scala.sys.process.*
+import java.io.*
 
 def createNodes(ar: AlignmentRibbon): Vector[NodeProperties] = // Start and End are created in createEdges
   val nodeInfos: Vector[NodeProperties] =
@@ -73,8 +75,37 @@ def createDot(
   val dotBody = (nodeLines ++ edgeLines).mkString(";\n")
   List(dotStart, dotBody, dotEnd).mkString("\n")
 
+def createSvg(dotFile: String): Either[String, String] =
+  val dotExecutable = sys.env.getOrElse(
+    "GRAPHVIZ_DOT", // Use environment variable if set
+    "dot" // Otherwise expect to find dot on system path
+  )
+  val process = Process(Seq(dotExecutable, "-Tsvg"))
+  val output = new StringBuilder
+  val error = new StringBuilder
+  val io = new ProcessIO(
+    in => {
+      val writer = new PrintWriter(in)
+      writer.write(dotFile)
+      writer.close()
+    },
+    out => {
+      val src = scala.io.Source.fromInputStream(out)
+      output.appendAll(src.mkString)
+      src.close()
+    },
+    err => {
+      val src = scala.io.Source.fromInputStream(err)
+      error.appendAll(src.mkString)
+      src.close()
+    }
+  )
+  val proc = process.run(io)
+  val exitCode = proc.exitValue()
+  if exitCode == 0 then Right(output.toString)
+  else Left(s"Graphviz error: $error")
 
-/** Create and Rhine delta representation as SVG (entry point)
+/** Create Rhine delta representation as SVG (entry point)
   *
   * @param ar
   *   AlignmentRibbon
@@ -87,10 +118,11 @@ def createRhineDelta(ar: AlignmentRibbon, displaySigla: List[Siglum]): Unit =
   val end = NodeProperties(Int.MaxValue.toString, allWitIds, "End")
   val nodes = createNodes(ar) // Extract, label, and flatten reading groups into vector of NodeProperty
   val edges = createEdges(nodes, start, end, displaySigla) // Create edges as vector of EdgeProperty
-  val dot = createDot(start +: nodes :+ end, edges, displaySigla)
-  // Create SVG
-  // Return SVG
-  println(dot)
+  val dotFile = createDot(start +: nodes :+ end, edges, displaySigla)
+  createSvg(dotFile) match
+    case Right(svg) => println(svg) // SVG content
+    case Left(err)  => System.err.println(err)
+
 
 // gId is stringified Int.Int, e.g. 2.5
 // gId is for development, the intersection of the witnesses on the source and target of an edge is the edge label
