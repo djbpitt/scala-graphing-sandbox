@@ -2,7 +2,7 @@ package net.collatex.reptilian
 
 import scala.annotation.tailrec
 
-def createNodes(ar: AlignmentRibbon): Vector[NodeProperties] =
+def createNodes(ar: AlignmentRibbon): Vector[NodeProperties] = // Start and End are created in createEdges
   val nodeInfos: Vector[NodeProperties] =
     ar.children.zipWithIndex.flatMap { case (data, apId) =>
       data
@@ -24,9 +24,7 @@ def createEdges(nodes: Vector[NodeProperties], displaySigla: List[Siglum]): Vect
       acc: Vector[EdgeProperties]
   ): Vector[EdgeProperties] =
     if rgs.isEmpty then {
-      // FIXME: Create last edges, pointing to End node, and add to graph
-      val endEdges = Vector[EdgeProperties]()
-      acc ++ endEdges
+      acc
     } else {
       val newNode = rgs.head
       val rightmostChanges = rgs.head.witnesses.map(k => k -> newNode).toSeq // Update rightMost map
@@ -35,18 +33,33 @@ def createEdges(nodes: Vector[NodeProperties], displaySigla: List[Siglum]): Vect
       // 1. Retrieve rightmost nodes for all witnesses in new node
       // 1. Use sourceEdgeGroups to find witnesses associated with each source (for labeling)
       // 1. Retain only witness identifiers that are present in both source and target
-      val sourceEdgeGroups: Map[NodeProperties, Set[WitId]] =
-        rightmost.groupMap(_._2)(_._1).map { case (k, v) => k -> v.toSet }
-      val newEdges = newNode.witnesses.toVector.sorted
-        .map(e => rightmost(e)) // potential edge sources
-        .map(f => sourceEdgeGroups(f)) // witnesses for each potential edge source
-        .map(g => g.intersect(newNode.witnesses)) // only witnesses in both source and target
-        .map(h => EdgeProperties(rightmost(h.head).gId, newNode.gId, "hi"))
+      val newEdges = newNode.witnesses // all witnesses on newNode
+        .map(e => e -> rightmost(e))
+        .toMap // sources for new edges (may include duplicates)
+        .groupMap(_._2)(_._1)
+        .map { case (k, v) => k -> v.toSet }
+        .map((k, v) => EdgeProperties(k.gId, newNode.gId, v.mkString(", ")))
       val newAcc: Vector[EdgeProperties] = acc ++ newEdges
       nextNode(rgs.tail, newRightmost, newAcc)
     }
-  val acc = nextNode(nodes, displaySigla.indices.map(e => e -> start).toMap, Vector())
+  val acc = nextNode(start +: nodes :+ end, displaySigla.indices.map(e => e -> start).toMap, Vector())
   acc
+
+def createDot(
+    nodes: Vector[NodeProperties],
+    edges: Vector[EdgeProperties],
+    displaySigla: List[Siglum]
+): String =
+  val nodeLines =
+    nodes
+      .map(e =>
+        val cleanedContent = e.content.replace('"', '\"') // Escape quote (only?)
+        List("  ", e.gId, " [label=\"", cleanedContent, "\"]").mkString
+      )
+      .mkString("\n")
+  val edgeLines =
+    edges.map(e => List("  ", e.source, " -> ", e.target, " [\"", e.label, "\"]").mkString).mkString("\n")
+  nodeLines + edgeLines
 
 /** Create and Rhine delta representation as SVG (entry point)
   *
@@ -57,11 +70,9 @@ def createEdges(nodes: Vector[NodeProperties], displaySigla: List[Siglum]): Vect
   */
 def createRhineDelta(ar: AlignmentRibbon, displaySigla: List[Siglum]): Unit =
   val nodes = createNodes(ar) // Extract, label, and flatten reading groups into vector
-  nodes.foreach(println) // debug
   val edges = createEdges(nodes, displaySigla)
-  edges.foreach(println)
-//  val g = createGraph(nodeProps, displaySigla)
-//  println(g) // debug
+  val dot = createDot(nodes, edges, displaySigla)
+  println(dot)
 
 // gId is stringified Int.Int, e.g. 2.5
 // gId is for development, the intersection of the witnesses on the source and target of an edge is the edge label
