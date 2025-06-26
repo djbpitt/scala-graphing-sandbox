@@ -4,7 +4,14 @@ import scala.annotation.tailrec
 import scala.sys.process.*
 import java.io.*
 
-def createNodes(ar: AlignmentRibbon): Vector[NodeProperties] = // Start and End are created in createEdges
+/** Create all nodes except Start and End as NodeProperties instances
+  *
+  * @param ar
+  *   Alignment ribbon, same as for other visualizations.
+  * @return
+  *   Vector of NodeProperties instances
+  */
+def createNodes(ar: AlignmentRibbon): Vector[NodeProperties] = // Start and End are created elsewhere
   val nodeInfos: Vector[NodeProperties] =
     ar.children.zipWithIndex.flatMap { case (data, apId) =>
       data
@@ -15,6 +22,22 @@ def createNodes(ar: AlignmentRibbon): Vector[NodeProperties] = // Start and End 
     }.toVector
   nodeInfos
 
+/** Create edges as a vector of EdgeProperties instances
+  *
+  * @param nodes
+  *   Vector of NodeProperties instances; excludes Start and End
+  * @param start
+  *   Start (and End; both NodeProperties instances) are passed in separately because they would require special
+  *   handling if included in the recursion. They are passed in, rather than created here, because they are used
+  *   elsewhere, as well.
+  * @param end
+  *   See documentation of start, above.
+  * @param displaySigla
+  *   Used here only for its size to create seed rightmost for all witnesses. WitId (Int) values in AlignmentRibbon are
+  *   replaced by user-supplied displaySigla (Siglum) values elsehwere.
+  * @return
+  *   Vector of EdgeProperties instances
+  */
 def createEdges(
     nodes: Vector[NodeProperties],
     start: NodeProperties,
@@ -49,6 +72,18 @@ def createEdges(
   val acc = nextNode(nodes :+ end, displaySigla.indices.map(e => e -> start).toMap, Vector())
   acc
 
+/** Create Graphviz dot file from NodeProperties and EdgeProperties data
+  *
+  * @param nodes
+  *   Vector of NodeProperties instances. Includes Start and End.
+  * @param edges
+  *   Vector of EdgeProperties instances
+  * @param displaySigla
+  *   User-supplied values (Siglum). EdgeProperties instances include WitId values; these are remapped to Siglum values
+  *   in this function with edge labels are created.
+  * @return
+  *   Graphviz dot file as a String
+  */
 def createDot(
     nodes: Vector[NodeProperties],
     edges: Vector[EdgeProperties],
@@ -75,6 +110,17 @@ def createDot(
   val dotBody = (nodeLines ++ edgeLines).mkString(";\n")
   List(dotStart, dotBody, dotEnd).mkString("\n")
 
+/** Spawn process to transform Graphviz dot file to SVG (as String)
+  *
+  * Graphviz dot must be installed and either on system path or specified as a `GRAPHVIZ_DOT` environemnt variable
+  *
+  * The SVG is created as String, rather than an XML-related datatype, because it’s created by Graphviz dot as a String.
+  *
+  * @param dotFile
+  *   Graphviz dot file as String
+  * @return
+  *   Rhine delta SVG visualization as String
+  */
 def createSvg(dotFile: String): Either[String, String] =
   val dotExecutable = sys.env.getOrElse(
     "GRAPHVIZ_DOT", // Use environment variable if set
@@ -109,8 +155,10 @@ def createSvg(dotFile: String): Either[String, String] =
   *
   * @param ar
   *   AlignmentRibbon
+  * @param displaySigla
+  *   User-supplied sigla as List[Siglum]
   * @return
-  *   Rhine delta as SVG, created by Graphviz
+  *   Rhine delta SVG representation as String, created by Graphviz
   */
 def createRhineDelta(ar: AlignmentRibbon, displaySigla: List[Siglum]): Either[String, String] =
   val allWitIds = displaySigla.indices.toSet
@@ -120,7 +168,6 @@ def createRhineDelta(ar: AlignmentRibbon, displaySigla: List[Siglum]): Either[St
   val edges = createEdges(nodes, start, end, displaySigla) // Create edges as vector of EdgeProperty
   val dotFile = createDot(start +: nodes :+ end, edges, displaySigla)
   createSvg(dotFile)
-
 
 // gId is stringified Int.Int, e.g. 2.5
 // gId is for development, the intersection of the witnesses on the source and target of an edge is the edge label
