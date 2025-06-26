@@ -112,16 +112,14 @@ def createSvg(dotFile: String): Either[String, String] =
   * @return
   *   Rhine delta as SVG, created by Graphviz
   */
-def createRhineDelta(ar: AlignmentRibbon, displaySigla: List[Siglum]): Unit =
+def createRhineDelta(ar: AlignmentRibbon, displaySigla: List[Siglum]): Either[String, String] =
   val allWitIds = displaySigla.indices.toSet
   val start = NodeProperties("-1.0", allWitIds, "Start")
   val end = NodeProperties(Int.MaxValue.toString, allWitIds, "End")
   val nodes = createNodes(ar) // Extract, label, and flatten reading groups into vector of NodeProperty
   val edges = createEdges(nodes, start, end, displaySigla) // Create edges as vector of EdgeProperty
   val dotFile = createDot(start +: nodes :+ end, edges, displaySigla)
-  createSvg(dotFile) match
-    case Right(svg) => println(svg) // SVG content
-    case Left(err)  => System.err.println(err)
+  createSvg(dotFile)
 
 
 // gId is stringified Int.Int, e.g. 2.5
