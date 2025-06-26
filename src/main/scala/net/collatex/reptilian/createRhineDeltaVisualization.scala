@@ -42,7 +42,7 @@ def createEdges(nodes: Vector[NodeProperties], displaySigla: List[Siglum]): Vect
       val newAcc: Vector[EdgeProperties] = acc ++ newEdges
       nextNode(rgs.tail, newRightmost, newAcc)
     }
-  val acc = nextNode(start +: nodes :+ end, displaySigla.indices.map(e => e -> start).toMap, Vector())
+  val acc = nextNode(nodes :+ end, displaySigla.indices.map(e => e -> start).toMap, Vector())
   acc
 
 def createDot(
@@ -76,9 +76,11 @@ def createDot(
   *   Rhine delta as SVG, created by Graphviz
   */
 def createRhineDelta(ar: AlignmentRibbon, displaySigla: List[Siglum]): Unit =
-  val nodes = createNodes(ar) // Extract, label, and flatten reading groups into vector
-  val edges = createEdges(nodes, displaySigla)
+  val nodes = createNodes(ar) // Extract, label, and flatten reading groups into vector of NodeProperty
+  val edges = createEdges(nodes, displaySigla) // Create edges as vector of EdgeProperty
   val dot = createDot(nodes, edges, displaySigla)
+  // Create SVG
+  // Return SVG
   println(dot)
 
 // gId is stringified Int.Int, e.g. 2.5
