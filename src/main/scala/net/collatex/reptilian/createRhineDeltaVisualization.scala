@@ -38,7 +38,7 @@ def createEdges(nodes: Vector[NodeProperties], displaySigla: List[Siglum]): Vect
         .toMap // sources for new edges (may include duplicates)
         .groupMap(_._2)(_._1)
         .map { case (k, v) => k -> v.toSet }
-        .map((k, v) => EdgeProperties(k.gId, newNode.gId, v.mkString(", ")))
+        .map((k, v) => EdgeProperties(k.gId, newNode.gId, v.toSeq.sorted))
       val newAcc: Vector[EdgeProperties] = acc ++ newEdges
       nextNode(rgs.tail, newRightmost, newAcc)
     }
@@ -56,10 +56,17 @@ def createDot(
         val cleanedContent = e.content.replace('"', '\"') // Escape quote (only?)
         List("  ", e.gId, " [label=\"", cleanedContent, "\"]").mkString
       )
-      .mkString("\n")
   val edgeLines =
-    edges.map(e => List("  ", e.source, " -> ", e.target, " [\"", e.label, "\"]").mkString).mkString("\n")
-  nodeLines + edgeLines
+    edges
+      .map(e =>
+        val edgeLabel = Seq(
+          " [label=\"",
+          e.witnesses.map(f => displaySigla(f)).mkString(", "),
+          "\"]"
+        ).mkString
+        List("  ", e.source, " -> ", e.target, edgeLabel).mkString
+      )
+  (nodeLines ++ edgeLines).mkString("\n")
 
 /** Create and Rhine delta representation as SVG (entry point)
   *
@@ -78,4 +85,4 @@ def createRhineDelta(ar: AlignmentRibbon, displaySigla: List[Siglum]): Unit =
 // gId is for development, the intersection of the witnesses on the source and target of an edge is the edge label
 type GId = String
 case class NodeProperties(gId: GId, witnesses: Set[WitId], content: String)
-case class EdgeProperties(source: GId, target: GId, label: String)
+case class EdgeProperties(source: GId, target: GId, witnesses: Seq[Int])
