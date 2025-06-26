@@ -18,7 +18,7 @@ def createNodes(ar: AlignmentRibbon): Vector[NodeProperties] = // Start and End 
         .asInstanceOf[AlignmentPoint]
         .witnessGroups
         .zipWithIndex
-        .map((wr, gId) => NodeProperties(List(apId, ".", gId).mkString, wr.keySet, wr.head._2.nString))
+        .map((wr, gId) => NodeProperties(List(apId, ".", gId).mkString, wr.keySet, wr.head._2.tString))
     }.toVector
   nodeInfos
 
