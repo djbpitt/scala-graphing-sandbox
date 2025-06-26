@@ -13,10 +13,12 @@ def createNodes(ar: AlignmentRibbon): Vector[NodeProperties] = // Start and End 
     }.toVector
   nodeInfos
 
-def createEdges(nodes: Vector[NodeProperties], displaySigla: List[Siglum]): Vector[EdgeProperties] =
-  val allWitIds = displaySigla.indices.toSet
-  val start = NodeProperties("-1.0", allWitIds, "Start")
-  val end = NodeProperties(Int.MaxValue.toString, allWitIds, "End")
+def createEdges(
+    nodes: Vector[NodeProperties],
+    start: NodeProperties,
+    end: NodeProperties,
+    displaySigla: List[Siglum]
+): Vector[EdgeProperties] =
   @tailrec
   def nextNode(
       rgs: Vector[NodeProperties],
@@ -50,6 +52,8 @@ def createDot(
     edges: Vector[EdgeProperties],
     displaySigla: List[Siglum]
 ): String =
+  val dotStart = "digraph G {"
+  val dotEnd = "}"
   val nodeLines =
     nodes
       .map(e =>
@@ -66,7 +70,9 @@ def createDot(
         ).mkString
         List("  ", e.source, " -> ", e.target, edgeLabel).mkString
       )
-  (nodeLines ++ edgeLines).mkString("\n")
+  val dotBody = (nodeLines ++ edgeLines).mkString(";\n")
+  List(dotStart, dotBody, dotEnd).mkString("\n")
+
 
 /** Create and Rhine delta representation as SVG (entry point)
   *
@@ -76,9 +82,12 @@ def createDot(
   *   Rhine delta as SVG, created by Graphviz
   */
 def createRhineDelta(ar: AlignmentRibbon, displaySigla: List[Siglum]): Unit =
+  val allWitIds = displaySigla.indices.toSet
+  val start = NodeProperties("-1.0", allWitIds, "Start")
+  val end = NodeProperties(Int.MaxValue.toString, allWitIds, "End")
   val nodes = createNodes(ar) // Extract, label, and flatten reading groups into vector of NodeProperty
-  val edges = createEdges(nodes, displaySigla) // Create edges as vector of EdgeProperty
-  val dot = createDot(nodes, edges, displaySigla)
+  val edges = createEdges(nodes, start, end, displaySigla) // Create edges as vector of EdgeProperty
+  val dot = createDot(start +: nodes :+ end, edges, displaySigla)
   // Create SVG
   // Return SVG
   println(dot)
