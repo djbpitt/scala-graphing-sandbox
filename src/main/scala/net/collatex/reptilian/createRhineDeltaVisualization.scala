@@ -94,7 +94,7 @@ def createDot(
   val nodeLines =
     nodes
       .map(e =>
-        val cleanedContent = e.content.replace('"', '\"') // Escape quote (only?)
+        val cleanedContent = e.content.replace("\"", "\\\"") // Escape quote (only?)
         List("  ", e.gId, " [label=\"", cleanedContent, "\"]").mkString
       )
   val edgeLines =
@@ -167,6 +167,7 @@ def createRhineDelta(ar: AlignmentRibbon, displaySigla: List[Siglum]): Either[St
   val nodes = createNodes(ar) // Extract, label, and flatten reading groups into vector of NodeProperty
   val edges = createEdges(nodes, start, end, displaySigla) // Create edges as vector of EdgeProperty
   val dotFile = createDot(start +: nodes :+ end, edges, displaySigla)
+  System.err.println(dotFile)
   createSvg(dotFile)
 
 // gId is stringified Int.Int, e.g. 2.5
