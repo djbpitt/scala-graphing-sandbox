@@ -20,10 +20,10 @@
 <!-- ==================================================================== -->
 
 <witnesses xmlns="http://interedition.eu/collatex/ns/1.0">
-  <witness siglum="59" url="../darwin/darwin1859.txt"/>
-  <witness siglum="60" url="../darwin/darwin1860.txt"/>
-  <witness siglum="61" url="http://obdurodon.org/~djb/darwin1861.txt"/>
-  <witness siglum="66" url="../darwin/darwin1866.txt"/>
-  <witness siglum="69" url="../darwin/darwin1869.txt"/>
-  <witness siglum="72" url="../darwin/darwin1872.txt"/>
+  <witness siglum="59" color="peru" url="../darwin/darwin1859.txt"/>
+  <witness siglum="60" color="orange" url="../darwin/darwin1860.txt"/>
+  <witness siglum="61" color="yellow" url="http://obdurodon.org/~djb/darwin1861.txt"/>
+  <witness siglum="66" color="limegreen" url="../darwin/darwin1866.txt"/>
+  <witness siglum="69" color="dodgerblue" url="../darwin/darwin1869.txt"/>
+  <witness siglum="72" color="violet" url="../darwin/darwin1872.txt"/>
 </witnesses>

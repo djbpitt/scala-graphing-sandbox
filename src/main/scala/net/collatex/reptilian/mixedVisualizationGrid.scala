@@ -1,20 +1,8 @@
 package net.collatex.reptilian
 
 import scala.annotation.{tailrec, unused}
-import scala.xml.{Elem, Node, NodeSeq}
+import scala.xml.{Elem, NodeSeq}
 import math.Ordered.orderingToOrdered
-
-/* Constants */
-// FIXME: Hard-coded witness identifiers!
-val witnessToColor: Map[WitId, String] = Map(
-  0 -> "peru",
-  1 -> "orange",
-  2 -> "yellow",
-  3 -> "limegreen",
-  4 -> "dodgerblue",
-  5 -> "violet"
-)
-/* End of constants*/
 
 /* ====================================================================== */
 /* Horizontal ribbons                                                     */
@@ -218,6 +206,7 @@ def createHorizontalRibbons(
     root: AlignmentRibbon,
     gTaSigla: List[WitId],
     displaySigla: List[Siglum],
+    displayColors: List[String],
     gTa: Vector[TokenEnum]
 ): scala.xml.Node =
   /** Constants */
@@ -276,15 +265,8 @@ def createHorizontalRibbons(
   /* End of computing optimal witness order */
   val totalHeight = ribbonWidth * (witnessCount * 3) - ribbonWidth / 2
 
-  // FIXME: Get rid of hard-coded gTaSigla values
-  val witnessToGradient: Map[WitId, String] = Map(
-    0 -> "url(#peruGradient)",
-    1 -> "url(#orangeGradient)",
-    2 -> "url(#yellowGradient)",
-    3 -> "url(#limegreenGradient)",
-    4 -> "url(#dodgerblueGradient)",
-    5 -> "url(#violetGradient)"
-  )
+  val gradientMap: Map[WitId, String] =
+    displayColors.zipWithIndex.map((color, offset) => offset -> List("url(#", color, "Gradient)").mkString("")).toMap
 
   // FIXME: Hard-coded for darwin18xx.txt or single-character gTaSigla
   def formatSiglum(witId: WitId): String =
@@ -329,7 +311,7 @@ def createHorizontalRibbons(
           val newG =
             <g>{
               for e <- groups.head.members.zipWithIndex yield
-                val fillColor = witnessToColor(e._1.witId)
+                val fillColor = displayColors(e._1.witId)
                 val vOffset = e._2
                 Seq(
                   plotRect(vOffset, node, fillColor, top),
@@ -341,7 +323,7 @@ def createHorizontalRibbons(
     val groups = processGroups(node.groups)
     /* Missing witnesses */
     val missing = for e <- node.missing.zipWithIndex yield
-      val fillColor = witnessToColor(e._1)
+      val fillColor = displayColors(e._1)
       val vOffset = e._2
       val top = missingTop
       Seq(
@@ -407,7 +389,7 @@ def createHorizontalRibbons(
       <path d={
         s"M 0,$leftYPos L 10,$leftYPos C 40,$leftYPos 40,$rightYPos 70,$rightYPos L 80,$rightYPos"
       }
-            stroke={witnessToGradient(e)}
+            stroke={gradientMap(e)}
             stroke-width={ribbonWidth.toString}
             fill="none"/>
     )
@@ -501,10 +483,9 @@ def createHorizontalRibbons(
   /* Create gradient stops for each color, using colorname + "Gradient" as @id of <linearGradient> wrapper */
   val gradients =
     <defs>{
-      val colors: Vector[String] = Vector("yellow", "dodgerblue", "violet", "orange", "peru", "limegreen")
       val stops: Vector[(Int, Double)] =
         Vector((0, 1), (6, 1), (20, .6), (35, .4), (50, .3), (65, .4), (80, .6), (94, 1), (100, 1))
-      for c <- colors yield <linearGradient id={s"${c}Gradient"} x1="0%" x2="100%" y1="0%" y2="0%">{
+      for c <- displayColors yield <linearGradient id={s"${c}Gradient"} x1="0%" x2="100%" y1="0%" y2="0%">{
         for s <- stops yield <stop offset={s"${s._1}%"} stop-color={s"$c"} stop-opacity={s"${s._2}"}/>
       }</linearGradient>
     }</defs>
