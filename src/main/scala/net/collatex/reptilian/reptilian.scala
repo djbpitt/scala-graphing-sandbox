@@ -85,7 +85,10 @@ def readData(pathToData: Path): List[(String, String)] =
       val displaySigla: List[Siglum] = data.map(e => Siglum(e.siglum)).toList
       val displayColors: List[String] = data.map(e => e.color).toList
       // Create alignment ribbon
-      val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
+      val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, displaySigla, gTa)
+      createRhineDelta(root, displaySigla) match
+        case Left(err)  => System.err.println(err)
+        case Right(svg) => println(svg)
       // Write to stdout
       val writer = new PrintWriter(Console.out)
       val doctypeHtml: DocType = DocType("html")
