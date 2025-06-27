@@ -439,17 +439,21 @@ def retrieveWitnessData(manifest: Elem, manifestSource: Path | URL): Either[Stri
   *   sequence of CollateXWitnessData instances if success; string with error message if failure
   */
 def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnessData]] =
-  for {
-    manifestPath <- resolveManifestString(manifestPathString)
-    manifestUri: java.net.URI = manifestPath match {
-      case p: os.Path      => p.toNIO.toUri
-      case u: java.net.URL => u.toURI
-    }
-    manifestXml <- retrieveManifestXml(manifestPath)
-    manifestRnc = Source.fromResource("manifest.rnc").getLines().mkString("\n")
-    _ <- validateRnc(manifestXml, manifestRnc)
-    _ <- validateSchematron(manifestXml, "manifest-sch-compiled.xsl", manifestUri).left.map(_.mkString("\n"))
-    witnessData <- retrieveWitnessData(manifestXml, manifestPath)
-  } yield witnessData
+  if manifestPathString.endsWith(".xml") then
+    for {
+      manifestPath <- resolveManifestString(manifestPathString)
+      manifestUri: java.net.URI = manifestPath match {
+        case p: os.Path      => p.toNIO.toUri
+        case u: java.net.URL => u.toURI
+      }
+      manifestXml <- retrieveManifestXml(manifestPath)
+      manifestRnc = Source.fromResource("manifest.rnc").getLines().mkString("\n")
+      _ <- validateRnc(manifestXml, manifestRnc)
+      _ <- validateSchematron(manifestXml, "manifest-sch-compiled.xsl", manifestUri).left.map(_.mkString("\n"))
+      witnessData <- retrieveWitnessData(manifestXml, manifestPath)
+    } yield witnessData
+  else if manifestPathString.endsWith(".json") then
+    Left("JSON manifest support is not yet implemented. Please use an XML manifest instead.")
+  else Left("Manifest filename must end with .xml or .json") // Should not happen; we trap this earlier
 
 case class CollateXWitnessData(siglum: String, color: String, content: String)
