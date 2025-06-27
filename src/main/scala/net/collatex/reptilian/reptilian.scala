@@ -8,12 +8,9 @@ import scala.util.matching.Regex
 import scala.xml.*
 import scala.xml.dtd.DocType
 import scala.io.Source
-
 import java.io.{PrintWriter, StringReader}
 import java.net.{URI, URL}
-
-import cats.data.State
-import cats.syntax.all.*
+import scala.annotation.tailrec
 
 // Relax NG validation
 import com.thaiopensource.validate.ValidationDriver
@@ -122,14 +119,47 @@ def previewWitness(wd: Seq[CollateXWitnessData]): Seq[String] =
   *   Tuple of manifest path as string and debug as Boolean
   */
 def parseArgs(args: Seq[String]): Either[String, (String, Boolean)] =
-  if args.isEmpty then return Left("""
-              |Usage: java -jar manifest.jar manifest.xml [debug]
+  /* API changes
+  Cannot specify witness information on command line; must use XML or JSON manifest
+  Remove switches -a, -cp, -dot, -h, -ie, -mcs, -mpc, -oe, -p, -s, -S, -t, -xml, -xp
+   * */
+
+  val usage = """
+              |Usage: java -jar collatex-reptilian-<version>.jar [manifest.xml | manifest.json] <options>
               |
-              | For manifest.xml format see TBA
-              | To display debug reports specify the string debug (no quotes) as a second parameter
-              |""".stripMargin)
-  val debug: Boolean = args.size > 1 && args(1) == "debug"
-  Right(args.head, debug)
+              | For manifest.xml and manifest.json formats see TBA
+              |
+              | Options:
+              |   -f, --format <arg+>
+              |       space-separated list of output formats, which can be:
+              |         "ribbon" alignment ribbon (HTML)
+              |         "table" (default) plain-text table, read horizontally (one row per witness)
+              |         "table-t-h" same as "table"
+              |         "table-t-v" plain-text table, read vertically (one column per witness)
+              |         "table-h-h" HTML table, read horizontally (one row per witness)
+              |         "table-h-v" HTML table, read vertically (one column per witness)
+              |         "json" JSON output TBA
+              |         "svg" Rhine delta (variant graph) as SVG, one reading on each token
+              |         "svg-rich" Rhine delta (variant graph) as SVG, one reading for each witness on each token
+              |         "graphml" GraphML XML
+              |         "tei" TEI XML (based on TEI parallel segmentation)
+              |   -h  --html <arg>
+              |       "html" (default) or "xhtml", filename extension for HTML outputs ("ribbon", "table-h-h", "table-h-v")
+              |   -o,--output <arg>
+              |       output base filename, without filename extension
+              |       if multiple output formats, all will have the same base filename, with different extensions,
+              |         except that table output will append "-h" or "-v" to base filename to signal orientation
+              |         and rich svg output will append "-r" to base filename
+              |       if not specified
+              |         if exactly one output format, output goes to stdout
+              |         if multiple output formats, the absence of an -o value is an error
+              |""".stripMargin
+  if args.isEmpty then return Left(usage)
+  @tailrec
+  def argsToMap(argQueue: Seq[String], argMap: Map[String, String]): Map[String, String] =
+    if argQueue.isEmpty then argMap else argsToMap(argQueue.tail, argMap)
+  val argMap = argsToMap(args.tail, Map())
+  Right(args.head, false)
 
 /** Validate manifest xml against a Relax NG XML schema
   *
