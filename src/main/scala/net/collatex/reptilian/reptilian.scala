@@ -61,28 +61,28 @@ def readData(pathToData: Path): List[(String, String)] =
     for {
       // https://contributors.scala-lang.org/t/for-comprehension-requires-withfilter-to-destructure-tuples/5953
       result <- parseArgs(args)
-      (manifestPathString, debug) = result
+      (manifestPathString, argMap) = result
       witnessData <- parseManifest(manifestPathString)
-    } yield (witnessData, debug)
+    } yield witnessData
 
   parsedInput match {
     case Left(e) => System.err.println(e)
     case Right(e) =>
       val tokensPerWitnessLimit = 100 // Low values for debug; set to Int.MaxValue for production
-      val (data: Seq[CollateXWitnessData], debug) = e
+      val data: Seq[CollateXWitnessData] = e
       val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
       val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, data, tokenPattern)
-      if debug then
-        System.err.println("\nWitness preview:")
-        previewWitness(data).foreach(System.err.println)
-        System.err.println("\nTokens:")
-        gTa.foreach(System.err.println)
+//      if debug then
+//        System.err.println("\nWitness preview:")
+//        previewWitness(data).foreach(System.err.println)
+//        System.err.println("\nTokens:")
+//        gTa.foreach(System.err.println)
       val gTaSigla: List[WitId] = data.indices.toList // integers
-      //User-supplied sigla and colors for rendering
+      // User-supplied sigla and colors for rendering
       val displaySigla: List[Siglum] = data.map(e => Siglum(e.siglum)).toList
       val displayColors: List[String] = data.map(e => e.color).toList
       // Create alignment ribbon
-      val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, displaySigla, gTa)
+      val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
       createRhineDelta(root, displaySigla) match
         case Left(err)  => System.err.println(err)
         case Right(svg) => println(svg)
@@ -120,58 +120,136 @@ def previewWitness(wd: Seq[CollateXWitnessData]): Seq[String] =
   * @return
   *   Tuple of manifest path as string and debug as Boolean
   */
-def parseArgs(args: Seq[String]): Either[String, (String, Boolean)] =
-  /* API changes
-  Cannot specify witness information on command line; must use XML or JSON manifest
-  Remove switches -a, -cp, -dot, -h, -ie, -mcs, -mpc, -oe, -p, -s, -S, -t, -xml, -xp
-   * */
+def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String]])] =
+  val usage =
+    """
+      |Usage: java -jar collatex-reptilian-<version>.jar <manifest-filename> [options]
+      |
+      |<manifest-filename> must end with '.xml' or '.json'. See TBA for structural description.
+      |
+      |Options:
+      |
+      |  -f, --format <formats...>
+      |      Space-separated list of output formats (one or more values required if '--format' switch is present). 
+      |      Allowed formats:
+      |        ribbon        Alignment ribbon (HTML)
+      |        table         Plain-text table, horizontal (one row per witness) (default)
+      |        table-t-h     Same as "table"
+      |        table-t-v     Plain-text table, vertical (one column per witness)
+      |        table-h-h     HTML table, horizontal (one row per witness)
+      |        table-h-v     HTML table, vertical (one column per witness)
+      |        json          JSON output (TBA)
+      |        svg           Rhine delta (variant graph) as SVG (one reading per token)
+      |        svg-rich      Rhine delta (variant graph) as SVG (one reading per witness per token)
+      |        graphml       GraphML XML output
+      |        tei           TEI XML (parallel segmentation)
+      |
+      |  -h, --html <html-option>
+      |      Value required if '--html' switch is present. Output file extension for HTML formats:
+      |      Allowed values: html (default), xhtml
+      |
+      |  -o, --output <base-filename>
+      |      Value required if '--output' switch is present. Base filename (without extension).
+      |      Allowed characters: Unicode letters, Unicode digits, hyphens, and underscores only.
+      |      Avoid spaces or punctuation that may require shell quoting.
+      |
+      |Notes:
+      |  - All switches are optional. If present, each must be followed by the required number of values.
+      |  - Defaults apply only when switches are omitted entirely, not when provided without values, which
+      |    is an error.
+      |""".stripMargin
 
-  val usage = """
-              |Usage: java -jar collatex-reptilian-<version>.jar [manifest.xml | manifest.json] <options>
-              |
-              | For manifest.xml and manifest.json formats see TBA
-              |
-              | Options:
-              |   -f, --format <arg+>
-              |       space-separated list of output formats, which can be:
-              |         "ribbon" alignment ribbon (HTML)
-              |         "table" (default) plain-text table, read horizontally (one row per witness)
-              |         "table-t-h" same as "table"
-              |         "table-t-v" plain-text table, read vertically (one column per witness)
-              |         "table-h-h" HTML table, read horizontally (one row per witness)
-              |         "table-h-v" HTML table, read vertically (one column per witness)
-              |         "json" JSON output TBA
-              |         "svg" Rhine delta (variant graph) as SVG, one reading on each token
-              |         "svg-rich" Rhine delta (variant graph) as SVG, one reading for each witness on each token
-              |         "graphml" GraphML XML
-              |         "tei" TEI XML (based on TEI parallel segmentation)
-              |   -h  --html <arg>
-              |       "html" (default) or "xhtml", filename extension for HTML outputs ("ribbon", "table-h-h", "table-h-v")
-              |   -o,--output <arg>
-              |       output base filename, without filename extension
-              |       if multiple output formats, all will have the same base filename, with different extensions,
-              |         except that table output will append "-h" or "-v" to base filename to signal orientation
-              |         and rich svg output will append "-r" to base filename
-              |       if not specified
-              |         if exactly one output format, output goes to stdout
-              |         if multiple output formats, the absence of an -o value is an error
-              |""".stripMargin
-  if args.isEmpty then return Left(usage)
-  @tailrec
-  def argsToMap(argQueue: Seq[String], argMap: Map[String, String]): Map[String, String] =
-    if argQueue.isEmpty then argMap else argsToMap(argQueue.tail, argMap)
-  val argMap = argsToMap(args.tail, Map())
-  Right(args.head, false)
+  val aliasMap: Map[String, String] = Map(
+    "-f" -> "--format",
+    "--format" -> "--format",
+    "-h" -> "--html",
+    "--html" -> "--html",
+    "-o" -> "--output",
+    "--output" -> "--output"
+  )
 
-/** Validate manifest xml against a Relax NG XML schema
-  *
-  * @param xmlElem
-  *   manifest as xml document (XML.Elem)
-  * @param rncSchema
-  *   Relax NG compact systax schema as string
-  * @return
-  *   Boolean result, which is ignored, if success; error report if not.
-  */
+  args.toList match
+    case Nil =>
+      Left("Missing required filename argument\n" + usage)
+    case manifestFilename :: rest =>
+      @tailrec
+      def nextArg(
+          argQueue: Seq[String],
+          acc: Map[String, Set[String]],
+          currentSwitch: Option[String]
+      ): Either[String, Map[String, Set[String]]] =
+        argQueue match
+          case Nil =>
+            Right(acc)
+          case head +: tail if head.startsWith("-") =>
+            aliasMap.get(head) match
+              case None =>
+                Left(s"Unknown switch: '$head'\n" + usage)
+              case Some(canonicalSwitch) =>
+                if acc.contains(canonicalSwitch) then
+                  Left(s"Duplicate switch detected: '$head' (alias for $canonicalSwitch)\n" + usage)
+                else nextArg(tail, acc.updated(canonicalSwitch, Set.empty), Some(canonicalSwitch))
+
+          case head +: tail =>
+            currentSwitch match
+              case Some(switch) =>
+                val updatedValues = acc(switch) + head
+                nextArg(tail, acc.updated(switch, updatedValues), currentSwitch)
+              case None =>
+                Left(s"Value '$head' without preceding switch\n" + usage)
+
+      nextArg(rest, Map.empty, None).flatMap { parsedMap =>
+        val formatVals = parsedMap.getOrElse("--format", Set.empty)
+        val htmlVals = parsedMap.getOrElse("--html", Set.empty)
+        val outputVals = parsedMap.getOrElse("--output", Set.empty)
+
+        val allowedFormats = Set(
+          "ribbon",
+          "table",
+          "table-t-h",
+          "table-t-v",
+          "table-h-h",
+          "table-h-v",
+          "json",
+          "svg",
+          "svg-rich",
+          "graphml",
+          "tei"
+        )
+        val allowedHtml = Set("html", "xhtml")
+        val outputNamePattern = "^[\\p{L}\\p{N}_-]+$".r // Unicode letters, digits, hyphens, underscores
+
+        if parsedMap.contains("--format") && formatVals.isEmpty then
+          Left("'--format' requires at least one value if provided\n" + usage)
+        else if parsedMap.contains("--html") && htmlVals.size != 1 then
+          Left("'--html' requires exactly one value if provided\n" + usage)
+        else if parsedMap.contains("--html") && !allowedHtml.contains(htmlVals.head) then
+          Left(s"'--html' value must be one of: ${allowedHtml.mkString(", ")}\n" + usage)
+        else if parsedMap.contains("--format") && !formatVals.subsetOf(allowedFormats) then
+          val invalid = formatVals.diff(allowedFormats)
+          Left(
+            s"Invalid '--format' values: ${invalid.mkString(", ")}. Allowed values: ${allowedFormats.mkString(", ")}\n" + usage
+          )
+        else if parsedMap.contains("--output") && outputVals.size != 1 then
+          Left("'--output' requires exactly one value if provided\n" + usage)
+        else if parsedMap.contains("--output") && !outputNamePattern.matches(outputVals.head) then
+          Left(
+            "'--output' contains invalid characters. Only Unicode letters, digits, hyphens, and underscores allowed.\n" + usage
+          )
+        else if !(manifestFilename.endsWith(".xml") || manifestFilename.endsWith(".json")) then
+          Left("Manifest filename must end with '.xml' or '.json'\n" + usage)
+        else Right((manifestFilename, parsedMap))
+      }
+
+    /** Validate manifest xml against a Relax NG XML schema
+      *
+      * @param xmlElem
+      *   manifest as xml document (XML.Elem)
+      * @param rncSchema
+      *   Relax NG compact systax schema as string
+      * @return
+      *   Boolean result, which is ignored, if success; error report if not.
+      */
 def validateRnc(xmlElem: Elem, rncSchema: String): Either[String, Boolean] =
   // TODO: Get validation error report from Jing, instead of just Boolean
   val datatypeLibraryFactory = new DatatypeLibraryFactoryImpl()
