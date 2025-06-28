@@ -50,7 +50,7 @@ def makeTokenizer(tokenPattern: Regex, tokenWitnessLimit: Int)(witnessData: Seq[
   val result = witnessData
     .map(_.content) // Use only witness string
     .flatMap(e =>
-      "" :: tokenPattern.findAllIn(e).toList.slice(0, tokenWitnessLimit)
+      "" :: tokenPattern.findAllIn(e).toList.take(tokenWitnessLimit)
     ) // Prepend empty string to each group of witness tokens
     .tail // Strip initial empty string; others will signal witness separation
     .toVector

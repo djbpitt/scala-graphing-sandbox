@@ -61,22 +61,17 @@ def readData(pathToData: Path): List[(String, String)] =
     for {
       // https://contributors.scala-lang.org/t/for-comprehension-requires-withfilter-to-destructure-tuples/5953
       result <- parseArgs(args)
-      (manifestPathString, argMap) = result
+      (manifestPathString, argMap) = result // TODO: Retrieve argMap and apply to output
       witnessData <- parseManifest(manifestPathString)
     } yield witnessData
 
   parsedInput match {
     case Left(e) => System.err.println(e)
     case Right(e) =>
-      val tokensPerWitnessLimit = 100 // Low values for debug; set to Int.MaxValue for production
+      val tokensPerWitnessLimit = 2500 // Low values for debug; set to Int.MaxValue for production
       val data: Seq[CollateXWitnessData] = e
       val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
       val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, data, tokenPattern)
-//      if debug then
-//        System.err.println("\nWitness preview:")
-//        previewWitness(data).foreach(System.err.println)
-//        System.err.println("\nTokens:")
-//        gTa.foreach(System.err.println)
       val gTaSigla: List[WitId] = data.indices.toList // integers
       // User-supplied sigla and colors for rendering
       val displaySigla: List[Siglum] = data.map(e => Siglum(e.siglum)).toList
