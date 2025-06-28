@@ -11,6 +11,7 @@ import scala.io.Source
 import java.io.{PrintWriter, StringReader}
 import java.net.{URI, URL}
 import scala.annotation.tailrec
+import java.nio.file.{Paths, Files}
 
 // Relax NG validation
 import com.thaiopensource.validate.ValidationDriver
@@ -80,11 +81,12 @@ def readData(pathToData: Path): List[(String, String)] =
       val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
       // At this point, all formats are guaranteed valid by prior argument parsing
       val formats = e._2.getOrElse("--format", Set("table")) // default to table if none specified
-      val htmlExtension = e._2.getOrElse("--html", Set("html"))
+      val htmlExtension = e._2.getOrElse("--html", Set("html")) // default to .html if none specified
+      val outputBaseFilename = e._2.getOrElse("--output", Set()) // empty set if none specified
       formats.foreach {
         // TODO: Manage html/xhtml, horizontal/vertical table, filenames
         case "table"    => emitTableVisualization()
-        case "ribbon"   => emitAlignmentRibbon(root, gTaSigla, displaySigla, displayColors, gTa)
+        case "ribbon"   => emitAlignmentRibbon(root, gTaSigla, displaySigla, displayColors, gTa, outputBaseFilename)
         case "svg"      => emitSvgGraph(root, displaySigla)
         case "svg-rich" => emitRichSvgGraph()
         case "json"     => emitJsonOutput()
@@ -96,19 +98,29 @@ def readData(pathToData: Path): List[(String, String)] =
 def emitTableVisualization(): Unit =
   System.err.println("Table visualization has not yet been implemented")
 
-def emitAlignmentRibbon(root: AlignmentRibbon, gTaSigla: List[WitId], displaySigla: List[Siglum], displayColors: List[String], gTa: Vector[TokenEnum]): Unit =
+def emitAlignmentRibbon(
+    root: AlignmentRibbon,
+    gTaSigla: List[WitId],
+    displaySigla: List[Siglum],
+    displayColors: List[String],
+    gTa: Vector[TokenEnum],
+    outputBaseFilename: Set[String] // either empty or single string (validated in parsArgs())
+): Unit =
   val writer = new PrintWriter(Console.out)
   val doctypeHtml: DocType = DocType("html")
   val horizontalRibbons = createHorizontalRibbons(root, gTaSigla, displaySigla, displayColors, gTa)
-  XML.write( // pretty-printed by scala.xml.PrettyPrinter by default
-    writer,
-    horizontalRibbons, // xml.Node
-    "UTF-8", // encoding (for declaration)
-    xmlDecl = true, // emit <?xml ... ?>
-    doctype = doctypeHtml // emit <!DOCTYPE html>
-  )
-  writer.flush()
-
+  if outputBaseFilename.isEmpty then // Write to stdout
+    Using.resource(new PrintWriter(Console.out)) { writer =>
+      XML.write(writer, horizontalRibbons, "UTF-8", xmlDecl = true, doctype = doctypeHtml)
+      writer.flush() // For Console.out, optional but harmless
+    }
+  else // Write to file
+    val filename = outputBaseFilename.head + ".html"
+    val file = os.Path(filename, os.pwd) // Handles relative or absolute path
+    Using.resource(new PrintWriter(file.toIO)) { writer =>
+      XML.write(writer, horizontalRibbons, "UTF-8", xmlDecl = true, doctype = doctypeHtml)
+      // No need to manually flush/close — Using handles it
+    }
 
 def emitSvgGraph(root: AlignmentRibbon, displaySigla: List[Siglum]): Unit =
   createRhineDelta(root, displaySigla) match
@@ -147,6 +159,7 @@ def previewWitness(wd: Seq[CollateXWitnessData]): Seq[String] =
   * @return
   *   Tuple of manifest path as string and debug as Boolean
   */
+
 def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String]])] =
   val usage =
     """
@@ -157,7 +170,7 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
       |Options:
       |
       |  -f, --format <formats...>
-      |      Space-separated list of output formats (one or more values required if '--format' switch is present). 
+      |      Space-separated list of output formats (one or more values required if '--format' switch is present).
       |      Allowed formats:
       |        ribbon        Alignment ribbon (HTML)
       |        table         Plain-text table, horizontal (one row per witness) (default)
@@ -175,10 +188,10 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
       |      Value required if '--html' switch is present. Output file extension for HTML formats:
       |      Allowed values: html (default), xhtml
       |
-      |  -o, --output <base-filename>
-      |      Value required if '--output' switch is present. Base filename (without extension).
-      |      Allowed characters: Unicode letters, Unicode digits, hyphens, and underscores only.
-      |      Avoid spaces or punctuation that may require shell quoting.
+      |  -o, --output <base-path>
+      |      Value required if '--output' switch is present. Base path for output files (may include directories).
+      |      The parent directory must exist and be writable. The last path component is treated as the base filename;
+      |      output extensions like '.svg' or '.txt' will be appended automatically.
       |
       |Notes:
       |  - All switches are optional. If present, each must be followed by the required number of values.
@@ -197,24 +210,22 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
 
   args.toList match
     case Nil =>
-      Left("Missing required filename argument\n" + usage)
+      Left("Error: Missing required filename argument.\n" + usage)
     case manifestFilename :: rest =>
       @tailrec
       def nextArg(
-          argQueue: Seq[String],
-          acc: Map[String, Set[String]],
-          currentSwitch: Option[String]
-      ): Either[String, Map[String, Set[String]]] =
+                   argQueue: Seq[String],
+                   acc: Map[String, Set[String]],
+                   currentSwitch: Option[String]
+                 ): Either[String, Map[String, Set[String]]] =
         argQueue match
-          case Nil =>
-            Right(acc)
+          case Nil => Right(acc)
           case head +: tail if head.startsWith("-") =>
             aliasMap.get(head) match
-              case None =>
-                Left(s"Unknown switch: '$head'\n" + usage)
+              case None => Left(s"Error: Unknown switch: '$head'.\n" + usage)
               case Some(canonicalSwitch) =>
                 if acc.contains(canonicalSwitch) then
-                  Left(s"Duplicate switch detected: '$head' (alias for $canonicalSwitch)\n" + usage)
+                  Left(s"Error: Duplicate switch detected: '$head' (alias for $canonicalSwitch).\n" + usage)
                 else nextArg(tail, acc.updated(canonicalSwitch, Set.empty), Some(canonicalSwitch))
 
           case head +: tail =>
@@ -223,7 +234,7 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
                 val updatedValues = acc(switch) + head
                 nextArg(tail, acc.updated(switch, updatedValues), currentSwitch)
               case None =>
-                Left(s"Value '$head' without preceding switch\n" + usage)
+                Left(s"Error: Value '$head' without preceding switch.\n" + usage)
 
       nextArg(rest, Map.empty, None).flatMap { parsedMap =>
         val formatVals = parsedMap.getOrElse("--format", Set.empty)
@@ -231,46 +242,45 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
         val outputVals = parsedMap.getOrElse("--output", Set.empty)
 
         val allowedFormats = Set(
-          "ribbon",
-          "table",
-          "table-t-h",
-          "table-t-v",
-          "table-h-h",
-          "table-h-v",
-          "json",
-          "svg",
-          "svg-rich",
-          "graphml",
-          "tei"
+          "ribbon", "table", "table-t-h", "table-t-v",
+          "table-h-h", "table-h-v", "json", "svg",
+          "svg-rich", "graphml", "tei"
         )
         val allowedHtml = Set("html", "xhtml")
-        val outputNamePattern = "^[\\p{L}\\p{N}_-]+$".r // Unicode letters, digits, hyphens, underscores
 
         if parsedMap.contains("--format") && formatVals.isEmpty then
-          Left("'--format' requires at least one value if provided\n" + usage)
+          Left("Error: '--format' requires at least one value if provided.\n" + usage)
         else if parsedMap.contains("--format") && formatVals.size > 1 && !parsedMap.contains("--output") then
-          Left("If you specify more than one '--format' value you must also specify an '--output' value\n" + usage)
+          Left("Error: If you specify more than one '--format' value you must also specify an '--output' value.\n" + usage)
         else if parsedMap.contains("--html") && htmlVals.size != 1 then
-          Left("'--html' requires exactly one value if provided\n" + usage)
+          Left("Error: '--html' requires exactly one value if provided.\n" + usage)
         else if parsedMap.contains("--html") && !allowedHtml.contains(htmlVals.head) then
-          Left(s"'--html' value must be one of: ${allowedHtml.mkString(", ")}\n" + usage)
+          Left(s"Error: '--html' value must be one of: ${allowedHtml.mkString(", ")}.\n" + usage)
         else if parsedMap.contains("--format") && !formatVals.subsetOf(allowedFormats) then
           val invalid = formatVals.diff(allowedFormats)
           Left(
-            s"Invalid '--format' values: ${invalid.mkString(", ")}. Allowed values: ${allowedFormats.mkString(", ")}\n" + usage
+            s"Error: Invalid '--format' values: ${invalid.mkString(", ")}. Allowed values: ${allowedFormats.mkString(", ")}.\n" + usage
           )
         else if parsedMap.contains("--output") && outputVals.size != 1 then
-          Left("'--output' requires exactly one value if provided\n" + usage)
-        else if parsedMap.contains("--output") && !outputNamePattern.matches(outputVals.head) then
-          Left(
-            "'--output' contains invalid characters. Only Unicode letters, digits, hyphens, and underscores allowed.\n" + usage
-          )
+          Left("Error: '--output' requires exactly one value if provided.\n" + usage)
+        else if parsedMap.contains("--output") then
+          val outputPath = Paths.get(outputVals.head).toAbsolutePath
+          val parent = Option(outputPath.getParent).getOrElse(Paths.get(".").toAbsolutePath)
+          if !Files.exists(parent) || !Files.isDirectory(parent) then
+            Left(s"Error: '--output' parent directory does not exist: $parent.\n" + usage)
+          else if !Files.isWritable(parent) then
+            Left(s"Error: '--output' parent directory is not writable: $parent.\n" + usage)
+          else if outputPath.getFileName.toString.isEmpty || outputPath.getFileName.toString.matches("\\.*") then
+            Left("Error: '--output' must specify a valid, non-empty file name component.\n" + usage)
+          else Right((manifestFilename, parsedMap))
         else if !(manifestFilename.endsWith(".xml") || manifestFilename.endsWith(".json")) then
-          Left("Manifest filename must end with '.xml' or '.json'\n" + usage)
-        else Right((manifestFilename, parsedMap))
+          Left("Error: Manifest filename must end with '.xml' or '.json'.\n" + usage)
+        else
+          Right((manifestFilename, parsedMap))
       }
 
-    /** Validate manifest xml against a Relax NG XML schema
+
+/** Validate manifest xml against a Relax NG XML schema
       *
       * @param xmlElem
       *   manifest as xml document (XML.Elem)
