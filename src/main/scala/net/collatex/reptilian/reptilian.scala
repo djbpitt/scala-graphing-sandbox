@@ -63,37 +63,69 @@ def readData(pathToData: Path): List[(String, String)] =
       result <- parseArgs(args)
       (manifestPathString, argMap) = result // TODO: Retrieve argMap and apply to output
       witnessData <- parseManifest(manifestPathString)
-    } yield witnessData
+    } yield (witnessData, argMap)
 
   parsedInput match {
     case Left(e) => System.err.println(e)
     case Right(e) =>
       val tokensPerWitnessLimit = 2500 // Low values for debug; set to Int.MaxValue for production
-      val data: Seq[CollateXWitnessData] = e
+      val data: Seq[CollateXWitnessData] = e._1
       val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
       val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, data, tokenPattern)
       val gTaSigla: List[WitId] = data.indices.toList // integers
       // User-supplied sigla and colors for rendering
       val displaySigla: List[Siglum] = data.map(e => Siglum(e.siglum)).toList
       val displayColors: List[String] = data.map(e => e.color).toList
-      // Create alignment ribbon
+      // Create model as alignment ribbon
       val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
-      createRhineDelta(root, displaySigla) match
-        case Left(err)  => System.err.println(err)
-        case Right(svg) => println(svg)
-      // Write to stdout
-      val writer = new PrintWriter(Console.out)
-      val doctypeHtml: DocType = DocType("html")
-      val horizontalRibbons = createHorizontalRibbons(root, gTaSigla, displaySigla, displayColors, gTa)
-      XML.write( // pretty-printed by scala.xml.PrettyPrinter by default
-        writer,
-        horizontalRibbons, // xml.Node
-        "UTF-8", // encoding (for declaration)
-        xmlDecl = true, // emit <?xml ... ?>
-        doctype = doctypeHtml // emit <!DOCTYPE html>
-      )
-      writer.flush()
+      // At this point, all formats are guaranteed valid by prior argument parsing
+      val formats = e._2.getOrElse("--format", Set("table")) // default to table if none specified
+      val htmlExtension = e._2.getOrElse("--html", Set("html"))
+      formats.foreach {
+        // TODO: Manage html/xhtml, horizontal/vertical table, filenames
+        case "table"    => emitTableVisualization()
+        case "ribbon"   => emitAlignmentRibbon(root, gTaSigla, displaySigla, displayColors, gTa)
+        case "svg"      => emitSvgGraph(root, displaySigla)
+        case "svg-rich" => emitRichSvgGraph()
+        case "json"     => emitJsonOutput()
+        case "graphml"  => emitGraphmlOutput()
+        case "tei"      => emitTeiXml()
+      }
   }
+
+def emitTableVisualization(): Unit =
+  System.err.println("Table visualization has not yet been implemented")
+
+def emitAlignmentRibbon(root: AlignmentRibbon, gTaSigla: List[WitId], displaySigla: List[Siglum], displayColors: List[String], gTa: Vector[TokenEnum]): Unit =
+  val writer = new PrintWriter(Console.out)
+  val doctypeHtml: DocType = DocType("html")
+  val horizontalRibbons = createHorizontalRibbons(root, gTaSigla, displaySigla, displayColors, gTa)
+  XML.write( // pretty-printed by scala.xml.PrettyPrinter by default
+    writer,
+    horizontalRibbons, // xml.Node
+    "UTF-8", // encoding (for declaration)
+    xmlDecl = true, // emit <?xml ... ?>
+    doctype = doctypeHtml // emit <!DOCTYPE html>
+  )
+  writer.flush()
+
+
+def emitSvgGraph(root: AlignmentRibbon, displaySigla: List[Siglum]): Unit =
+  createRhineDelta(root, displaySigla) match
+    case Left(err)  => System.err.println(err)
+    case Right(svg) => println(svg)
+
+def emitRichSvgGraph(): Unit =
+  System.err.println("Rich SVG visualization has not yet been implemented")
+
+def emitGraphmlOutput(): Unit =
+  System.err.println("GraphML output has not yet be implemented")
+
+def emitJsonOutput(): Unit =
+  System.err.println("JSON output has not yet been implemented")
+
+def emitTeiXml(): Unit =
+  System.err.println("TEI XML output has not yet been implemented")
 
 /** Display witId and initial slice of text of all witnesses
   *
