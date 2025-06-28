@@ -161,6 +161,8 @@ def createLocalTA(
   result.flatten
 }
 
+// expand this with the graph information
+// Do not combine the hypergraphs together
 def identifyHGTokenRanges(y: Hypergraph[EdgeLabel, TokenRange]): Vector[Vector[TokenHG]] =
   val HGTokenRange: Set[(EdgeLabel, TokenRange)] =
     y.hyperedges map (e => (e.label, e.verticesIterator.next()))
