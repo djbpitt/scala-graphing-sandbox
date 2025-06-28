@@ -227,7 +227,21 @@ def createAlignedPatternsPhaseTwo(
     )
     AlignedPatternPhaseTwo(occurrences)
   )
+  
+  // The discussion is whether we need all the sigla from both graphs
+  // to make a good decision here. I think we do. 
+  def checkDifferentGraphs(range: TokenRange, range1: TokenRange) =
+    ???
+    
+    
   val blocksAsTokenRanges =xxBlocks.map(x => x.remapBlockToGTa(lTa)).map(x => x.toTokenRanges(gTa))
+  blocksAsTokenRanges.foreach(e => checkDifferentGraphs(e.head, e.last))
+
+
+
+
+
+  // check that both parts are from different parts of the graph
   //val debugBlockOverlapSortedByLast = blocksAsTokenRanges.sortBy(_.last.start)
   val debugBlockOverlapSortedByHead = blocksAsTokenRanges.sortBy(_.head.start)
   //println("blocks as token ranges sorted by first")
