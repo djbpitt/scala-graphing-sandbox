@@ -248,6 +248,8 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
 
         if parsedMap.contains("--format") && formatVals.isEmpty then
           Left("'--format' requires at least one value if provided\n" + usage)
+        else if parsedMap.contains("--format") && formatVals.size > 1 && !parsedMap.contains("--output") then
+          Left("If you specify more than one '--format' value you must also specify an '--output' value\n" + usage)
         else if parsedMap.contains("--html") && htmlVals.size != 1 then
           Left("'--html' requires exactly one value if provided\n" + usage)
         else if parsedMap.contains("--html") && !allowedHtml.contains(htmlVals.head) then

@@ -72,7 +72,7 @@ class parseArgsTest extends AnyFunSuite:
   }
 
   test("Invalid --format value triggers error") {
-    val args = Seq("manifest.xml", "--format", "svg", "badformat")
+    val args = Seq("manifest.xml", "--format", "svg", "badformat", "--output", "outputBaseFilename")
     val res = parseArgs(args)
     assert(res.isLeft)
     assert(res.swap.toOption.get.contains("Invalid '--format' values"))
@@ -90,4 +90,17 @@ class parseArgsTest extends AnyFunSuite:
     val res = parseArgs(args)
     assert(res.isLeft)
     assert(res.swap.toOption.get.contains("'--format' requires at least one value"))
+  }
+
+  test("Error if multiple --format values provided without --output") {
+    val args = Seq("manifest.xml", "--format", "table", "ribbon")
+    val res = parseArgs(args)
+    assert(res.isLeft)
+    assert(res.swap.toOption.get.contains("you must also specify an '--output' value"))
+  }
+
+  test("Accept multiple --format values when --output is provided") {
+    val args = Seq("manifest.xml", "--format", "table", "ribbon", "--output", "results")
+    val res = parseArgs(args)
+    assert(res.isRight)
   }
