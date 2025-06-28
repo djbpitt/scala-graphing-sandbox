@@ -86,7 +86,7 @@ def readData(pathToData: Path): List[(String, String)] =
       formats.foreach {
         // TODO: Manage html/xhtml, horizontal/vertical table, filenames
         case "table"    => emitTableVisualization()
-        case "ribbon"   => emitAlignmentRibbon(root, gTaSigla, displaySigla, displayColors, gTa, outputBaseFilename)
+        case "ribbon"   => emitAlignmentRibbon(root, gTaSigla, displaySigla, displayColors, gTa, outputBaseFilename, htmlExtension)
         case "svg"      => emitSvgGraph(root, displaySigla)
         case "svg-rich" => emitRichSvgGraph()
         case "json"     => emitJsonOutput()
@@ -104,9 +104,9 @@ def emitAlignmentRibbon(
     displaySigla: List[Siglum],
     displayColors: List[String],
     gTa: Vector[TokenEnum],
-    outputBaseFilename: Set[String] // either empty or single string (validated in parsArgs())
+    outputBaseFilename: Set[String], // either empty or single string (validated in parsArgs())
+    htmlExtension: Set[String]
 ): Unit =
-  val writer = new PrintWriter(Console.out)
   val doctypeHtml: DocType = DocType("html")
   val horizontalRibbons = createHorizontalRibbons(root, gTaSigla, displaySigla, displayColors, gTa)
   if outputBaseFilename.isEmpty then // Write to stdout
@@ -115,7 +115,7 @@ def emitAlignmentRibbon(
       writer.flush() // For Console.out, optional but harmless
     }
   else // Write to file
-    val filename = outputBaseFilename.head + ".html"
+    val filename = outputBaseFilename.head + "." + htmlExtension.head // guaranteed single-item set
     val file = os.Path(filename, os.pwd) // Handles relative or absolute path
     Using.resource(new PrintWriter(file.toIO)) { writer =>
       XML.write(writer, horizontalRibbons, "UTF-8", xmlDecl = true, doctype = doctypeHtml)
