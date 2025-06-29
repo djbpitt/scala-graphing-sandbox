@@ -60,6 +60,16 @@ def mergeHgHg(
     hg2: Hypergraph[EdgeLabel, TokenRange],
     debug: Boolean
 ): Hypergraph[EdgeLabel, TokenRange] =
+  // We do not group both hyperedges together now
+  // We need to capture from which hypergraph each token is coming
+  val HGTokensForHG1 = identifyHGTokenRanges(hg1)
+  val HGTokensForHG2 = identifyHGTokenRanges(hg2)
+  // Then we combine both vectors into one and add the separators
+  val HGTokensForBoth = HGTokensForHG1 ++ HGTokensForHG2
+  // Now we insert the separators
+  val localTokenArray = insertSeparators(HGTokensForBoth)
+  println(localTokenArray)
+
   val bothHgs = hg1 + hg2
   // debug
 //  val _dg = bothHgs.toDependencyGraph()
