@@ -69,7 +69,7 @@ def readData(pathToData: Path): List[(String, String)] =
   parsedInput match {
     case Left(e) => System.err.println(e)
     case Right(e) =>
-      val tokensPerWitnessLimit = 2500 // Low values for debug; set to Int.MaxValue for production
+      val tokensPerWitnessLimit = 10 // Low values for debug; set to Int.MaxValue for production
       val data: Seq[CollateXWitnessData] = e._1
       val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
       val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, data, tokenPattern)
@@ -85,7 +85,8 @@ def readData(pathToData: Path): List[(String, String)] =
       val outputBaseFilename = e._2.getOrElse("--output", Set()) // empty set if none specified
       formats.foreach {
         // TODO: Manage html/xhtml, horizontal/vertical table, filenames
-        case "table" => emitTableVisualization(root, displaySigla, gTa)
+        case "table" | "table-h" => emitTableHorizontal(root, displaySigla, gTa)
+        case "table-v"           => emitTableVertical(root, displaySigla, gTa)
         case "ribbon" =>
           emitAlignmentRibbon(root, gTaSigla, displaySigla, displayColors, gTa, outputBaseFilename, htmlExtension)
         case "svg"      => emitSvgGraph(root, displaySigla, outputBaseFilename)
@@ -96,24 +97,104 @@ def readData(pathToData: Path): List[(String, String)] =
       }
   }
 
-def emitTableVisualization(
+/** Helper function (pads right with spaces) for plain text table output
+  *
+  * @param s
+  *   string to pad
+  * @param width
+  *   desired width as Int
+  * @return
+  *   padded string
+  */
+def padCell(s: String, width: Int): String =
+  s.padTo(width, ' ') // Left-align; pad right with spaces
+
+/** Plain text table; rows as witnesses, columns as alignment points
+  *
+  * --format table | --format table-h (default, so also no --format specified)
+  *
+  * Create fake TokenRange(0, 0, gTa) for empty cell
+  *
+  * @param root
+  *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
+  * @param displaySigla
+  *   List of Sigla in output order (List[Siglum])
+  * @param gTa
+  *   global token array (Vector[TokenEnum]); compute readings with tString method
+  */
+def emitTableHorizontal(
     root: AlignmentRibbon,
     displaySigla: List[Siglum],
     gTa: Vector[TokenEnum]
-): Unit = {
+): Unit =
   val allWitIds = displaySigla.indices
-  val m = root.children.map(e =>
-    System.err.println("\nAP\n")
-    allWitIds.map(f =>
-      System.err.println(
-        e.asInstanceOf[AlignmentPoint]
-          .witnessReadings
-          .getOrElse(f, TokenRange(0, 0, gTa))
-          .tString
-      )
-    )
-  )
-}
+  val table = root.children.map { e =>
+    allWitIds.map { f =>
+      e.asInstanceOf[AlignmentPoint]
+        .witnessReadings
+        .getOrElse(f, TokenRange(0, 0, gTa))
+        .tString
+    }
+  }
+
+  if table.isEmpty then
+    System.errprintln("Empty table (should not happen)")
+    return
+
+  val numRows = allWitIds.size
+  val numCols = table.size
+  val rotated = (0 until numRows).map { rowIdx =>
+    table.map(_(rowIdx))
+  }
+
+  val colWidths = (0 until numCols).map { colIdx =>
+    rotated.map(row => row(colIdx).length).max
+  }
+
+  for row <- rotated do
+    val padded = row.zip(colWidths).map { (cell, w) => padCell(cell, w) }
+    println(padded.mkString(" | "))
+
+/** Plain text table; rows as witnesses, columns as alignment points
+  *
+  * --format table-v
+  *
+  * Create fake TokenRange(0, 0, gTa) for empty cell
+  *
+  * @param root
+  *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
+  * @param displaySigla
+  *   List of Sigla in output order (List[Siglum])
+  * @param gTa
+  *   global token array (Vector[TokenEnum]); compute readings with tString method
+  */
+def emitTableVertical(
+    root: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    gTa: Vector[TokenEnum]
+): Unit =
+  val allWitIds = displaySigla.indices
+  val table = root.children.map { e =>
+    allWitIds.map { f =>
+      e.asInstanceOf[AlignmentPoint]
+        .witnessReadings
+        .getOrElse(f, TokenRange(0, 0, gTa))
+        .tString
+    }
+  }
+
+  if table.isEmpty then
+    System.errprintln("Empty table (should not happen)")
+    return
+
+  val numCols = allWitIds.size
+  val colWidths = (0 until numCols).map { colIdx =>
+    table.map(row => row(colIdx).length).max
+  }
+
+  for row <- table do
+    val padded = row.zip(colWidths).map { (cell, w) => padCell(cell, w) }
+    println(padded.mkString(" | "))
 
 def emitAlignmentRibbon(
     root: AlignmentRibbon,
@@ -203,8 +284,8 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
       |      Allowed formats:
       |        ribbon        Alignment ribbon (HTML)
       |        table         Plain-text table, horizontal (one row per witness) (default)
-      |        table-t-h     Same as "table"
-      |        table-t-v     Plain-text table, vertical (one column per witness)
+      |        table-h       Same as "table"
+      |        table-v       Plain-text table, vertical (one column per witness)
       |        table-h-h     HTML table, horizontal (one row per witness)
       |        table-h-v     HTML table, vertical (one column per witness)
       |        json          JSON output (TBA)
@@ -273,8 +354,8 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
         val allowedFormats = Set(
           "ribbon",
           "table",
-          "table-t-h",
-          "table-t-v",
+          "table-h",
+          "table-v",
           "table-h-h",
           "table-h-v",
           "json",
