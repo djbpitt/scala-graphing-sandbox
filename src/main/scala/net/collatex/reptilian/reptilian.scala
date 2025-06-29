@@ -85,9 +85,10 @@ def readData(pathToData: Path): List[(String, String)] =
       val outputBaseFilename = e._2.getOrElse("--output", Set()) // empty set if none specified
       formats.foreach {
         // TODO: Manage html/xhtml, horizontal/vertical table, filenames
-        case "table"    => emitTableVisualization()
-        case "ribbon"   => emitAlignmentRibbon(root, gTaSigla, displaySigla, displayColors, gTa, outputBaseFilename, htmlExtension)
-        case "svg"      => emitSvgGraph(root, displaySigla)
+        case "table" => emitTableVisualization(root, displaySigla, gTa)
+        case "ribbon" =>
+          emitAlignmentRibbon(root, gTaSigla, displaySigla, displayColors, gTa, outputBaseFilename, htmlExtension)
+        case "svg"      => emitSvgGraph(root, displaySigla, outputBaseFilename)
         case "svg-rich" => emitRichSvgGraph()
         case "json"     => emitJsonOutput()
         case "graphml"  => emitGraphmlOutput()
@@ -95,8 +96,24 @@ def readData(pathToData: Path): List[(String, String)] =
       }
   }
 
-def emitTableVisualization(): Unit =
-  System.err.println("Table visualization has not yet been implemented")
+def emitTableVisualization(
+    root: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    gTa: Vector[TokenEnum]
+): Unit = {
+  val allWitIds = displaySigla.indices
+  val m = root.children.map(e =>
+    System.err.println("\nAP\n")
+    allWitIds.map(f =>
+      System.err.println(
+        e.asInstanceOf[AlignmentPoint]
+          .witnessReadings
+          .getOrElse(f, TokenRange(0, 0, gTa))
+          .tString
+      )
+    )
+  )
+}
 
 def emitAlignmentRibbon(
     root: AlignmentRibbon,
@@ -122,10 +139,22 @@ def emitAlignmentRibbon(
       // No need to manually flush/close — Using handles it
     }
 
-def emitSvgGraph(root: AlignmentRibbon, displaySigla: List[Siglum]): Unit =
+def emitSvgGraph(
+    root: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    outputBaseFilename: Set[String] // either empty or single string (validated in parseArgs())
+): Unit =
   createRhineDelta(root, displaySigla) match
-    case Left(err)  => System.err.println(err)
-    case Right(svg) => println(svg)
+    case Left(err) =>
+      System.err.println(err)
+    case Right(svg) =>
+      if outputBaseFilename.isEmpty then println(svg) // write to stdout
+      else
+        val base = outputBaseFilename.head
+        val fullPath = Paths.get(base + ".svg").toAbsolutePath
+        Using.resource(new PrintWriter(fullPath.toFile, "UTF-8")) { writer =>
+          writer.write(svg)
+        }
 
 def emitRichSvgGraph(): Unit =
   System.err.println("Rich SVG visualization has not yet been implemented")
@@ -214,10 +243,10 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
     case manifestFilename :: rest =>
       @tailrec
       def nextArg(
-                   argQueue: Seq[String],
-                   acc: Map[String, Set[String]],
-                   currentSwitch: Option[String]
-                 ): Either[String, Map[String, Set[String]]] =
+          argQueue: Seq[String],
+          acc: Map[String, Set[String]],
+          currentSwitch: Option[String]
+      ): Either[String, Map[String, Set[String]]] =
         argQueue match
           case Nil => Right(acc)
           case head +: tail if head.startsWith("-") =>
@@ -242,16 +271,26 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
         val outputVals = parsedMap.getOrElse("--output", Set.empty)
 
         val allowedFormats = Set(
-          "ribbon", "table", "table-t-h", "table-t-v",
-          "table-h-h", "table-h-v", "json", "svg",
-          "svg-rich", "graphml", "tei"
+          "ribbon",
+          "table",
+          "table-t-h",
+          "table-t-v",
+          "table-h-h",
+          "table-h-v",
+          "json",
+          "svg",
+          "svg-rich",
+          "graphml",
+          "tei"
         )
         val allowedHtml = Set("html", "xhtml")
 
         if parsedMap.contains("--format") && formatVals.isEmpty then
           Left("Error: '--format' requires at least one value if provided.\n" + usage)
         else if parsedMap.contains("--format") && formatVals.size > 1 && !parsedMap.contains("--output") then
-          Left("Error: If you specify more than one '--format' value you must also specify an '--output' value.\n" + usage)
+          Left(
+            "Error: If you specify more than one '--format' value you must also specify an '--output' value.\n" + usage
+          )
         else if parsedMap.contains("--html") && htmlVals.size != 1 then
           Left("Error: '--html' requires exactly one value if provided.\n" + usage)
         else if parsedMap.contains("--html") && !allowedHtml.contains(htmlVals.head) then
@@ -275,20 +314,18 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
           else Right((manifestFilename, parsedMap))
         else if !(manifestFilename.endsWith(".xml") || manifestFilename.endsWith(".json")) then
           Left("Error: Manifest filename must end with '.xml' or '.json'.\n" + usage)
-        else
-          Right((manifestFilename, parsedMap))
+        else Right((manifestFilename, parsedMap))
       }
 
-
 /** Validate manifest xml against a Relax NG XML schema
-      *
-      * @param xmlElem
-      *   manifest as xml document (XML.Elem)
-      * @param rncSchema
-      *   Relax NG compact systax schema as string
-      * @return
-      *   Boolean result, which is ignored, if success; error report if not.
-      */
+  *
+  * @param xmlElem
+  *   manifest as xml document (XML.Elem)
+  * @param rncSchema
+  *   Relax NG compact systax schema as string
+  * @return
+  *   Boolean result, which is ignored, if success; error report if not.
+  */
 def validateRnc(xmlElem: Elem, rncSchema: String): Either[String, Boolean] =
   // TODO: Get validation error report from Jing, instead of just Boolean
   val datatypeLibraryFactory = new DatatypeLibraryFactoryImpl()
