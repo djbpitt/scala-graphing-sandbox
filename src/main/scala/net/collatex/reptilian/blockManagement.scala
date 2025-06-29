@@ -1,6 +1,7 @@
 package net.collatex.reptilian
 
 import net.collatex.reptilian.TokenEnum.TokenHG
+import net.collatex.util.Hypergraph
 
 import scala.annotation.tailrec
 import scala.collection.{IndexedSeqView, mutable}
@@ -222,14 +223,18 @@ def createAlignedPatternsPhaseTwo(
       val originalBlock = e
       val originalHe = occurrenceStart.he
       val originalTr = occurrenceStart.tr
+      val originalHG = occurrenceStart.hg
       val patternTr: TokenRange = TokenRange(occurrenceStartAsGlobal, occurrenceStartAsGlobal + e.length, gTa)
-      AlignedPatternOccurrencePhaseTwo(originalBlock, originalHe, originalTr, patternTr)
+      AlignedPatternOccurrencePhaseTwo(originalBlock, originalHG, originalHe, originalTr, patternTr)
     )
     AlignedPatternPhaseTwo(occurrences)
   )
   
   // The discussion is whether we need all the sigla from both graphs
   // to make a good decision here. I think we do. 
+  // It seems TokenRange is not the right thing here
+  // TokenRanges are in global coordinates
+  // We need to know from which hg it originates
   def checkDifferentGraphs(range: TokenRange, range1: TokenRange) =
     ???
     
@@ -280,6 +285,7 @@ def createAlignedPatternsPhaseTwo(
 
 case class AlignedPatternOccurrencePhaseTwo(
     originalBlock: FullDepthBlock,
+    originalHypergraph: Hypergraph[EdgeLabel, TokenRange],
     originalHe: EdgeLabel,
     originalTr: TokenRange,
     patternTr: TokenRange // must be contained by originalTr
