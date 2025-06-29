@@ -87,12 +87,14 @@ def readData(pathToData: Path): List[(String, String)] =
         // TODO: Manage html/xhtml, horizontal/vertical table, filenames
         case "table" | "table-h" => emitTableHorizontal(root, displaySigla, gTa)
         case "table-v"           => emitTableVertical(root, displaySigla, gTa)
+        case "table-html-h"      => emitTableHorizontalHTML(root, displaySigla, gTa, outputBaseFilename, htmlExtension)
+        case "table-html-v"      => emitTableVerticalHTML(root, displaySigla, gTa, outputBaseFilename, htmlExtension)
         case "ribbon" =>
           emitAlignmentRibbon(root, gTaSigla, displaySigla, displayColors, gTa, outputBaseFilename, htmlExtension)
         case "svg"      => emitSvgGraph(root, displaySigla, outputBaseFilename)
         case "svg-rich" => emitRichSvgGraph()
-        case "json"     => emitJsonOutput()
-        case "graphml"  => emitGraphmlOutput()
+        case "json"     => emitJson()
+        case "graphml"  => emitGraphml()
         case "tei"      => emitTeiXml()
       }
   }
@@ -109,11 +111,11 @@ def readData(pathToData: Path): List[(String, String)] =
 def padCell(s: String, width: Int): String =
   s.padTo(width, ' ') // Left-align; pad right with spaces
 
-/** Plain text table; rows as witnesses, columns as alignment points
+/** Horizontal plain text table; rows as witnesses, columns as alignment points
   *
   * --format table | --format table-h (default, so also no --format specified)
   *
-  * Create fake TokenRange(0, 0, gTa) for empty cell
+  * Displays witness sigla as row labels. Takes siglum width into account when padding.
   *
   * @param root
   *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
@@ -127,6 +129,7 @@ def emitTableHorizontal(
     displaySigla: List[Siglum],
     gTa: Vector[TokenEnum]
 ): Unit =
+
   val allWitIds = displaySigla.indices
   val table = root.children.map { e =>
     allWitIds.map { f =>
@@ -138,16 +141,19 @@ def emitTableHorizontal(
   }
 
   if table.isEmpty then
-    System.errprintln("Empty table (should not happen)")
+    System.err.println("Empty table (should not happen)")
     return
 
   val numRows = allWitIds.size
   val numCols = table.size
+
+  // Add sigla as first column
   val rotated = (0 until numRows).map { rowIdx =>
-    table.map(_(rowIdx))
+    displaySigla(rowIdx).value +: table.map(_(rowIdx))
   }
 
-  val colWidths = (0 until numCols).map { colIdx =>
+  // Calculate column widths, considering sigla
+  val colWidths = (0 to numCols).map { colIdx =>
     rotated.map(row => row(colIdx).length).max
   }
 
@@ -155,11 +161,11 @@ def emitTableHorizontal(
     val padded = row.zip(colWidths).map { (cell, w) => padCell(cell, w) }
     println(padded.mkString(" | "))
 
-/** Plain text table; rows as witnesses, columns as alignment points
+/** Plain text table; rows as alignment points, columns as witnesses
   *
   * --format table-v
   *
-  * Create fake TokenRange(0, 0, gTa) for empty cell
+  * Displays witness sigla as header row. Takes siglum width into account when padding.
   *
   * @param root
   *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
@@ -173,6 +179,7 @@ def emitTableVertical(
     displaySigla: List[Siglum],
     gTa: Vector[TokenEnum]
 ): Unit =
+
   val allWitIds = displaySigla.indices
   val table = root.children.map { e =>
     allWitIds.map { f =>
@@ -184,17 +191,191 @@ def emitTableVertical(
   }
 
   if table.isEmpty then
-    System.errprintln("Empty table (should not happen)")
+    System.err.println("Empty table (should not happen)")
     return
+
+  // Prepend sigla as header row
+  val header = displaySigla.map(_.value)
+  val fullTable = header +: table
 
   val numCols = allWitIds.size
   val colWidths = (0 until numCols).map { colIdx =>
-    table.map(row => row(colIdx).length).max
+    fullTable.map(row => row(colIdx).length).max
   }
 
-  for row <- table do
+  for row <- fullTable do
     val padded = row.zip(colWidths).map { (cell, w) => padCell(cell, w) }
     println(padded.mkString(" | "))
+
+  import scala.xml._
+  import java.io.PrintWriter
+  import scala.util.Using
+
+def emitTableHorizontalHTML(
+    root: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    gTa: Vector[TokenEnum],
+    outputBaseFilename: Set[String], // validated: empty or exactly one value
+    htmlExtension: Set[String] // validated: exactly one value
+): Unit =
+
+  val allWitIds = displaySigla.indices
+  val tableContent = root.children.map { e =>
+    allWitIds.map { f =>
+      e.asInstanceOf[AlignmentPoint]
+        .witnessReadings
+        .getOrElse(f, TokenRange(0, 0, gTa))
+        .tString
+    }
+  }
+
+  if tableContent.isEmpty then
+    System.err.println("Empty table (should not happen)")
+    return
+
+  val numRows = allWitIds.size
+  val numCols = tableContent.size // needed only if thead includes alignment-point numbering
+  val rotated = (0 until numRows).map { rowIdx =>
+    tableContent.map(_(rowIdx))
+  }
+
+  val htmlTable =
+    <table>
+      <!-- <thead>
+        <tr>
+          <th>Siglum</th>{
+      (0 until numCols).map { i =>
+        <th>AP
+            {i + 1}
+          </th>
+      }
+    }
+        </tr>
+      </thead> -->
+      <tbody>
+        {
+      rotated.zip(displaySigla).map { (row, siglum) =>
+        <tr>
+          <th>
+            {siglum.value}
+          </th>{
+          row.map(cell => <td>
+          {cell}
+        </td>)
+        }
+        </tr>
+      }
+    }
+      </tbody>
+    </table>
+
+  val htmlDoc =
+    <html xmlns="http://www.w3.org/1999/xhtml">
+      <head>
+        <title>Alignment Table (Horizontal)</title>
+        <style type="text/css">
+          :root {{background-color: gainsboro;}}
+          table, tr, th, td {{border: 1px solid gray;}}
+          table {{border-collapse: collapse}}
+          th, td {{padding: 2px 3px}}
+        </style>
+      </head>
+      <body>
+        <h2>Alignment Table (Witnesses as Rows)</h2>{htmlTable}
+      </body>
+    </html>
+
+  val doctypeHtml = DocType("html")
+
+  if outputBaseFilename.isEmpty then
+    Using.resource(new PrintWriter(Console.out)) { writer =>
+      XML.write(writer, htmlDoc, "UTF-8", xmlDecl = true, doctype = doctypeHtml)
+    }
+  else
+    val filename = outputBaseFilename.head + "." + htmlExtension.head
+    val file = os.Path(filename, os.pwd)
+    Using.resource(new PrintWriter(file.toIO)) { writer =>
+      XML.write(writer, htmlDoc, "UTF-8", xmlDecl = true, doctype = doctypeHtml)
+    }
+
+def emitTableVerticalHTML(
+    root: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    gTa: Vector[TokenEnum],
+    outputBaseFilename: Set[String], // validated: empty or exactly one value
+    htmlExtension: Set[String] // validated: exactly one value
+): Unit =
+
+  val allWitIds = displaySigla.indices
+  val tableContent = root.children.map { e =>
+    allWitIds.map { f =>
+      e.asInstanceOf[AlignmentPoint]
+        .witnessReadings
+        .getOrElse(f, TokenRange(0, 0, gTa))
+        .tString
+    }
+  }
+
+  if tableContent.isEmpty then
+    System.err.println("Empty table (should not happen)")
+    return
+
+  val htmlTable =
+    <table>
+      <thead>
+        <tr>
+          <!--<th>Alignment Point</th>-->{
+      displaySigla.map(s => <th>
+          {s.value}
+        </th>)
+    }
+        </tr>
+      </thead>
+      <tbody>
+        {
+      tableContent.zipWithIndex.map { (row, idx) =>
+        <tr>
+          <!--<td>AP
+            {idx + 1}
+          </td>-->{
+          row.map(cell => <td>
+          {cell}
+        </td>)
+        }
+        </tr>
+      }
+    }
+      </tbody>
+    </table>
+
+  val htmlDoc =
+    <html xmlns="http://www.w3.org/1999/xhtml">
+      <head>
+        <title>Alignment Table (Vertical)</title>
+        <style type="text/css">
+          :root {{background-color: gainsboro;}}
+          table, tr, th, td {{border: 1px solid gray;}}
+          table {{border-collapse: collapse}}
+          th, td {{padding: 2px 3px}}
+        </style>
+      </head>
+      <body>
+        <h2>Alignment Table (Witnesses as Columns)</h2>{htmlTable}
+      </body>
+    </html>
+
+  val doctypeHtml = DocType("html")
+
+  if outputBaseFilename.isEmpty then
+    Using.resource(new PrintWriter(Console.out)) { writer =>
+      XML.write(writer, htmlDoc, "UTF-8", xmlDecl = true, doctype = doctypeHtml)
+    }
+  else
+    val filename = outputBaseFilename.head + "." + htmlExtension.head
+    val file = os.Path(filename, os.pwd)
+    Using.resource(new PrintWriter(file.toIO)) { writer =>
+      XML.write(writer, htmlDoc, "UTF-8", xmlDecl = true, doctype = doctypeHtml)
+    }
 
 def emitAlignmentRibbon(
     root: AlignmentRibbon,
@@ -240,10 +421,10 @@ def emitSvgGraph(
 def emitRichSvgGraph(): Unit =
   System.err.println("Rich SVG visualization has not yet been implemented")
 
-def emitGraphmlOutput(): Unit =
+def emitGraphml(): Unit =
   System.err.println("GraphML output has not yet be implemented")
 
-def emitJsonOutput(): Unit =
+def emitJson(): Unit =
   System.err.println("JSON output has not yet been implemented")
 
 def emitTeiXml(): Unit =
@@ -286,8 +467,8 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
       |        table         Plain-text table, horizontal (one row per witness) (default)
       |        table-h       Same as "table"
       |        table-v       Plain-text table, vertical (one column per witness)
-      |        table-h-h     HTML table, horizontal (one row per witness)
-      |        table-h-v     HTML table, vertical (one column per witness)
+      |        table-html-h  HTML table, horizontal (one row per witness)
+      |        table-html-v  HTML table, vertical (one column per witness)
       |        json          JSON output (TBA)
       |        svg           Rhine delta (variant graph) as SVG (one reading per token)
       |        svg-rich      Rhine delta (variant graph) as SVG (one reading per witness per token)
@@ -350,20 +531,20 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
         val formatVals = parsedMap.getOrElse("--format", Set.empty)
         val htmlVals = parsedMap.getOrElse("--html", Set.empty)
         val outputVals = parsedMap.getOrElse("--output", Set.empty)
-
-        val allowedFormats = Set(
+        val allowedFormatsList = Vector(
           "ribbon",
           "table",
           "table-h",
           "table-v",
-          "table-h-h",
-          "table-h-v",
+          "table-html-h",
+          "table-html-v",
           "json",
           "svg",
           "svg-rich",
           "graphml",
           "tei"
         )
+        val allowedFormatsSet = allowedFormatsList.toSet
         val allowedHtml = Set("html", "xhtml")
 
         if parsedMap.contains("--format") && formatVals.isEmpty then
@@ -376,10 +557,11 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
           Left("Error: '--html' requires exactly one value if provided.\n" + usage)
         else if parsedMap.contains("--html") && !allowedHtml.contains(htmlVals.head) then
           Left(s"Error: '--html' value must be one of: ${allowedHtml.mkString(", ")}.\n" + usage)
-        else if parsedMap.contains("--format") && !formatVals.subsetOf(allowedFormats) then
-          val invalid = formatVals.diff(allowedFormats)
+        else if parsedMap.contains("--format") && !formatVals.subsetOf(allowedFormatsSet) then
+          val invalid = formatVals.diff(allowedFormatsSet)
           Left(
-            s"Error: Invalid '--format' values: ${invalid.mkString(", ")}. Allowed values: ${allowedFormats.mkString(", ")}.\n" + usage
+            s"Error: Invalid '--format' values: ${invalid.mkString(", ")}. Allowed values: ${allowedFormatsList
+                .mkString(", ")}.\n" + usage
           )
         else if parsedMap.contains("--output") && outputVals.size != 1 then
           Left("Error: '--output' requires exactly one value if provided.\n" + usage)
