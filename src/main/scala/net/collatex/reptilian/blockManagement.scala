@@ -229,15 +229,15 @@ def createAlignedPatternsPhaseTwo(
 
   // TODO: Why do we need to filter _.length > 0 on the adjusted blocks ??
   val xxBlocks = if blocks.isEmpty then List.empty else adjustBlockOverlap(blocks, gTa).filter(_.length > 0).toList
-  val patterns: List[AlignedPatternPhaseTwo] = xxBlocks map (e => // e: block
+  val patternsAsTuples = xxBlocks map (e => // e: block
     // NOTE: Each Block has two instances. If both instances point to the same hypergraph
     // we have an Illegal Pattern which should be filtered out
-    val occurrences = e.instances.map(f => // f: block instance (start offset)
-      convertBlockToAlignedPatternOccurrence(f, e)
-    )
-    AlignedPatternPhaseTwo(occurrences)
+    (convertBlockToAlignedPatternOccurrence(e.instances(0), e),
+      convertBlockToAlignedPatternOccurrence(e.instances(1), e))
   )
-  
+  val occurrencePhaseTwo = patternsAsTuples.map { case (x, y) => Vector(x, y) }
+  val patterns: List[AlignedPatternPhaseTwo] = occurrencePhaseTwo.map(occurrences => AlignedPatternPhaseTwo(occurrences))
+
   // The discussion is whether we need all the sigla from both graphs
   // to make a good decision here. I think we do. 
   // It seems TokenRange is not the right thing here
@@ -298,10 +298,10 @@ case class AlignedPatternOccurrencePhaseTwo(
     originalTr: TokenRange,
     patternTr: TokenRange // must be contained by originalTr
 ) {
-
     override def toString: String = patternTr.toString
-
 }
+
+// In practice there are only two occurrences in the vector
 case class AlignedPatternPhaseTwo(
     occurrences: Vector[AlignedPatternOccurrencePhaseTwo]
 )
