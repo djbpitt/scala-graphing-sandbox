@@ -101,6 +101,7 @@ def readData(pathToData: Path): List[(String, String)] =
         case "json"     => emitJson(root, displaySigla, gTa, outputBaseFilename)
         case "graphml"  => emitGraphml()
         case "tei"      => emitTeiXml()
+        case "xml"      => emitXml()
       }
   }
 
@@ -543,6 +544,9 @@ def emitJson(
 def emitTeiXml(): Unit =
   System.err.println("TEI XML output has not yet been implemented")
 
+def emitXml(): Unit =
+  System.err.println("CollateX XML output has not yet been implemented")
+
 /** Display witId and initial slice of text of all witnesses
   *
   * Used only for debugging
@@ -587,6 +591,8 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
       |        svg-rich      Rhine delta (variant graph) as SVG (one reading per witness per token)
       |        graphml       GraphML XML output
       |        tei           TEI XML (parallel segmentation)
+      |        xml           XML
+      |      See TBA for output format documentation.
       |
       |  -h, --html <html-option>
       |      Value required if '--html' switch is present. Output file extension for HTML formats:
@@ -655,7 +661,8 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
           "svg",
           "svg-rich",
           "graphml",
-          "tei"
+          "tei",
+          "xml"
         )
         val allowedFormatsSet = allowedFormatsList.toSet
         val allowedHtml = Set("html", "xhtml")
