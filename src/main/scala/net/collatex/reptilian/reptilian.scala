@@ -101,7 +101,7 @@ def readData(pathToData: Path): List[(String, String)] =
         case "json"     => emitJson(root, displaySigla, gTa, outputBaseFilename)
         case "graphml"  => emitGraphml()
         case "tei"      => emitTeiXml()
-        case "xml"      => emitXml()
+        case "xml"      => emitXml(root, displaySigla, gTa, outputBaseFilename)
       }
   }
 
@@ -544,8 +544,46 @@ def emitJson(
 def emitTeiXml(): Unit =
   System.err.println("TEI XML output has not yet been implemented")
 
-def emitXml(): Unit =
-  System.err.println("CollateX XML output has not yet been implemented")
+def emitXml(
+    root: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    gTa: Vector[TokenEnum],
+    outputBaseFilename: Set[String]
+): Unit =
+
+  val namespace = "http://interedition.eu/collatex/ns/1.0"
+
+  val rows: Seq[Node] = root.children.toVector.map { alignmentUnit =>
+    val point = alignmentUnit.asInstanceOf[AlignmentPoint]
+
+    val cells = point.witnessReadings.toSeq.sortBy(_._1).map { (witId, tokenRange) =>
+      <cell sigil={displaySigla(witId).value}>
+        {tokenRange.tString}
+      </cell>
+    }
+
+    <row>
+      {cells}
+    </row>
+  }
+
+  val xmlRoot: Elem =
+    <alignment xmlns={namespace}>
+      {rows}
+    </alignment>
+
+  val prettyPrinter = new PrettyPrinter(80, 2)
+  val renderedBody = prettyPrinter.format(xmlRoot)
+
+  val declaration = """<?xml version="1.0" encoding="UTF-8"?>"""
+
+  val fullOutput = s"$declaration\n$renderedBody" // prepend string instead of XML.write to retain pretty-print
+
+  if outputBaseFilename.isEmpty then println(fullOutput)
+  else
+    val filename = outputBaseFilename.head + ".xml"
+    val file = os.Path(filename, os.pwd)
+    os.write.over(file, fullOutput)
 
 /** Display witId and initial slice of text of all witnesses
   *
