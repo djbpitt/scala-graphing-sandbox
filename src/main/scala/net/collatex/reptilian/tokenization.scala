@@ -2,9 +2,8 @@ package net.collatex.reptilian
 
 import cats.data.State
 import cats.syntax.all.*
-
+import net.collatex.util.Hypergraph
 import upickle.default.*
-
 
 import scala.util.matching.Regex
 
@@ -30,7 +29,7 @@ enum TokenEnum:
   case Token(t: String, n: String, w: WitId, g: Int) extends TokenEnum
   case TokenSep(t: String, n: String, w: WitId, g: Int) extends TokenEnum
   case TokenSg(t: String, n: String, w: WitId, g: Int) extends TokenEnum
-  case TokenHG(t: String, n: String, w: WitId, g: Int, he: EdgeLabel, tr: TokenRange) extends TokenEnum
+  case TokenHG(t: String, n: String, w: WitId, g: Int, hg: Hypergraph[EdgeLabel, TokenRange], he: EdgeLabel, tr: TokenRange) extends TokenEnum
   def t: String
   def n: String
   def w: WitId
