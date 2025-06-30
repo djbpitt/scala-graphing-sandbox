@@ -28,6 +28,7 @@ import javax.xml.transform.stream.StreamSource
 // JSON output
 import upickle.default.*
 import ujson.*
+import scala.reflect.ClassTag
 
 /** Mimic XPath normalize-space()
   *
@@ -191,8 +192,8 @@ def emitTableHorizontal(
   * @param gTa
   *   Global token array (Vector[TokenEnum]); compute readings with tString method
   * @param outputBaseFilename
-  *   Base filename for file-system output. If empty, output goes to stdout. If present, '-h.txt' is appended to
-  *   construct the output filename, e.g., 'foo' becomes 'foo-h.txt'.
+  *   Base filename for file-system output. If empty, output goes to stdout. If present, '-v.txt' is appended to
+  *   construct the output filename, e.g., 'foo' becomes 'foo-v.txt'.
   */
 def emitTableVertical(
     root: AlignmentRibbon,
@@ -356,7 +357,7 @@ def emitTableVerticalHTML(
       </thead>
       <tbody>
         {
-      tableContent.zipWithIndex.map { (row, idx) =>
+      tableContent.zipWithIndex.map { (row, idx) => // idx used only if APs are numbered
         <tr>
           <!--<td>AP
             {idx + 1}
@@ -447,6 +448,41 @@ def emitRichSvgGraph(): Unit =
 def emitGraphml(): Unit =
   System.err.println("GraphML output has not yet be implemented")
 
+/** Helper to convert an `Any` value to a ujson.Value, handling common Scala/Java types */
+def anyToUjsonValue(value: Any): Value = value match
+  case null          => ujson.Null
+  case s: String     => ujson.Str(s)
+  case i: Int        => ujson.Num(i)
+  case l: Long       => ujson.Num(l.toDouble) // Direct us of Long is deprecated
+  case d: Double     => ujson.Num(d)
+  case f: Float      => ujson.Num(f)
+  case b: Boolean    => ujson.Bool(b)
+  case seq: Seq[_]   => ujson.Arr(seq.map(anyToUjsonValue)*)
+  case arr: Array[_] => ujson.Arr(arr.map(anyToUjsonValue)*)
+  case map: Map[_, _] =>
+    val jsonFields = map.collect { case (k: String, v) => k -> anyToUjsonValue(v) }
+    ujson.Obj.from(jsonFields)
+  case other =>
+    ujson.Str(other.toString)
+
+/** JSON output
+  *
+  * --format json
+  *
+  * JSON structure documented at TBA
+  *
+  * Uses reflection to accommodate Token properties other than t, n, w, g, if provided
+  *
+  * @param root
+  *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
+  * @param displaySigla
+  *   List of Sigla in output order (List[Siglum])
+  * @param gTa
+  *   Global token array (Vector[TokenEnum]); compute readings with tString method
+  * @param outputBaseFilename
+  *   Base filename for file-system output. If empty, output goes to stdout. If present, '-json' is appended to
+  *   construct the output filename, e.g., 'foo' becomes 'foo.json'.
+  */
 def emitJson(
     root: AlignmentRibbon,
     displaySigla: List[Siglum],
@@ -460,17 +496,32 @@ def emitJson(
   val tableJson = root.children.toVector.map { alignmentUnit =>
     val point = alignmentUnit.asInstanceOf[AlignmentPoint]
 
-    val tokenArrays = allWitIds.map { witId =>
+    val tokenArrays: Seq[Value] = allWitIds.map { witId =>
       point.witnessReadings.get(witId) match
         case Some(tokenRange) =>
-          Arr(tokenRange.tokens.map { token =>
-            Obj(
-              "t" -> token.t,
-              "n" -> token.n,
-              "w" -> displaySigla(witId).value,
-              "g" -> token.g
-            )
-          }*)
+          val tokensJson = tokenRange.tokens.map { token =>
+            val standardKeys = Seq("t", "n", "w", "g")
+
+            val fieldMap: Map[String, Any] =
+              token.getClass.getDeclaredFields.map { field =>
+                field.setAccessible(true)
+                field.getName -> field.get(token)
+              }.toMap
+
+            val knownFields: Seq[(String, Value)] = standardKeys.map {
+              case "w" => "w" -> Str(displaySigla(witId).value)
+              case k   => k -> anyToUjsonValue(fieldMap(k))
+            }
+
+            val additionalFields: Seq[(String, Value)] = fieldMap
+              .filterNot { case (k, _) => standardKeys.contains(k) }
+              .toSeq
+              .sortBy(_._1)
+              .map { case (k, v) => k -> anyToUjsonValue(v) }
+
+            Obj.from(knownFields ++ additionalFields)
+          }
+          Arr(tokensJson*)
         case None => Arr()
     }
     Arr(tokenArrays*)
@@ -858,9 +909,3 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
   else Left("Manifest filename must end with .xml or .json") // Should not happen; we trap this earlier
 
 case class CollateXWitnessData(siglum: String, color: String, content: String)
-
-// Separate creating fields for JSON output (w goes from Int to Siglum.value) from creating the JSON itself
-case class TokenOutput(t: String, n: String, w: String, g: Int)
-
-// upickle macro for creating JSON output
-given Writer[TokenOutput] = macroW[TokenOutput]
