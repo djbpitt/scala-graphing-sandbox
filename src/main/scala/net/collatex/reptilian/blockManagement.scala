@@ -1,6 +1,7 @@
 package net.collatex.reptilian
 
 import net.collatex.reptilian.TokenEnum.TokenHG
+import net.collatex.util.Hypergraph
 
 import scala.annotation.tailrec
 import scala.collection.{IndexedSeqView, mutable}
@@ -57,7 +58,7 @@ def createSuffixArray(vectorization: Array[Int]) =
         ) // return -1 or 1 if x < y (vs y < x); cannot be 0 because suffixes are unique
   }
   val suffixArray = suffixes.zipWithIndex
-    .sortBy(_._1)(IntArrayOrdering)
+    .sortBy(_._1)(using IntArrayOrdering)
     .map(_._2)
   suffixArray.toArray
 
@@ -213,20 +214,33 @@ def createAlignedPatternsPhaseTwo(
       .map((starts, length) => FullDepthBlock(starts.toVector, length)) pipe removeOverlappingBlocks
 
   val gTa = lTa.head.asInstanceOf[TokenHG].tr.ta // from arbitrary TokenRange
-  // TODO: Why do we need to filter _.length > 0 on the adjusted blocks ??
+
+  def convertBlockToAlignedPatternOccurrence(f: Int, e: FullDepthBlock) =
+    val occurrenceStart: TokenHG = lTa(f).asInstanceOf[TokenHG]
+    val occurrenceStartAsGlobal: Int = occurrenceStart.g
+    val originalBlock = e
+    val originalHe = occurrenceStart.he
+    val originalTr = occurrenceStart.tr
+    val originalHG = occurrenceStart.hg
+    val patternTr: TokenRange = TokenRange(occurrenceStartAsGlobal, occurrenceStartAsGlobal + e.length, gTa)
+    AlignedPatternOccurrencePhaseTwo(originalBlock, originalHG, originalHe, originalTr, patternTr)
+
+
+
+  // TODO: Why are there empty blocks in the adjusted blocks ??
+  // necessitating that we filter _.length > 0 on the adjusted blocks
   val xxBlocks = if blocks.isEmpty then List.empty else adjustBlockOverlap(blocks, gTa).filter(_.length > 0).toList
-  val patterns: List[AlignedPatternPhaseTwo] = xxBlocks map (e => // e: block
-    val occurrences = e.instances.map(f => // f: block instance (start offset)
-      val occurrenceStart: TokenHG = lTa(f).asInstanceOf[TokenHG]
-      val occurrenceStartAsGlobal: Int = occurrenceStart.g
-      val originalBlock = e
-      val originalHe = occurrenceStart.he
-      val originalTr = occurrenceStart.tr
-      val patternTr: TokenRange = TokenRange(occurrenceStartAsGlobal, occurrenceStartAsGlobal + e.length, gTa)
-      AlignedPatternOccurrencePhaseTwo(originalBlock, originalHe, originalTr, patternTr)
-    )
-    AlignedPatternPhaseTwo(occurrences)
+  // NOTE: Each Block has two instances. If both instances point to the same hypergraph
+  // we have an Illegal Pattern which should be filtered out
+  val patternsAsTuples = xxBlocks map (e => // e: block
+    (convertBlockToAlignedPatternOccurrence(e.instances(0), e),
+      convertBlockToAlignedPatternOccurrence(e.instances(1), e))
   )
+  // check that both parts are from different parts of the graph
+  val validPatterns = patternsAsTuples.filter((x, y) => x.originalHypergraph != y.originalHypergraph)
+  val occurrencePhaseTwo = validPatterns.map { case (x, y) => Vector(x, y) }
+  val patterns: List[AlignedPatternPhaseTwo] = occurrencePhaseTwo.map(occurrences => AlignedPatternPhaseTwo(occurrences))
+
   val blocksAsTokenRanges =xxBlocks.map(x => x.remapBlockToGTa(lTa)).map(x => x.toTokenRanges(gTa))
   //val debugBlockOverlapSortedByLast = blocksAsTokenRanges.sortBy(_.last.start)
   val debugBlockOverlapSortedByHead = blocksAsTokenRanges.sortBy(_.head.start)
@@ -266,14 +280,15 @@ def createAlignedPatternsPhaseTwo(
 
 case class AlignedPatternOccurrencePhaseTwo(
     originalBlock: FullDepthBlock,
+    originalHypergraph: Hypergraph[EdgeLabel, TokenRange],
     originalHe: EdgeLabel,
     originalTr: TokenRange,
     patternTr: TokenRange // must be contained by originalTr
 ) {
-
     override def toString: String = patternTr.toString
-
 }
+
+// In practice there are only two occurrences in the vector
 case class AlignedPatternPhaseTwo(
     occurrences: Vector[AlignedPatternOccurrencePhaseTwo]
 )

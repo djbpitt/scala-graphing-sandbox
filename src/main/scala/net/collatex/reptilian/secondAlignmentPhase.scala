@@ -60,6 +60,16 @@ def mergeHgHg(
     hg2: Hypergraph[EdgeLabel, TokenRange],
     debug: Boolean
 ): Hypergraph[EdgeLabel, TokenRange] =
+  // We do not group both hyperedges together now
+  // We need to capture from which hypergraph each token is coming
+  val HGTokensForHG1 = identifyHGTokenRanges(hg1)
+  val HGTokensForHG2 = identifyHGTokenRanges(hg2)
+  // Then we combine both vectors into one and add the separators
+  val HGTokensForBoth = HGTokensForHG1 ++ HGTokensForHG2
+  // Now we insert the separators
+  val lTa = insertSeparators(HGTokensForBoth)
+  // println(lTs)
+
   val bothHgs = hg1 + hg2
   // debug
 //  val _dg = bothHgs.toDependencyGraph()
@@ -67,7 +77,7 @@ def mergeHgHg(
 //  dependencyGraphToDot(_dg, bothHgs)
 
   // bothHgs.hyperedges.map(e => e.verticesIterator.toSet.map(f => f.length)).foreach(System.err.println)
-  val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
+  // val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] =
     createAlignedPatternsPhaseTwo(lTa, 2) pipe groupPatternsTogetherByHyperedge
 
@@ -161,11 +171,13 @@ def createLocalTA(
   result.flatten
 }
 
-def identifyHGTokenRanges(y: Hypergraph[EdgeLabel, TokenRange]): Vector[Vector[TokenHG]] =
+// expand this with the graph information
+// Do not combine the hypergraphs together
+def identifyHGTokenRanges(hg: Hypergraph[EdgeLabel, TokenRange]): Vector[Vector[TokenHG]] =
   val HGTokenRange: Set[(EdgeLabel, TokenRange)] =
-    y.hyperedges map (e => (e.label, e.verticesIterator.next()))
+    hg.hyperedges map (e => (e.label, e.verticesIterator.next()))
   val HGTokens: Vector[Vector[TokenHG]] = HGTokenRange.toVector
-    .map((id, tr) => tr.tokens.map(f => TokenHG(f.t, f.n, f.w, f.g, id, tr)))
+    .map((id, tr) => tr.tokens.map(f => TokenHG(f.t, f.n, f.w, f.g, hg, id, tr)))
   HGTokens
 
 def insertSeparators(HGTokens: Vector[Vector[TokenEnum]]): Vector[TokenEnum] =
@@ -176,6 +188,7 @@ def insertSeparators(HGTokens: Vector[Vector[TokenEnum]]): Vector[TokenEnum] =
     .dropRight(1)
   result
 
+// TODO: Make this method not needed
 def createHgTa = insertSeparators compose identifyHGTokenRanges
 
 // returns the pre part, the post part separate, the middle part as a block -> hyperedge mapping
