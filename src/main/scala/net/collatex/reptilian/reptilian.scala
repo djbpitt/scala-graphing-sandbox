@@ -25,6 +25,10 @@ import org.xml.sax.InputSource
 import net.sf.saxon.s9api.{Processor, Serializer}
 import javax.xml.transform.stream.StreamSource
 
+// JSON output
+import upickle.default.*
+import ujson.*
+
 /** Mimic XPath normalize-space()
   *
   *   1. Convert all newlines to space characters
@@ -93,7 +97,7 @@ def readData(pathToData: Path): List[(String, String)] =
           emitAlignmentRibbon(root, gTaSigla, displaySigla, displayColors, gTa, outputBaseFilename, htmlExtension)
         case "svg"      => emitSvgGraph(root, displaySigla, outputBaseFilename)
         case "svg-rich" => emitRichSvgGraph()
-        case "json"     => emitJson()
+        case "json"     => emitJson(root, displaySigla, gTa, outputBaseFilename)
         case "graphml"  => emitGraphml()
         case "tei"      => emitTeiXml()
       }
@@ -443,8 +447,47 @@ def emitRichSvgGraph(): Unit =
 def emitGraphml(): Unit =
   System.err.println("GraphML output has not yet be implemented")
 
-def emitJson(): Unit =
-  System.err.println("JSON output has not yet been implemented")
+def emitJson(
+    root: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    gTa: Vector[TokenEnum],
+    outputBaseFilename: Set[String]
+): Unit =
+
+  val allWitIds = displaySigla.indices
+  val witnessesJson = displaySigla.map(_.value)
+
+  val tableJson = root.children.toVector.map { alignmentUnit =>
+    val point = alignmentUnit.asInstanceOf[AlignmentPoint]
+
+    val tokenArrays = allWitIds.map { witId =>
+      point.witnessReadings.get(witId) match
+        case Some(tokenRange) =>
+          Arr(tokenRange.tokens.map { token =>
+            Obj(
+              "t" -> token.t,
+              "n" -> token.n,
+              "w" -> displaySigla(witId).value,
+              "g" -> token.g
+            )
+          }*)
+        case None => Arr()
+    }
+    Arr(tokenArrays*)
+  }
+
+  val jsonRoot = Obj(
+    "witnesses" -> Arr(witnessesJson.map(Str(_))*),
+    "table" -> Arr(tableJson*)
+  )
+
+  val renderedJson = ujson.write(jsonRoot, indent = 2)
+
+  if outputBaseFilename.isEmpty then println(renderedJson)
+  else
+    val filename = outputBaseFilename.head + ".json"
+    val file = os.Path(filename, os.pwd)
+    os.write.over(file, renderedJson)
 
 def emitTeiXml(): Unit =
   System.err.println("TEI XML output has not yet been implemented")
@@ -815,3 +858,9 @@ def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnes
   else Left("Manifest filename must end with .xml or .json") // Should not happen; we trap this earlier
 
 case class CollateXWitnessData(siglum: String, color: String, content: String)
+
+// Separate creating fields for JSON output (w goes from Int to Siglum.value) from creating the JSON itself
+case class TokenOutput(t: String, n: String, w: String, g: Int)
+
+// upickle macro for creating JSON output
+given Writer[TokenOutput] = macroW[TokenOutput]
