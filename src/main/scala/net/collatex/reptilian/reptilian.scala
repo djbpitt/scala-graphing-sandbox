@@ -85,8 +85,8 @@ def readData(pathToData: Path): List[(String, String)] =
       val outputBaseFilename = e._2.getOrElse("--output", Set()) // empty set if none specified
       formats.foreach {
         // TODO: Manage html/xhtml, horizontal/vertical table, filenames
-        case "table" | "table-h" => emitTableHorizontal(root, displaySigla, gTa)
-        case "table-v"           => emitTableVertical(root, displaySigla, gTa)
+        case "table" | "table-h" => emitTableHorizontal(root, displaySigla, gTa, outputBaseFilename)
+        case "table-v"           => emitTableVertical(root, displaySigla, gTa, outputBaseFilename)
         case "table-html-h"      => emitTableHorizontalHTML(root, displaySigla, gTa, outputBaseFilename, htmlExtension)
         case "table-html-v"      => emitTableVerticalHTML(root, displaySigla, gTa, outputBaseFilename, htmlExtension)
         case "ribbon" =>
@@ -117,17 +117,23 @@ def padCell(s: String, width: Int): String =
   *
   * Displays witness sigla as row labels. Takes siglum width into account when padding.
   *
+  * Files system output will append '-h.txt' to supplied 'outputBaseFilename'
+  *
   * @param root
   *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
   * @param displaySigla
   *   List of Sigla in output order (List[Siglum])
   * @param gTa
-  *   global token array (Vector[TokenEnum]); compute readings with tString method
+  *   Global token array (Vector[TokenEnum]); compute readings with tString method
+  * @param outputBaseFilename
+  *   Base filename for file-system output. If empty, output goes to stdout. If present, '-h.txt' is appended to
+  *   construct the output filename, e.g., 'foo' becomes 'foo-h.txt'.
   */
 def emitTableHorizontal(
     root: AlignmentRibbon,
     displaySigla: List[Siglum],
-    gTa: Vector[TokenEnum]
+    gTa: Vector[TokenEnum],
+    outputBaseFilename: Set[String]
 ): Unit =
 
   val allWitIds = displaySigla.indices
@@ -135,7 +141,7 @@ def emitTableHorizontal(
     allWitIds.map { f =>
       e.asInstanceOf[AlignmentPoint]
         .witnessReadings
-        .getOrElse(f, TokenRange(0, 0, gTa))
+        .getOrElse(f, TokenRange(0, 0, gTa)) // fake empty token range for empty cell
         .tString
     }
   }
@@ -147,19 +153,24 @@ def emitTableHorizontal(
   val numRows = allWitIds.size
   val numCols = table.size
 
-  // Add sigla as first column
   val rotated = (0 until numRows).map { rowIdx =>
     displaySigla(rowIdx).value +: table.map(_(rowIdx))
   }
 
-  // Calculate column widths, considering sigla
   val colWidths = (0 to numCols).map { colIdx =>
     rotated.map(row => row(colIdx).length).max
   }
 
-  for row <- rotated do
-    val padded = row.zip(colWidths).map { (cell, w) => padCell(cell, w) }
-    println(padded.mkString(" | "))
+  def renderTable(writer: PrintWriter): Unit =
+    for row <- rotated do
+      val padded = row.zip(colWidths).map { (cell, w) => padCell(cell, w) }
+      writer.println(padded.mkString(" | "))
+
+  if outputBaseFilename.isEmpty then Using.resource(new PrintWriter(Console.out)) { writer => renderTable(writer) }
+  else
+    val filename = outputBaseFilename.head + "-h.txt"
+    val file = os.Path(filename, os.pwd)
+    Using.resource(new PrintWriter(file.toIO)) { writer => renderTable(writer) }
 
 /** Plain text table; rows as alignment points, columns as witnesses
   *
@@ -167,17 +178,23 @@ def emitTableHorizontal(
   *
   * Displays witness sigla as header row. Takes siglum width into account when padding.
   *
+  * Files system output will append '-v.txt' to supplied 'outputBaseFilename'
+  *
   * @param root
   *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
   * @param displaySigla
   *   List of Sigla in output order (List[Siglum])
   * @param gTa
-  *   global token array (Vector[TokenEnum]); compute readings with tString method
+  *   Global token array (Vector[TokenEnum]); compute readings with tString method
+  * @param outputBaseFilename
+  *   Base filename for file-system output. If empty, output goes to stdout. If present, '-h.txt' is appended to
+  *   construct the output filename, e.g., 'foo' becomes 'foo-h.txt'.
   */
 def emitTableVertical(
     root: AlignmentRibbon,
     displaySigla: List[Siglum],
-    gTa: Vector[TokenEnum]
+    gTa: Vector[TokenEnum],
+    outputBaseFilename: Set[String]
 ): Unit =
 
   val allWitIds = displaySigla.indices
@@ -185,7 +202,7 @@ def emitTableVertical(
     allWitIds.map { f =>
       e.asInstanceOf[AlignmentPoint]
         .witnessReadings
-        .getOrElse(f, TokenRange(0, 0, gTa))
+        .getOrElse(f, TokenRange(0, 0, gTa)) // fake empty token range for empty cell
         .tString
     }
   }
@@ -194,7 +211,6 @@ def emitTableVertical(
     System.err.println("Empty table (should not happen)")
     return
 
-  // Prepend sigla as header row
   val header = displaySigla.map(_.value)
   val fullTable = header +: table
 
@@ -203,13 +219,16 @@ def emitTableVertical(
     fullTable.map(row => row(colIdx).length).max
   }
 
-  for row <- fullTable do
-    val padded = row.zip(colWidths).map { (cell, w) => padCell(cell, w) }
-    println(padded.mkString(" | "))
+  def renderTable(writer: PrintWriter): Unit =
+    for row <- fullTable do
+      val padded = row.zip(colWidths).map { (cell, w) => padCell(cell, w) }
+      writer.println(padded.mkString(" | "))
 
-  import scala.xml._
-  import java.io.PrintWriter
-  import scala.util.Using
+  if outputBaseFilename.isEmpty then Using.resource(new PrintWriter(Console.out)) { writer => renderTable(writer) }
+  else
+    val filename = outputBaseFilename.head + "-v.txt"
+    val file = os.Path(filename, os.pwd)
+    Using.resource(new PrintWriter(file.toIO)) { writer => renderTable(writer) }
 
 def emitTableHorizontalHTML(
     root: AlignmentRibbon,
