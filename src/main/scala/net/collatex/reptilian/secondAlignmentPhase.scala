@@ -67,8 +67,8 @@ def mergeHgHg(
   // Then we combine both vectors into one and add the separators
   val HGTokensForBoth = HGTokensForHG1 ++ HGTokensForHG2
   // Now we insert the separators
-  val localTokenArray = insertSeparators(HGTokensForBoth)
-  println(localTokenArray)
+  val lTa = insertSeparators(HGTokensForBoth)
+  // println(lTs)
 
   val bothHgs = hg1 + hg2
   // debug
@@ -77,7 +77,7 @@ def mergeHgHg(
 //  dependencyGraphToDot(_dg, bothHgs)
 
   // bothHgs.hyperedges.map(e => e.verticesIterator.toSet.map(f => f.length)).foreach(System.err.println)
-  val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
+  // val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] =
     createAlignedPatternsPhaseTwo(lTa, 2) pipe groupPatternsTogetherByHyperedge
 

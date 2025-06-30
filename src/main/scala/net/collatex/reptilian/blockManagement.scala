@@ -58,7 +58,7 @@ def createSuffixArray(vectorization: Array[Int]) =
         ) // return -1 or 1 if x < y (vs y < x); cannot be 0 because suffixes are unique
   }
   val suffixArray = suffixes.zipWithIndex
-    .sortBy(_._1)(IntArrayOrdering)
+    .sortBy(_._1)(using IntArrayOrdering)
     .map(_._2)
   suffixArray.toArray
 
@@ -227,34 +227,21 @@ def createAlignedPatternsPhaseTwo(
 
 
 
-  // TODO: Why do we need to filter _.length > 0 on the adjusted blocks ??
+  // TODO: Why are there empty blocks in the adjusted blocks ??
+  // necessitating that we filter _.length > 0 on the adjusted blocks
   val xxBlocks = if blocks.isEmpty then List.empty else adjustBlockOverlap(blocks, gTa).filter(_.length > 0).toList
+  // NOTE: Each Block has two instances. If both instances point to the same hypergraph
+  // we have an Illegal Pattern which should be filtered out
   val patternsAsTuples = xxBlocks map (e => // e: block
-    // NOTE: Each Block has two instances. If both instances point to the same hypergraph
-    // we have an Illegal Pattern which should be filtered out
     (convertBlockToAlignedPatternOccurrence(e.instances(0), e),
       convertBlockToAlignedPatternOccurrence(e.instances(1), e))
   )
-  val occurrencePhaseTwo = patternsAsTuples.map { case (x, y) => Vector(x, y) }
+  // check that both parts are from different parts of the graph
+  val validPatterns = patternsAsTuples.filter((x, y) => x.originalHypergraph != y.originalHypergraph)
+  val occurrencePhaseTwo = validPatterns.map { case (x, y) => Vector(x, y) }
   val patterns: List[AlignedPatternPhaseTwo] = occurrencePhaseTwo.map(occurrences => AlignedPatternPhaseTwo(occurrences))
 
-  // The discussion is whether we need all the sigla from both graphs
-  // to make a good decision here. I think we do. 
-  // It seems TokenRange is not the right thing here
-  // TokenRanges are in global coordinates
-  // We need to know from which hg it originates
-  def checkDifferentGraphs(range: TokenRange, range1: TokenRange) =
-    ???
-    
-    
   val blocksAsTokenRanges =xxBlocks.map(x => x.remapBlockToGTa(lTa)).map(x => x.toTokenRanges(gTa))
-  blocksAsTokenRanges.foreach(e => checkDifferentGraphs(e.head, e.last))
-
-
-
-
-
-  // check that both parts are from different parts of the graph
   //val debugBlockOverlapSortedByLast = blocksAsTokenRanges.sortBy(_.last.start)
   val debugBlockOverlapSortedByHead = blocksAsTokenRanges.sortBy(_.head.start)
   //println("blocks as token ranges sorted by first")
