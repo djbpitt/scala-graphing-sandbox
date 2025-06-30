@@ -214,20 +214,26 @@ def createAlignedPatternsPhaseTwo(
       .map((starts, length) => FullDepthBlock(starts.toVector, length)) pipe removeOverlappingBlocks
 
   val gTa = lTa.head.asInstanceOf[TokenHG].tr.ta // from arbitrary TokenRange
+
+  def convertBlockToAlignedPatternOccurrence(f: Int, e: FullDepthBlock) =
+    val occurrenceStart: TokenHG = lTa(f).asInstanceOf[TokenHG]
+    val occurrenceStartAsGlobal: Int = occurrenceStart.g
+    val originalBlock = e
+    val originalHe = occurrenceStart.he
+    val originalTr = occurrenceStart.tr
+    val originalHG = occurrenceStart.hg
+    val patternTr: TokenRange = TokenRange(occurrenceStartAsGlobal, occurrenceStartAsGlobal + e.length, gTa)
+    AlignedPatternOccurrencePhaseTwo(originalBlock, originalHG, originalHe, originalTr, patternTr)
+
+
+
   // TODO: Why do we need to filter _.length > 0 on the adjusted blocks ??
   val xxBlocks = if blocks.isEmpty then List.empty else adjustBlockOverlap(blocks, gTa).filter(_.length > 0).toList
   val patterns: List[AlignedPatternPhaseTwo] = xxBlocks map (e => // e: block
     // NOTE: Each Block has two instances. If both instances point to the same hypergraph
     // we have an Illegal Pattern which should be filtered out
     val occurrences = e.instances.map(f => // f: block instance (start offset)
-      val occurrenceStart: TokenHG = lTa(f).asInstanceOf[TokenHG]
-      val occurrenceStartAsGlobal: Int = occurrenceStart.g
-      val originalBlock = e
-      val originalHe = occurrenceStart.he
-      val originalTr = occurrenceStart.tr
-      val originalHG = occurrenceStart.hg
-      val patternTr: TokenRange = TokenRange(occurrenceStartAsGlobal, occurrenceStartAsGlobal + e.length, gTa)
-      AlignedPatternOccurrencePhaseTwo(originalBlock, originalHG, originalHe, originalTr, patternTr)
+      convertBlockToAlignedPatternOccurrence(f, e)
     )
     AlignedPatternPhaseTwo(occurrences)
   )
