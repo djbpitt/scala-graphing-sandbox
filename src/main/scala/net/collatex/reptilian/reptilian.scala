@@ -74,7 +74,7 @@ def readData(pathToData: Path): List[(String, String)] =
   parsedInput match {
     case Left(e) => System.err.println(e)
     case Right(e) =>
-      val tokensPerWitnessLimit = 10 // Low values for debug; set to Int.MaxValue for production
+      val tokensPerWitnessLimit = 100 // Low values for debug; set to Int.MaxValue for production
       val data: Seq[CollateXWitnessData] = e._1
       val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
       val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, data, tokenPattern)
@@ -100,8 +100,8 @@ def readData(pathToData: Path): List[(String, String)] =
         case "svg-rich" => emitRichSvgGraph()
         case "json"     => emitJson(root, displaySigla, gTa, outputBaseFilename)
         case "graphml"  => emitGraphml()
-        case "tei"      => emitTeiXml()
-        case "xml"      => emitXml(root, displaySigla, gTa, outputBaseFilename)
+        case "tei"      => emitTeiXml(root, displaySigla, outputBaseFilename)
+        case "xml"      => emitXml(root, displaySigla, outputBaseFilename)
       }
   }
 
@@ -541,13 +541,92 @@ def emitJson(
     val file = os.Path(filename, os.pwd)
     os.write.over(file, renderedJson)
 
-def emitTeiXml(): Unit =
-  System.err.println("TEI XML output has not yet been implemented")
+def emitTeiXml(
+    alignment: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    outputBaseFilename: Set[String]
+): Unit = {
+
+  val nsCx = "http://interedition.eu/collatex/ns/1.0"
+  val nsTei = "http://www.tei-c.org/ns/1.0"
+
+  val siglumOrder: Map[String, Int] =
+    displaySigla.map(_.value).zipWithIndex.toMap
+
+  val allWitnessIds: Set[Int] = displaySigla.indices.toSet
+
+  val contentStrings: Seq[String] = alignment.children.toSeq.flatMap { ap =>
+
+    val readings = ap
+      .asInstanceOf[AlignmentPoint]
+      .witnessReadings
+      .toList
+      .map { case (witId, tokenRange) =>
+        displaySigla(witId) -> tokenRange.tString
+      }
+      .filterNot(_._2.isEmpty)
+
+    val grouped: Map[String, List[Siglum]] =
+      readings.groupBy(_._2).view.mapValues(_.map(_._1)).toMap
+
+    val presentWitIds = ap.asInstanceOf[AlignmentPoint].witnessReadings.keySet
+    val missingWitIds = allWitnessIds.diff(presentWitIds).toList.sorted
+
+    if (grouped.size == 1 && missingWitIds.isEmpty) {
+      val (txt, _) = grouped.head
+      Seq(txt)
+    } else {
+
+      val rdgElems = grouped.toList.map { case (txt, siglaList) =>
+        val sortedSigla = siglaList.sortBy(s => siglumOrder(s.value))
+        val witAttr = sortedSigla.map(s => "#" + s.value).mkString(" ")
+        Elem(null, "rdg", new UnprefixedAttribute("wit", witAttr, xml.Null), TopScope, minimizeEmpty = true, Text(txt))
+      }
+
+      val missingRdgs =
+        if (missingWitIds.nonEmpty) {
+          val sortedMissing = missingWitIds.map(displaySigla(_)).sortBy(s => siglumOrder(s.value))
+          val witAttr = sortedMissing.map(s => "#" + s.value).mkString(" ")
+          Seq(Elem(null, "rdg", new UnprefixedAttribute("wit", witAttr, xml.Null), TopScope, minimizeEmpty = true))
+        } else Seq.empty
+
+      val sortedRdgs = rdgElems.sortBy(e => siglumOrder(e.attribute("wit").get.text.stripPrefix("#").split(" ").head))
+
+      val appContent = (sortedRdgs ++ missingRdgs).map(_.toString).mkString("\n")
+      val appString = s"<app>\n$appContent\n</app>"
+      Seq(appString)
+    }
+  }
+
+  val combinedContent = contentStrings.mkString("")
+
+  // Parse the combined content into NodeSeq so XML stays valid
+  val parsedContent = scala.xml.XML.loadString(s"<wrapper>$combinedContent</wrapper>").child
+
+  val root =
+    Elem(
+      "cx",
+      "apparatus",
+      xml.Null,
+      NamespaceBinding("cx", nsCx, NamespaceBinding(null, nsTei, TopScope)),
+      minimizeEmpty = true,
+      parsedContent*
+    )
+
+  val xmlString = s"""<?xml version="1.0" encoding="UTF-8"?>\n${root.toString()}"""
+
+  if (outputBaseFilename.isEmpty) {
+    println(xmlString)
+  } else {
+    val out = new PrintWriter(s"${outputBaseFilename.head}-tei.xml", "UTF-8")
+    try out.println(xmlString)
+    finally out.close()
+  }
+}
 
 def emitXml(
     root: AlignmentRibbon,
     displaySigla: List[Siglum],
-    gTa: Vector[TokenEnum],
     outputBaseFilename: Set[String]
 ): Unit =
 
@@ -595,7 +674,7 @@ def emitXml(
   *   Sequence of strings if successful; string with error report if not.
   */
 def previewWitness(wd: Seq[CollateXWitnessData]): Seq[String] =
-  wd.map(e => List(e.siglum, e.content.slice(0, 30)).mkString(": "))
+  wd.map(e => List(e.siglum, e.content.take(30)).mkString(": "))
 
 /** Parse command line arguments
   *
@@ -605,7 +684,6 @@ def previewWitness(wd: Seq[CollateXWitnessData]): Seq[String] =
   * @return
   *   Tuple of manifest path as string and debug as Boolean
   */
-
 def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String]])] =
   val usage =
     """
