@@ -74,7 +74,7 @@ def readData(pathToData: Path): List[(String, String)] =
   parsedInput match {
     case Left(e) => System.err.println(e)
     case Right(e) =>
-      val tokensPerWitnessLimit = 100 // Low values for debug; set to Int.MaxValue for production
+      val tokensPerWitnessLimit = 20 // Low values for debug; set to Int.MaxValue for production
       val data: Seq[CollateXWitnessData] = e._1
       val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
       val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, data, tokenPattern)
@@ -541,6 +541,14 @@ def emitJson(
     val file = os.Path(filename, os.pwd)
     os.write.over(file, renderedJson)
 
+/** @param alignment
+  *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
+  * @param displaySigla
+  *   List of Sigla in output order (List[Siglum])
+  * @param outputBaseFilename
+  *   Base filename for file-system output. If empty, output goes to stdout. If populated, must be singleton, and
+  *   '-tei.xml' is appended to construct the output filename, e.g., 'foo' becomes 'foo-tei.xml'.
+  */
 def emitTeiXml(
     alignment: AlignmentRibbon,
     displaySigla: List[Siglum],
@@ -553,55 +561,86 @@ def emitTeiXml(
   val siglumOrder: Map[String, Int] =
     displaySigla.map(_.value).zipWithIndex.toMap
 
-  val allWitnessIds: Set[Int] = displaySigla.indices.toSet
+  val allWitIds: Set[Int] = displaySigla.indices.toSet
 
-  val contentStrings: Seq[String] = alignment.children.toSeq.flatMap { ap =>
+  val contentNodes: Seq[Node] = alignment.children.toSeq.flatMap { ap =>
+    val alignmentPoint = ap.asInstanceOf[AlignmentPoint]
 
-    val readings = ap
-      .asInstanceOf[AlignmentPoint]
-      .witnessReadings
-      .toList
-      .map { case (witId, tokenRange) =>
-        displaySigla(witId) -> tokenRange.tString
-      }
-      .filterNot(_._2.isEmpty)
+    val presentWitIds = alignmentPoint.witnessReadings.keySet
+    val missingWitIds = allWitIds.diff(presentWitIds).toList.sorted
 
-    val grouped: Map[String, List[Siglum]] =
-      readings.groupBy(_._2).view.mapValues(_.map(_._1)).toMap
-
-    val presentWitIds = ap.asInstanceOf[AlignmentPoint].witnessReadings.keySet
-    val missingWitIds = allWitnessIds.diff(presentWitIds).toList.sorted
-
-    if (grouped.size == 1 && missingWitIds.isEmpty) {
-      val (txt, _) = grouped.head
-      Seq(txt)
+    if (alignmentPoint.witnessGroups.size == 1 && missingWitIds.isEmpty) {
+      // Uniform reading, all witnesses present — emit plain text
+      val group = alignmentPoint.witnessGroups.head
+      val txt = group.head._2.tString
+      Seq(Text(txt))
     } else {
+      // Variation present or missing witnesses — emit <app> with <rdgGrp>
 
-      val rdgElems = grouped.toList.map { case (txt, siglaList) =>
-        val sortedSigla = siglaList.sortBy(s => siglumOrder(s.value))
-        val witAttr = sortedSigla.map(s => "#" + s.value).mkString(" ")
-        Elem(null, "rdg", new UnprefixedAttribute("wit", witAttr, xml.Null), TopScope, minimizeEmpty = true, Text(txt))
+      val rdgGrpElems = alignmentPoint.witnessGroups.toList.map { group =>
+        val nString = group.head._2.nString
+
+        // Group sigla by tString
+        val groupedByTString: Map[String, List[Siglum]] =
+          group.toList.groupBy(_._2.tString).view.mapValues(_.map { case (witId, _) => displaySigla(witId) }).toMap
+
+        val rdgElems = groupedByTString.toList.map { case (txt, siglaList) =>
+          val sortedSigla = siglaList.sortBy(s => siglumOrder(s.value))
+          val witAttr = sortedSigla.map(s => s"#${s.value}").mkString(" ")
+          Elem(
+            null,
+            "rdg",
+            new UnprefixedAttribute("wit", witAttr, xml.Null),
+            TopScope,
+            minimizeEmpty = true,
+            Text(txt)
+          )
+        }
+
+        val sortedFirstSiglum = group.keys.map(displaySigla).minBy(s => siglumOrder(s.value))
+
+        val rdgGrp = Elem(
+          null,
+          "rdgGrp",
+          new UnprefixedAttribute("n", nString, xml.Null),
+          TopScope,
+          minimizeEmpty = true,
+          rdgElems*
+        )
+
+        (siglumOrder(sortedFirstSiglum.value), rdgGrp)
       }
 
-      val missingRdgs =
+      val missingGrpOpt: Option[(Int, Elem)] =
         if (missingWitIds.nonEmpty) {
           val sortedMissing = missingWitIds.map(displaySigla(_)).sortBy(s => siglumOrder(s.value))
-          val witAttr = sortedMissing.map(s => "#" + s.value).mkString(" ")
-          Seq(Elem(null, "rdg", new UnprefixedAttribute("wit", witAttr, xml.Null), TopScope, minimizeEmpty = true))
-        } else Seq.empty
+          val witAttr = sortedMissing.map(s => s"#${s.value}").mkString(" ")
+          val rdgElem = Elem(
+            null,
+            "rdg",
+            new UnprefixedAttribute("wit", witAttr, xml.Null),
+            TopScope,
+            minimizeEmpty = true
+          )
 
-      val sortedRdgs = rdgElems.sortBy(e => siglumOrder(e.attribute("wit").get.text.stripPrefix("#").split(" ").head))
+          val rdgGrp = Elem(
+            null,
+            "rdgGrp",
+            new UnprefixedAttribute("n", "", xml.Null),
+            TopScope,
+            minimizeEmpty = true,
+            rdgElem
+          )
 
-      val appContent = (sortedRdgs ++ missingRdgs).map(_.toString).mkString("\n")
-      val appString = s"<app>\n$appContent\n</app>"
-      Seq(appString)
+          Some((siglumOrder(sortedMissing.head.value), rdgGrp))
+        } else None
+
+      val sortedGroups =
+        (rdgGrpElems ++ missingGrpOpt).sortBy(_._1).map(_._2)
+
+      Seq(Elem(null, "app", xml.Null, TopScope, minimizeEmpty = true, sortedGroups*))
     }
   }
-
-  val combinedContent = contentStrings.mkString("")
-
-  // Parse the combined content into NodeSeq so XML stays valid
-  val parsedContent = scala.xml.XML.loadString(s"<wrapper>$combinedContent</wrapper>").child
 
   val root =
     Elem(
@@ -610,10 +649,11 @@ def emitTeiXml(
       xml.Null,
       NamespaceBinding("cx", nsCx, NamespaceBinding(null, nsTei, TopScope)),
       minimizeEmpty = true,
-      parsedContent*
+      contentNodes*
     )
 
-  val xmlString = s"""<?xml version="1.0" encoding="UTF-8"?>\n${root.toString()}"""
+  val xmlString =
+    s"""<?xml version="1.0" encoding="UTF-8"?>\n${root.toString()}"""
 
   if (outputBaseFilename.isEmpty) {
     println(xmlString)
