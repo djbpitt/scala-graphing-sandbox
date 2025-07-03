@@ -1,0 +1,618 @@
+package net.collatex.reptilian
+
+import scala.util.Using
+import scala.xml.*
+import scala.xml.dtd.DocType
+import java.io.PrintWriter
+import java.nio.file.Paths
+
+// JSON output
+import ujson.*
+import scala.reflect.ClassTag
+
+/** Helper function (pads right with spaces) for plain text table output
+  *
+  * @param s
+  *   string to pad
+  * @param width
+  *   desired width as Int
+  * @return
+  *   padded string
+  */
+def padCell(s: String, width: Int): String =
+  s.padTo(width, ' ') // Left-align; pad right with spaces
+
+/** Horizontal plain text table; rows as witnesses, columns as alignment points
+  *
+  * --format table | --format table-h (default, so also no --format specified)
+  *
+  * Displays witness sigla as row labels. Takes siglum width into account when padding.
+  *
+  * Files system output will append '-h.txt' to supplied 'outputBaseFilename'
+  *
+  * @param alignment
+  *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
+  * @param displaySigla
+  *   List of Sigla in output order (List[Siglum])
+  * @param gTa
+  *   Global token array (Vector[TokenEnum]); compute readings with tString method
+  * @param outputBaseFilename
+  *   Base filename for file-system output. If empty, output goes to stdout. If present, '-h.txt' is appended to
+  *   construct the output filename, e.g., 'foo' becomes 'foo-h.txt'.
+  */
+def emitTableHorizontal(
+    alignment: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    gTa: Vector[TokenEnum],
+    outputBaseFilename: Set[String]
+): Unit =
+
+  val allWitIds = displaySigla.indices
+  val table = alignment.children.map { e =>
+    allWitIds.map { f =>
+      e.asInstanceOf[AlignmentPoint]
+        .witnessReadings
+        .getOrElse(f, TokenRange(0, 0, gTa)) // fake empty token range for empty cell
+        .tString
+    }
+  }
+
+  if table.isEmpty then
+    System.err.println("Empty table (should not happen)")
+    return
+
+  val numRows = allWitIds.size
+  val numCols = table.size
+
+  val rotated = (0 until numRows).map { rowIdx =>
+    displaySigla(rowIdx).value +: table.map(_(rowIdx))
+  }
+
+  val colWidths = (0 to numCols).map { colIdx =>
+    rotated.map(row => row(colIdx).length).max
+  }
+
+  def renderTable(writer: PrintWriter): Unit =
+    for row <- rotated do
+      val padded = row.zip(colWidths).map { (cell, w) => padCell(cell, w) }
+      writer.println(padded.mkString(" | "))
+
+  if outputBaseFilename.isEmpty then Using.resource(new PrintWriter(Console.out)) { writer => renderTable(writer) }
+  else
+    val filename = outputBaseFilename.head + "-h.txt"
+    val file = os.Path(filename, os.pwd)
+    Using.resource(new PrintWriter(file.toIO)) { writer => renderTable(writer) }
+
+/** Plain text table; rows as alignment points, columns as witnesses
+  *
+  * --format table-v
+  *
+  * Displays witness sigla as header row. Takes siglum width into account when padding.
+  *
+  * Files system output will append '-v.txt' to supplied 'outputBaseFilename'
+  *
+  * @param alignment
+  *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
+  * @param displaySigla
+  *   List of Sigla in output order (List[Siglum])
+  * @param gTa
+  *   Global token array (Vector[TokenEnum]); compute readings with tString method
+  * @param outputBaseFilename
+  *   Base filename for file-system output. If empty, output goes to stdout. If present, '-v.txt' is appended to
+  *   construct the output filename, e.g., 'foo' becomes 'foo-v.txt'.
+  */
+def emitTableVertical(
+    alignment: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    gTa: Vector[TokenEnum],
+    outputBaseFilename: Set[String]
+): Unit =
+
+  val allWitIds = displaySigla.indices
+  val table = alignment.children.map { e =>
+    allWitIds.map { f =>
+      e.asInstanceOf[AlignmentPoint]
+        .witnessReadings
+        .getOrElse(f, TokenRange(0, 0, gTa)) // fake empty token range for empty cell
+        .tString
+    }
+  }
+
+  if table.isEmpty then
+    System.err.println("Empty table (should not happen)")
+    return
+
+  val header = displaySigla.map(_.value)
+  val fullTable = header +: table
+
+  val numCols = allWitIds.size
+  val colWidths = (0 until numCols).map { colIdx =>
+    fullTable.map(row => row(colIdx).length).max
+  }
+
+  def renderTable(writer: PrintWriter): Unit =
+    for row <- fullTable do
+      val padded = row.zip(colWidths).map { (cell, w) => padCell(cell, w) }
+      writer.println(padded.mkString(" | "))
+
+  if outputBaseFilename.isEmpty then Using.resource(new PrintWriter(Console.out)) { writer => renderTable(writer) }
+  else
+    val filename = outputBaseFilename.head + "-v.txt"
+    val file = os.Path(filename, os.pwd)
+    Using.resource(new PrintWriter(file.toIO)) { writer => renderTable(writer) }
+
+def emitTableHorizontalHTML(
+    alignment: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    gTa: Vector[TokenEnum],
+    outputBaseFilename: Set[String], // validated: empty or exactly one value
+    htmlExtension: Set[String] // validated: exactly one value
+): Unit =
+
+  val allWitIds = displaySigla.indices
+  val tableContent = alignment.children.map { e =>
+    allWitIds.map { f =>
+      e.asInstanceOf[AlignmentPoint]
+        .witnessReadings
+        .getOrElse(f, TokenRange(0, 0, gTa))
+        .tString
+    }
+  }
+
+  if tableContent.isEmpty then
+    System.err.println("Empty table (should not happen)")
+    return
+
+  val numRows = allWitIds.size
+  val numCols = tableContent.size // needed only if thead includes alignment-point numbering
+  val rotated = (0 until numRows).map { rowIdx =>
+    tableContent.map(_(rowIdx))
+  }
+
+  val htmlTable =
+    <table>
+      <!-- <thead>
+        <tr>
+          <th>Siglum</th>{
+      (0 until numCols).map { i =>
+        <th>AP
+            {i + 1}
+          </th>
+      }
+    }
+        </tr>
+      </thead> -->
+      <tbody>
+        {
+      rotated.zip(displaySigla).map { (row, siglum) =>
+        <tr>
+            <th>
+              {siglum.value}
+            </th>{
+          row.map(cell => <td>
+              {cell}
+            </td>)
+        }
+          </tr>
+      }
+    }
+      </tbody>
+    </table>
+
+  val htmlDoc =
+    <html xmlns="http://www.w3.org/1999/xhtml">
+      <head>
+        <title>Alignment Table (Horizontal)</title>
+        <style type="text/css">
+          :root {{background-color: gainsboro;}}
+          table, tr, th, td {{border: 1px solid gray;}}
+          table {{border-collapse: collapse}}
+          th, td {{padding: 2px 3px}}
+        </style>
+      </head>
+      <body>
+        <h2>Alignment Table (Witnesses as Rows)</h2>{htmlTable}
+      </body>
+    </html>
+
+  val doctypeHtml = DocType("html")
+
+  if outputBaseFilename.isEmpty then
+    Using.resource(new PrintWriter(Console.out)) { writer =>
+      XML.write(writer, htmlDoc, "UTF-8", xmlDecl = true, doctype = doctypeHtml)
+    }
+  else
+    val filename = outputBaseFilename.head + "-h." + htmlExtension.head
+    val file = os.Path(filename, os.pwd)
+    Using.resource(new PrintWriter(file.toIO)) { writer =>
+      XML.write(writer, htmlDoc, "UTF-8", xmlDecl = true, doctype = doctypeHtml)
+    }
+
+def emitTableVerticalHTML(
+    alignment: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    gTa: Vector[TokenEnum],
+    outputBaseFilename: Set[String], // validated: empty or exactly one value
+    htmlExtension: Set[String] // validated: exactly one value
+): Unit =
+
+  val allWitIds = displaySigla.indices
+  val tableContent = alignment.children.map { e =>
+    allWitIds.map { f =>
+      e.asInstanceOf[AlignmentPoint]
+        .witnessReadings
+        .getOrElse(f, TokenRange(0, 0, gTa))
+        .tString
+    }
+  }
+
+  if tableContent.isEmpty then
+    System.err.println("Empty table (should not happen)")
+    return
+
+  val htmlTable =
+    <table>
+      <thead>
+        <tr>
+          <!--<th>Alignment Point</th>-->{
+      displaySigla.map(s => <th>
+            {s.value}
+          </th>)
+    }
+        </tr>
+      </thead>
+      <tbody>
+        {
+      tableContent.zipWithIndex.map { (row, idx) => // idx used only if APs are numbered
+        <tr>
+            <!--<td>AP
+            {idx + 1}
+          </td>-->{
+          row.map(cell => <td>
+              {cell}
+            </td>)
+        }
+          </tr>
+      }
+    }
+      </tbody>
+    </table>
+
+  val htmlDoc =
+    <html xmlns="http://www.w3.org/1999/xhtml">
+      <head>
+        <title>Alignment Table (Vertical)</title>
+        <style type="text/css">
+          :root {{background-color: gainsboro;}}
+          table, tr, th, td {{border: 1px solid gray;}}
+          table {{border-collapse: collapse}}
+          th, td {{padding: 2px 3px}}
+        </style>
+      </head>
+      <body>
+        <h2>Alignment Table (Witnesses as Columns)</h2>{htmlTable}
+      </body>
+    </html>
+
+  val doctypeHtml = DocType("html")
+
+  if outputBaseFilename.isEmpty then
+    Using.resource(new PrintWriter(Console.out)) { writer =>
+      XML.write(writer, htmlDoc, "UTF-8", xmlDecl = true, doctype = doctypeHtml)
+    }
+  else
+    val filename = outputBaseFilename.head + "-v." + htmlExtension.head
+    val file = os.Path(filename, os.pwd)
+    Using.resource(new PrintWriter(file.toIO)) { writer =>
+      XML.write(writer, htmlDoc, "UTF-8", xmlDecl = true, doctype = doctypeHtml)
+    }
+
+def emitAlignmentRibbon(
+    alignment: AlignmentRibbon,
+    gTaSigla: List[WitId],
+    displaySigla: List[Siglum],
+    displayColors: List[String],
+    gTa: Vector[TokenEnum],
+    outputBaseFilename: Set[String], // either empty or single string (validated in parsArgs())
+    htmlExtension: Set[String]
+): Unit =
+  val doctypeHtml: DocType = DocType("html")
+  val horizontalRibbons = createHorizontalRibbons(alignment, gTaSigla, displaySigla, displayColors, gTa)
+  if outputBaseFilename.isEmpty then // Write to stdout
+    Using.resource(new PrintWriter(Console.out)) { writer =>
+      XML.write(writer, horizontalRibbons, "UTF-8", xmlDecl = true, doctype = doctypeHtml)
+      writer.flush() // For Console.out, optional but harmless
+    }
+  else // Write to file
+    val filename = outputBaseFilename.head + "." + htmlExtension.head // guaranteed single-item set
+    val file = os.Path(filename, os.pwd) // Handles relative or absolute path
+    Using.resource(new PrintWriter(file.toIO)) { writer =>
+      XML.write(writer, horizontalRibbons, "UTF-8", xmlDecl = true, doctype = doctypeHtml)
+      // No need to manually flush/close — Using handles it
+    }
+
+def emitSvgGraph(
+    alignment: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    outputBaseFilename: Set[String] // either empty or single string (validated in parseArgs())
+): Unit =
+  createRhineDelta(alignment, displaySigla) match
+    case Left(err) =>
+      System.err.println(err)
+    case Right(svg) =>
+      if outputBaseFilename.isEmpty then println(svg) // write to stdout
+      else
+        val base = outputBaseFilename.head
+        val fullPath = Paths.get(base + ".svg").toAbsolutePath
+        Using.resource(new PrintWriter(fullPath.toFile, "UTF-8")) { writer =>
+          writer.write(svg)
+        }
+
+def emitRichSvgGraph(): Unit =
+  System.err.println("Rich SVG visualization has not yet been implemented")
+
+def emitGraphml(): Unit =
+  System.err.println("GraphML output has not yet be implemented")
+
+/** Helper to convert an `Any` value to a ujson.Value, handling common Scala/Java types */
+def anyToUjsonValue(value: Any): Value = value match
+  case null          => ujson.Null
+  case s: String     => ujson.Str(s)
+  case i: Int        => ujson.Num(i)
+  case l: Long       => ujson.Num(l.toDouble) // Direct us of Long is deprecated
+  case d: Double     => ujson.Num(d)
+  case f: Float      => ujson.Num(f)
+  case b: Boolean    => ujson.Bool(b)
+  case seq: Seq[_]   => ujson.Arr(seq.map(anyToUjsonValue)*)
+  case arr: Array[_] => ujson.Arr(arr.map(anyToUjsonValue)*)
+  case map: Map[_, _] =>
+    val jsonFields = map.collect { case (k: String, v) => k -> anyToUjsonValue(v) }
+    ujson.Obj.from(jsonFields)
+  case other =>
+    ujson.Str(other.toString)
+
+/** JSON output
+  *
+  * --format json
+  *
+  * JSON structure documented at TBA
+  *
+  * Uses reflection to accommodate Token properties other than t, n, w, g, if provided
+  *
+  * @param alignment
+  *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
+  * @param displaySigla
+  *   List of Sigla in output order (List[Siglum])
+  * @param gTa
+  *   Global token array (Vector[TokenEnum]); compute readings with tString method
+  * @param outputBaseFilename
+  *   Base filename for file-system output. If empty, output goes to stdout. If present, '-json' is appended to
+  *   construct the output filename, e.g., 'foo' becomes 'foo.json'.
+  */
+def emitJson(
+    alignment: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    gTa: Vector[TokenEnum],
+    outputBaseFilename: Set[String]
+): Unit =
+
+  val allWitIds = displaySigla.indices
+  val witnessesJson = displaySigla.map(_.value)
+
+  val tableJson = alignment.children.toVector.map { alignmentUnit =>
+    val point = alignmentUnit.asInstanceOf[AlignmentPoint]
+
+    val tokenArrays: Seq[Value] = allWitIds.map { witId =>
+      point.witnessReadings.get(witId) match
+        case Some(tokenRange) =>
+          val tokensJson = tokenRange.tokens.map { token =>
+            val standardKeys = Seq("t", "n", "w", "g")
+
+            val fieldMap: Map[String, Any] =
+              token.getClass.getDeclaredFields.map { field =>
+                field.setAccessible(true)
+                field.getName -> field.get(token)
+              }.toMap
+
+            val knownFields: Seq[(String, Value)] = standardKeys.map {
+              case "w" => "w" -> Str(displaySigla(witId).value)
+              case k   => k -> anyToUjsonValue(fieldMap(k))
+            }
+
+            val additionalFields: Seq[(String, Value)] = fieldMap
+              .filterNot { case (k, _) => standardKeys.contains(k) }
+              .toSeq
+              .sortBy(_._1)
+              .map { case (k, v) => k -> anyToUjsonValue(v) }
+
+            Obj.from(knownFields ++ additionalFields)
+          }
+          Arr(tokensJson*)
+        case None => Arr()
+    }
+    Arr(tokenArrays*)
+  }
+
+  val jsonRoot = Obj(
+    "witnesses" -> Arr(witnessesJson.map(Str(_))*),
+    "table" -> Arr(tableJson*)
+  )
+
+  val renderedJson = ujson.write(jsonRoot, indent = 2)
+
+  if outputBaseFilename.isEmpty then println(renderedJson)
+  else
+    val filename = outputBaseFilename.head + ".json"
+    val file = os.Path(filename, os.pwd)
+    os.write.over(file, renderedJson)
+
+/** TEI parallel segmentation
+  *
+  * <rdgGrp> for shared 'n' property (missing witnesses have empty 'n' value)
+  *
+  * NB: If all present witnesses end in space, the space is moved out of the <rdg> and after the <app>, corresponding to
+  * where a human tagger would have put the shared inter-token space character. This suggests an extra space in the case
+  * of missing witnesses, but that can be flattened, if desired, by pretty-printing later.
+  *
+  * @param alignment
+  *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
+  * @param displaySigla
+  *   List of Sigla in output order (List[Siglum])
+  * @param outputBaseFilename
+  *   Base filename for file-system output. If empty, output goes to stdout. If populated, must be singleton, and
+  *   '-tei.xml' is appended to construct the output filename, e.g., 'foo' becomes 'foo-tei.xml'.
+  */
+def emitTeiXml(
+    alignment: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    outputBaseFilename: Set[String]
+): Unit = {
+
+  val nsCx = "http://interedition.eu/collatex/ns/1.0"
+  val nsTei = "http://www.tei-c.org/ns/1.0"
+
+  val siglumOrder: Map[String, Int] =
+    displaySigla.map(_.value).zipWithIndex.toMap
+
+  val allWitIds: Set[Int] = displaySigla.indices.toSet
+
+  val contentNodes: Seq[Node] = alignment.children.toSeq.flatMap { ap =>
+    val alignmentPoint = ap.asInstanceOf[AlignmentPoint]
+
+    val presentWitIds = alignmentPoint.witnessReadings.keySet
+    val missingWitIds = allWitIds.diff(presentWitIds).toList.sorted
+
+    if (alignmentPoint.witnessGroups.size == 1 && missingWitIds.isEmpty) {
+      // Uniform reading, all witnesses present — emit plain text
+      val group = alignmentPoint.witnessGroups.head
+      val txt = group.head._2.tString
+      Seq(Text(txt))
+    } else {
+      // Variation present or missing witnesses — emit <app> with <rdgGrp>
+
+      val rdgGrpElems = alignmentPoint.witnessGroups.toList.map { group =>
+        val nString = group.head._2.nString
+
+        // Group sigla by tString
+        val groupedByTString: Map[String, List[Siglum]] =
+          group.toList.groupBy(_._2.tString).view.mapValues(_.map { case (witId, _) => displaySigla(witId) }).toMap
+
+        val rdgElems = groupedByTString.toList.map { case (txt, siglaList) =>
+          val sortedSigla = siglaList.sortBy(s => siglumOrder(s.value))
+          val witAttr = sortedSigla.map(s => s"#${s.value}").mkString(" ")
+          Elem(
+            null,
+            "rdg",
+            new UnprefixedAttribute("wit", witAttr, xml.Null),
+            TopScope,
+            minimizeEmpty = true,
+            Text(txt)
+          )
+        }
+
+        val sortedFirstSiglum = group.keys.map(displaySigla).minBy(s => siglumOrder(s.value))
+
+        val rdgGrp = Elem(
+          null,
+          "rdgGrp",
+          new UnprefixedAttribute("n", nString, xml.Null),
+          TopScope,
+          minimizeEmpty = true,
+          rdgElems*
+        )
+
+        (siglumOrder(sortedFirstSiglum.value), rdgGrp)
+      }
+
+      val missingGrpOpt: Option[(Int, Elem)] =
+        if (missingWitIds.nonEmpty) {
+          val sortedMissing = missingWitIds.map(displaySigla(_)).sortBy(s => siglumOrder(s.value))
+          val witAttr = sortedMissing.map(s => s"#${s.value}").mkString(" ")
+          val rdgElem = Elem(
+            null,
+            "rdg",
+            new UnprefixedAttribute("wit", witAttr, xml.Null),
+            TopScope,
+            minimizeEmpty = true
+          )
+
+          val rdgGrp = Elem(
+            null,
+            "rdgGrp",
+            new UnprefixedAttribute("n", "", xml.Null),
+            TopScope,
+            minimizeEmpty = true,
+            rdgElem
+          )
+
+          Some((siglumOrder(sortedMissing.head.value), rdgGrp))
+        } else None
+
+      val sortedGroups =
+        (rdgGrpElems ++ missingGrpOpt).sortBy(_._1).map(_._2)
+
+      Seq(Elem(null, "app", xml.Null, TopScope, minimizeEmpty = true, sortedGroups*))
+    }
+  }
+
+  val root =
+    Elem(
+      "cx",
+      "apparatus",
+      xml.Null,
+      NamespaceBinding("cx", nsCx, NamespaceBinding(null, nsTei, TopScope)),
+      minimizeEmpty = true,
+      contentNodes*
+    )
+
+  val xmlString =
+    s"""<?xml version="1.0" encoding="UTF-8"?>\n${root.toString()}"""
+
+  if (outputBaseFilename.isEmpty) {
+    println(xmlString)
+  } else {
+    val out = new PrintWriter(s"${outputBaseFilename.head}-tei.xml", "UTF-8")
+    try out.println(xmlString)
+    finally out.close()
+  }
+}
+
+def emitXml(
+    alignment: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    outputBaseFilename: Set[String]
+): Unit =
+
+  val namespace = "http://interedition.eu/collatex/ns/1.0"
+
+  val rows: Seq[Node] = alignment.children.toVector.map { alignmentUnit =>
+    val point = alignmentUnit.asInstanceOf[AlignmentPoint]
+
+    val cells = point.witnessReadings.toSeq.sortBy(_._1).map { (witId, tokenRange) =>
+      <cell sigil={displaySigla(witId).value}>
+        {tokenRange.tString}
+      </cell>
+    }
+
+    <row>
+      {cells}
+    </row>
+  }
+
+  val xmlRoot: Elem =
+    <alignment xmlns={namespace}>
+      {rows}
+    </alignment>
+
+  val prettyPrinter = new PrettyPrinter(80, 2)
+  val renderedBody = prettyPrinter.format(xmlRoot)
+
+  val declaration = """<?xml version="1.0" encoding="UTF-8"?>"""
+
+  val fullOutput = s"$declaration\n$renderedBody" // prepend string instead of XML.write to retain pretty-print
+
+  if outputBaseFilename.isEmpty then println(fullOutput)
+  else
+    val filename = outputBaseFilename.head + ".xml"
+    val file = os.Path(filename, os.pwd)
+    os.write.over(file, fullOutput)
