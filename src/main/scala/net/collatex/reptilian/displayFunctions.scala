@@ -83,7 +83,7 @@ def emitTableHorizontal(
     val file = os.Path(filename, os.pwd)
     Using.resource(new PrintWriter(file.toIO)) { writer => renderTable(writer) }
 
-/** Plain text table; rows as alignment points, columns as witnesses
+/** Vertical plain text table; rows as alignment points, columns as witnesses
   *
   * --format table-v
   *
@@ -141,12 +141,35 @@ def emitTableVertical(
     val file = os.Path(filename, os.pwd)
     Using.resource(new PrintWriter(file.toIO)) { writer => renderTable(writer) }
 
+/** Horizontal HTML table; rows as witnesses, columns as alignment points
+  *
+  * --format table-html-h
+  *
+  * Displays witness sigla as left column.
+  *
+  * Files system output will append '-h.html' to supplied 'outputBaseFilename'
+  *
+  * @param alignment
+  *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
+  * @param displaySigla
+  *   List of Sigla in output order (List[Siglum])
+  * @param gTa
+  *   Global token array (Vector[TokenEnum]); compute readings with tString method
+  * @param outputBaseFilename
+  *   Base filename for file-system output. If empty, output goes to stdout. If present, '-v.txt' is appended to
+  *   construct the output filename, e.g., 'foo' becomes 'foo-v.txt'.
+  * @param htmlExtension
+  *   'html' or 'xhtml'
+  *
+  * @return
+  *   None; writes HTML document to filesystem or stdout
+  */
 def emitTableHorizontalHTML(
     alignment: AlignmentRibbon,
     displaySigla: List[Siglum],
     gTa: Vector[TokenEnum],
     outputBaseFilename: Set[String], // validated: empty or exactly one value
-    htmlExtension: Set[String] // validated: exactly one value
+    htmlExtension: Set[String] // validated: exactly one value ('html' or 'xhtml')
 ): Unit =
 
   val allWitIds = displaySigla.indices
@@ -154,7 +177,7 @@ def emitTableHorizontalHTML(
     allWitIds.map { f =>
       e.asInstanceOf[AlignmentPoint]
         .witnessReadings
-        .getOrElse(f, TokenRange(0, 0, gTa))
+        .getOrElse(f, TokenRange(0, 0, gTa)) // fake empty TokenRange
         .tString
     }
   }
@@ -228,6 +251,29 @@ def emitTableHorizontalHTML(
       XML.write(writer, htmlDoc, "UTF-8", xmlDecl = true, doctype = doctypeHtml)
     }
 
+/** Vertical HTML table; rows as alignment points, columns as witnesses
+  *
+  * --format table-html-v
+  *
+  * Displays witness sigla as header row.
+  *
+  * Files system output will append '-v.html' to supplied 'outputBaseFilename'
+  *
+  * @param alignment
+  *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
+  * @param displaySigla
+  *   List of Sigla in output order (List[Siglum])
+  * @param gTa
+  *   Global token array (Vector[TokenEnum]); compute readings with tString method
+  * @param outputBaseFilename
+  *   Base filename for file-system output. If empty, output goes to stdout. If present, '-v.txt' is appended to
+  *   construct the output filename, e.g., 'foo' becomes 'foo-v.txt'.
+  * @param htmlExtension
+  *   'html' or 'xhtml'
+  *
+  * @return
+  *   None; writes HTML document to filesystem or stdout
+  */
 def emitTableVerticalHTML(
     alignment: AlignmentRibbon,
     displaySigla: List[Siglum],
@@ -307,9 +353,32 @@ def emitTableVerticalHTML(
       XML.write(writer, htmlDoc, "UTF-8", xmlDecl = true, doctype = doctypeHtml)
     }
 
+/** Create alignment ribbon visualization (HTML and SVG)
+  *
+  * --format ribbon
+  *
+  * File system output will append value of htmlExtension ('html' or 'xhtml') to outputBaseFilename
+  *
+  * @param alignment
+  *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
+  * @param displaySigla
+  *   List of Sigla in output order (List[Siglum])
+  * @param displayColors
+  *   List of colors is same order as 'displaySigla'
+  * @param gTa
+  *   Global token array (Vector[TokenEnum]); compute readings with tString method
+  * @param outputBaseFilename
+  *   Base filename for file-system output. If empty, output goes to stdout. If present, '.html' or '.xhtml' (taken from
+  *   'htmlExtension' parameter) is appended to construct the output filename, e.g., 'foo' becomes 'foo.html' or
+  *   'foo.xhtml'.
+  * @param htmlExtension
+  *   'html' or 'xhtml'
+  *
+  * @return
+  *   None, Write HTML document (with embedded SVG) to filesystem or stdout
+  */
 def emitAlignmentRibbon(
     alignment: AlignmentRibbon,
-    gTaSigla: List[WitId],
     displaySigla: List[Siglum],
     displayColors: List[String],
     gTa: Vector[TokenEnum],
@@ -317,7 +386,7 @@ def emitAlignmentRibbon(
     htmlExtension: Set[String]
 ): Unit =
   val doctypeHtml: DocType = DocType("html")
-  val horizontalRibbons = createHorizontalRibbons(alignment, gTaSigla, displaySigla, displayColors, gTa)
+  val horizontalRibbons = createHorizontalRibbons(alignment, displaySigla, displayColors, gTa)
   if outputBaseFilename.isEmpty then // Write to stdout
     Using.resource(new PrintWriter(Console.out)) { writer =>
       XML.write(writer, horizontalRibbons, "UTF-8", xmlDecl = true, doctype = doctypeHtml)
@@ -331,6 +400,23 @@ def emitAlignmentRibbon(
       // No need to manually flush/close — Using handles it
     }
 
+/** Create SVG representation of Rhine delta (formerly variant graph)
+  *
+  * --format svg
+  *
+  * Shows only 'n' value of tokens. For 't' values use '--format svg-rich'
+  *
+  * @param alignment
+  *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
+  * @param displaySigla
+  *   List of Sigla in output order (List[Siglum])
+  * @param outputBaseFilename
+  *   Base filename for file-system output. If empty, output goes to stdout. If present, '.svg' is appended to construct
+  *   the output filename, e.g., 'foo' becomes 'foo.svg'.
+  *
+  * @return
+  *   None. Write SVG document to filesystem or stdout
+  */
 def emitSvgGraph(
     alignment: AlignmentRibbon,
     displaySigla: List[Siglum],
@@ -448,11 +534,13 @@ def emitJson(
 
 /** TEI parallel segmentation
   *
+  * --format tei
+  *
   * <rdgGrp> for shared 'n' property (missing witnesses have empty 'n' value)
   *
-  * NB: If all present witnesses end in space, the space is moved out of the <rdg> and after the <app>, corresponding to
-  * where a human tagger would have put the shared inter-token space character. This suggests an extra space in the case
-  * of missing witnesses, but that can be flattened, if desired, by pretty-printing later.
+  * NB: If all present witnesses ('t' values) end in space, the space is moved out of the <rdg> and after the <app>,
+  * corresponding to where a human tagger would have put a shared inter-token space character. This adds an extra space
+  * in the case of missing witnesses, which can be flattened, if desired, in post-processing or by pretty-printing.
   *
   * @param alignment
   *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
@@ -461,6 +549,9 @@ def emitJson(
   * @param outputBaseFilename
   *   Base filename for file-system output. If empty, output goes to stdout. If populated, must be singleton, and
   *   '-tei.xml' is appended to construct the output filename, e.g., 'foo' becomes 'foo-tei.xml'.
+  *
+  * @return
+  *   None. Write XML document to filesystem or stdout
   */
 def emitTeiXml(
     alignment: AlignmentRibbon,
@@ -577,6 +668,23 @@ def emitTeiXml(
   }
 }
 
+/** Custom CollateX XML structure
+  *
+  * --format xml
+  *
+  * For documentation see TBA.
+  *
+  * @param alignment
+  *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
+  * @param displaySigla
+  *   List of Sigla in output order (List[Siglum])
+  * @param outputBaseFilename
+  *   Base filename for file-system output. If empty, output goes to stdout. If populated, must be singleton, and '.xml'
+  *   is appended to construct the output filename, e.g., 'foo' becomes 'foo.xml'.
+  *
+  * @return
+  *   None. Write XML document to filesystem or stdout
+  */
 def emitXml(
     alignment: AlignmentRibbon,
     displaySigla: List[Siglum],

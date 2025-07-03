@@ -195,8 +195,6 @@ def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   *
   * @param root
   *   Expanded node root of entire alignment tree
-  * @param gTaSigla
-  *   Set of Siglum instances
   * @param gTa
   *   Global token array
   * @return
@@ -204,11 +202,11 @@ def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   */
 def createHorizontalRibbons(
     root: AlignmentRibbon,
-    gTaSigla: List[WitId],
     displaySigla: List[Siglum],
     displayColors: List[String],
     gTa: Vector[TokenEnum]
 ): scala.xml.Node =
+  val gTaSigla = displaySigla.indices.toList
   /** Constants */
   val ribbonWidth = 18
   // val missingTop = allSigla.size * ribbonWidth * 2 + ribbonWidth / 2

@@ -89,7 +89,7 @@ def readData(pathToData: Path): List[(String, String)] =
         case "table-html-h"      => emitTableHorizontalHTML(root, displaySigla, gTa, outputBaseFilename, htmlExtension)
         case "table-html-v"      => emitTableVerticalHTML(root, displaySigla, gTa, outputBaseFilename, htmlExtension)
         case "ribbon" =>
-          emitAlignmentRibbon(root, gTaSigla, displaySigla, displayColors, gTa, outputBaseFilename, htmlExtension)
+          emitAlignmentRibbon(root, displaySigla, displayColors, gTa, outputBaseFilename, htmlExtension)
         case "svg"      => emitSvgGraph(root, displaySigla, outputBaseFilename)
         case "svg-rich" => emitRichSvgGraph()
         case "json"     => emitJson(root, displaySigla, gTa, outputBaseFilename)
