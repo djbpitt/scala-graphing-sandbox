@@ -577,9 +577,9 @@ def emitTeiXml(
 
     val groupElems = groups.toList.map { group =>
       val readings = group.toList.groupBy(_._2.tString)
-      val rdgs = readings.toList.map { case (tString, witEntries) =>
+      val rdgs = readings.toList.map((tString, witEntries) =>
         val sortedSigla = witEntries
-          .map { case (witId, _) => displaySigla(witId) }
+          .map((witId, _) => displaySigla(witId))
           .sortBy(s => siglumOrder(s.value))
         val witAttr = sortedSigla.map(s => "#" + s.value).mkString(" ")
         Elem(
@@ -590,7 +590,7 @@ def emitTeiXml(
           minimizeEmpty = true,
           Text(tString)
         )
-      }
+      )
       val nString = group.headOption.map(_._2.nString).getOrElse("")
       Elem(null, "rdgGrp", new UnprefixedAttribute("n", nString, xml.Null), TopScope, minimizeEmpty = true, rdgs*)
     }
@@ -625,6 +625,7 @@ def emitTeiXml(
       val txt = allRdgs.headOption.map(_.text).getOrElse("")
       Seq(Text(txt))
     } else {
+      // If all present readings end in space, remove it from rdg and move it after app
       val cleanedGroups = if (allEndWithSpace) {
         allGrps.map { grp =>
           val cleanedRdgs = (grp \ "rdg").map { rdg =>
@@ -666,6 +667,16 @@ def emitTeiXml(
   }
 }
 
+/** Helper function invokes Saxon XSLT to create TEI XML output
+  *
+  * The XSLT is just an identity transformation with indent="yes"; the only thing we need from it is pretty-printing,
+  * which Saxon does correctly where Scala doesn’t.
+  *
+  * @param xmlString
+  *   Raw XML to format
+  * @return
+  *   Pretty-printed XML as String
+  */
 def applyTeiPrettyPrint(xmlString: String): String = {
   val processor = new Processor(false)
   val compiler: XsltCompiler = processor.newXsltCompiler()
