@@ -3,7 +3,6 @@ package net.collatex.reptilian
 import scala.util.Using
 import scala.xml.*
 import scala.xml.dtd.DocType
-import java.io.PrintWriter
 import java.nio.file.Paths
 
 // JSON output
@@ -11,10 +10,10 @@ import ujson.*
 import scala.reflect.ClassTag
 
 // TEI XML output
-import net.sf.saxon.s9api.{Processor, Serializer, XsltCompiler, XsltExecutable, XsltTransformer, QName}
+import net.sf.saxon.s9api.{Processor, Serializer, XsltCompiler, XsltExecutable}
 import scala.xml.{Elem, Node, PrettyPrinter}
-import java.io.{File, PrintWriter, StringReader, StringWriter}
-import javax.xml.transform.stream.{StreamSource, StreamResult}
+import java.io.{PrintWriter, StringReader, StringWriter}
+import javax.xml.transform.stream.StreamSource
 
 /** Helper function (pads right with spaces) for plain text table output
   *
