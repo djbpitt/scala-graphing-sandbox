@@ -442,12 +442,31 @@ def emitSvgGraph(
 def emitRichSvgGraph(): Unit =
   System.err.println("Rich SVG visualization has not yet been implemented")
 
+/** GraphML output
+  *
+  * --format graphml
+  *
+  * Shows only 'n' value of tokens. Rank = position of alignment point. Id is "n" + rank + "." + (arbitrary) group
+  * number within alignment point
+  *
+  * Uses Saxon XSLT only to fix pretty-printing
+  *
+  * @param alignment
+  *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
+  * @param displaySigla
+  *   List of Sigla in output order (List[Siglum])
+  * @param outputBaseFilename
+  *   Base filename for file-system output. If empty, output goes to stdout. If present, '-graphml.xml' is appended to
+  *   construct the output filename, e.g., 'foo' becomes 'foo-graphml.xml'.
+  *
+  * @return
+  *   None. Write XML document to filesystem or stdout
+  */
 def emitGraphMl(
     alignment: AlignmentRibbon,
     displaySigla: List[Siglum],
     outputBaseFilename: Set[String]
 ): Unit =
-  val namespace = "http://graphml.graphdrawing.org/xmlns"
   val keys = Seq(
     <key id="d0" for="node" attr.name="number" attr.type="int"/>,
     <key id="d1" for="node" attr.name="tokens" attr.type="string"/>,
@@ -456,14 +475,14 @@ def emitGraphMl(
     <key id="d4" for="edge" attr.name="type" attr.type="string"/>,
     <key id="d5" for="edge" attr.name="witnesses" attr.type="string"/>
   )
-  val nodes = alignment.children.zipWithIndex.toVector.map { (alignmentUnit, apIdx) =>
+  val nodes = alignment.children.zipWithIndex.toVector.map { (alignmentUnit, rank) =>
     val point = alignmentUnit.asInstanceOf[AlignmentPoint]
     val groups = point.witnessGroups.zipWithIndex.toVector.map { (group, gpIdx) =>
-      val id = List("n", apIdx, ".", gpIdx).mkString
+      val id = List("n", rank, ".", gpIdx).mkString
       val content = group.head._2.nString
       <node id={id}>
         <data key="d0">{id}</data>
-        <data key="d2">{apIdx}</data>
+        <data key="d2">{rank}</data>
         <data key="d1">{content}</data>
       </node>
     }
