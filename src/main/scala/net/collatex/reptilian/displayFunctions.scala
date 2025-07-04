@@ -447,7 +447,10 @@ def emitRichSvgGraph(): Unit =
   * --format graphml
   *
   * Shows only 'n' value of tokens. Rank = position of alignment point. Id is "n" + rank + "." + (arbitrary) group
-  * number within alignment point
+  * offset within alignment point (e.g. "n2.1").
+  *
+  * The number property is a string that combines rank + "." + (arbitrary) group offset within alignment point (e.g.,
+  * "2.1"). NB: "number" value was an integer in earlier version of CollateX.
   *
   * Uses Saxon XSLT only to fix pretty-printing
   *
@@ -468,26 +471,28 @@ def emitGraphMl(
     outputBaseFilename: Set[String]
 ): Unit =
   val keys = Seq(
-    <key id="d0" for="node" attr.name="number" attr.type="int"/>,
+    <key id="d0" for="node" attr.name="number" attr.type="string"/>,
     <key id="d1" for="node" attr.name="tokens" attr.type="string"/>,
     <key id="d2" for="node" attr.name="rank" attr.type="int"/>,
     <key id="d3" for="edge" attr.name="number" attr.type="int"/>,
     <key id="d4" for="edge" attr.name="type" attr.type="string"/>,
     <key id="d5" for="edge" attr.name="witnesses" attr.type="string"/>
   )
-  val nodes = alignment.children.zipWithIndex.toVector.map { (alignmentUnit, rank) =>
+  val nodeInstances = alignment.children.zipWithIndex.toVector.flatMap { (alignmentUnit, rank) =>
     val point = alignmentUnit.asInstanceOf[AlignmentPoint]
-    val groups = point.witnessGroups.zipWithIndex.toVector.map { (group, gpIdx) =>
-      val id = List("n", rank, ".", gpIdx).mkString
-      val content = group.head._2.nString
-      <node id={id}>
-        <data key="d0">{id}</data>
-        <data key="d2">{rank}</data>
-        <data key="d1">{content}</data>
-      </node>
+    val nodeData = point.witnessGroups.zipWithIndex.toVector.map { (group, gpIdx) =>
+      val number: String = List(rank, ".", gpIdx).mkString
+      val tokens = group.head._2.nString
+      val witIds = group.keySet
+      GraphMlNodeProperties(number, tokens, rank, witIds)
     }
-    groups
+    nodeData
   }
+  val nodes = nodeInstances.map(e => <node id={"n" + e.number}>
+      <data key="d0">{e.number}</data>
+      <data key="d2">{e.content}</data>
+      <data key="d1">{e.rank}</data>
+    </node>)
 
   val xmlRoot: Elem =
     <graphml xmlns="http://graphml.graphdrawing.org/xmlns"
@@ -824,3 +829,16 @@ def emitXml(
     val filename = outputBaseFilename.head + ".xml"
     val file = os.Path(filename, os.pwd)
     os.write.over(file, fullOutput)
+
+/** Node data for GraphML output
+  *
+  * @param number
+  *   String composed of rank + "." + (arbitrary) group offset within alignment point
+  * @param content
+  *   nString
+  * @param rank
+  *   Offset of AlignmentPoint within AlignmentRibbon
+  * @param witIds
+  *   Set of WitId values, used to compute edge labels
+  */
+case class GraphMlNodeProperties(number: String, content: String, rank: Int, witIds: Set[WitId])
