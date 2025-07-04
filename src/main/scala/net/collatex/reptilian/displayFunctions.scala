@@ -10,6 +10,12 @@ import java.nio.file.Paths
 import ujson.*
 import scala.reflect.ClassTag
 
+// TEI XML output
+import net.sf.saxon.s9api.{Processor, Serializer, XsltCompiler, XsltExecutable, XsltTransformer, QName}
+import scala.xml.{Elem, Node, PrettyPrinter}
+import java.io.{File, PrintWriter, StringReader, StringWriter}
+import javax.xml.transform.stream.{StreamSource, StreamResult}
+
 /** Helper function (pads right with spaces) for plain text table output
   *
   * @param s
@@ -561,111 +567,125 @@ def emitTeiXml(
 
   val nsCx = "http://interedition.eu/collatex/ns/1.0"
   val nsTei = "http://www.tei-c.org/ns/1.0"
-
-  val siglumOrder: Map[String, Int] =
-    displaySigla.map(_.value).zipWithIndex.toMap
-
+  val siglumOrder: Map[String, Int] = displaySigla.map(_.value).zipWithIndex.toMap
   val allWitIds: Set[Int] = displaySigla.indices.toSet
 
-  val contentNodes: Seq[Node] = alignment.children.toSeq.flatMap { ap =>
-    val alignmentPoint = ap.asInstanceOf[AlignmentPoint]
+  val content: Seq[Node] = alignment.children.toSeq.flatMap { ap =>
+    val groups: Set[WitnessReadings] = ap.asInstanceOf[AlignmentPoint].witnessGroups
+    val presentWitIds = groups.flatMap(_.keys)
+    val missingWitIds = allWitIds.diff(presentWitIds)
 
-    val presentWitIds = alignmentPoint.witnessReadings.keySet
-    val missingWitIds = allWitIds.diff(presentWitIds).toList.sorted
-
-    if (alignmentPoint.witnessGroups.size == 1 && missingWitIds.isEmpty) {
-      // Uniform reading, all witnesses present — emit plain text
-      val group = alignmentPoint.witnessGroups.head
-      val txt = group.head._2.tString
-      Seq(Text(txt))
-    } else {
-      // Variation present or missing witnesses — emit <app> with <rdgGrp>
-
-      val rdgGrpElems = alignmentPoint.witnessGroups.toList.map { group =>
-        val nString = group.head._2.nString
-
-        // Group sigla by tString
-        val groupedByTString: Map[String, List[Siglum]] =
-          group.toList.groupBy(_._2.tString).view.mapValues(_.map { case (witId, _) => displaySigla(witId) }).toMap
-
-        val rdgElems = groupedByTString.toList.map { case (txt, siglaList) =>
-          val sortedSigla = siglaList.sortBy(s => siglumOrder(s.value))
-          val witAttr = sortedSigla.map(s => s"#${s.value}").mkString(" ")
-          Elem(
-            null,
-            "rdg",
-            new UnprefixedAttribute("wit", witAttr, xml.Null),
-            TopScope,
-            minimizeEmpty = true,
-            Text(txt)
-          )
-        }
-
-        val sortedFirstSiglum = group.keys.map(displaySigla).minBy(s => siglumOrder(s.value))
-
-        val rdgGrp = Elem(
+    val groupElems = groups.toList.map { group =>
+      val readings = group.toList.groupBy(_._2.tString)
+      val rdgs = readings.toList.map { case (tString, witEntries) =>
+        val sortedSigla = witEntries
+          .map { case (witId, _) => displaySigla(witId) }
+          .sortBy(s => siglumOrder(s.value))
+        val witAttr = sortedSigla.map(s => "#" + s.value).mkString(" ")
+        Elem(
           null,
-          "rdgGrp",
-          new UnprefixedAttribute("n", nString, xml.Null),
+          "rdg",
+          new UnprefixedAttribute("wit", witAttr, xml.Null),
           TopScope,
           minimizeEmpty = true,
-          rdgElems*
+          Text(tString)
         )
-
-        (siglumOrder(sortedFirstSiglum.value), rdgGrp)
       }
+      val nString = group.headOption.map(_._2.nString).getOrElse("")
+      Elem(null, "rdgGrp", new UnprefixedAttribute("n", nString, xml.Null), TopScope, minimizeEmpty = true, rdgs*)
+    }
 
-      val missingGrpOpt: Option[(Int, Elem)] =
-        if (missingWitIds.nonEmpty) {
-          val sortedMissing = missingWitIds.map(displaySigla(_)).sortBy(s => siglumOrder(s.value))
-          val witAttr = sortedMissing.map(s => s"#${s.value}").mkString(" ")
-          val rdgElem = Elem(
-            null,
-            "rdg",
-            new UnprefixedAttribute("wit", witAttr, xml.Null),
-            TopScope,
-            minimizeEmpty = true
-          )
+    val missingGrp =
+      if (missingWitIds.nonEmpty) {
+        val sortedMissing = missingWitIds.map(displaySigla(_)).toList.sortBy(s => siglumOrder(s.value))
+        val witAttr = sortedMissing.map(s => "#" + s.value).mkString(" ")
+        val missingRdg =
+          Elem(null, "rdg", new UnprefixedAttribute("wit", witAttr, xml.Null), TopScope, minimizeEmpty = true)
+        Some(
+          Elem(null, "rdgGrp", new UnprefixedAttribute("n", "", xml.Null), TopScope, minimizeEmpty = true, missingRdg)
+        )
+      } else None
 
-          val rdgGrp = Elem(
-            null,
-            "rdgGrp",
-            new UnprefixedAttribute("n", "", xml.Null),
-            TopScope,
-            minimizeEmpty = true,
-            rdgElem
-          )
+    val allGrps = (groupElems ++ missingGrp).sortBy { elem =>
+      if (elem.attribute("n").exists(_.text.isEmpty)) Int.MaxValue
+      else {
+        val firstWit = (elem \ "rdg").headOption
+          .flatMap(_.attribute("wit"))
+          .map(_.text.split(" ").headOption.getOrElse(""))
+          .getOrElse("")
+        siglumOrder.getOrElse(firstWit.stripPrefix("#"), Int.MaxValue)
+      }
+    }
 
-          Some((siglumOrder(sortedMissing.head.value), rdgGrp))
-        } else None
+    val allRdgs = (allGrps \ "rdg").toList
+    val allEndWithSpace = allRdgs.filter(_.text.nonEmpty).forall(_.text.endsWith(" "))
 
-      val sortedGroups =
-        (rdgGrpElems ++ missingGrpOpt).sortBy(_._1).map(_._2)
+    if (allGrps.size == 1 && missingWitIds.isEmpty) {
+      // Uniform reading, no variation, output as plain text
+      val txt = allRdgs.headOption.map(_.text).getOrElse("")
+      Seq(Text(txt))
+    } else {
+      val cleanedGroups = if (allEndWithSpace) {
+        allGrps.map { grp =>
+          val cleanedRdgs = (grp \ "rdg").map { rdg =>
+            val cleanedText = if (rdg.text.nonEmpty && rdg.text.endsWith(" ")) rdg.text.dropRight(1) else rdg.text
+            rdg.asInstanceOf[Elem].copy(child = Text(cleanedText))
+          }
+          grp.copy(child = cleanedRdgs)
+        }
+      } else allGrps
 
-      Seq(Elem(null, "app", xml.Null, TopScope, minimizeEmpty = true, sortedGroups*))
+      val trailingSpace = if (allEndWithSpace) Some(Text(" ")) else None
+
+      val appElem = Elem(null, "app", xml.Null, TopScope, minimizeEmpty = true, cleanedGroups*)
+      trailingSpace match {
+        case Some(space) => Seq(appElem, space)
+        case None        => Seq(appElem)
+      }
     }
   }
 
-  val root =
-    Elem(
-      "cx",
-      "apparatus",
-      xml.Null,
-      NamespaceBinding("cx", nsCx, NamespaceBinding(null, nsTei, TopScope)),
-      minimizeEmpty = true,
-      contentNodes*
-    )
+  val root = Elem(
+    "cx",
+    "apparatus",
+    xml.Null,
+    NamespaceBinding("cx", nsCx, NamespaceBinding(null, nsTei, TopScope)),
+    minimizeEmpty = true,
+    content*
+  )
 
-  val xmlString =
-    s"""<?xml version="1.0" encoding="UTF-8"?>\n${root.toString()}"""
+  val rawXmlString = s"""<?xml version="1.0" encoding="UTF-8"?>\n${root.toString()}"""
 
-  if (outputBaseFilename.isEmpty) {
-    println(xmlString)
-  } else {
+  val finalOutput = applyTeiPrettyPrint(rawXmlString)
+
+  if (outputBaseFilename.isEmpty) println(finalOutput)
+  else {
     val out = new PrintWriter(s"${outputBaseFilename.head}-tei.xml", "UTF-8")
-    try out.println(xmlString)
+    try out.println(finalOutput)
     finally out.close()
   }
+}
+
+def applyTeiPrettyPrint(xmlString: String): String = {
+  val processor = new Processor(false)
+  val compiler: XsltCompiler = processor.newXsltCompiler()
+  val xsltStream = getClass.getResourceAsStream("/tei-pretty-print.xsl")
+  val executable: XsltExecutable = compiler.compile(new StreamSource(xsltStream))
+
+  val builder = processor.newDocumentBuilder()
+  val inputDoc = builder.build(new StreamSource(new StringReader(xmlString)))
+
+  val transformer = executable.load()
+  transformer.setInitialContextNode(inputDoc)
+
+  val writer = new StringWriter()
+  val serializer = processor.newSerializer(writer)
+  serializer.setOutputProperty(Serializer.Property.INDENT, "yes")
+
+  transformer.setDestination(serializer)
+  transformer.transform()
+
+  writer.toString
 }
 
 /** Custom CollateX XML structure

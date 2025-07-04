@@ -68,7 +68,7 @@ def readData(pathToData: Path): List[(String, String)] =
   parsedInput match {
     case Left(e) => System.err.println(e)
     case Right(e) =>
-      val tokensPerWitnessLimit = 20 // Low values for debug; set to Int.MaxValue for production
+      val tokensPerWitnessLimit = 2500 // Low values for debug; set to Int.MaxValue for production
       val data: Seq[CollateXWitnessData] = e._1
       val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
       val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, data, tokenPattern)
