@@ -442,8 +442,59 @@ def emitSvgGraph(
 def emitRichSvgGraph(): Unit =
   System.err.println("Rich SVG visualization has not yet been implemented")
 
-def emitGraphml(): Unit =
-  System.err.println("GraphML output has not yet be implemented")
+def emitGraphMl(
+    alignment: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    outputBaseFilename: Set[String]
+): Unit =
+  val namespace = "http://graphml.graphdrawing.org/xmlns"
+  val keys = Seq(
+    <key id="d0" for="node" attr.name="number" attr.type="int"/>,
+    <key id="d1" for="node" attr.name="tokens" attr.type="string"/>,
+    <key id="d2" for="node" attr.name="rank" attr.type="int"/>,
+    <key id="d3" for="edge" attr.name="number" attr.type="int"/>,
+    <key id="d4" for="edge" attr.name="type" attr.type="string"/>,
+    <key id="d5" for="edge" attr.name="witnesses" attr.type="string"/>
+  )
+  val nodes = alignment.children.zipWithIndex.toVector.map { (alignmentUnit, apIdx) =>
+    val point = alignmentUnit.asInstanceOf[AlignmentPoint]
+    val groups = point.witnessGroups.zipWithIndex.toVector.map { (group, gpIdx) =>
+      val id = List("n", apIdx, ".", gpIdx).mkString
+      val content = group.head._2.nString
+      <node id={id}>
+        <data key="d0">{id}</data>
+        <data key="d2">{apIdx}</data>
+        <data key="d1">{content}</data>
+      </node>
+    }
+    groups
+  }
+
+  val xmlRoot: Elem =
+    <graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns 
+     http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+      {keys}
+      <graph id="g0" 
+             edgedefault="directed" 
+             parse.nodeids="canonical" 
+             parse.edgeids="canonical"
+             parse.order="nodesfirst">{nodes}</graph>
+    </graphml>
+
+  val prettyPrinter = new PrettyPrinter(80, 2)
+  val renderedBody = prettyPrinter.format(xmlRoot)
+
+  val declaration = """<?xml version="1.0" encoding="UTF-8"?>"""
+
+  val fullOutput = s"$declaration\n$renderedBody" // prepend string instead of XML.write to retain pretty-print
+
+  if outputBaseFilename.isEmpty then println(fullOutput)
+  else
+    val filename = outputBaseFilename.head + "-graphml.xml"
+    val file = os.Path(filename, os.pwd)
+    os.write.over(file, fullOutput)
 
 /** Helper to convert an `Any` value to a ujson.Value, handling common Scala/Java types */
 def anyToUjsonValue(value: Any): Value = value match

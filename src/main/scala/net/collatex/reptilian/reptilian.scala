@@ -93,7 +93,7 @@ def readData(pathToData: Path): List[(String, String)] =
         case "svg"      => emitSvgGraph(root, displaySigla, outputBaseFilename)
         case "svg-rich" => emitRichSvgGraph()
         case "json"     => emitJson(root, displaySigla, gTa, outputBaseFilename)
-        case "graphml"  => emitGraphml()
+        case "graphml"  => emitGraphMl(root, displaySigla, outputBaseFilename)
         case "tei"      => emitTeiXml(root, displaySigla, outputBaseFilename)
         case "xml"      => emitXml(root, displaySigla, outputBaseFilename)
       }
