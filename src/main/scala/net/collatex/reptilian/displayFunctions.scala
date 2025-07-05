@@ -491,15 +491,24 @@ def emitGraphMl(
     nodeData
   }
   val allWits = displaySigla.indices.toSet
-  val start = GraphMlNodeProperties("0.0", "Start", 0, allWits)
+  val start = GraphMlNodeProperties("0.0", "[Start]", 0, allWits)
   val endRank = nodeInstances.last.rank + 1
-  val end = GraphMlNodeProperties(List(endRank, ".0").mkString, "End", endRank, allWits)
+  val end = GraphMlNodeProperties(List(endRank, ".0").mkString, "[End]", endRank, allWits)
   val nodes = (start +: nodeInstances :+ end).map(e => <node id={"n" + e.number}>
       <data key="d0">{e.number}</data>
       <data key="d2">{e.rank}</data>
       <data key="d1">{e.content}</data>
     </node>)
 
+  val edgeInstances = createGraphMlEdges(nodeInstances, start, end, displaySigla)
+  val edges = edgeInstances.zipWithIndex.map((edgeData, index) =>
+    val id = List("e" + index).mkString
+    <edge id={id} source={edgeData.source} target={edgeData.target}>
+      <data key="d3">{id}</data>
+      <data key="d4">path</data>
+      <data key="d5">{edgeData.witIds.mkString(", ")}</data>
+    </edge>
+  )
   val xmlRoot: Elem =
     <graphml xmlns="http://graphml.graphdrawing.org/xmlns"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -510,7 +519,7 @@ def emitGraphMl(
              edgedefault="directed" 
              parse.nodeids="canonical" 
              parse.edgeids="canonical"
-             parse.order="nodesfirst">{nodes}</graph>
+             parse.order="nodesfirst">{nodes}{edges}</graph>
     </graphml>
 
   val prettyPrinter = new PrettyPrinter(80, 2)
@@ -528,7 +537,7 @@ def emitGraphMl(
 
 /** Helper to create edges for GraphML output
   *
-  * NB: Duplicates much of the logic that creates edges for the Rhine delta visualization. Should we combine them?
+  * TODO: Combine with function that creates edges for Rhine delta visualization; most code is shared
   *
   * @param nodes
   *   GraphMlNodeProperties instances
@@ -543,38 +552,42 @@ def emitGraphMl(
   *   Vector of GraphMlEdgeProperties instances
   */
 def createGraphMlEdges(
-    nodes: Vector[NodeProperties],
-    start: NodeProperties,
-    end: NodeProperties,
+    nodes: Vector[GraphMlNodeProperties],
+    start: GraphMlNodeProperties,
+    end: GraphMlNodeProperties,
     displaySigla: List[Siglum]
-): Vector[EdgeProperties] =
+): Vector[GraphMlEdgeProperties] =
   @tailrec
   def nextNode(
-      rgs: Vector[NodeProperties],
-      rightmost: Map[WitId, NodeProperties],
-      acc: Vector[EdgeProperties]
-  ): Vector[EdgeProperties] =
+      rgs: Vector[GraphMlNodeProperties],
+      rightmost: Map[WitId, GraphMlNodeProperties],
+      acc: Vector[GraphMlEdgeProperties]
+  ): Vector[GraphMlEdgeProperties] =
     if rgs.isEmpty then {
       acc
     } else {
       val newNode = rgs.head
-      val rightmostChanges = rgs.head.witnesses.map(k => k -> newNode).toSeq // Update rightMost map
-      val newRightmost: Map[WitId, NodeProperties] = rightmost ++ rightmostChanges
+      val rightmostChanges = rgs.head.witIds.map(k => k -> newNode).toSeq // Update rightMost map
+      val newRightmost: Map[WitId, GraphMlNodeProperties] = rightmost ++ rightmostChanges
       // To create edges:
       // 1. Retrieve rightmost nodes for all witnesses in new node
       // 1. Use sourceEdgeGroups to find witnesses associated with each source (for labeling)
       // 1. Retain only witness identifiers that are present in both source and target
-      val newEdges = newNode.witnesses // all witnesses on newNode
+      val newEdges = newNode.witIds // all witnesses on newNode
         .map(e => e -> rightmost(e))
         .toMap // sources for new edges (may include duplicates)
         .groupMap(_._2)(_._1)
         .map { case (k, v) => k -> v.toSet }
-        .map((k, v) => EdgeProperties(k.gId, newNode.gId, v.toSeq.sorted))
-      val newAcc: Vector[EdgeProperties] = acc ++ newEdges
+        .map((k, v) =>
+          val label: Seq[WitId] = v.toSeq.sorted
+          GraphMlEdgeProperties(List("n", k.number).mkString, List("n", newNode.number).mkString, label)
+        )
+      val newAcc: Vector[GraphMlEdgeProperties] = acc ++ newEdges
       nextNode(rgs.tail, newRightmost, newAcc)
     }
 
   val acc = nextNode(nodes :+ end, displaySigla.indices.map(e => e -> start).toMap, Vector())
+  acc.take(5).foreach(System.err.println)
   acc
 
 /** Helper to convert an `Any` value to a ujson.Value, handling common Scala/Java types */
@@ -899,4 +912,4 @@ def emitXml(
   *   Set of WitId values, used to compute edge labels
   */
 case class GraphMlNodeProperties(number: String, content: String, rank: Int, witIds: Set[WitId])
-case class GraphMlEdgeProperties(source: String, target: String, witIds: Set[WitId])
+case class GraphMlEdgeProperties(source: String, target: String, witIds: Seq[WitId])
