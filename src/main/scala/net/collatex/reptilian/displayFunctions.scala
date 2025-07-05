@@ -506,9 +506,10 @@ def emitGraphMl(
     <edge id={id} source={edgeData.source} target={edgeData.target}>
       <data key="d3">{id}</data>
       <data key="d4">path</data>
-      <data key="d5">{edgeData.witIds.mkString(", ")}</data>
+      <data key="d5">{edgeData.witIds.map(f => displaySigla(f).value).mkString(", ")}</data>
     </edge>
   )
+  edges.take(5).foreach(System.err.println)
   val xmlRoot: Elem =
     <graphml xmlns="http://graphml.graphdrawing.org/xmlns"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -587,7 +588,6 @@ def createGraphMlEdges(
     }
 
   val acc = nextNode(nodes :+ end, displaySigla.indices.map(e => e -> start).toMap, Vector())
-  acc.take(5).foreach(System.err.println)
   acc
 
 /** Helper to convert an `Any` value to a ujson.Value, handling common Scala/Java types */
