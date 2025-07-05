@@ -509,7 +509,6 @@ def emitGraphMl(
       <data key="d5">{edgeData.witIds.map(f => displaySigla(f).value).mkString(", ")}</data>
     </edge>
   )
-  edges.take(5).foreach(System.err.println)
   val xmlRoot: Elem =
     <graphml xmlns="http://graphml.graphdrawing.org/xmlns"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -523,12 +522,10 @@ def emitGraphMl(
              parse.order="nodesfirst">{nodes}{edges}</graph>
     </graphml>
 
-  val prettyPrinter = new PrettyPrinter(80, 2)
-  val renderedBody = prettyPrinter.format(xmlRoot)
+  val prettyPrintedBody = saxonPrettyPrint(xmlRoot.toString)
 
   val declaration = """<?xml version="1.0" encoding="UTF-8"?>"""
-
-  val fullOutput = s"$declaration\n$renderedBody" // prepend string instead of XML.write to retain pretty-print
+  val fullOutput = s"$declaration\n$prettyPrintedBody" // prepend string instead of XML.write to retain pretty-print
 
   if outputBaseFilename.isEmpty then println(fullOutput)
   else
@@ -801,7 +798,7 @@ def emitTeiXml(
 
   val rawXmlString = s"""<?xml version="1.0" encoding="UTF-8"?>\n${root.toString()}"""
 
-  val finalOutput = applyTeiPrettyPrint(rawXmlString)
+  val finalOutput = saxonPrettyPrint(rawXmlString)
 
   if (outputBaseFilename.isEmpty) println(finalOutput)
   else {
@@ -821,7 +818,7 @@ def emitTeiXml(
   * @return
   *   Pretty-printed XML as String
   */
-def applyTeiPrettyPrint(xmlString: String): String = {
+def saxonPrettyPrint(xmlString: String): String = {
   val processor = new Processor(false)
   val compiler: XsltCompiler = processor.newXsltCompiler()
   val xsltStream = getClass.getResourceAsStream("/tei-pretty-print.xsl")
