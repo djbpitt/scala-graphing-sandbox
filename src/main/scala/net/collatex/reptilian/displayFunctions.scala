@@ -4,6 +4,7 @@ import scala.util.Using
 import scala.xml.*
 import scala.xml.dtd.DocType
 import java.nio.file.Paths
+import scala.annotation.tailrec
 
 // JSON output
 import ujson.*
@@ -478,9 +479,10 @@ def emitGraphMl(
     <key id="d4" for="edge" attr.name="type" attr.type="string"/>,
     <key id="d5" for="edge" attr.name="witnesses" attr.type="string"/>
   )
-  val nodeInstances = alignment.children.zipWithIndex.toVector.flatMap { (alignmentUnit, rank) =>
+  val nodeInstances = alignment.children.zipWithIndex.toVector.flatMap { (alignmentUnit, offset) =>
     val point = alignmentUnit.asInstanceOf[AlignmentPoint]
-    val nodeData = point.witnessGroups.zipWithIndex.toVector.map { (group, gpIdx) =>
+    val nodeData: Vector[GraphMlNodeProperties] = point.witnessGroups.zipWithIndex.toVector.map { (group, gpIdx) =>
+      val rank = offset + 1 // Start node is 0, so real nodes start at 1
       val number: String = List(rank, ".", gpIdx).mkString
       val tokens = group.head._2.nString
       val witIds = group.keySet
@@ -488,10 +490,14 @@ def emitGraphMl(
     }
     nodeData
   }
-  val nodes = nodeInstances.map(e => <node id={"n" + e.number}>
+  val allWits = displaySigla.indices.toSet
+  val start = GraphMlNodeProperties("0.0", "Start", 0, allWits)
+  val endRank = nodeInstances.last.rank + 1
+  val end = GraphMlNodeProperties(List(endRank, ".0").mkString, "End", endRank, allWits)
+  val nodes = (start +: nodeInstances :+ end).map(e => <node id={"n" + e.number}>
       <data key="d0">{e.number}</data>
-      <data key="d2">{e.content}</data>
-      <data key="d1">{e.rank}</data>
+      <data key="d2">{e.rank}</data>
+      <data key="d1">{e.content}</data>
     </node>)
 
   val xmlRoot: Elem =
@@ -519,6 +525,57 @@ def emitGraphMl(
     val filename = outputBaseFilename.head + "-graphml.xml"
     val file = os.Path(filename, os.pwd)
     os.write.over(file, fullOutput)
+
+/** Helper to create edges for GraphML output
+  *
+  * NB: Duplicates much of the logic that creates edges for the Rhine delta visualization. Should we combine them?
+  *
+  * @param nodes
+  *   GraphMlNodeProperties instances
+  * @param start
+  *   Start node is special
+  * @param end
+  *   End node is special
+  * @param displaySigla
+  *   List[Siglum] for edge labels
+  *
+  * @return
+  *   Vector of GraphMlEdgeProperties instances
+  */
+def createGraphMlEdges(
+    nodes: Vector[NodeProperties],
+    start: NodeProperties,
+    end: NodeProperties,
+    displaySigla: List[Siglum]
+): Vector[EdgeProperties] =
+  @tailrec
+  def nextNode(
+      rgs: Vector[NodeProperties],
+      rightmost: Map[WitId, NodeProperties],
+      acc: Vector[EdgeProperties]
+  ): Vector[EdgeProperties] =
+    if rgs.isEmpty then {
+      acc
+    } else {
+      val newNode = rgs.head
+      val rightmostChanges = rgs.head.witnesses.map(k => k -> newNode).toSeq // Update rightMost map
+      val newRightmost: Map[WitId, NodeProperties] = rightmost ++ rightmostChanges
+      // To create edges:
+      // 1. Retrieve rightmost nodes for all witnesses in new node
+      // 1. Use sourceEdgeGroups to find witnesses associated with each source (for labeling)
+      // 1. Retain only witness identifiers that are present in both source and target
+      val newEdges = newNode.witnesses // all witnesses on newNode
+        .map(e => e -> rightmost(e))
+        .toMap // sources for new edges (may include duplicates)
+        .groupMap(_._2)(_._1)
+        .map { case (k, v) => k -> v.toSet }
+        .map((k, v) => EdgeProperties(k.gId, newNode.gId, v.toSeq.sorted))
+      val newAcc: Vector[EdgeProperties] = acc ++ newEdges
+      nextNode(rgs.tail, newRightmost, newAcc)
+    }
+
+  val acc = nextNode(nodes :+ end, displaySigla.indices.map(e => e -> start).toMap, Vector())
+  acc
 
 /** Helper to convert an `Any` value to a ujson.Value, handling common Scala/Java types */
 def anyToUjsonValue(value: Any): Value = value match
@@ -842,3 +899,4 @@ def emitXml(
   *   Set of WitId values, used to compute edge labels
   */
 case class GraphMlNodeProperties(number: String, content: String, rank: Int, witIds: Set[WitId])
+case class GraphMlEdgeProperties(source: String, target: String, witIds: Set[WitId])
