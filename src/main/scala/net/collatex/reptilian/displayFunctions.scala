@@ -16,6 +16,17 @@ import scala.xml.{Elem, Node, PrettyPrinter}
 import java.io.{PrintWriter, StringReader, StringWriter}
 import javax.xml.transform.stream.StreamSource
 
+/** Create all requested outputs
+  *
+  * @param root
+  *   AlignmentRibbon
+  * @param gTa
+  *   Global token array as Vector[TokenEnum]
+  * @param data
+  *   Alignment ribbon data as Seq[CollateXWitnessData]
+  * @param argMap
+  *   Command line arguments as Map from String to Set[String]
+  */
 def displayDispatch(
     root: AlignmentRibbon,
     gTa: Vector[TokenEnum],
@@ -44,6 +55,8 @@ def displayDispatch(
     case "tei"      => emitTeiXml(root, displaySigla, outputBaseFilename)
     case "xml"      => emitXml(root, displaySigla, outputBaseFilename)
   }
+
+val saxonPrettyPrinter = prettyPrintWithSaxon() // Partially applied, used by multiple XML outputs
 
 /** Helper function (pads right with spaces) for plain text table output
   *
@@ -571,7 +584,6 @@ def emitGraphMl(
              parse.edgeids="canonical"
              parse.order="nodesfirst">{nodes}{edges}</graph>
     </graphml>
-  val saxonPrettyPrinter = prettyPrintWithSaxon()
   val prettyPrintedBody = saxonPrettyPrinter(xmlRoot.toString)
   val declaration = """<?xml version="1.0" encoding="UTF-8"?>"""
   val fullOutput = s"$declaration\n$prettyPrintedBody" // prepend string instead of XML.write to retain pretty-print
@@ -846,8 +858,6 @@ def emitTeiXml(
   )
 
   val rawXmlString = s"""<?xml version="1.0" encoding="UTF-8"?>\n${root.toString()}"""
-
-  val saxonPrettyPrinter = prettyPrintWithSaxon()
   val finalOutput = saxonPrettyPrinter(rawXmlString)
 
   if (outputBaseFilename.isEmpty) println(finalOutput)
@@ -862,6 +872,8 @@ def emitTeiXml(
   *
   * Scala XML pretty printer incorrectly inserts whitespace between tags and element text content. We use Saxon
   * serialization instead.
+  *
+  * Partially applied; create once and use with multiple formats
   *
   * @param xmlString
   *   XML to pretty-print as String
@@ -926,7 +938,6 @@ def emitXml(
 
   val xmlRoot: Elem =
     <alignment xmlns={namespace}>{rows}</alignment>
-  val saxonPrettyPrinter = prettyPrintWithSaxon()
   val renderedBody = saxonPrettyPrinter(xmlRoot.toString)
 
   val declaration = """<?xml version="1.0" encoding="UTF-8"?>"""

@@ -73,8 +73,7 @@ def readData(pathToData: Path): List[(String, String)] =
       val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
       val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, data, tokenPattern)
       val gTaSigla: List[WitId] = data.indices.toList // integers
-      // Create model as alignment ribbon
-      val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
+      val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa) // Create model as alignment ribbon
       displayDispatch(root, gTa, data, argMap) // Create requested outputs
   }
 
