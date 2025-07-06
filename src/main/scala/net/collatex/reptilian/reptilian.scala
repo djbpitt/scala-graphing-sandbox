@@ -69,34 +69,13 @@ def readData(pathToData: Path): List[(String, String)] =
     case Left(e) => System.err.println(e)
     case Right(e) =>
       val tokensPerWitnessLimit = 2500 // Low values for debug; set to Int.MaxValue for production
-      val data: Seq[CollateXWitnessData] = e._1
+      val (data, argMap): (Seq[CollateXWitnessData], Map[String, Set[String]]) = e
       val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
       val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, data, tokenPattern)
       val gTaSigla: List[WitId] = data.indices.toList // integers
-      // User-supplied sigla and colors for rendering
-      val displaySigla: List[Siglum] = data.map(e => Siglum(e.siglum)).toList
-      val displayColors: List[String] = data.map(e => e.color).toList
       // Create model as alignment ribbon
       val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
-      // At this point, all formats are guaranteed valid by prior argument parsing
-      val formats = e._2.getOrElse("--format", Set("table")) // default to table if none specified
-      val htmlExtension = e._2.getOrElse("--html", Set("html")) // default to .html if none specified
-      val outputBaseFilename = e._2.getOrElse("--output", Set()) // empty set if none specified
-      formats.foreach {
-        // TODO: Manage html/xhtml, horizontal/vertical table, filenames
-        case "table" | "table-h" => emitTableHorizontal(root, displaySigla, gTa, outputBaseFilename)
-        case "table-v"           => emitTableVertical(root, displaySigla, gTa, outputBaseFilename)
-        case "table-html-h"      => emitTableHorizontalHTML(root, displaySigla, gTa, outputBaseFilename, htmlExtension)
-        case "table-html-v"      => emitTableVerticalHTML(root, displaySigla, gTa, outputBaseFilename, htmlExtension)
-        case "ribbon" =>
-          emitAlignmentRibbon(root, displaySigla, displayColors, gTa, outputBaseFilename, htmlExtension)
-        case "svg"      => emitSvgGraph(root, displaySigla, outputBaseFilename)
-        case "svg-rich" => emitRichSvgGraph()
-        case "json"     => emitJson(root, displaySigla, gTa, outputBaseFilename)
-        case "graphml"  => emitGraphMl(root, displaySigla, outputBaseFilename)
-        case "tei"      => emitTeiXml(root, displaySigla, outputBaseFilename)
-        case "xml"      => emitXml(root, displaySigla, outputBaseFilename)
-      }
+      displayDispatch(root, gTa, data, argMap) // Create requested outputs
   }
 
 /** Display witId and initial slice of text of all witnesses

@@ -16,6 +16,35 @@ import scala.xml.{Elem, Node, PrettyPrinter}
 import java.io.{PrintWriter, StringReader, StringWriter}
 import javax.xml.transform.stream.StreamSource
 
+def displayDispatch(
+    root: AlignmentRibbon,
+    gTa: Vector[TokenEnum],
+    data: Seq[CollateXWitnessData],
+    argMap: Map[String, Set[String]]
+): Unit =
+  // User-supplied sigla and colors for rendering
+  val displaySigla: List[Siglum] = data.map(e => Siglum(e.siglum)).toList
+  val displayColors: List[String] = data.map(e => e.color).toList
+  // At this point, all formats are guaranteed valid by prior argument parsing
+  val formats = argMap.getOrElse("--format", Set("table")) // default to table if none specified
+  val htmlExtension = argMap.getOrElse("--html", Set("html")) // default to .html if none specified
+  val outputBaseFilename = argMap.getOrElse("--output", Set()) // empty set if none specified
+  formats.foreach {
+    // TODO: Manage html/xhtml, horizontal/vertical table, filenames
+    case "table" | "table-h" => emitTableHorizontal(root, displaySigla, gTa, outputBaseFilename)
+    case "table-v"           => emitTableVertical(root, displaySigla, gTa, outputBaseFilename)
+    case "table-html-h"      => emitTableHorizontalHTML(root, displaySigla, gTa, outputBaseFilename, htmlExtension)
+    case "table-html-v"      => emitTableVerticalHTML(root, displaySigla, gTa, outputBaseFilename, htmlExtension)
+    case "ribbon" =>
+      emitAlignmentRibbon(root, displaySigla, displayColors, gTa, outputBaseFilename, htmlExtension)
+    case "svg"      => emitSvgGraph(root, displaySigla, outputBaseFilename)
+    case "svg-rich" => emitRichSvgGraph()
+    case "json"     => emitJson(root, displaySigla, gTa, outputBaseFilename)
+    case "graphml"  => emitGraphMl(root, displaySigla, outputBaseFilename)
+    case "tei"      => emitTeiXml(root, displaySigla, outputBaseFilename)
+    case "xml"      => emitXml(root, displaySigla, outputBaseFilename)
+  }
+
 /** Helper function (pads right with spaces) for plain text table output
   *
   * @param s
