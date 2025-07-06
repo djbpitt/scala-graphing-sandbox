@@ -48,8 +48,9 @@ def displayDispatch(
     case "table-html-v"      => emitTableVerticalHTML(root, displaySigla, gTa, outputBaseFilename, htmlExtension)
     case "ribbon" =>
       emitAlignmentRibbon(root, displaySigla, displayColors, gTa, outputBaseFilename, htmlExtension)
+    // Both Rhine delta formats use same output function with different values of Boolean 'rich' parameter
     case "svg"      => emitSvgGraph(root, displaySigla, outputBaseFilename)
-    case "svg-rich" => emitRichSvgGraph()
+    case "svg-rich" => emitSvgGraph(root, displaySigla, outputBaseFilename, true)
     case "json"     => emitJson(root, displaySigla, gTa, outputBaseFilename)
     case "graphml"  => emitGraphMl(root, displaySigla, outputBaseFilename)
     case "tei"      => emitTeiXml(root, displaySigla, outputBaseFilename)
@@ -459,6 +460,8 @@ def emitAlignmentRibbon(
   * @param outputBaseFilename
   *   Base filename for file-system output. If empty, output goes to stdout. If present, '.svg' is appended to construct
   *   the output filename, e.g., 'foo' becomes 'foo.svg'.
+  * @param rich
+  *   Boolean; true = rich SVG output (t values), false (default) = traditional SVG output (n values)
   *
   * @return
   *   None. Write SVG document to filesystem or stdout
@@ -466,9 +469,10 @@ def emitAlignmentRibbon(
 def emitSvgGraph(
     alignment: AlignmentRibbon,
     displaySigla: List[Siglum],
-    outputBaseFilename: Set[String] // either empty or single string (validated in parseArgs())
+    outputBaseFilename: Set[String], // either empty or single string (validated in parseArgs())
+    rich: Boolean = false
 ): Unit =
-  createRhineDelta(alignment, displaySigla) match
+  createRhineDelta(alignment, displaySigla, rich) match
     case Left(err) =>
       System.err.println(err)
     case Right(svg) =>

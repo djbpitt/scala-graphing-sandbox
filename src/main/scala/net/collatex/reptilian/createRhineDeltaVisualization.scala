@@ -165,6 +165,7 @@ def createSvg(dotFile: String): Either[String, String] =
   *   User-supplied sigla as List[Siglum]
   * @param rich
   *   Boolean; true = rich SVG output (t values), false (default) = traditional SVG output (n values)
+  *
   * @return
   *   Rhine delta SVG representation as String, created by Graphviz
   */
@@ -174,12 +175,14 @@ def createRhineDelta(
     rich: Boolean = false
 ): Either[String, String] =
   val allWitIds = displaySigla.indices.toSet
-  val start = NodeProperties("-1.0", allWitIds, "Start")
-  val end = NodeProperties(Int.MaxValue.toString, allWitIds, "End")
-  val nodes = createNodes(ar) // Extract, label, and flatten reading groups into vector of NodeProperty
-  val edges = createEdges(nodes, start, end, displaySigla) // Create edges as vector of EdgeProperty
-  val dotFile = createDot(start +: nodes :+ end, edges, displaySigla)
-  createSvg(dotFile)
+  if rich then Left("Rich SVG support not yet implemented")
+  else
+    val start = NodeProperties("-1.0", allWitIds, "Start")
+    val end = NodeProperties(Int.MaxValue.toString, allWitIds, "End")
+    val nodes = createNodes(ar) // Extract, label, and flatten reading groups into vector of NodeProperty
+    val edges = createEdges(nodes, start, end, displaySigla) // Create edges as vector of EdgeProperty
+    val dotFile = createDot(start +: nodes :+ end, edges, displaySigla)
+    createSvg(dotFile)
 
 // gId is stringified Int.Int, e.g. 2.5
 // gId is for development, the intersection of the witnesses on the source and target of an edge is the edge label
