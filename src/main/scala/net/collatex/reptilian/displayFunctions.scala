@@ -12,7 +12,7 @@ import scala.reflect.ClassTag
 
 // XML output, using Saxon for pretty-printing because Scala XML pretty-printing is broken
 import net.sf.saxon.s9api.{Processor, Serializer, XdmNode, DocumentBuilder}
-import scala.xml.{Elem, Node, PrettyPrinter}
+import scala.xml.{Elem, Node}
 import java.io.{PrintWriter, StringReader, StringWriter}
 import javax.xml.transform.stream.StreamSource
 
@@ -25,7 +25,7 @@ import javax.xml.transform.stream.StreamSource
   * @param data
   *   Alignment ribbon data as Seq[CollateXWitnessData]
   * @param argMap
-  *   Command line arguments as Map from String to Set[String]
+  *   Command line arguments as `Map[String, Set[String]]`
   */
 def displayDispatch(
     root: AlignmentRibbon,
@@ -55,8 +55,6 @@ def displayDispatch(
     case "tei"      => emitTeiXml(root, displaySigla, outputBaseFilename)
     case "xml"      => emitXml(root, displaySigla, outputBaseFilename)
   }
-
-val saxonPrettyPrinter = prettyPrintWithSaxon() // Partially applied, used by multiple XML outputs
 
 /** Helper function (pads right with spaces) for plain text table output
   *
@@ -868,37 +866,31 @@ def emitTeiXml(
   }
 }
 
-/** Pretty print XML using Saxon serializer
+/** Pretty-print XML using Saxon
   *
-  * Scala XML pretty printer incorrectly inserts whitespace between tags and element text content. We use Saxon
-  * serialization instead.
+  * Input and output are stringified XML
   *
-  * Partially applied; create once and use with multiple formats
-  *
-  * @param xmlString
-  *   XML to pretty-print as String
-  *
-  * @return
-  *   Pretty-printed XML as string
+  * Scala XML pretty-printing inserts whitespace characters where it shouldn’t, so we use Saxon to ensure proper
+  * formatting and wrapping.
   */
-def prettyPrintWithSaxon()(xmlString: String): String = {
+val saxonPrettyPrinter: String => String = {
   val processor = new Processor(false) // false = non-schema-aware
   val builder: DocumentBuilder = processor.newDocumentBuilder()
+  xmlString =>
+    // Set up the serializer with indenting enabled
+    val writer = new StringWriter()
+    val serializer = processor.newSerializer(writer)
+    serializer.setOutputProperty(Serializer.Property.METHOD, "xml")
+    serializer.setOutputProperty(Serializer.Property.INDENT, "yes")
+    serializer.setOutputProperty(Serializer.Property.OMIT_XML_DECLARATION, "no") // Adjust as needed
 
-  // Set up the serializer with indenting enabled
-  val writer = new StringWriter()
-  val serializer = processor.newSerializer(writer)
-  serializer.setOutputProperty(Serializer.Property.METHOD, "xml")
-  serializer.setOutputProperty(Serializer.Property.INDENT, "yes")
-  serializer.setOutputProperty(Serializer.Property.OMIT_XML_DECLARATION, "no") // Adjust as needed
+    // Parse the raw XML string into an XdmNode
+    val inputDoc: XdmNode = builder.build(new StreamSource(new StringReader(xmlString)))
 
-  // Parse the raw XML string into an XdmNode
-  val inputDoc: XdmNode = builder.build(new StreamSource(new StringReader(xmlString)))
+    // Serialize the document
+    serializer.serializeNode(inputDoc)
 
-  // Serialize the document
-  serializer.serializeNode(inputDoc)
-
-  writer.toString
+    writer.toString
 }
 
 /** Custom CollateX XML structure
