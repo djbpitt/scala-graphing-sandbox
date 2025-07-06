@@ -8,10 +8,16 @@ import java.io.*
   *
   * @param ar
   *   Alignment ribbon, same as for other visualizations.
+  * @param rich
+  *   Boolean; true = rich output (t values), false (defult) = regular output (n values)
+  *
   * @return
   *   Vector of NodeProperties instances
   */
-def createNodes(ar: AlignmentRibbon): Vector[NodeProperties] = // Start and End are created elsewhere
+def createNodes(
+    ar: AlignmentRibbon,
+    rich: Boolean = false
+): Vector[NodeProperties] = // Start and End are created elsewhere
   val nodeInfos: Vector[NodeProperties] =
     ar.children.zipWithIndex.flatMap { case (data, apId) =>
       data
@@ -157,10 +163,16 @@ def createSvg(dotFile: String): Either[String, String] =
   *   AlignmentRibbon
   * @param displaySigla
   *   User-supplied sigla as List[Siglum]
+  * @param rich
+  *   Boolean; true = rich SVG output (t values), false (default) = traditional SVG output (n values)
   * @return
   *   Rhine delta SVG representation as String, created by Graphviz
   */
-def createRhineDelta(ar: AlignmentRibbon, displaySigla: List[Siglum]): Either[String, String] =
+def createRhineDelta(
+    ar: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    rich: Boolean = false
+): Either[String, String] =
   val allWitIds = displaySigla.indices.toSet
   val start = NodeProperties("-1.0", allWitIds, "Start")
   val end = NodeProperties(Int.MaxValue.toString, allWitIds, "End")

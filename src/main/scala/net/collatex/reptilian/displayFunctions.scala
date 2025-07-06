@@ -482,27 +482,28 @@ def emitSvgGraph(
 
 /** Rich svg graph with alignment table column inside node
   */
-val sampleRichSvgOutput = // Sample for documentation; not used in production
-  """#https://graphviz.org/doc/info/shapes.html#html
-    |# https://www.renenyffenegger.ch/notes/tools/Graphviz/attributes/label/HTML-like/index
-    |digraph G {
-    |A [label=<
-    |    <table cellspacing="0">
-    |        <tr>
-    |            <td align="left" bgcolor="lightblue">n</td>
-    |            <td align="left" bgcolor="lightblue"><font face="Bukyvede">greeting</font></td>
-    |        </tr>
-    |        <tr>
-    |            <td align="left" bgcolor="gainsboro">59, 61</td>
-    |            <td align="left"><font face="Bukyvede">Приветъ</font></td>
-    |        </tr>
-    |        <tr>
-    |            <td align="left" bgcolor="gainsboro">66, 69</td>
-    |            <td align="left"><font face="Bukyvede">Hello</font></td>
-    |        </tr>
-    |    </table>
-    |>]
-    |}""".stripMargin
+/* Sample output
+#https://graphviz.org/doc/info/shapes.html#html
+# https://www.renenyffenegger.ch/notes/tools/Graphviz/attributes/label/HTML-like/index
+digraph G {
+A [shape="plain"; label=<
+    <table cellspacing="0">
+        <tr>
+            <td align="left" bgcolor="lightblue">n</td>
+            <td align="left" bgcolor="lightblue"><font face="Bukyvede">greeting</font></td>
+        </tr>
+        <tr>
+            <td align="left" bgcolor="gainsboro">59, 61</td>
+            <td align="left"><font face="Bukyvede">Приветъ</font></td>
+        </tr>
+        <tr>
+            <td align="left" bgcolor="gainsboro">66, 69</td>
+            <td align="left"><font face="Bukyvede">Hello</font></td>
+        </tr>
+    </table>
+>]
+}
+ */
 def emitRichSvgGraph(): Unit =
   System.err.println("Rich SVG visualization has not yet been implemented")
 
