@@ -10,7 +10,7 @@ import scala.annotation.tailrec
 import ujson.*
 import scala.reflect.ClassTag
 
-// TEI XML output
+// XML output, using Saxon for pretty-printing because Scala XML pretty-printing is broken
 import net.sf.saxon.s9api.{Processor, Serializer, XdmNode, DocumentBuilder}
 import scala.xml.{Elem, Node, PrettyPrinter}
 import java.io.{PrintWriter, StringReader, StringWriter}
@@ -441,11 +441,10 @@ def emitSvgGraph(
         }
 
 /** Rich svg graph with alignment table column inside node
-  *
-  * Sample:
   */
 val sampleRichSvgOutput = // Sample for documentation; not used in production
-  """# https://www.renenyffenegger.ch/notes/tools/Graphviz/attributes/label/HTML-like/index
+  """#https://graphviz.org/doc/info/shapes.html#html
+    |# https://www.renenyffenegger.ch/notes/tools/Graphviz/attributes/label/HTML-like/index
     |digraph G {
     |A [label=<
     |    <table cellspacing="0">
@@ -476,8 +475,6 @@ def emitRichSvgGraph(): Unit =
   *
   * The number property is a string that combines rank + "." + (arbitrary) group offset within alignment point (e.g.,
   * "2.1"). NB: "number" value was an integer in earlier version of CollateX.
-  *
-  * Uses Saxon XSLT only to fix pretty-printing
   *
   * @param alignment
   *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
@@ -545,9 +542,8 @@ def emitGraphMl(
              parse.edgeids="canonical"
              parse.order="nodesfirst">{nodes}{edges}</graph>
     </graphml>
-
-  // val prettyPrintedBody = saxonPrettyPrintXslt(xmlRoot.toString)
-  val prettyPrintedBody = prettyPrintWithSaxon(xmlRoot.toString)
+  val saxonPrettyPrinter = prettyPrintWithSaxon()
+  val prettyPrintedBody = saxonPrettyPrinter(xmlRoot.toString)
   val declaration = """<?xml version="1.0" encoding="UTF-8"?>"""
   val fullOutput = s"$declaration\n$prettyPrintedBody" // prepend string instead of XML.write to retain pretty-print
 
@@ -822,7 +818,8 @@ def emitTeiXml(
 
   val rawXmlString = s"""<?xml version="1.0" encoding="UTF-8"?>\n${root.toString()}"""
 
-  val finalOutput = prettyPrintWithSaxon(rawXmlString)
+  val saxonPrettyPrinter = prettyPrintWithSaxon()
+  val finalOutput = saxonPrettyPrinter(rawXmlString)
 
   if (outputBaseFilename.isEmpty) println(finalOutput)
   else {
@@ -843,12 +840,9 @@ def emitTeiXml(
   * @return
   *   Pretty-printed XML as string
   */
-def prettyPrintWithSaxon(xmlString: String): String = {
+def prettyPrintWithSaxon()(xmlString: String): String = {
   val processor = new Processor(false) // false = non-schema-aware
   val builder: DocumentBuilder = processor.newDocumentBuilder()
-
-  // Parse the raw XML string into an XdmNode
-  val inputDoc: XdmNode = builder.build(new StreamSource(new StringReader(xmlString)))
 
   // Set up the serializer with indenting enabled
   val writer = new StringWriter()
@@ -856,6 +850,9 @@ def prettyPrintWithSaxon(xmlString: String): String = {
   serializer.setOutputProperty(Serializer.Property.METHOD, "xml")
   serializer.setOutputProperty(Serializer.Property.INDENT, "yes")
   serializer.setOutputProperty(Serializer.Property.OMIT_XML_DECLARATION, "no") // Adjust as needed
+
+  // Parse the raw XML string into an XdmNode
+  val inputDoc: XdmNode = builder.build(new StreamSource(new StringReader(xmlString)))
 
   // Serialize the document
   serializer.serializeNode(inputDoc)
@@ -892,23 +889,16 @@ def emitXml(
     val point = alignmentUnit.asInstanceOf[AlignmentPoint]
 
     val cells = point.witnessReadings.toSeq.sortBy(_._1).map { (witId, tokenRange) =>
-      <cell sigil={displaySigla(witId).value}>
-        {tokenRange.tString}
-      </cell>
+      <cell sigil={displaySigla(witId).value}>{tokenRange.tString}</cell>
     }
 
-    <row>
-      {cells}
-    </row>
+    <row>{cells}</row>
   }
 
   val xmlRoot: Elem =
-    <alignment xmlns={namespace}>
-      {rows}
-    </alignment>
-
-  val prettyPrinter = new PrettyPrinter(80, 2)
-  val renderedBody = prettyPrinter.format(xmlRoot)
+    <alignment xmlns={namespace}>{rows}</alignment>
+  val saxonPrettyPrinter = prettyPrintWithSaxon()
+  val renderedBody = saxonPrettyPrinter(xmlRoot.toString)
 
   val declaration = """<?xml version="1.0" encoding="UTF-8"?>"""
 
