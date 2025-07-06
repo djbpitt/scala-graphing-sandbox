@@ -77,18 +77,6 @@ def readData(pathToData: Path): List[(String, String)] =
       displayDispatch(root, gTa, data, argMap) // Create requested outputs
   }
 
-/** Display witId and initial slice of text of all witnesses
-  *
-  * Used only for debugging
-  *
-  * @param wd
-  *   Sequence of CollateXWitnessData instances, one per witness
-  * @return
-  *   Sequence of strings if successful; string with error report if not.
-  */
-def previewWitness(wd: Seq[CollateXWitnessData]): Seq[String] =
-  wd.map(e => List(e.siglum, e.content.take(30)).mkString(": "))
-
 /** Parse command line arguments
   *
   * @param args

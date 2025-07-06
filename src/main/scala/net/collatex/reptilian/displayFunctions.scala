@@ -41,7 +41,6 @@ def displayDispatch(
   val htmlExtension = argMap.getOrElse("--html", Set("html")) // default to .html if none specified
   val outputBaseFilename = argMap.getOrElse("--output", Set()) // empty set if none specified
   formats.foreach {
-    // TODO: Manage html/xhtml, horizontal/vertical table, filenames
     case "table" | "table-h" => emitTableHorizontal(root, displaySigla, gTa, outputBaseFilename)
     case "table-v"           => emitTableVertical(root, displaySigla, gTa, outputBaseFilename)
     case "table-html-h"      => emitTableHorizontalHTML(root, displaySigla, gTa, outputBaseFilename, htmlExtension)
