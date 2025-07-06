@@ -171,6 +171,8 @@ def createRhineDelta(ar: AlignmentRibbon, displaySigla: List[Siglum]): Either[St
 
 // gId is stringified Int.Int, e.g. 2.5
 // gId is for development, the intersection of the witnesses on the source and target of an edge is the edge label
+// RichNodeProperties copies witnessGroups from alignment point
 type GId = String
 case class NodeProperties(gId: GId, witnesses: Set[WitId], content: String)
+case class RichNodeProperties(gId: GId, witnesses: Set[WitId], groups: Set[WitnessReadings])
 case class EdgeProperties(source: GId, target: GId, witnesses: Seq[Int])

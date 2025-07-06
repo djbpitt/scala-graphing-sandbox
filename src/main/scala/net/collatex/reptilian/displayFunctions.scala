@@ -11,7 +11,7 @@ import ujson.*
 import scala.reflect.ClassTag
 
 // TEI XML output
-import net.sf.saxon.s9api.{Processor, Serializer, XsltCompiler, XsltExecutable}
+import net.sf.saxon.s9api.{Processor, Serializer, XdmNode, DocumentBuilder}
 import scala.xml.{Elem, Node, PrettyPrinter}
 import java.io.{PrintWriter, StringReader, StringWriter}
 import javax.xml.transform.stream.StreamSource
@@ -440,6 +440,30 @@ def emitSvgGraph(
           writer.write(svg)
         }
 
+/** Rich svg graph with alignment table column inside node
+  *
+  * Sample:
+  */
+val sampleRichSvgOutput = // Sample for documentation; not used in production
+  """# https://www.renenyffenegger.ch/notes/tools/Graphviz/attributes/label/HTML-like/index
+    |digraph G {
+    |A [label=<
+    |    <table cellspacing="0">
+    |        <tr>
+    |            <td align="left" bgcolor="lightblue">n</td>
+    |            <td align="left" bgcolor="lightblue"><font face="Bukyvede">greeting</font></td>
+    |        </tr>
+    |        <tr>
+    |            <td align="left" bgcolor="gainsboro">59, 61</td>
+    |            <td align="left"><font face="Bukyvede">Приветъ</font></td>
+    |        </tr>
+    |        <tr>
+    |            <td align="left" bgcolor="gainsboro">66, 69</td>
+    |            <td align="left"><font face="Bukyvede">Hello</font></td>
+    |        </tr>
+    |    </table>
+    |>]
+    |}""".stripMargin
 def emitRichSvgGraph(): Unit =
   System.err.println("Rich SVG visualization has not yet been implemented")
 
@@ -522,8 +546,8 @@ def emitGraphMl(
              parse.order="nodesfirst">{nodes}{edges}</graph>
     </graphml>
 
-  val prettyPrintedBody = saxonPrettyPrint(xmlRoot.toString)
-
+  // val prettyPrintedBody = saxonPrettyPrintXslt(xmlRoot.toString)
+  val prettyPrintedBody = prettyPrintWithSaxon(xmlRoot.toString)
   val declaration = """<?xml version="1.0" encoding="UTF-8"?>"""
   val fullOutput = s"$declaration\n$prettyPrintedBody" // prepend string instead of XML.write to retain pretty-print
 
@@ -798,7 +822,7 @@ def emitTeiXml(
 
   val rawXmlString = s"""<?xml version="1.0" encoding="UTF-8"?>\n${root.toString()}"""
 
-  val finalOutput = saxonPrettyPrint(rawXmlString)
+  val finalOutput = prettyPrintWithSaxon(rawXmlString)
 
   if (outputBaseFilename.isEmpty) println(finalOutput)
   else {
@@ -808,34 +832,33 @@ def emitTeiXml(
   }
 }
 
-/** Helper function invokes Saxon XSLT to create TEI XML output
+/** Pretty print XML using Saxon serializer
   *
-  * The XSLT is just an identity transformation with indent="yes"; the only thing we need from it is pretty-printing,
-  * which Saxon does correctly where Scala doesn’t.
+  * Scala XML pretty printer incorrectly inserts whitespace between tags and element text content. We use Saxon
+  * serialization instead.
   *
   * @param xmlString
-  *   Raw XML to format
+  *   XML to pretty-print as String
+  *
   * @return
-  *   Pretty-printed XML as String
+  *   Pretty-printed XML as string
   */
-def saxonPrettyPrint(xmlString: String): String = {
-  val processor = new Processor(false)
-  val compiler: XsltCompiler = processor.newXsltCompiler()
-  val xsltStream = getClass.getResourceAsStream("/tei-pretty-print.xsl")
-  val executable: XsltExecutable = compiler.compile(new StreamSource(xsltStream))
+def prettyPrintWithSaxon(xmlString: String): String = {
+  val processor = new Processor(false) // false = non-schema-aware
+  val builder: DocumentBuilder = processor.newDocumentBuilder()
 
-  val builder = processor.newDocumentBuilder()
-  val inputDoc = builder.build(new StreamSource(new StringReader(xmlString)))
+  // Parse the raw XML string into an XdmNode
+  val inputDoc: XdmNode = builder.build(new StreamSource(new StringReader(xmlString)))
 
-  val transformer = executable.load()
-  transformer.setInitialContextNode(inputDoc)
-
+  // Set up the serializer with indenting enabled
   val writer = new StringWriter()
   val serializer = processor.newSerializer(writer)
+  serializer.setOutputProperty(Serializer.Property.METHOD, "xml")
   serializer.setOutputProperty(Serializer.Property.INDENT, "yes")
+  serializer.setOutputProperty(Serializer.Property.OMIT_XML_DECLARATION, "no") // Adjust as needed
 
-  transformer.setDestination(serializer)
-  transformer.transform()
+  // Serialize the document
+  serializer.serializeNode(inputDoc)
 
   writer.toString
 }
