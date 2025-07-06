@@ -878,11 +878,13 @@ val saxonPrettyPrinter: String => String = {
   val builder: DocumentBuilder = processor.newDocumentBuilder()
   xmlString =>
     // Set up the serializer with indenting enabled
+    // Writers maintain state and readers are bound to specific input,
+    //   so these have to be created afresh each time the function is called
     val writer = new StringWriter()
     val serializer = processor.newSerializer(writer)
     serializer.setOutputProperty(Serializer.Property.METHOD, "xml")
     serializer.setOutputProperty(Serializer.Property.INDENT, "yes")
-    serializer.setOutputProperty(Serializer.Property.OMIT_XML_DECLARATION, "no") // Adjust as needed
+    serializer.setOutputProperty(Serializer.Property.OMIT_XML_DECLARATION, "no")
 
     // Parse the raw XML string into an XdmNode
     val inputDoc: XdmNode = builder.build(new StreamSource(new StringReader(xmlString)))
