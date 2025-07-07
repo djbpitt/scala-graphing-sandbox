@@ -93,16 +93,33 @@ def createEdges(
 def createDot(
     nodes: Vector[NodeProperties],
     edges: Vector[EdgeProperties],
-    displaySigla: List[Siglum]
+    displaySigla: List[Siglum],
+    rich: Boolean
 ): String =
+  def cleanContent(orig: String) = // Graphviz HTML requires escaping; Replace & before < and >
+    orig.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&lt;")
   val dotStart = "digraph G {"
   val dotEnd = "}"
-  val nodeLines =
-    nodes
-      .map(e =>
-        val cleanedContent = e.content.replace("\"", "\\\"") // Escape quote (only?)
-        List("  ", e.gId, " [label=\"", cleanedContent, "\"]").mkString
-      )
+  val nodeLines = {
+    if rich then
+      nodes
+        .map(e =>
+          val cleanedContent =
+            s"""<table cellspacing="0" border="0" cellborder="1">
+                <tr>
+              |<td align="left" bgcolor="lightblue">n</td>
+              |<td align="left" bgcolor="lightblue">${cleanContent(e.content)}</td>
+              |</tr>
+              |</table>""".stripMargin
+          List("  ", e.gId, "[shape=\"plain\" label=<", cleanedContent, ">]").mkString
+        )
+    else
+      nodes
+        .map(e =>
+          val cleanedContent = cleanContent(e.content).replace("\"", "\\\"")
+          List("  ", e.gId, " [label=\"", cleanedContent, "\"]").mkString
+        )
+  }
   val edgeLines =
     edges
       .map(e =>
@@ -127,12 +144,14 @@ def createDot(
   * @return
   *   Rhine delta SVG visualization as String
   */
-def createSvg(dotFile: String): Either[String, String] =
+def createSvg(dotFile: String, rich: Boolean = false): Either[String, String] =
   val dotExecutable = sys.env.getOrElse(
     "GRAPHVIZ_DOT", // Use environment variable if set
     "dot" // Otherwise expect to find dot on system path
   )
-  val process = Process(Seq(dotExecutable, "-Tsvg"))
+  val process =
+    if rich then Process(Seq(dotExecutable, "-Tsvg:cairo")) // cairo required for stable font metrics
+    else Process(Seq(dotExecutable, "-Tsvg"))
   val output = new StringBuilder
   val error = new StringBuilder
   val io = new ProcessIO(
@@ -202,8 +221,9 @@ def createRhineDelta(
   val end = NodeProperties(Int.MaxValue.toString, allWitIds, "End", endGroup)
   val nodes = createNodes(ar) // Extract, label, and flatten reading groups into vector of NodeProperty
   val edges = createEdges(nodes, start, end, displaySigla) // Create edges as vector of EdgeProperty
-  val dotFile = createDot(start +: nodes :+ end, edges, displaySigla)
-  createSvg(dotFile)
+  val dotFile = createDot(start +: nodes :+ end, edges, displaySigla, rich)
+  // System.err.println(dotFile)
+  createSvg(dotFile, rich)
 
 // gId is stringified Int.Int, e.g. 2.5
 // gId is for development, the intersection of the witnesses on the source and target of an edge is the edge label

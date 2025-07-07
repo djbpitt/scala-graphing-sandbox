@@ -470,7 +470,7 @@ def emitAlignmentRibbon(
 # https://www.renenyffenegger.ch/notes/tools/Graphviz/attributes/label/HTML-like/index
 digraph G {
 A [shape="plain"; label=<
-    <table cellspacing="0">
+    <table cellspacing="0" border="0" cellborder="1">
         <tr>
             <td align="left" bgcolor="lightblue">n</td>
             <td align="left" bgcolor="lightblue"><font face="Bukyvede">greeting</font></td>
@@ -500,7 +500,9 @@ def emitSvgGraph(
       if outputBaseFilename.isEmpty then println(svg) // write to stdout
       else
         val base = outputBaseFilename.head
-        val fullPath = Paths.get(base + ".svg").toAbsolutePath
+        val fullPath = {
+          if rich then Paths.get(base + "-rich.svg").toAbsolutePath else Paths.get(base + ".svg").toAbsolutePath
+        }
         Using.resource(new PrintWriter(fullPath.toFile, "UTF-8")) { writer =>
           writer.write(svg)
         }
