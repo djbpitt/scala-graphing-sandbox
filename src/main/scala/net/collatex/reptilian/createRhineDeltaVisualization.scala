@@ -24,7 +24,7 @@ def createNodes(
         .asInstanceOf[AlignmentPoint]
         .witnessGroups
         .zipWithIndex
-        .map((wr, gId) => NodeProperties(List(apId, ".", gId).mkString, wr.keySet, wr.head._2.tString))
+        .map((wr, gId) => NodeProperties(List(apId, ".", gId).mkString, wr.keySet, wr.head._2.nString, wr))
     }.toVector
   nodeInfos
 
@@ -169,25 +169,44 @@ def createSvg(dotFile: String): Either[String, String] =
   * @return
   *   Rhine delta SVG representation as String, created by Graphviz
   */
+/* Sample rich output
+# https://www.renenyffenegger.ch/notes/tools/Graphviz/attributes/label/HTML-like/index
+digraph G {
+A [shape="plain"; label=<
+    <table cellspacing="0">
+        <tr>
+            <td align="left" bgcolor="lightblue">n</td>
+            <td align="left" bgcolor="lightblue"><font face="Bukyvede">greeting</font></td>
+        </tr>
+        <tr>
+            <td align="left" bgcolor="gainsboro">59, 61</td>
+            <td align="left"><font face="Bukyvede">Приветъ</font></td>
+        </tr>
+        <tr>
+            <td align="left" bgcolor="gainsboro">66, 69</td>
+            <td align="left"><font face="Bukyvede">Hello</font></td>
+        </tr>
+    </table>
+>]
+}
+ * */
 def createRhineDelta(
     ar: AlignmentRibbon,
     displaySigla: List[Siglum],
     rich: Boolean = false
 ): Either[String, String] =
   val allWitIds = displaySigla.indices.toSet
-  if rich then Left("Rich SVG support not yet implemented")
-  else
-    val start = NodeProperties("-1.0", allWitIds, "Start")
-    val end = NodeProperties(Int.MaxValue.toString, allWitIds, "End")
-    val nodes = createNodes(ar) // Extract, label, and flatten reading groups into vector of NodeProperty
-    val edges = createEdges(nodes, start, end, displaySigla) // Create edges as vector of EdgeProperty
-    val dotFile = createDot(start +: nodes :+ end, edges, displaySigla)
-    createSvg(dotFile)
+  val startGroup = allWitIds.map(e => e -> "[Start]").toMap.asInstanceOf[WitnessReadings]
+  val start = NodeProperties("-1.0", allWitIds, "Start", startGroup)
+  val endGroup = allWitIds.map(e => e -> "[End]").toMap.asInstanceOf[WitnessReadings]
+  val end = NodeProperties(Int.MaxValue.toString, allWitIds, "End", endGroup)
+  val nodes = createNodes(ar) // Extract, label, and flatten reading groups into vector of NodeProperty
+  val edges = createEdges(nodes, start, end, displaySigla) // Create edges as vector of EdgeProperty
+  val dotFile = createDot(start +: nodes :+ end, edges, displaySigla)
+  createSvg(dotFile)
 
 // gId is stringified Int.Int, e.g. 2.5
 // gId is for development, the intersection of the witnesses on the source and target of an edge is the edge label
-// RichNodeProperties copies witnessGroups from alignment point
 type GId = String
-case class NodeProperties(gId: GId, witnesses: Set[WitId], content: String)
-case class RichNodeProperties(gId: GId, witnesses: Set[WitId], groups: Set[WitnessReadings])
+case class NodeProperties(gId: GId, witnesses: Set[WitId], content: String, group: WitnessReadings)
 case class EdgeProperties(source: GId, target: GId, witnesses: Seq[Int])

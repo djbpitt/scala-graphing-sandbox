@@ -448,9 +448,9 @@ def emitAlignmentRibbon(
 
 /** Create SVG representation of Rhine delta (formerly variant graph)
   *
-  * --format svg
+  * --format svg, --format svg-rich
   *
-  * Shows only 'n' value of tokens. For 't' values use '--format svg-rich'
+  * svg format shows only 'n' value of tokens; svg-rich format shows t values
   *
   * @param alignment
   *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
@@ -464,26 +464,6 @@ def emitAlignmentRibbon(
   *
   * @return
   *   None. Write SVG document to filesystem or stdout
-  */
-def emitSvgGraph(
-    alignment: AlignmentRibbon,
-    displaySigla: List[Siglum],
-    outputBaseFilename: Set[String], // either empty or single string (validated in parseArgs())
-    rich: Boolean = false
-): Unit =
-  createRhineDelta(alignment, displaySigla, rich) match
-    case Left(err) =>
-      System.err.println(err)
-    case Right(svg) =>
-      if outputBaseFilename.isEmpty then println(svg) // write to stdout
-      else
-        val base = outputBaseFilename.head
-        val fullPath = Paths.get(base + ".svg").toAbsolutePath
-        Using.resource(new PrintWriter(fullPath.toFile, "UTF-8")) { writer =>
-          writer.write(svg)
-        }
-
-/** Rich svg graph with alignment table column inside node
   */
 /* Sample output
 #https://graphviz.org/doc/info/shapes.html#html
@@ -507,8 +487,23 @@ A [shape="plain"; label=<
 >]
 }
  */
-def emitRichSvgGraph(): Unit =
-  System.err.println("Rich SVG visualization has not yet been implemented")
+def emitSvgGraph(
+    alignment: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    outputBaseFilename: Set[String], // either empty or single string (validated in parseArgs())
+    rich: Boolean = false
+): Unit =
+  createRhineDelta(alignment, displaySigla, rich) match
+    case Left(err) =>
+      System.err.println(err)
+    case Right(svg) =>
+      if outputBaseFilename.isEmpty then println(svg) // write to stdout
+      else
+        val base = outputBaseFilename.head
+        val fullPath = Paths.get(base + ".svg").toAbsolutePath
+        Using.resource(new PrintWriter(fullPath.toFile, "UTF-8")) { writer =>
+          writer.write(svg)
+        }
 
 /** GraphML output
   *
@@ -556,9 +551,19 @@ def emitGraphMl(
     nodeData
   }
   val allWits = displaySigla.indices.toSet
-  val start = GraphMlNodeProperties("0.0", "[Start]", 0, allWits)
+  val start = GraphMlNodeProperties(
+    "0.0",
+    "[Start]",
+    0,
+    allWits
+  )
   val endRank = nodeInstances.last.rank + 1
-  val end = GraphMlNodeProperties(List(endRank, ".0").mkString, "[End]", endRank, allWits)
+  val end = GraphMlNodeProperties(
+    List(endRank, ".0").mkString,
+    "[End]",
+    endRank,
+    allWits
+  )
   val nodes = (start +: nodeInstances :+ end).map(e => <node id={"n" + e.number}>
       <data key="d0">{e.number}</data>
       <data key="d2">{e.rank}</data>
@@ -959,5 +964,10 @@ def emitXml(
   * @param witIds
   *   Set of WitId values, used to compute edge labels
   */
-case class GraphMlNodeProperties(number: String, content: String, rank: Int, witIds: Set[WitId])
+case class GraphMlNodeProperties(
+    number: String,
+    content: String,
+    rank: Int,
+    witIds: Set[WitId]
+)
 case class GraphMlEdgeProperties(source: String, target: String, witIds: Seq[WitId])
