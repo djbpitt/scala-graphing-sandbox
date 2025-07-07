@@ -1,5 +1,7 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.NodeContent.{EndNode, StartNode}
+
 import scala.annotation.tailrec
 import scala.sys.process.*
 import java.io.*
@@ -24,7 +26,9 @@ def createNodes(
         .asInstanceOf[AlignmentPoint]
         .witnessGroups
         .zipWithIndex
-        .map((wr, gId) => NodeProperties(List(apId, ".", gId).mkString, wr.keySet, wr.head._2.nString, wr))
+        .map((wr, gId) =>
+          NodeProperties(List(apId, ".", gId).mkString, wr.keySet, wr.head._2.nString, NodeContent.RealContent(wr))
+        )
     }.toVector
   nodeInfos
 
@@ -102,21 +106,42 @@ def createDot(
   val dotEnd = "}"
   val nodeLines = {
     if rich then
-      nodes
-        .map(e =>
-          val cleanedContent =
-            s"""<table cellspacing="0" border="0" cellborder="1">
+      nodes.map { e =>
+        val nRow =
+          <tr>
+            <td align="left" bgcolor="lightblue">n</td>
+            <td align="left" bgcolor="lightblue">{
+            e.group match
+              case NodeContent.RealContent(wr) => cleanContent(e.content)
+              case NodeContent.StartNode       => "[Start]"
+              case NodeContent.EndNode         => "[End]"
+          }</td>
+          </tr>.toString
+
+        val tRows = e.group match
+          case NodeContent.RealContent(group) =>
+            e.witnesses.toSeq.sorted
+              .map { f =>
+                val reading = group(f).tString
                 <tr>
-              |<td align="left" bgcolor="lightblue">n</td>
-              |<td align="left" bgcolor="lightblue">${cleanContent(e.content)}</td>
-              |</tr>
-              |</table>""".stripMargin
-          List("  ", e.gId, "[shape=\"plain\" label=<", cleanedContent, ">]").mkString
-        )
+                <td align="left">{displaySigla(f)}</td>
+                <td align="left">{reading}</td>
+              </tr>
+              }
+              .mkString("\n")
+
+          case NodeContent.StartNode | NodeContent.EndNode =>
+            "" // No t-rows needed for Start/End
+
+        val cleanedContent =
+          List("<table cellspacing=\"0\" border=\"0\" cellborder=\"1\">", nRow, tRows, "</table>").mkString
+
+        List("  ", e.gId, "[shape=\"plain\" label=<", cleanedContent, ">]").mkString
+      }
     else
       nodes
         .map(e =>
-          val cleanedContent = cleanContent(e.content).replace("\"", "\\\"")
+          val cleanedContent = cleanContent(e.content).replace("\"", "\\\"") // Replace quotes only for non-HTML labels
           List("  ", e.gId, " [label=\"", cleanedContent, "\"]").mkString
         )
   }
@@ -215,10 +240,8 @@ def createRhineDelta(
     rich: Boolean = false
 ): Either[String, String] =
   val allWitIds = displaySigla.indices.toSet
-  val startGroup = allWitIds.map(e => e -> "[Start]").toMap.asInstanceOf[WitnessReadings]
-  val start = NodeProperties("-1.0", allWitIds, "Start", startGroup)
-  val endGroup = allWitIds.map(e => e -> "[End]").toMap.asInstanceOf[WitnessReadings]
-  val end = NodeProperties(Int.MaxValue.toString, allWitIds, "End", endGroup)
+  val start = NodeProperties("-1.0", allWitIds, "Start", StartNode)
+  val end = NodeProperties(Int.MaxValue.toString, allWitIds, "End", EndNode)
   val nodes = createNodes(ar) // Extract, label, and flatten reading groups into vector of NodeProperty
   val edges = createEdges(nodes, start, end, displaySigla) // Create edges as vector of EdgeProperty
   val dotFile = createDot(start +: nodes :+ end, edges, displaySigla, rich)
@@ -228,5 +251,12 @@ def createRhineDelta(
 // gId is stringified Int.Int, e.g. 2.5
 // gId is for development, the intersection of the witnesses on the source and target of an edge is the edge label
 type GId = String
-case class NodeProperties(gId: GId, witnesses: Set[WitId], content: String, group: WitnessReadings)
+
+// Start and end nodes don't have token ranges; this lets us process them with special handling
+enum NodeContent:
+  case RealContent(group: WitnessReadings) // normal nodes with TokenRange mappings
+  case StartNode // Special artificial node to signal special handling (also EndNode)
+  case EndNode
+case class NodeProperties(gId: GId, witnesses: Set[WitId], content: String, group: NodeContent)
+
 case class EdgeProperties(source: GId, target: GId, witnesses: Seq[Int])

@@ -15,8 +15,6 @@ enum TokenRange:
   def until: Int
   def ta: Vector[TokenEnum]
 
-  override def toString: String = // For debugging
-    List("TokenRange(", this.start, ",", this.until, ", gTa)").mkString
   def tString: String =
     this.tokens.map(_.t).mkString // concatenate t values
   def nString: String =
