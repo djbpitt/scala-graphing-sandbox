@@ -1,6 +1,6 @@
 package net.collatex.reptilian
 
-import net.collatex.reptilian.NodeContent.{EndNode, StartNode}
+import net.collatex.reptilian.NodeContent.TerminalNode
 
 import scala.annotation.tailrec
 import scala.sys.process.*
@@ -110,12 +110,7 @@ def createDot(
         val nRow =
           <tr>
             <td align="left" bgcolor="lightblue">n</td>
-            <td align="left" bgcolor="lightblue">{
-            e.group match
-              case NodeContent.RealContent(wr) => cleanContent(e.content)
-              case NodeContent.StartNode       => "[Start]"
-              case NodeContent.EndNode         => "[End]"
-          }</td>
+            <td align="left" bgcolor="lightblue">{cleanContent(e.nValue)}</td>
           </tr>.toString
 
         val tRows = e.group match
@@ -130,8 +125,7 @@ def createDot(
               }
               .mkString("\n")
 
-          case NodeContent.StartNode | NodeContent.EndNode =>
-            "" // No t-rows needed for Start/End
+          case NodeContent.TerminalNode => "" // No t-rows needed for Start/End
 
         val cleanedContent =
           List("<table cellspacing=\"0\" border=\"0\" cellborder=\"1\">", nRow, tRows, "</table>").mkString
@@ -141,7 +135,7 @@ def createDot(
     else
       nodes
         .map(e =>
-          val cleanedContent = cleanContent(e.content).replace("\"", "\\\"") // Replace quotes only for non-HTML labels
+          val cleanedContent = cleanContent(e.nValue).replace("\"", "\\\"") // Replace quotes only for non-HTML labels
           List("  ", e.gId, " [label=\"", cleanedContent, "\"]").mkString
         )
   }
@@ -240,8 +234,8 @@ def createRhineDelta(
     rich: Boolean = false
 ): Either[String, String] =
   val allWitIds = displaySigla.indices.toSet
-  val start = NodeProperties("-1.0", allWitIds, "Start", StartNode)
-  val end = NodeProperties(Int.MaxValue.toString, allWitIds, "End", EndNode)
+  val start = NodeProperties("-1.0", allWitIds, "[Start]", TerminalNode)
+  val end = NodeProperties(Int.MaxValue.toString, allWitIds, "[End]", TerminalNode)
   val nodes = createNodes(ar) // Extract, label, and flatten reading groups into vector of NodeProperty
   val edges = createEdges(nodes, start, end, displaySigla) // Create edges as vector of EdgeProperty
   val dotFile = createDot(start +: nodes :+ end, edges, displaySigla, rich)
@@ -255,8 +249,7 @@ type GId = String
 // Start and end nodes don't have token ranges; this lets us process them with special handling
 enum NodeContent:
   case RealContent(group: WitnessReadings) // normal nodes with TokenRange mappings
-  case StartNode // Special artificial node to signal special handling (also EndNode)
-  case EndNode
-case class NodeProperties(gId: GId, witnesses: Set[WitId], content: String, group: NodeContent)
+  case TerminalNode // Start and End have no witness readings
+case class NodeProperties(gId: GId, witnesses: Set[WitId], nValue: String, group: NodeContent)
 
 case class EdgeProperties(source: GId, target: GId, witnesses: Seq[Int])
