@@ -54,15 +54,33 @@ def readData(pathToData: Path): List[(String, String)] =
   *   args: location of manifest and optional toggle for debug output
   * @return
   */
-@main def manifest(
-    args: String*
-): Unit =
+@main def manifest(args: String*): Unit =
   val parsedInput =
     for {
-      // https://contributors.scala-lang.org/t/for-comprehension-requires-withfilter-to-destructure-tuples/5953
+      // Parse args into (manifestPathString, argMap)
       result <- parseArgs(args)
-      (manifestPathString, argMap) = result // TODO: Retrieve argMap and apply to output
-      witnessData <- parseManifest(manifestPathString)
+      (manifestPathString, argMap) = result
+
+      // Resolve to ManifestData (source + format)
+      manifestData <- resolveManifestString(manifestPathString)
+
+      // Branch on format
+      witnessData <- manifestData match
+        case ManifestData(source, ManifestFormat.Xml) =>
+          val manifestUri = source match
+            case ManifestSource.Local(path) => path.toNIO.toUri
+            case ManifestSource.Remote(url) => url.toURI
+
+          for {
+            manifestXml <- retrieveManifestXml(source)
+            manifestRnc = Source.fromResource("manifest.rnc").mkString
+            _ <- validateRnc(manifestXml, manifestRnc)
+            _ <- validateSchematron(manifestXml, "manifest-sch-compiled.xsl", manifestUri).left.map(_.mkString("\n"))
+            data <- retrieveWitnessData(manifestXml, ManifestData(source, ManifestFormat.Xml))
+          } yield data
+
+        case ManifestData(_, ManifestFormat.Json) =>
+          Left("JSON manifest support is not yet implemented. Please use an XML manifest instead.")
     } yield (witnessData, argMap)
 
   parsedInput match {
@@ -327,37 +345,44 @@ def validateSchematron(
   * @return
   *   Absolute file system path or url if success; string with error report if not.
   */
-def resolveManifestString(manifestPathString: String): Either[String, Path | URL] =
+def resolveManifestString(manifestPathString: String): Either[String, ManifestData] =
+  val format =
+    if manifestPathString.endsWith(".xml") then ManifestFormat.Xml
+    else if manifestPathString.endsWith(".json") then ManifestFormat.Json
+    else return Left("Manifest filename must end with .xml or .json")
+
   if manifestPathString.startsWith("http://") || manifestPathString.startsWith("https://") then
-    try Right(URI.create(manifestPathString).toURL)
+    try Right(ManifestData(ManifestSource.Remote(URI.create(manifestPathString).toURL), format))
     catch
       case ex: Exception =>
         Left(s"Invalid URL: ${ex.getMessage}")
   else
     val absoluteManifestPath = os.Path(manifestPathString, os.pwd)
-    if os.exists(absoluteManifestPath) then Right(absoluteManifestPath)
+    if os.exists(absoluteManifestPath) then Right(ManifestData(ManifestSource.Local(absoluteManifestPath), format))
     else Left(s"Manifest file cannot be found: $absoluteManifestPath")
 
 /** Retrieves manifest from eith file system path or remote url
   *
-  * @param manifestSource
+  * @param source
   *   Location of manifest as file system path (absolute or relative to manifest file) or remote url
   * @return
   *   Manifest as xml if successful; error report as string if not.
   */
-def retrieveManifestXml(manifestSource: Path | URL): Either[String, Elem] =
+def retrieveManifestXml(source: ManifestSource): Either[String, Elem] =
   val manifestXml: Elem =
-    manifestSource match
-      case x: Path =>
-        try XML.loadFile(x.toString)
+    source match
+      case ManifestSource.Local(path) =>
+        try XML.loadFile(path.toString)
         catch
           case _: Exception =>
-            return Left(s"Manifest was found at $x, but could not be loaded as an XML document")
-      case x: URL =>
-        try XML.load(x)
+            return Left(s"Manifest was found at $path, but could not be loaded as an XML document")
+
+      case ManifestSource.Remote(url) =>
+        try XML.load(url)
         catch
           case _: Exception =>
-            return Left(s"Url $x was found but could not be loaded as an XML document")
+            return Left(s"URL $url was found but could not be loaded as an XML document")
+
   Right(manifestXml)
 
 /** Retrieves witness data from witness sources in manifest
@@ -369,7 +394,7 @@ def retrieveManifestXml(manifestSource: Path | URL): Either[String, Elem] =
   * @return
   *   Sequence of CollateXWitnessData instances if successful; otherwise error messages as string
   */
-def retrieveWitnessData(manifest: Elem, manifestSource: Path | URL): Either[String, Seq[CollateXWitnessData]] =
+def retrieveWitnessData(manifest: Elem, manifestSource: ManifestData): Either[String, Seq[CollateXWitnessData]] =
   val results: Seq[Either[String, CollateXWitnessData]] =
     (manifest \ "_").map { e =>
       val siglum = (e \ "@siglum").headOption.map(_.text).getOrElse("")
@@ -381,12 +406,12 @@ def retrieveWitnessData(manifest: Elem, manifestSource: Path | URL): Either[Stri
         val inputSource = witnessUrlAttr match
           case remote if remote.startsWith("http://") || remote.startsWith("https://") =>
             Source.fromURL(remote)
-          case pathLike => // path to witness
-            manifestSource match // it's a relative path, but relative to url or to file system resource?
-              case baseUrl: URL => // manifest source is url
+          case pathLike =>
+            manifestSource.source match // <-- match on the inner ManifestSource now
+              case ManifestSource.Remote(baseUrl) =>
                 val resolvedUrl = URI.create(baseUrl.toString).resolve(pathLike).toURL
-                Source.fromURL(resolvedUrl) // Must be URL, not URI
-              case basePath: Path => // manifest source is path
+                Source.fromURL(resolvedUrl)
+              case ManifestSource.Local(basePath) =>
                 val manifestParent = basePath / os.up
                 val resolvedPath = os.Path(pathLike, manifestParent)
                 Source.fromFile(resolvedPath.toString)
@@ -403,33 +428,39 @@ def retrieveWitnessData(manifest: Elem, manifestSource: Path | URL): Either[Stri
   if errors.nonEmpty then Left(errors.mkString("\n"))
   else Right(witnesses)
 
+//TODO: Remove because logic has been moved elsewhere?
 /** Locates manifest from path string and reads witnesses into CollateXWitnessData
   *
   * Combines helper methods into for comprehension to 1) resolve the manifest path string; 2) load the manifest as xml;
   * 3) validate the manifest with Relax NG and Schematron; and 4) retrieve witness data from witness sources identified
   * in manifest.
   *
-  * @param manifestPathString
+  * @param source
   *   location of manifest (may be remote, local absolute, or local relative)
   * @return
   *   sequence of CollateXWitnessData instances if success; string with error message if failure
   */
-def parseManifest(manifestPathString: String): Either[String, Seq[CollateXWitnessData]] =
-  if manifestPathString.endsWith(".xml") then
-    for {
-      manifestPath <- resolveManifestString(manifestPathString)
-      manifestUri: java.net.URI = manifestPath match {
-        case p: os.Path      => p.toNIO.toUri
-        case u: java.net.URL => u.toURI
-      }
-      manifestXml <- retrieveManifestXml(manifestPath)
-      manifestRnc = Source.fromResource("manifest.rnc").getLines().mkString("\n")
-      _ <- validateRnc(manifestXml, manifestRnc)
-      _ <- validateSchematron(manifestXml, "manifest-sch-compiled.xsl", manifestUri).left.map(_.mkString("\n"))
-      witnessData <- retrieveWitnessData(manifestXml, manifestPath)
-    } yield witnessData
-  else if manifestPathString.endsWith(".json") then
-    Left("JSON manifest support is not yet implemented. Please use an XML manifest instead.")
-  else Left("Manifest filename must end with .xml or .json") // Should not happen; we trap this earlier
+def parseXmlManifest(source: ManifestSource): Either[String, Seq[CollateXWitnessData]] =
+  val manifestUri: URI = source match
+    case ManifestSource.Local(path) => path.toNIO.toUri
+    case ManifestSource.Remote(url) => url.toURI
+
+  source match
+    case ManifestSource.Local(_) | ManifestSource.Remote(_) =>
+      for {
+        manifestXml <- retrieveManifestXml(source)
+        manifestRnc = Source.fromResource("manifest.rnc").getLines().mkString("\n")
+        _ <- validateRnc(manifestXml, manifestRnc)
+        _ <- validateSchematron(manifestXml, "manifest-sch-compiled.xsl", manifestUri).left.map(_.mkString("\n"))
+        witnessData <- retrieveWitnessData(manifestXml, ManifestData(source, ManifestFormat.Xml))
+      } yield witnessData
 
 case class CollateXWitnessData(siglum: String, color: String, content: String)
+// Manifest can be XML or JSON and it can be remote or local
+enum ManifestSource:
+  case Remote(url: URL)
+  case Local(path: os.Path)
+enum ManifestFormat:
+  case Xml
+  case Json
+case class ManifestData(source: ManifestSource, format: ManifestFormat)
