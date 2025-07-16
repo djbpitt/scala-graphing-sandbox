@@ -10,15 +10,12 @@ import java.io.*
   *
   * @param ar
   *   Alignment ribbon, same as for other visualizations.
-  * @param rich
-  *   Boolean; true = rich output (t values), false (defult) = regular output (n values)
   *
   * @return
   *   Vector of NodeProperties instances
   */
 def createNodes(
-    ar: AlignmentRibbon,
-    rich: Boolean = false
+    ar: AlignmentRibbon
 ): Vector[NodeProperties] = // Start and End are created elsewhere
   val nodeInfos: Vector[NodeProperties] =
     ar.children.zipWithIndex.flatMap { case (data, apId) =>
@@ -115,17 +112,24 @@ def createDot(
 
         val tRows = e.group match
           case NodeContent.RealContent(group) =>
-            e.witnesses.toSeq.sorted
-              .map { f =>
-                val reading = group(f).tString
+            group.toSeq
+              .groupBy { case (_, tokenRange) => tokenRange.tString.normalizeSpace }
+              .toSeq
+              .map { case (readingText, groupedEntries) =>
+                val witIds = groupedEntries.map { case (witId, _) => witId }
+                val sortedSigla = witIds
+                  .map(displaySigla)
+                  .sortBy(s => displaySigla.indexOf(s))
+                  .mkString(", ")
+
                 <tr>
-                <td align="left">{displaySigla(f)}</td>
-                <td align="left">{reading}</td>
-              </tr>
+                  <td align="left">{sortedSigla}</td>
+                  <td align="left">{readingText}</td>
+                </tr>
               }
               .mkString("\n")
 
-          case NodeContent.TerminalNode => "" // No t-rows needed for Start/End
+          case NodeContent.TerminalNode => ""
 
         val cleanedContent =
           List("<table cellspacing=\"0\" border=\"0\" cellborder=\"1\">", nRow, tRows, "</table>").mkString
