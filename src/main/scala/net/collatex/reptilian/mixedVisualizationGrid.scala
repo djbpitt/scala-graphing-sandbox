@@ -1,7 +1,7 @@
 package net.collatex.reptilian
 
 import scala.annotation.{tailrec, unused}
-import scala.xml.{Elem, NodeSeq}
+import scala.xml.{Elem, NodeSeq, Unparsed}
 import math.Ordered.orderingToOrdered
 
 /* ====================================================================== */
@@ -619,7 +619,7 @@ def createHorizontalRibbons(
       <head>
         <title>Alignments</title>
         <style type="text/css">{css}</style>
-        <script type="text/javascript">{js}</script>
+        <script type="text/javascript">{Unparsed(js)}</script>
       </head>
       <body>
         <header>
