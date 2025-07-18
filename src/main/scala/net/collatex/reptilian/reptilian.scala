@@ -455,8 +455,23 @@ def parseXmlManifest(source: ManifestSource): Either[String, Seq[CollateXWitness
         witnessData <- retrieveWitnessData(manifestXml, ManifestData(source, ManifestFormat.Xml))
       } yield witnessData
 
+/** Data retrieved from link in manifest
+  *
+  * @param siglum
+  *   User-supplied string for rendering
+  * @param color
+  *   User-supplied string to color ribbon
+  * @param content
+  *   Plain-text string, to be tokenized
+  */
 case class CollateXWitnessData(siglum: String, color: String, content: String)
-// Manifest can be XML or JSON and it can be remote or local
+
+/** ManifestData has two properties:
+  *
+  * Source: Remote (URL) or local (Path), where local can be absolute or relative
+  *
+  * Format: XML or JSON
+  */
 enum ManifestSource:
   case Remote(url: URL)
   case Local(path: os.Path)
