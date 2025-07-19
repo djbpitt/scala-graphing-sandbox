@@ -76,10 +76,10 @@ def readData(pathToData: Path): List[(String, String)] =
             manifestRnc = Source.fromResource("manifest.rnc").mkString
             _ <- validateRnc(manifestXml, manifestRnc)
             _ <- validateSchematron(manifestXml, "manifest-sch-compiled.xsl", manifestUri).left.map(_.mkString("\n"))
-            data <- retrieveWitnessData(manifestXml, ManifestData(source, ManifestFormat.Xml))
+            data <- retrieveWitnessDataXml(manifestXml, ManifestData(source, ManifestFormat.Xml))
           } yield data
 
-        case ManifestData(_, ManifestFormat.Json) =>
+        case ManifestData(source, ManifestFormat.Json) =>
           Left("JSON manifest support is not yet implemented. Please use an XML manifest instead.")
     } yield (witnessData, argMap)
 
@@ -394,7 +394,7 @@ def retrieveManifestXml(source: ManifestSource): Either[String, Elem] =
   * @return
   *   Sequence of CollateXWitnessData instances if successful; otherwise error messages as string
   */
-def retrieveWitnessData(manifest: Elem, manifestSource: ManifestData): Either[String, Seq[CollateXWitnessData]] =
+def retrieveWitnessDataXml(manifest: Elem, manifestSource: ManifestData): Either[String, Seq[CollateXWitnessData]] =
   val results: Seq[Either[String, CollateXWitnessData]] =
     (manifest \ "_").map { e =>
       val siglum = (e \ "@siglum").headOption.map(_.text).getOrElse("")
@@ -428,6 +428,9 @@ def retrieveWitnessData(manifest: Elem, manifestSource: ManifestData): Either[St
   if errors.nonEmpty then Left(errors.mkString("\n"))
   else Right(witnesses)
 
+def retrieveWitnessDataJson(json: ujson.Value, manifestSource: ManifestData): Either[String, Seq[CollateXWitnessData]] = ???
+
+
 //TODO: Remove because logic has been moved elsewhere?
 /** Locates manifest from path string and reads witnesses into CollateXWitnessData
   *
@@ -452,7 +455,7 @@ def parseXmlManifest(source: ManifestSource): Either[String, Seq[CollateXWitness
         manifestRnc = Source.fromResource("manifest.rnc").getLines().mkString("\n")
         _ <- validateRnc(manifestXml, manifestRnc)
         _ <- validateSchematron(manifestXml, "manifest-sch-compiled.xsl", manifestUri).left.map(_.mkString("\n"))
-        witnessData <- retrieveWitnessData(manifestXml, ManifestData(source, ManifestFormat.Xml))
+        witnessData <- retrieveWitnessDataXml(manifestXml, ManifestData(source, ManifestFormat.Xml))
       } yield witnessData
 
 /** Data retrieved from link in manifest
