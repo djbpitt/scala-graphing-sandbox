@@ -397,17 +397,18 @@ def retrieveManifestXml(source: ManifestSource): Either[String, Elem] =
 def retrieveWitnessDataXml(manifest: Elem, manifestSource: ManifestData): Either[String, Seq[CollateXWitnessData]] =
   val results: Seq[Either[String, CollateXWitnessData]] =
     (manifest \ "_").map { e =>
-      val siglum = (e \ "@siglum").headOption.map(_.text).getOrElse("")
-      val color = (e \ "@color").headOption.map(_.text).getOrElse("")
       val maybeWitness: Either[String, CollateXWitnessData] = Try {
-        // Try (unlike try) does not throw an immediate exception; it wraps
-        //   the code and returns Success(value) or Failure(exception)
-        val witnessUrlAttr = (e \ "@url").head.text // might be url or file system path (relative to manifest)
+        val siglum = (e \ "@siglum").headOption.map(_.text).getOrElse {
+          throw new RuntimeException(s"Missing required @siglum attribute in: ${e.toString}")
+        }
+        // Defined as Option[String], will be None if missing or empty string
+        val color = (e \ "@color").headOption.map(_.text).filter(_.nonEmpty)
+        val witnessUrlAttr = (e \ "@url").head.text
         val inputSource = witnessUrlAttr match
           case remote if remote.startsWith("http://") || remote.startsWith("https://") =>
             Source.fromURL(remote)
           case pathLike =>
-            manifestSource.source match // <-- match on the inner ManifestSource now
+            manifestSource.source match
               case ManifestSource.Remote(baseUrl) =>
                 val resolvedUrl = URI.create(baseUrl.toString).resolve(pathLike).toURL
                 Source.fromURL(resolvedUrl)
@@ -417,9 +418,8 @@ def retrieveWitnessDataXml(manifest: Elem, manifestSource: ManifestData): Either
                 Source.fromFile(resolvedPath.toString)
         Using(inputSource) { source =>
           CollateXWitnessData(siglum, color, source.getLines().mkString(" "))
-        }.get // Throws if resource can't be read
-      }.toEither.left.map(ex => s"Error reading witness '$siglum' at ${(e \ "@url").head.text}: ${ex.getMessage}")
-
+        }.get
+      }.toEither.left.map(ex => s"Error reading witness: ${ex.getMessage}")
       maybeWitness
     }
 
@@ -428,8 +428,14 @@ def retrieveWitnessDataXml(manifest: Elem, manifestSource: ManifestData): Either
   if errors.nonEmpty then Left(errors.mkString("\n"))
   else Right(witnesses)
 
-def retrieveWitnessDataJson(json: ujson.Value, manifestSource: ManifestData): Either[String, Seq[CollateXWitnessData]] = ???
-
+/** @param json
+  * @param manifestSource
+  * @return
+  */
+def retrieveWitnessDataJson(
+    json: ujson.Value,
+    manifestSource: ManifestData
+): Either[String, Seq[WitnessJsonData]] = ???
 
 //TODO: Remove because logic has been moved elsewhere?
 /** Locates manifest from path string and reads witnesses into CollateXWitnessData
@@ -467,7 +473,25 @@ def parseXmlManifest(source: ManifestSource): Either[String, Seq[CollateXWitness
   * @param content
   *   Plain-text string, to be tokenized
   */
-case class CollateXWitnessData(siglum: String, color: String, content: String)
+case class CollateXWitnessData(
+    siglum: String,
+    color: Option[String] = None,
+    content: String
+)
+
+/** Data retrieved from JSON manifest
+  *
+  * `content` property is a string, which can be tokenized in the same way as strings retrieved from an XML manifest
+  *
+  * `tokens` is pretokenized JSON, which needs to be cleaned up:
+  *
+  *   - `n` properties created if they aren’t present
+  *   - `w` and`g` properties created
+  *   - `other` property managed as `Map`
+  */
+enum WitnessJsonData:
+  case FromContent(witness: CollateXWitnessData)
+  case FromTokens(siglum: String, tokens: Seq[TokenEnum.Token])
 
 /** ManifestData has two properties:
   *

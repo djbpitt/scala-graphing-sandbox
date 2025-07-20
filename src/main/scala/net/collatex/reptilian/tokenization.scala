@@ -44,6 +44,7 @@ enum TokenEnum:
   def n: String
   def w: WitId
   def g: Int
+  /* Extra token fields for pretokenized JSON input; unused in TokenSep. */
   def other: Map[String, ujson.Value] = Map.empty
 
 /** Normalize witness data

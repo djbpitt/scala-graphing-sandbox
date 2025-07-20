@@ -35,8 +35,12 @@ def displayDispatch(
 ): Unit =
   // User-supplied sigla and colors for rendering
   val displaySigla: List[Siglum] = data.map(e => Siglum(e.siglum)).toList
-  val displayColors: List[String] = data.map(e => e.color).toList
-  // At this point, all formats are guaranteed valid by prior argument parsing
+  // Default colors are used only when colors are not specified in the XML or JSON manifest
+  val defaultColors = List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
+  val displayColors: List[String] =
+    data.zipWithIndex.map { case (e, i) =>
+      e.color.getOrElse(defaultColors(i % defaultColors.length))
+    }.toList // At this point, all formats are guaranteed valid by prior argument parsing
   val formats = argMap.getOrElse("--format", Set("table")) // default to table if none specified
   val htmlExtension = argMap.getOrElse("--html", Set("html")) // default to .html if none specified
   val outputBaseFilename = argMap.getOrElse("--output", Set()) // empty set if none specified
