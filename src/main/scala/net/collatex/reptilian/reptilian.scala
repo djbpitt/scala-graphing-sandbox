@@ -7,6 +7,15 @@ import scala.util.chaining.*
 import scala.util.matching.Regex
 import scala.xml.*
 import scala.io.Source
+
+// To process JSON input
+import cats.syntax.all.* // We use traverse
+import WitnessJsonData.*
+
+// Scala 3 prohibits local returns and uses boundary.break instead
+import scala.util.boundary
+import scala.util.boundary.break
+
 import java.io.StringReader
 import java.net.{URI, URL}
 import scala.annotation.tailrec
@@ -80,20 +89,102 @@ def readData(pathToData: Path): List[(String, String)] =
           } yield data
 
         case ManifestData(source, ManifestFormat.Json) =>
-          Left("JSON manifest support is not yet implemented. Please use an XML manifest instead.")
+          val json: Either[String, ujson.Value] = source match
+            case ManifestSource.Local(path) =>
+              try
+                val content = os.read(path) // using OS-lib to read local file
+                Right(ujson.read(content))
+              catch
+                case e: Exception => Left(s"Failed to read local JSON manifest: ${e.getMessage}")
+            case ManifestSource.Remote(url) =>
+              try
+                val stream = new URI(url.toString).toURL.openStream()
+                try
+                  val content = scala.io.Source.fromInputStream(stream).mkString
+                  Right(ujson.read(content))
+                finally stream.close()
+              catch
+                case e: Exception => Left(s"Failed to fetch remote JSON manifest: ${e.getMessage}")
+
+          json match
+            case Left(err) => Left(err)
+            case Right(parsedJson) =>
+              retrieveWitnessDataJson(parsedJson, ManifestData(source, ManifestFormat.Json))
     } yield (witnessData, argMap)
 
-  parsedInput match {
-    case Left(e) => System.err.println(e)
-    case Right(e) =>
+  parsedInput match
+    case Left(e) =>
+      System.err.println(e)
+
+    case Right((witnessDataJsonOrXml, argMap)) =>
+      val defaultColors = List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
       val tokensPerWitnessLimit = 2500 // Low values for debug; set to Int.MaxValue for production
-      val (data, argMap): (Seq[CollateXWitnessData], Map[String, Set[String]]) = e
       val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
-      val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, data, tokenPattern)
-      val gTaSigla: List[WitId] = data.indices.toList // integers
-      val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa) // Create model as alignment ribbon
-      displayDispatch(root, gTa, data, argMap) // Create requested outputs
+
+      // Pattern-match on JSON vs XML result
+      witnessDataJsonOrXml.headOption match
+        case Some(_: CollateXWitnessData) =>
+          val xmlData = witnessDataJsonOrXml.asInstanceOf[Seq[CollateXWitnessData]]
+          val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, xmlData, tokenPattern)
+          val gTaSigla: List[WitId] = xmlData.indices.toList
+          val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
+          val siglaList: List[Siglum] = xmlData.map(w => Siglum(w.siglum)).toList
+          val colorList: List[String] =
+            xmlData.zipWithIndex.map { case (w, i) =>
+              w.color.getOrElse(defaultColors(i % defaultColors.length))
+            }.toList
+          displayDispatch(root, gTa, siglaList, colorList, argMap)
+
+        case Some(_: WitnessJsonData) =>
+          val jsonData = witnessDataJsonOrXml.asInstanceOf[Seq[WitnessJsonData]]
+          
+          buildJsonGTaAndMetadata(jsonData, tokensPerWitnessLimit, tokenPattern) match
+            case Left(error) =>
+              System.err.println(s"Error building JSON gTa and metadata: $error")
+            // Handle error as needed, possibly return or exit
+            case Right((gTa, siglaList, colorList)) =>
+              val gTaSigla: List[WitId] = siglaList.indices.toList
+              val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
+              displayDispatch(root, gTa, siglaList, colorList, argMap)
+      
+        case None =>
+          System.err.println("No witnesses found in the manifest.")
+
+def buildJsonGTaAndMetadata(
+  data: Seq[WitnessJsonData],
+  tokensPerWitnessLimit: WitId,
+  tokenPattern: Regex
+): Either[String, (Vector[TokenEnum], List[Siglum], List[String])] = {
+  val defaultColors = List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
+  val initialState = ParseState(offset = 0, emptyCount = 0)
+  val gBuilder = Vector.newBuilder[TokenEnum]
+  val siglaBuilder = List.newBuilder[Siglum]
+  val colorBuilder = List.newBuilder[String]
+
+  data.zipWithIndex.foreach {
+    case (FromTokens(siglum, tokens), witIndex) =>
+      gBuilder += TokenEnum.TokenSep(s"sep$witIndex", s"sep$witIndex", 0, 0)
+      siglaBuilder += Siglum(siglum)
+      colorBuilder += defaultColors(witIndex % defaultColors.length)
+      gBuilder ++= tokens.map(_.copy(w = witIndex)) // assume g values already set
+
+    case (FromContent(witness), witIndex) =>
+      gBuilder += TokenEnum.TokenSep(s"sep$witIndex", s"sep$witIndex", 0, 0)
+      siglaBuilder += Siglum(witness.siglum)
+      colorBuilder += witness.color.getOrElse(defaultColors(witIndex % defaultColors.length))
+
+      val tokenizer = makeTokenizer(tokenPattern, tokensPerWitnessLimit)
+      val tokenStrings = tokenizer(Seq(witness))
+
+      val tokenState = tokenStrings.traverse(processToken)
+      val tokens = tokenState.runA(ParseState(0, 0)).value
+
+      gBuilder ++= tokens.map(_.asInstanceOf[TokenEnum.Token].copy(w = witIndex))
   }
+
+  Right((gBuilder.result(), siglaBuilder.result(), colorBuilder.result()))
+}
+
 
 /** Parse command line arguments
   *
@@ -394,7 +485,10 @@ def retrieveManifestXml(source: ManifestSource): Either[String, Elem] =
   * @return
   *   Sequence of CollateXWitnessData instances if successful; otherwise error messages as string
   */
-def retrieveWitnessDataXml(manifest: Elem, manifestSource: ManifestData): Either[String, Seq[CollateXWitnessData]] =
+def retrieveWitnessDataXml(
+    manifest: Elem,
+    manifestSource: ManifestData
+): Either[String, Seq[CollateXWitnessData]] =
   val results: Seq[Either[String, CollateXWitnessData]] =
     (manifest \ "_").map { e =>
       val maybeWitness: Either[String, CollateXWitnessData] = Try {
@@ -428,41 +522,49 @@ def retrieveWitnessDataXml(manifest: Elem, manifestSource: ManifestData): Either
   if errors.nonEmpty then Left(errors.mkString("\n"))
   else Right(witnesses)
 
-/** @param json
-  * @param manifestSource
-  * @return
-  */
 def retrieveWitnessDataJson(
     json: ujson.Value,
     manifestSource: ManifestData
-): Either[String, Seq[WitnessJsonData]] = ???
+): Either[String, Seq[WitnessJsonData]] = boundary {
+  val witnesses = json("witnesses").arr.toSeq
+  var gCounter = 0
+  val result = scala.collection.mutable.ListBuffer.empty[WitnessJsonData]
 
-//TODO: Remove because logic has been moved elsewhere?
-/** Locates manifest from path string and reads witnesses into CollateXWitnessData
-  *
-  * Combines helper methods into for comprehension to 1) resolve the manifest path string; 2) load the manifest as xml;
-  * 3) validate the manifest with Relax NG and Schematron; and 4) retrieve witness data from witness sources identified
-  * in manifest.
-  *
-  * @param source
-  *   location of manifest (may be remote, local absolute, or local relative)
-  * @return
-  *   sequence of CollateXWitnessData instances if success; string with error message if failure
-  */
-def parseXmlManifest(source: ManifestSource): Either[String, Seq[CollateXWitnessData]] =
-  val manifestUri: URI = source match
-    case ManifestSource.Local(path) => path.toNIO.toUri
-    case ManifestSource.Remote(url) => url.toURI
+  for ((w, witnessIndex) <- witnesses.zipWithIndex) {
+    val siglum = w("siglum").str
 
-  source match
-    case ManifestSource.Local(_) | ManifestSource.Remote(_) =>
-      for {
-        manifestXml <- retrieveManifestXml(source)
-        manifestRnc = Source.fromResource("manifest.rnc").getLines().mkString("\n")
-        _ <- validateRnc(manifestXml, manifestRnc)
-        _ <- validateSchematron(manifestXml, "manifest-sch-compiled.xsl", manifestUri).left.map(_.mkString("\n"))
-        witnessData <- retrieveWitnessDataXml(manifestXml, ManifestData(source, ManifestFormat.Xml))
-      } yield witnessData
+    if (w.obj.contains("content")) {
+      val content = w("content").str
+      val color = w.obj.get("color").map(_.str)
+      result += WitnessJsonData.FromContent(CollateXWitnessData(siglum, color, content))
+    } else if (w.obj.contains("tokens")) {
+      val tokensJson = w("tokens").arr.toSeq
+      val tokens: Seq[TokenEnum.Token] = tokensJson.map { tokenObj =>
+        val tField = tokenObj.obj.get("t").map(_.str).getOrElse {
+          break(Left(s"Missing required 't' property in a token of witness '$siglum'"))
+        }
+
+        val nField = tokenObj.obj.get("n").map(_.str).getOrElse(tField)
+        val wField = witnessIndex
+        val gField = gCounter
+
+        gCounter += 1
+
+        val knownKeys = Set("t", "n", "w", "g")
+        val otherFields = tokenObj.obj.view.filterKeys(k => !knownKeys.contains(k)).toMap
+
+        TokenEnum.Token(t = tField, n = nField, w = wField, g = gField, other = otherFields)
+      }
+
+      gCounter += 1 // skip one between witnesses
+      result += WitnessJsonData.FromTokens(siglum, tokens)
+    } else { // Scala 3 idiom for non-local return from inside map
+      break(Left(s"Witness '$siglum' must contain either 'content' or 'tokens'"))
+    }
+  }
+
+  Right(result.toSeq)
+}
 
 /** Data retrieved from link in manifest
   *

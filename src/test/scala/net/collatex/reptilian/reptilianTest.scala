@@ -1,6 +1,4 @@
 //package net.collatex.reptilian
-//
-//import org.scalatest.funsuite.AnyFunSuite
 //import org.hammerlab.suffixes.dc3.make as calculate_suffix_array
 //import org.scalatest.matchers.should.Matchers._
 //import org.scalatest._

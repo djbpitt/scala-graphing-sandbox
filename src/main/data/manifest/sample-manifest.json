@@ -1,0 +1,32 @@
+{
+  "witnesses": [
+    {
+      "siglum": "A",
+      "content": "Once upon a midnight dreary,"
+    },
+    {
+      "siglum": "B",
+      "tokens": [
+        {
+          "t": "Once",
+          "extra1": "ignored"
+        },
+        {
+          "t": "upon",
+          "n": "Upon",
+          "note": "should appear in other"
+        },
+        {
+          "t": "a"
+        },
+        {
+          "t": "midnight"
+        },
+        {
+          "t": "dreary"
+        }
+      ]
+    }
+  ]
+}
+
