@@ -14,7 +14,8 @@ import ujson.*
 val tokenPattern: Regex = raw"(\w+|[^\w\s]+)\s*".r
 
 /* Create soundexifier (Soundex function) */
-val superscriptMap: Elem = XML.loadString(os.read(os.pwd / "src" / "main" / "data" / "mikulka" / "superscript-map.xml"))
+val superscriptMap: Elem =
+  XML.loadString(os.read(os.pwd / "src" / "main" / "data" / "manifest" / "mikulka" / "superscript-map.xml"))
 val replacementInputs: String = (superscriptMap \\ "sup").map(_.text).mkString
 val replacementOutputs: String = (superscriptMap \\ "base").map(_.text).mkString
 val unSuper: String => String = translate(replacementInputs, replacementOutputs)
@@ -55,12 +56,12 @@ def replaceOneToMany(inText: String): String = {
 // One-to-one replacements, grouped by replacement character
 val replacementsByGroup: Map[String, Char] = Map(
   "ѧѩꙙꙝꙗя" -> 'ѧ',
-  "еєѥ" -> 'е',
+  "еєѥѣꙓ" -> 'е', // jat' merged with e experimentally
   "ыꙑиіїꙇй" -> 'и',
   "оꙩꙫꙭꙮѡꙍѽѻꚙꚛ" -> 'о',
   "уꙋюꙕѵѷӱѹ" -> 'у',
   "ѫѭꙛ" -> 'ѫ',
-  "ѣꙓ" -> 'ѣ',
+  // "ѣꙓ" -> 'ѣ',
   "ьъ" -> 'ь',
   "зꙁꙃѕꙅ" -> 'з'
 )
@@ -79,21 +80,40 @@ def tokenize(inText: String) =
   val result = tokenPattern.findAllIn(inText).toList
   result
 
-val normalizationPipeline: String => String =
+// Keep punctuation-only strings, but otherwise remove punctuation
+def stripPunct(s: String): String =
+  val tmp = s.replaceAll("""\p{Punct}""", "")
+  if tmp.isEmpty then s
+  else tmp
+
+val vowelRegex = "[аѧеиоуѫь]".r
+def stripNoninitialVowels(s: String): String =
+  val first = s.head
+  val rest = vowelRegex.replaceAllIn(s.tail, "")
+  s"$first$rest"
+
+def degeminateConsonants(input: String): String =
+  input.replaceAll("(?i)([^аѧеиоуѫь\\W_])\\1+", "$1")
+
+val normalizationPipeline: String => String = {
   Function.chain(
     Seq(
       _.trim,
       _.toLowerCase,
+      stripPunct,
+      unSuper,
       replaceManyToOne,
       replaceOneToMany,
-      unSuper,
       myReplaceOneToOne,
+      degeminateConsonants, // must precede stripping vowels
+      stripNoninitialVowels,
       _.take(4)
     )
   )
+}
 
 @main def textToJson(): Unit =
-  val pathToData = os.pwd / "src" / "main" / "data" / "mikulka"
+  val pathToData = os.pwd / "src" / "main" / "data" / "manifest" / "mikulka"
   val sigla = os.read.lines(pathToData / "sigla.txt")
   val txt = os.read.lines(pathToData / "readings.txt")
   val data = sigla.zip(txt)

@@ -94,17 +94,17 @@ def readData(pathToData: Path): List[(String, String)] =
               try
                 val content = os.read(path) // using OS-lib to read local file
                 Right(ujson.read(content))
-              catch
-                case e: Exception => Left(s"Failed to read local JSON manifest: ${e.getMessage}")
+              catch case e: Exception => Left(s"Failed to read local JSON manifest: ${e.getMessage}")
             case ManifestSource.Remote(url) =>
-              try
+              try {
                 val stream = new URI(url.toString).toURL.openStream()
-                try
-                  val content = scala.io.Source.fromInputStream(stream).mkString
-                  Right(ujson.read(content))
-                finally stream.close()
-              catch
+                val content =
+                  try scala.io.Source.fromInputStream(stream).mkString
+                  finally stream.close()
+                Right(ujson.read(content))
+              } catch {
                 case e: Exception => Left(s"Failed to fetch remote JSON manifest: ${e.getMessage}")
+              }
 
           json match
             case Left(err) => Left(err)
@@ -118,7 +118,7 @@ def readData(pathToData: Path): List[(String, String)] =
 
     case Right((witnessDataJsonOrXml, argMap)) =>
       val defaultColors = List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
-      val tokensPerWitnessLimit = 2500 // Low values for debug; set to Int.MaxValue for production
+      val tokensPerWitnessLimit = 10 // Low values for debug; set to Int.MaxValue for production
       val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
 
       // Pattern-match on JSON vs XML result
@@ -135,9 +135,8 @@ def readData(pathToData: Path): List[(String, String)] =
             }.toList
           displayDispatch(root, gTa, siglaList, colorList, argMap)
 
-        case Some(_: WitnessJsonData) =>
+        case Some(x: WitnessJsonData) =>
           val jsonData = witnessDataJsonOrXml.asInstanceOf[Seq[WitnessJsonData]]
-          
           buildJsonGTaAndMetadata(jsonData, tokensPerWitnessLimit, tokenPattern) match
             case Left(error) =>
               System.err.println(s"Error building JSON gTa and metadata: $error")
@@ -146,45 +145,65 @@ def readData(pathToData: Path): List[(String, String)] =
               val gTaSigla: List[WitId] = siglaList.indices.toList
               val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
               displayDispatch(root, gTa, siglaList, colorList, argMap)
-      
+
         case None =>
           System.err.println("No witnesses found in the manifest.")
 
 def buildJsonGTaAndMetadata(
-  data: Seq[WitnessJsonData],
-  tokensPerWitnessLimit: WitId,
-  tokenPattern: Regex
+    data: Seq[WitnessJsonData],
+    tokensPerWitnessLimit: WitId,
+    tokenPattern: Regex
 ): Either[String, (Vector[TokenEnum], List[Siglum], List[String])] = {
   val defaultColors = List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
-  val initialState = ParseState(offset = 0, emptyCount = 0)
   val gBuilder = Vector.newBuilder[TokenEnum]
   val siglaBuilder = List.newBuilder[Siglum]
   val colorBuilder = List.newBuilder[String]
 
-  data.zipWithIndex.foreach {
-    case (FromTokens(siglum, tokens), witIndex) =>
-      gBuilder += TokenEnum.TokenSep(s"sep$witIndex", s"sep$witIndex", 0, 0)
-      siglaBuilder += Siglum(siglum)
-      colorBuilder += defaultColors(witIndex % defaultColors.length)
-      gBuilder ++= tokens.map(_.copy(w = witIndex)) // assume g values already set
+  var gCounter = 0 // running global g value
 
-    case (FromContent(witness), witIndex) =>
-      gBuilder += TokenEnum.TokenSep(s"sep$witIndex", s"sep$witIndex", 0, 0)
-      siglaBuilder += Siglum(witness.siglum)
-      colorBuilder += witness.color.getOrElse(defaultColors(witIndex % defaultColors.length))
+  data.zipWithIndex.foreach { case (witnessData, witIndex) =>
+    // Only insert a TokenSep *after* the first witness
+    if (witIndex != 0) {
+      gBuilder += TokenEnum.TokenSep(s"sep$witIndex", s"sep$witIndex", witIndex, gCounter)
+      gCounter += 1 // TokenSep uses one g value
+    }
 
-      val tokenizer = makeTokenizer(tokenPattern, tokensPerWitnessLimit)
-      val tokenStrings = tokenizer(Seq(witness))
+    // Add siglum and color
+    val (siglum, color) = witnessData match {
+      case FromTokens(s, _) => (s, defaultColors(witIndex % defaultColors.length))
+      case FromContent(witness) =>
+        (witness.siglum, witness.color.getOrElse(defaultColors(witIndex % defaultColors.length)))
+    }
+    siglaBuilder += Siglum(siglum)
+    colorBuilder += color
 
-      val tokenState = tokenStrings.traverse(processToken)
-      val tokens = tokenState.runA(ParseState(0, 0)).value
+    // Process tokens and update gBuilder and gCounter
+    witnessData match {
+      case FromTokens(_, tokens) =>
+        tokens.foreach { tok =>
+          val updated = tok.copy(w = witIndex, g = gCounter)
+          gBuilder += updated
+          gCounter += 1
+        }
 
-      gBuilder ++= tokens.map(_.asInstanceOf[TokenEnum.Token].copy(w = witIndex))
+      case FromContent(witness) =>
+        val tokenizer = makeTokenizer(tokenPattern, tokensPerWitnessLimit)
+        val tokenStrings = tokenizer(Seq(witness))
+
+        val tokenState = tokenStrings.traverse(processToken)
+        val tokens = tokenState.runA(ParseState(0, 0)).value
+
+        tokens.foreach {
+          case tok: TokenEnum.Token =>
+            gBuilder += tok.copy(w = witIndex, g = gCounter)
+            gCounter += 1
+          case _ => // should not happen
+        }
+    }
   }
 
   Right((gBuilder.result(), siglaBuilder.result(), colorBuilder.result()))
 }
-
 
 /** Parse command line arguments
   *
@@ -531,7 +550,7 @@ def retrieveWitnessDataJson(
   val result = scala.collection.mutable.ListBuffer.empty[WitnessJsonData]
 
   for ((w, witnessIndex) <- witnesses.zipWithIndex) {
-    val siglum = w("siglum").str
+    val siglum = w("id").str
 
     if (w.obj.contains("content")) {
       val content = w("content").str
@@ -592,8 +611,8 @@ case class CollateXWitnessData(
   *   - `other` property managed as `Map`
   */
 enum WitnessJsonData:
-  case FromContent(witness: CollateXWitnessData)
-  case FromTokens(siglum: String, tokens: Seq[TokenEnum.Token])
+  case FromContent(id: CollateXWitnessData)
+  case FromTokens(id: String, tokens: Seq[TokenEnum.Token])
 
 /** ManifestData has two properties:
   *
