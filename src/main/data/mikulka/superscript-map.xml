@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Mapping from Cyrillic superscript letters to base forms-->
+<?xml-model href="superscript-map.rnc" type="application/relax-ng-compact-syntax"?>
+<?xml-model href="superscript-map.sch" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<letters>
+  <!-- Cyrillic extended-a -->
+  <letter>
+    <sup u="2DE0" name="COMBINING CYRILLIC LETTER BE">&#x2de0;</sup>
+    <base u="0431" name="CYRILLIC SMALL LETTER BE">б</base>
+  </letter>
+  <letter>
+    <sup u="2DE1" name="COMBINING CYRILLIC LETTER VE">&#x2DE1;</sup>
+    <base u="0432" name="CYRILLIC SMALL LETTER VE">в</base>
+  </letter>
+  <letter>
+    <sup u="2DE2" name="COMBINING CYRILLIC LETTER GHE">&#x2DE2;</sup>
+    <base u="0433" name="CYRILLIC SMALL LETTER GHE">г</base>
+  </letter>
+  <letter>
+    <sup u="2DE3" name="COMBINING CYRILLIC LETTER DE">&#x2DE3;</sup>
+    <base u="0434" name="CYRILLIC SMALL LETTER DE">д</base>
+  </letter>
+  <letter>
+    <sup u="2DE4" name="COMBINING CYRILLIC LETTER ZHE">&#x2DE4;</sup>
+    <base u="0436" name="CYRILLIC SMALL LETTER ZHE">ж</base>
+  </letter>
+  <letter>
+    <sup u="2DE5" name="COMBINING CYRILLIC LETTER ZE">&#x2DE5;</sup>
+    <base u="0437" name="CYRILLIC SMALL LETTER ZE">з</base>
+  </letter>
+  <letter>
+    <sup u="2DE6" name="COMBINING CYRILLIC LETTER KA">&#x2DE6;</sup>
+    <base u="043a" name="CYRILLIC SMALL LETTER KA">к</base>
+  </letter>
+  <letter>
+    <sup u="2DE7" name="COMBINING CYRILLIC LETTER EL">&#x2DE7;</sup>
+    <base u="043b" name="CYRILLIC SMALL LETTER EL">л</base>
+  </letter>
+  <letter>
+    <sup u="2DE8" name="COMBINING CYRILLIC LETTER EM">&#x2DE8;</sup>
+    <base u="043c" name="CYRILLIC SMALL LETTER EM">м</base>
+  </letter>
+  <letter>
+    <sup u="2DE9" name="COMBINING CYRILLIC LETTER EN">&#x2DE9;</sup>
+    <base u="043d" name="CYRILLIC SMALL LETTER EN">н</base>
+  </letter>
+  <letter>
+    <sup u="2DEA" name="COMBINING CYRILLIC LETTER O">&#x2DEA;</sup>
+    <base u="043e" name="CYRILLIC SMALL LETTER O">о</base>
+  </letter>
+  <letter>
+    <sup u="2DEB" name="COMBINING CYRILLIC LETTER PE">&#x2DEB;</sup>
+    <base u="043f" name="CYRILLIC SMALL LETTER PE">п</base>
+  </letter>
+  <letter>
+    <sup u="2DEC" name="COMBINING CYRILLIC LETTER ER">&#x2DEC;</sup>
+    <base u="0440" name="CYRILLIC SMALL LETTER ER">р</base>
+  </letter>
+  <letter>
+    <sup u="2DED" name="COMBINING CYRILLIC LETTER ES">&#x2DED;</sup>
+    <base u="0441" name="CYRILLIC SMALL LETTER ES">с</base>
+  </letter>
+  <letter>
+    <sup u="2DEE" name="COMBINING CYRILLIC LETTER TE">&#x2DEE;</sup>
+    <base u="0442" name="CYRILLIC SMALL LETTER TE">т</base>
+  </letter>
+  <letter>
+    <sup u="2DEF" name="COMBINING CYRILLIC LETTER HA">&#x2DEF;</sup>
+    <base u="0445" name="CYRILLIC SMALL LETTER HA">х</base>
+  </letter>
+  <letter>
+    <sup u="2DF0" name="COMBINING CYRILLIC LETTER TSE">&#x2DF0;</sup>
+    <base u="0446" name="CYRILLIC SMALL LETTER TSE">ц</base>
+  </letter>
+  <letter>
+    <sup u="2DF1" name="COMBINING CYRILLIC LETTER CHE">&#x2DF1;</sup>
+    <base u="0447" name="CYRILLIC SMALL LETTER CHE">ч</base>
+  </letter>
+  <letter>
+    <sup u="2DF2" name="COMBINING CYRILLIC LETTER SHA">&#x2DF2;</sup>
+    <base u="0448" name="CYRILLIC SMALL LETTER SHA">ш</base>
+  </letter>
+  <letter>
+    <sup u="2DF3" name="COMBINING CYRILLIC LETTER SHCHA">&#x2DF3;</sup>
+    <base u="0449" name="CYRILLIC SMALL LETTER SHCHA">щ</base>
+  </letter>
+  <letter>
+    <sup u="2DF4" name="COMBINING CYRILLIC LETTER FITA">&#x2DF4;</sup>
+    <base u="0473" name="CYRILLIC SMALL LETTER FITA">ѳ</base>
+  </letter>
+  <!--  Not one-to-one; currently omitted, can be reintroduced as one-to-many if needed
+  <letter>
+    <sup u="2DF5" name="COMBINING CYRILLIC LETTER ES-TE">&#x2DF5;</sup>
+    <base u="" name="CYRILLIC SMALL LETTER ES-TE">ст</base>
+  </letter>-->
+  <letter>
+    <sup u="2DF6" name="COMBINING CYRILLIC LETTER A">&#x2DF6;</sup>
+    <base u="0430" name="CYRILLIC SMALL LETTER A">а</base>
+  </letter>
+  <letter>
+    <sup u="2DF7" name="COMBINING CYRILLIC LETTER IE">&#x2DF7;</sup>
+    <base u="0435" name="CYRILLIC SMALL LETTER IE">е</base>
+  </letter>
+  <letter>
+    <sup u="2DF9" name="COMBINING CYRILLIC LETTER MONOGRAPH UK">&#x2DF9;</sup>
+    <base u="a64b" name="CYRILLIC SMALL LETTER MONOGRAPHIC UK">ꙋ</base>
+  </letter>
+  <letter>
+    <sup u="2DFA" name="COMBINING CYRILLIC LETTER YAT">&#x2DFA;</sup>
+    <base u="0463" name="CYRILLIC SMALL LETTER YAT">ѣ</base>
+  </letter>
+  <letter>
+    <sup u="2DFB" name="COMBINING CYRILLIC LETTER YU">&#x2DFB;</sup>
+    <base u="044e" name="CYRILLIC SMALL LETTER YU">ю</base>
+  </letter>
+  <letter>
+    <sup u="2DFC" name="COMBINING CYRILLIC LETTER IOTIFIED A">&#x2DFC;</sup>
+    <base u="a657" name="CYRILLIC SMALL LETTER IOTIFIED A">ꙗ</base>
+  </letter>
+  <letter>
+    <sup u="2DFD" name="COMBINING CYRILLIC LETTER LITTLE YUS">&#x2DFD;</sup>
+    <base u="0467" name="CYRILLIC SMALL LETTER LITTLE YUS">ѧ</base>
+  </letter>
+  <letter>
+    <sup u="2DFE" name="COMBINING CYRILLIC LETTER BIG YUS">&#x2DFE;</sup>
+    <base u="046b" name="CYRILLIC SMALL LETTER BIG YUS">ѫ</base>
+  </letter>
+  <letter>
+    <sup u="2DFF" name="COMBINING CYRILLIC LETTER IOTIFIED BIG YUS">&#x2DFF;</sup>
+    <base u="046d" name="CYRILLIC SMALL LETTER IOTIFIED BIG YUS">ѭ</base>
+  </letter>
+  <!-- Cyrillic extended-d -->
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL A" u="1E030">&#x1E030;</sup>
+    <base name="CYRILLIC SMALL LETTER A" u="0430">а</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL BE" u="1E031">&#x1E031;</sup>
+    <base name="CYRILLIC SMALL LETTER BE" u="0431">б</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL VE" u="1E032">&#x1E032;</sup>
+    <base name="CYRILLIC SMALL LETTER VE" u="0432">в</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL GHE" u="1E033">&#x1E033;</sup>
+    <base name="CYRILLIC SMALL LETTER GHE" u="0433">г</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL DE" u="1E034">&#x1E034;</sup>
+    <base name="CYRILLIC SMALL LETTER DE" u="0434">д</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL IE" u="1E035">&#x1E035;</sup>
+    <base name="CYRILLIC SMALL LETTER IE" u="0435">е</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL ZHE" u="1E036">&#x1E036;</sup>
+    <base name="CYRILLIC SMALL LETTER ZHE" u="0436">ж</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL ZE" u="1E037">&#x1E037;</sup>
+    <base name="CYRILLIC SMALL LETTER ZE" u="0437">з</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL I" u="1E038">&#x1E038;</sup>
+    <base name="CYRILLIC SMALL LETTER I" u="0438">и</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL KA" u="1E039">&#x1E039;</sup>
+    <base name="CYRILLIC SMALL LETTER KA" u="043A">к</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL EL" u="1E03A">&#x1E03A;</sup>
+    <base name="CYRILLIC SMALL LETTER EL" u="043B">л</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL EM" u="1E03B">&#x1E03B;</sup>
+    <base name="CYRILLIC SMALL LETTER EM" u="043C">м</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL O" u="1E03C">&#x1E03C;</sup>
+    <base name="CYRILLIC SMALL LETTER O" u="043E">о</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL PE" u="1E03D">&#x1E03D;</sup>
+    <base name="CYRILLIC SMALL LETTER PE" u="043F">п</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL ER" u="1E03E">&#x1E03E;</sup>
+    <base name="CYRILLIC SMALL LETTER ER" u="0440">р</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL ES" u="1E03F">&#x1E03F;</sup>
+    <base name="CYRILLIC SMALL LETTER ES" u="0441">с</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL TE" u="1E040">&#x1E040;</sup>
+    <base name="CYRILLIC SMALL LETTER TE" u="0442">т</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL U" u="1E041">&#x1E041;</sup>
+    <base name="CYRILLIC SMALL LETTER U" u="0443">у</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL EF" u="1E042">&#x1E042;</sup>
+    <base name="CYRILLIC SMALL LETTER EF" u="0444">ф</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL HA" u="1E043">&#x1E043;</sup>
+    <base name="CYRILLIC SMALL LETTER HA" u="0445">х</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL TSE" u="1E044">&#x1E044;</sup>
+    <base name="CYRILLIC SMALL LETTER TSE" u="0446">ц</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL CHE" u="1E045">&#x1E045;</sup>
+    <base name="CYRILLIC SMALL LETTER CHE" u="0447">ч</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL SHA" u="1E046">&#x1E046;</sup>
+    <base name="CYRILLIC SMALL LETTER SHA" u="0448">ш</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL YERU" u="1E047">&#x1E047;</sup>
+    <base name="CYRILLIC SMALL LETTER YERU" u="044B">ы</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL E" u="1E048">&#x1E048;</sup>
+    <base name="CYRILLIC SMALL LETTER E" u="044D">э</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL YU" u="1E049">&#x1E049;</sup>
+    <base name="CYRILLIC SMALL LETTER YU" u="044E">ю</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL BYELORUSSIAN-UKRAINIAN I" u="1E04C">&#x1E04C;</sup>
+    <base name="CYRILLIC LETTER SMALL BYELORUSSIAN-UKRAINIAN I" u="0456">і</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SMALL YERU WITH BACK YER" u="1E06C">&#x1E06C;</sup>
+    <base name="CYRILLIC LETTER SMALL YERU WITH BACK YER" u="A651">ꙑ</base>
+  </letter>
+  <!-- Cyrillic extended-b -->
+  <letter>
+    <sup name="COMBINING CYRILLIC LETTER UKRAINIAN IE" u="a674">&#xa674;</sup>
+    <base name="CYRILLIC SMALL LETTER UKRAINIAN IE" u="0454">є</base>
+  </letter>
+  <letter>
+    <sup name="COMBINING CYRILLIC LETTER I" u="a675">&#xa675;</sup>
+    <base name="CYRILLIC SMALL LETTER I" u="0438">и</base>
+  </letter>
+  <letter>
+    <sup name="COMBINING CYRILLIC LETTER YI" u="a676">&#xa676;</sup>
+    <base name="CYRILLIC SMALL LETTER YI" u="0457">ї</base>
+  </letter>
+  <letter>
+    <sup name="COMBINING CYRILLIC LETTER U" u="a677">&#xa677;</sup>
+    <base name="CYRILLIC SMALL LETTER U" u="443">у</base>
+  </letter>
+  <letter>
+    <sup name="COMBINING CYRILLIC LETTER HARD SIGN" u="a678">&#xa678;</sup>
+    <base name="CYRILLIC SMALL LETTER HARD SIGN" u="044a">ъ</base>
+  </letter>
+  <letter>
+    <sup name="COMBINING CYRILLIC LETTER YERU" u="a679">&#xa679;</sup>
+    <base name="CYRILLIC SMALL LETTER YERU" u="044b">ы</base>
+  </letter>
+  <letter>
+    <sup name="COMBINING CYRILLIC LETTER SOFT SIGN" u="a67A">&#xa67a;</sup>
+    <base name="CYRILLIC SMALL LETTER SOFT SIGN" u="044c">ь</base>
+  </letter>
+  <letter>
+    <sup name="COMBINING CYRILLIC LETTER OMEGA" u="a67B">&#xa67b;</sup>
+    <base name="CYRILLIC SMALL LETTER OMEGA" u="0461">ѡ</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC HARD SIGN" u="a68c">&#xa68c;</sup>
+    <base name="CYRILLIC SMALL LETTER HARD SIGN" u="044a">ъ</base>
+  </letter>
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC SOFT SIGN" u="a68d">&#xa68d;</sup>
+    <base name="CYRILLIC SMALL LETTER SOFT SIGN" u="044c">ь</base>
+  </letter>
+  <letter>
+    <sup name="COMBINING CYRILLIC LETTER EF" u="a68e">&#xa68e;</sup>
+    <base name="CYRILLIC SMALL LETTER EF" u="0444">ф</base>
+  </letter>
+  <letter>
+    <sup name="COMBINING CYRILLIC LETTER IOTIFIED E" u="a68f">&#xa68f;</sup>
+    <base name="CYRILLIC SMALL LETTER IOTIFIED E" u="0465">ѥ</base>
+  </letter>
+  <!-- Phonetic extensions -->
+  <letter>
+    <sup name="MODIFIER LETTER CYRILLIC EN" u="1d78">&#x1d78;</sup>
+    <base name="CYRILLIC SMALL LETTER EN" u="043d">н</base>
+  </letter>
+</letters>
