@@ -10,7 +10,7 @@ namespace cx = "http://interedition.eu/collatex/ns/1.0"
 
 start = witnesses
 witnesses = element cx:witnesses { witness+ }
-witness = element cx:witness { siglum, color, url }
+witness = element cx:witness { siglum, color?, url }
 siglum = attribute siglum { text }
 color = attribute color { text }
 url = attribute url { xsd:anyURI }
