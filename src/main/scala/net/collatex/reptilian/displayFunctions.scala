@@ -8,7 +8,6 @@ import scala.annotation.tailrec
 
 // JSON output
 import ujson.*
-import scala.reflect.ClassTag
 
 // XML output, using Saxon for pretty-printing because Scala XML pretty-printing is broken
 import net.sf.saxon.s9api.{Processor, Serializer, XdmNode, DocumentBuilder}
@@ -22,8 +21,10 @@ import javax.xml.transform.stream.StreamSource
   *   AlignmentRibbon
   * @param gTa
   *   Global token array as Vector[TokenEnum]
-  * @param data
-  *   Alignment ribbon data as Seq[CollateXWitnessData]
+  * @param displaySigla
+  *   List of user-oriented siglum values for output (internal sigla are zero-based consecutive integers)
+  * @param displayColors
+  *   List of colors for alignment ribbon (user-supplied or default)
   * @param argMap
   *   Command line arguments as `Map[String, Set[String]]`
   */
@@ -35,7 +36,6 @@ def displayDispatch(
     argMap: Map[String, Set[String]]
 ): Unit =
   // Default colors are used only when colors are not specified in the XML or JSON manifest
-  val defaultColors = List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
   val formats = argMap.getOrElse("--format", Set("table")) // default to table if none specified
   val htmlExtension = argMap.getOrElse("--html", Set("html")) // default to .html if none specified
   val outputBaseFilename = argMap.getOrElse("--output", Set()) // empty set if none specified
@@ -656,23 +656,6 @@ def createGraphMlEdges(
   val acc = nextNode(nodes :+ end, displaySigla.indices.map(e => e -> start).toMap, Vector())
   acc
 
-/** Helper to convert an `Any` value to a ujson.Value, handling common Scala/Java types */
-def anyToUjsonValue(value: Any): Value = value match
-  case null          => ujson.Null
-  case s: String     => ujson.Str(s)
-  case i: Int        => ujson.Num(i)
-  case l: Long       => ujson.Num(l.toDouble) // Direct us of Long is deprecated
-  case d: Double     => ujson.Num(d)
-  case f: Float      => ujson.Num(f)
-  case b: Boolean    => ujson.Bool(b)
-  case seq: Seq[_]   => ujson.Arr(seq.map(anyToUjsonValue)*)
-  case arr: Array[_] => ujson.Arr(arr.map(anyToUjsonValue)*)
-  case map: Map[_, _] =>
-    val jsonFields = map.collect { case (k: String, v) => k -> anyToUjsonValue(v) }
-    ujson.Obj.from(jsonFields)
-  case other =>
-    ujson.Str(other.toString)
-
 /** JSON output
   *
   * --format json
@@ -707,31 +690,21 @@ def emitJson(
     val tokenArrays: Seq[Value] = allWitIds.map { witId =>
       point.witnessReadings.get(witId) match
         case Some(tokenRange) =>
-          val tokensJson = tokenRange.tokens.map { token =>
-            val standardKeys = Seq("t", "n", "w", "g")
+          val tokensJson = tokenRange.tokens.collect { case tok: TokenEnum.Token =>
+            val orderedFields: Seq[(String, Value)] =
+              Seq(
+                "t" -> Str(tok.t),
+                "n" -> Str(tok.n),
+                "w" -> Str(displaySigla(witId).value),
+                "g" -> Num(tok.g)
+              ) ++ tok.other.toSeq.sortBy(_._1)
 
-            val fieldMap: Map[String, Any] =
-              token.getClass.getDeclaredFields.map { field =>
-                field.setAccessible(true)
-                field.getName -> field.get(token)
-              }.toMap
-
-            val knownFields: Seq[(String, Value)] = standardKeys.map {
-              case "w" => "w" -> Str(displaySigla(witId).value)
-              case k   => k -> anyToUjsonValue(fieldMap(k))
-            }
-
-            val additionalFields: Seq[(String, Value)] = fieldMap
-              .filterNot { case (k, _) => standardKeys.contains(k) }
-              .toSeq
-              .sortBy(_._1)
-              .map { case (k, v) => k -> anyToUjsonValue(v) }
-
-            Obj.from(knownFields ++ additionalFields)
+            Obj.from(orderedFields)
           }
           Arr(tokensJson*)
         case None => Arr()
     }
+
     Arr(tokenArrays*)
   }
 
