@@ -118,7 +118,7 @@ def readData(pathToData: Path): List[(String, String)] =
 
     case Right((witnessDataJsonOrXml, argMap)) =>
       val defaultColors = List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
-      val tokensPerWitnessLimit = 10 // Low values for debug; set to Int.MaxValue for production
+      val tokensPerWitnessLimit = 2500 // Low values for debug; set to Int.MaxValue for production
       val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
 
       // Pattern-match on JSON vs XML result

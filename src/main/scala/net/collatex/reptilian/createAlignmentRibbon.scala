@@ -34,6 +34,7 @@ def alignFullDepthBlocks(unalignedZone: UnalignedZone, gTaSigla: List[WitId]): L
   val lTa = unalignedZone.createLocalTokenArrayForUnalignedZone
   val witnessCount = unalignedZone.witnessReadings.size
   val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(lTa, witnessCount)
+  // System.err.println(s"longestFullDepthNonRepeatingBlocks: $longestFullDepthNonRepeatingBlocks")
   if longestFullDepthNonRepeatingBlocks.isEmpty
   then { // align unaligned zones
     alignByClustering(unalignedZone, gTa)
