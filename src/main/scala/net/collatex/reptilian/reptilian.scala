@@ -563,7 +563,7 @@ def retrieveWitnessDataJson(
           break(Left(s"Missing required 't' property in a token of witness '$siglum'"))
         }
 
-        val nField = tokenObj.obj.get("n").map(_.str).getOrElse(tField)
+        val nField = tokenObj.obj.get("n").map(_.str).getOrElse(normalize(tField))
         val wField = witnessIndex
         val gField = gCounter
 
