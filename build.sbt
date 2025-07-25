@@ -54,5 +54,5 @@ libraryDependencies += "org.typelevel" %% "cats-core" % "2.12.0"
 libraryDependencies += "org.scala-lang.modules" %% "scala-collection-contrib" % "0.3.0"
 libraryDependencies += "net.sf.saxon" % "Saxon-HE" % "12.8"
 libraryDependencies += "com.lihaoyi" %% "requests" % "0.9.0"
-
+libraryDependencies += "org.everit.json" % "org.everit.json.schema" % "1.14.3"
 
