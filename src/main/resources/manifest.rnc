@@ -5,12 +5,15 @@
 # Order of <witness> children determines vertical order in alignment ribbon
 # See sample manifest for additional documentation
 
-namespace xsd = "http://www.w3.org/2001/XMLSchema-datatypes"
 namespace cx = "http://interedition.eu/collatex/ns/1.0"
+namespace xsd = "http://www.w3.org/2001/XMLSchema-datatypes"
 
 start = witnesses
 witnesses = element cx:witnesses { witness+ }
 witness = element cx:witness { siglum, color?, url }
 siglum = attribute siglum { text }
-color = attribute color { text }
+color =
+  attribute color {
+    xsd:string { minLength = "1" }
+  }
 url = attribute url { xsd:anyURI }

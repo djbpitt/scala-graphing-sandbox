@@ -38,6 +38,14 @@
         />. </sch:report>
     </sch:rule>
 
+    <sch:rule context="cx:witnesses">
+      <!-- ============================================================== -->
+      <!-- There must be color attribute either for all witness or none   -->
+      <!-- ============================================================== -->
+      <sch:let name="colors" value="cx:witness/@color"/>
+      <sch:assert test="count($colors) = (count(cx:witness), 0)">There must be @color attributes for
+        either all witnesses or no witnesses</sch:assert>
+    </sch:rule>
     <sch:rule context="cx:witness/@url">
       <!-- ============================================================== -->
       <!-- Report duplicate URLs                                          -->
