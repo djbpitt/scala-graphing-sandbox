@@ -1,7 +1,9 @@
 package net.collatex.reptilian
 
+import org.xml.sax.ErrorHandler
 import os.Path
 
+import scala.collection.mutable.ListBuffer
 import scala.util.{CommandLineParser, Try, Using}
 import scala.util.chaining.*
 import scala.util.matching.Regex
@@ -16,7 +18,7 @@ import WitnessJsonData.*
 import scala.util.boundary
 import scala.util.boundary.break
 
-import java.io.StringReader
+import java.io.{StringReader, StringWriter, PrintWriter}
 import java.net.{URI, URL}
 import scala.annotation.tailrec
 import java.nio.file.{Paths, Files}
@@ -27,7 +29,10 @@ import com.thaiopensource.validate.rng.CompactSchemaReader
 import com.thaiopensource.datatype.xsd.DatatypeLibraryFactoryImpl
 import com.thaiopensource.util.{PropertyMap, PropertyMapBuilder}
 import com.thaiopensource.validate.prop.rng.RngProperty
-import org.xml.sax.InputSource
+import com.thaiopensource.validate.ValidateProperty
+import org.xml.sax.{ErrorHandler, SAXParseException, InputSource}
+import scala.jdk.CollectionConverters._
+
 
 // Schematron (via XSLT) validation
 import net.sf.saxon.s9api.{Processor, Serializer}
@@ -128,7 +133,7 @@ def readData(pathToData: Path): List[(String, String)] =
           val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, xmlData, tokenPattern)
           val gTaSigla: List[WitId] = xmlData.indices.toList
           val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
-          val siglaList: List[Siglum] = xmlData.map(w => Siglum(w.siglum)).toList
+          val siglaList: List[Siglum] = xmlData.map(w => w.siglum).toList
           val colorList: List[String] =
             xmlData.zipWithIndex.map { case (w, i) =>
               w.color.getOrElse(defaultColors(i % defaultColors.length))
@@ -174,7 +179,7 @@ def buildJsonGTaAndMetadata(
       case FromContent(witness) =>
         (witness.siglum, witness.color.getOrElse(defaultColors(witIndex % defaultColors.length)))
     }
-    siglaBuilder += Siglum(siglum)
+    siglaBuilder += siglum
     colorBuilder += color
 
     // Process tokens and update gBuilder and gCounter
@@ -354,20 +359,43 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
   * @return
   *   Boolean result, which is ignored, if success; error report if not.
   */
-def validateRnc(xmlElem: Elem, rncSchema: String): Either[String, Boolean] =
-  // TODO: Get validation error report from Jing, instead of just Boolean
+def validateRnc(xmlElem: Elem, rncSchema: String): Either[String, Boolean] = {
   val datatypeLibraryFactory = new DatatypeLibraryFactoryImpl()
   val propertyMapBuilder = new PropertyMapBuilder()
+
+  // Set datatype factory for RNG
   propertyMapBuilder.put(RngProperty.DATATYPE_LIBRARY_FACTORY, datatypeLibraryFactory)
-  val propertyMap: PropertyMap = propertyMapBuilder.toPropertyMap
+
+  // Collect error messages here
+  val errorWriter = new StringWriter()
+  val errorPrinter = new PrintWriter(errorWriter)
+
+  // Custom error handler
+  val errorHandler = new ErrorHandler {
+    override def warning(e: SAXParseException): Unit = errorPrinter.println(s"Warning: ${e.getMessage}")
+
+    override def error(e: SAXParseException): Unit = errorPrinter.println(s"Error: ${e.getMessage}")
+
+    override def fatalError(e: SAXParseException): Unit = errorPrinter.println(s"Fatal error: ${e.getMessage}")
+  }
+
+  propertyMapBuilder.put(ValidateProperty.ERROR_HANDLER, errorHandler)
+
+  val propertyMap = propertyMapBuilder.toPropertyMap
   val driver = new ValidationDriver(propertyMap, CompactSchemaReader.getInstance())
+
   val schemaInput = new InputSource(new StringReader(rncSchema))
   val schemaLoaded = driver.loadSchema(schemaInput)
-  if !schemaLoaded then Left("Failed to load RNC schema from string.")
+  if !schemaLoaded then
+    Left("Failed to load RNC schema from string.")
+
   val xmlInput = new InputSource(new StringReader(xmlElem.toString()))
-  val result = driver.validate(xmlInput)
-  if result then Right(result)
-  else Left("RNC validation failed")
+  val isValid = driver.validate(xmlInput)
+
+  if isValid then Right(true)
+  else Left(errorWriter.toString.trim)
+}
+
 
 /** Validate manifest against precompiled xslt version of Schematron schema
   *
@@ -530,7 +558,7 @@ def retrieveWitnessDataXml(
                 val resolvedPath = os.Path(pathLike, manifestParent)
                 Source.fromFile(resolvedPath.toString)
         Using(inputSource) { source =>
-          CollateXWitnessData(siglum, color, source.getLines().mkString(" "))
+          CollateXWitnessData(Siglum(siglum), color, source.getLines().mkString(" "))
         }.get
       }.toEither.left.map(ex => s"Error reading witness: ${ex.getMessage}")
       maybeWitness
@@ -555,7 +583,7 @@ def retrieveWitnessDataJson(
     if (w.obj.contains("content")) {
       val content = w("content").str
       val color = w.obj.get("color").map(_.str)
-      result += WitnessJsonData.FromContent(CollateXWitnessData(siglum, color, content))
+      result += WitnessJsonData.FromContent(CollateXWitnessData(Siglum(siglum), color, content))
     } else if (w.obj.contains("tokens")) {
       val tokensJson = w("tokens").arr.toSeq
       val tokens: Seq[TokenEnum.Token] = tokensJson.map { tokenObj =>
@@ -576,7 +604,7 @@ def retrieveWitnessDataJson(
       }
 
       gCounter += 1 // skip one between witnesses
-      result += WitnessJsonData.FromTokens(siglum, tokens)
+      result += WitnessJsonData.FromTokens(Siglum(siglum), tokens)
     } else { // Scala 3 idiom for non-local return from inside map
       break(Left(s"Witness '$siglum' must contain either 'content' or 'tokens'"))
     }
@@ -595,7 +623,7 @@ def retrieveWitnessDataJson(
   *   Plain-text string, to be tokenized
   */
 case class CollateXWitnessData(
-    siglum: String,
+    siglum: Siglum,
     color: Option[String] = None,
     content: String
 )
@@ -612,7 +640,7 @@ case class CollateXWitnessData(
   */
 enum WitnessJsonData:
   case FromContent(id: CollateXWitnessData)
-  case FromTokens(id: String, tokens: Seq[TokenEnum.Token])
+  case FromTokens(id: Siglum, tokens: Seq[TokenEnum.Token])
 
 /** ManifestData has two properties:
   *
