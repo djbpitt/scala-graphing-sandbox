@@ -63,7 +63,6 @@ class reptilianTest extends AnyFunSuite:
                     assert(w2Data.content == expectedContent2)
   }
 
-
   test("XML manifest: fails to parse malformed XML") {
     val malformedXml = "<witnesses><witness siglum='A'></witness" // missing '>'
 
@@ -118,7 +117,6 @@ class reptilianTest extends AnyFunSuite:
           case Left(err) =>
             assert(err.exists(_.contains(s"siglum A is duplicated")))
   }
-
 
   test("XML manifest: Schematron violation - mixed use of optional color") {
     val xml =
