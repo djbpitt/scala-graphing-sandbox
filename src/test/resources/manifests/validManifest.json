@@ -1,0 +1,6 @@
+{
+  "witnesses": [
+    { "id": "A", "content": "some text here" },
+    { "id": "B", "tokens": [{ "t": "some" }, { "t": "tokens" }] }
+  ]
+}

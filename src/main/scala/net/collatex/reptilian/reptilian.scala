@@ -1,41 +1,42 @@
 package net.collatex.reptilian
 
-import org.xml.sax.ErrorHandler
 import os.Path
 
-import scala.collection.mutable.ListBuffer
-import scala.util.{CommandLineParser, Try, Using}
+import scala.io.Source
 import scala.util.chaining.*
 import scala.util.matching.Regex
+import scala.util.{CommandLineParser, Try, Using}
 import scala.xml.*
-import scala.io.Source
 
 // To process JSON input
-import cats.syntax.all.* // We use traverse
-import WitnessJsonData.*
+import cats.syntax.all.*
+import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
+import com.networknt.schema.{JsonSchema, JsonSchemaFactory, SpecVersion, ValidationMessage}
+import net.collatex.reptilian.WitnessJsonData.*
+
+import java.io.InputStream
 
 // Scala 3 prohibits local returns and uses boundary.break instead
+import java.io.{PrintWriter, StringReader, StringWriter}
+import java.net.{URI, URL}
+import java.nio.file.{Files, Paths}
+import scala.annotation.tailrec
 import scala.util.boundary
 import scala.util.boundary.break
 
-import java.io.{StringReader, StringWriter, PrintWriter}
-import java.net.{URI, URL}
-import scala.annotation.tailrec
-import java.nio.file.{Paths, Files}
-
 // Relax NG validation
-import com.thaiopensource.validate.ValidationDriver
-import com.thaiopensource.validate.rng.CompactSchemaReader
 import com.thaiopensource.datatype.xsd.DatatypeLibraryFactoryImpl
-import com.thaiopensource.util.{PropertyMap, PropertyMapBuilder}
+import com.thaiopensource.util.PropertyMapBuilder
+import com.thaiopensource.validate.{ValidateProperty, ValidationDriver}
 import com.thaiopensource.validate.prop.rng.RngProperty
-import com.thaiopensource.validate.ValidateProperty
-import org.xml.sax.{ErrorHandler, SAXParseException, InputSource}
-import scala.jdk.CollectionConverters._
+import com.thaiopensource.validate.rng.CompactSchemaReader
+import org.xml.sax.{ErrorHandler, InputSource, SAXParseException}
 
+import scala.jdk.CollectionConverters.*
 
 // Schematron (via XSLT) validation
 import net.sf.saxon.s9api.{Processor, Serializer}
+
 import javax.xml.transform.stream.StreamSource
 
 /** Mimic XPath normalize-space()
@@ -386,8 +387,7 @@ def validateRnc(xmlElem: Elem, rncSchema: String): Either[String, Boolean] = {
 
   val schemaInput = new InputSource(new StringReader(rncSchema))
   val schemaLoaded = driver.loadSchema(schemaInput)
-  if !schemaLoaded then
-    Left("Failed to load RNC schema from string.")
+  if !schemaLoaded then Left("Failed to load RNC schema from string.")
 
   val xmlInput = new InputSource(new StringReader(xmlElem.toString()))
   val isValid = driver.validate(xmlInput)
@@ -395,7 +395,6 @@ def validateRnc(xmlElem: Elem, rncSchema: String): Either[String, Boolean] = {
   if isValid then Right(true)
   else Left(errorWriter.toString.trim)
 }
-
 
 /** Validate manifest against precompiled xslt version of Schematron schema
   *
@@ -473,6 +472,26 @@ def validateSchematron(
 
     case None =>
       Left(Seq(s"Could not load XSLT resource: $xsltResourcePath"))
+  }
+}
+
+def validateJsonManifest(jsonInput: String, schemaInput: InputStream): Either[String, Boolean] = {
+  val mapper = new ObjectMapper()
+
+  try {
+    val jsonNode: JsonNode = mapper.readTree(jsonInput)
+    val schemaFactory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7)
+    val schema: JsonSchema = schemaFactory.getSchema(schemaInput)
+
+    val validationResult: java.util.Set[ValidationMessage] = schema.validate(jsonNode)
+
+    if validationResult.isEmpty then Right(true)
+    else
+      Left(
+        validationResult.asScala.map(_.getMessage).mkString("\n")
+      )
+  } catch {
+    case e: Exception => Left(s"Exception during validation: ${e.getMessage}")
   }
 }
 

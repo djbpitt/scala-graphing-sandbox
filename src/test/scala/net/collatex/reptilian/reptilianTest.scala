@@ -139,3 +139,153 @@ class reptilianTest extends AnyFunSuite:
           case Left(err) =>
             assert(err.exists(_.contains("There must be @color attributes for either all witnesses or no witnesses")))
   }
+
+  // Utility to read JSON files from resources
+  def readResource(path: String): String =
+    val stream = getClass.getResourceAsStream(path)
+    assert(stream != null, s"Could not load resource: $path")
+    scala.io.Source.fromInputStream(stream).mkString
+
+  test("validateJsonManifest should accept a valid manifest") {
+    val json = readResource("/manifests/validManifest.json")
+    val schemaStream = getClass.getResourceAsStream("/manifestSchema.json")
+    require(schemaStream != null, "Schema resource not found")
+    val result = validateJsonManifest(json, schemaStream)
+    assert(result == Right(true))
+  }
+
+  test("validateJsonManifest should reject a manifest missing required keys") {
+    val json = readResource("/manifests/invalidManifest.json")
+    val schemaStream = getClass.getResourceAsStream("/manifestSchema.json")
+    require(schemaStream != null, "Schema resource not found")
+    val result = validateJsonManifest(json, schemaStream)
+    result match
+      case Left(error) => assert(error.contains("required property"))
+      case Right(_)    => fail("Expected validation to fail but it succeeded.")
+  }
+
+  val jsonSchemaStream =
+    getClass.getResourceAsStream("/manifestSchema.json")
+
+  test("valid manifest with content witnesses should pass validation") {
+    val manifest =
+      """
+        |{
+        |  "witnesses": [
+        |    { "id": "A", "content": "Lorem ipsum" },
+        |    { "id": "B", "content": "Dolor sit amet" }
+        |  ]
+        |}
+      """.stripMargin
+    val result = validateJsonManifest(manifest, jsonSchemaStream)
+    assert(result.isRight)
+  }
+
+  test("valid manifest with tokens and unknown fields should pass validation") {
+    val manifest =
+      """
+        |{
+        |  "witnesses": [
+        |    {
+        |      "id": "T1",
+        |      "tokens": [
+        |        { "t": "foo", "extra": true },
+        |        { "t": "bar", "another": 5 }
+        |      ]
+        |    }
+        |  ]
+        |}
+      """.stripMargin
+    val result = validateJsonManifest(manifest, jsonSchemaStream)
+    assert(result.isRight)
+  }
+
+  test("manifest missing 'witnesses' key should fail validation") {
+    val manifest =
+      """
+        |{
+        |  "algorithm": "levenshtein"
+        |}
+      """.stripMargin
+    val result = validateJsonManifest(manifest, jsonSchemaStream)
+    assert(result.isLeft)
+  }
+
+  test("manifest with witness having both 'content' and 'tokens' should fail validation") {
+    val manifest =
+      """
+        |{
+        |  "witnesses": [
+        |    {
+        |      "id": "X",
+        |      "content": "abc",
+        |      "tokens": [{ "t": "abc" }]
+        |    }
+        |  ]
+        |}
+      """.stripMargin
+    val result = validateJsonManifest(manifest, jsonSchemaStream)
+    assert(result.isLeft)
+  }
+
+  test("manifest with witness missing both 'content' and 'tokens' should fail validation") {
+    val manifest =
+      """
+        |{
+        |  "witnesses": [
+        |    { "id": "Y" }
+        |  ]
+        |}
+      """.stripMargin
+    val result = validateJsonManifest(manifest, jsonSchemaStream)
+    assert(result.isLeft)
+  }
+
+  test("manifest with token missing required 't' field should fail validation") {
+    val manifest =
+      """
+        |{
+        |  "witnesses": [
+        |    {
+        |      "id": "Z",
+        |      "tokens": [{ "n": "missing-t" }]
+        |    }
+        |  ]
+        |}
+      """.stripMargin
+    val result = validateJsonManifest(manifest, jsonSchemaStream)
+    assert(result.isLeft)
+  }
+
+  test("manifest with token having wrong types should fail validation") {
+    val manifest =
+      """
+        |{
+        |  "witnesses": [
+        |    {
+        |      "id": "WrongTypes",
+        |      "tokens": [
+        |        { "t": 123, "n": false, "w": "oops", "g": null }
+        |      ]
+        |    }
+        |  ]
+        |}
+      """.stripMargin
+    val result = validateJsonManifest(manifest, jsonSchemaStream)
+    assert(result.isLeft)
+  }
+
+  test("valid manifest with top-level options should pass validation") {
+    val manifest =
+      """
+        |{
+        |  "algorithm": "levenshtein",
+        |  "tokenComparator": "caseInsensitive",
+        |  "witnesses": [
+        |    { "id": "W", "content": "Some text" }
+        |  ]
+        |}
+      """.stripMargin
+    val result = validateJsonManifest(manifest, jsonSchemaStream)
+    assert(result.isRight)
+  }
