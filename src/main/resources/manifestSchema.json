@@ -6,68 +6,36 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": [
-          "id"
-        ],
+        "required": ["id"],
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "content": {
-            "type": "string"
-          },
+          "id": { "type": "string" },
+          "content": { "type": "string" },
           "tokens": {
             "type": "array",
             "items": {
               "type": "object",
-              "required": [
-                "t"
-              ],
+              "required": ["t"],
               "properties": {
-                "t": {
-                  "type": "string"
-                },
-                "n": {
-                  "type": "string"
-                },
-                "w": {
-                  "type": "integer"
-                },
-                "g": {
-                  "type": "integer"
-                }
+                "t": { "type": "string" },
+                "n": { "type": "string" },
+                "w": { "type": "integer" },
+                "g": { "type": "integer" }
               },
               "additionalProperties": true
             }
           },
-          "color": {
-            "type": "string"
-          }
+          "color": { "type": "string" }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "oneOf": [
-          {
-            "required": [
-              "content"
-            ]
-          },
-          {
-            "required": [
-              "tokens"
-            ]
-          }
+          { "required": ["content"] },
+          { "required": ["tokens"] }
         ]
       }
     },
-    "algorithm": {
-      "type": "string"
-    },
-    "tokenComparator": {
-      "type": "string"
-    }
+    "algorithm": { "type": "string" },
+    "tokenComparator": { "type": "string" }
   },
-  "required": [
-    "witnesses"
-  ],
+  "required": ["witnesses"],
   "additionalProperties": false
 }

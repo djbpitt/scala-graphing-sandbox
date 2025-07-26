@@ -164,9 +164,6 @@ class reptilianTest extends AnyFunSuite:
       case Right(_)    => fail("Expected validation to fail but it succeeded.")
   }
 
-  val jsonSchemaStream =
-    getClass.getResourceAsStream("/manifestSchema.json")
-
   test("valid manifest with content witnesses should pass validation") {
     val manifest =
       """
@@ -177,7 +174,8 @@ class reptilianTest extends AnyFunSuite:
         |  ]
         |}
       """.stripMargin
-    val result = validateJsonManifest(manifest, jsonSchemaStream)
+    val schemaStream = getClass.getResourceAsStream("/manifestSchema.json")
+    val result = validateJsonManifest(manifest, schemaStream)
     assert(result.isRight)
   }
 
@@ -196,7 +194,8 @@ class reptilianTest extends AnyFunSuite:
         |  ]
         |}
       """.stripMargin
-    val result = validateJsonManifest(manifest, jsonSchemaStream)
+    val schemaStream = getClass.getResourceAsStream("/manifestSchema.json")
+    val result = validateJsonManifest(manifest, schemaStream)
     assert(result.isRight)
   }
 
@@ -207,7 +206,8 @@ class reptilianTest extends AnyFunSuite:
         |  "algorithm": "levenshtein"
         |}
       """.stripMargin
-    val result = validateJsonManifest(manifest, jsonSchemaStream)
+    val schemaStream = getClass.getResourceAsStream("/manifestSchema.json")
+    val result = validateJsonManifest(manifest, schemaStream)
     assert(result.isLeft)
   }
 
@@ -224,7 +224,8 @@ class reptilianTest extends AnyFunSuite:
         |  ]
         |}
       """.stripMargin
-    val result = validateJsonManifest(manifest, jsonSchemaStream)
+    val schemaStream = getClass.getResourceAsStream("/manifestSchema.json")
+    val result = validateJsonManifest(manifest, schemaStream)
     assert(result.isLeft)
   }
 
@@ -237,7 +238,8 @@ class reptilianTest extends AnyFunSuite:
         |  ]
         |}
       """.stripMargin
-    val result = validateJsonManifest(manifest, jsonSchemaStream)
+    val schemaStream = getClass.getResourceAsStream("/manifestSchema.json")
+    val result = validateJsonManifest(manifest, schemaStream)
     assert(result.isLeft)
   }
 
@@ -253,7 +255,8 @@ class reptilianTest extends AnyFunSuite:
         |  ]
         |}
       """.stripMargin
-    val result = validateJsonManifest(manifest, jsonSchemaStream)
+    val schemaStream = getClass.getResourceAsStream("/manifestSchema.json")
+    val result = validateJsonManifest(manifest, schemaStream)
     assert(result.isLeft)
   }
 
@@ -271,7 +274,8 @@ class reptilianTest extends AnyFunSuite:
         |  ]
         |}
       """.stripMargin
-    val result = validateJsonManifest(manifest, jsonSchemaStream)
+    val schemaStream = getClass.getResourceAsStream("/manifestSchema.json")
+    val result = validateJsonManifest(manifest, schemaStream)
     assert(result.isLeft)
   }
 
@@ -286,6 +290,69 @@ class reptilianTest extends AnyFunSuite:
         |  ]
         |}
       """.stripMargin
-    val result = validateJsonManifest(manifest, jsonSchemaStream)
+    val schemaStream = getClass.getResourceAsStream("/manifestSchema.json")
+    val result = validateJsonManifest(manifest, schemaStream)
+    assert(result.isRight)
+  }
+
+  test("post-schema validation fails when some but not all witnesses have color") {
+    val manifest = ujson.read("""
+      {
+        "witnesses": [
+          { "id": "A", "content": "A text", "color": "#ff0000" },
+          { "id": "B", "content": "B text" }
+        ]
+      }
+    """)
+    val result = validatePostSchemaRules(manifest)
+    assert(result.isLeft)
+    result match
+      case Left(errors) =>
+        assert(errors.exists(_.contains("Either all witnesses must have 'color' or none may have it")))
+      case Right(_) =>
+        fail("Expected validation to fail, but it succeeded")
+  }
+
+  test("post-schema validation fails when witness ids are not unique") {
+    val manifest = ujson.read("""
+      {
+        "witnesses": [
+          { "id": "dup", "content": "Text A" },
+          { "id": "dup", "content": "Text B" }
+        ]
+      }
+    """)
+    val result = validatePostSchemaRules(manifest)
+    assert(result.isLeft)
+    result match
+      case Left(errors) =>
+        assert(errors.exists(_.contains("Duplicate witness id(s)")))
+      case Right(_) =>
+        fail("Expected validation to fail, but it succeeded")
+  }
+
+  test("post-schema validation succeeds when color is consistent and ids are unique") {
+    val manifest = ujson.read("""
+      {
+        "witnesses": [
+          { "id": "A", "content": "First", "color": "#ff0000" },
+          { "id": "B", "content": "Second", "color": "#00ff00" }
+        ]
+      }
+    """)
+    val result = validatePostSchemaRules(manifest)
+    assert(result.isRight)
+  }
+
+  test("post-schema validation succeeds when no witness has color") {
+    val manifest = ujson.read("""
+      {
+        "witnesses": [
+          { "id": "W1", "content": "X" },
+          { "id": "W2", "content": "Y" }
+        ]
+      }
+    """)
+    val result = validatePostSchemaRules(manifest)
     assert(result.isRight)
   }

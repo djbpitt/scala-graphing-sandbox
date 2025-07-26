@@ -115,7 +115,23 @@ def readData(pathToData: Path): List[(String, String)] =
           json match
             case Left(err) => Left(err)
             case Right(parsedJson) =>
-              retrieveWitnessDataJson(parsedJson, ManifestData(source, ManifestFormat.Json))
+              // Apply JSON Schema validation first
+              val schemaPath = os.resource / "manifestSchema.json"
+              val schemaInputStream = new java.io.ByteArrayInputStream(os.read.bytes(schemaPath))
+              val schemaValidation = validateJsonManifest(parsedJson.render(), schemaInputStream)
+
+              schemaValidation match
+                case Left(errors) =>
+                  Left(s"Manifest failed JSON Schema validation:\n${errors.mkString("\n")}")
+                case Right(_) =>
+                  // Apply post-schema rules (color consistency, unique ids)
+                  validatePostSchemaRules(parsedJson) match
+                    case Left(ruleErrors) =>
+                      Left(s"Manifest failed semantic validation:\n${ruleErrors.mkString("\n")}")
+                    case Right(_) =>
+                      retrieveWitnessDataJson(parsedJson, ManifestData(source, ManifestFormat.Json))
+
+
     } yield (witnessData, argMap)
 
   parsedInput match
@@ -493,6 +509,31 @@ def validateJsonManifest(jsonInput: String, schemaInput: InputStream): Either[St
   } catch {
     case e: Exception => Left(s"Exception during validation: ${e.getMessage}")
   }
+}
+
+def validatePostSchemaRules(json: ujson.Value): Either[List[String], Unit] = {
+  val witnesses = json("witnesses").arr
+
+  // Rule 1: All or none have "color"
+  val withColor = witnesses.count(w => w.obj.contains("color"))
+  val allHaveColor = withColor == witnesses.length
+  val noneHaveColor = withColor == 0
+
+  val colorError =
+    if (allHaveColor || noneHaveColor) None
+    else Some("Either all witnesses must have 'color' or none may have it.")
+
+  // Rule 2: Unique ids
+  val ids = witnesses.map(_("id").str)
+  val duplicateIds = ids.diff(ids.distinct).distinct
+  val idError =
+    if (duplicateIds.nonEmpty)
+      Some(s"Duplicate witness id(s): ${duplicateIds.mkString(", ")}")
+    else None
+
+  val allErrors = List(colorError, idError).flatten
+  if (allErrors.isEmpty) Right(())
+  else Left(allErrors)
 }
 
 /** Resolves manifest location (input as string) as absolute path (if local) or URL (if remote)
