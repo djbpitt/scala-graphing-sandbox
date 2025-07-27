@@ -125,7 +125,7 @@ def emitTableHorizontal(
   if outputBaseFilename.isEmpty then Using.resource(new PrintWriter(Console.out)) { writer => renderTable(writer) }
   else
     val filename = outputBaseFilename.head + "-h.txt"
-    val file = os.Path(filename, os.pwd)
+    val file = os.Path(filename, os.pwd) // correctly resolve relative paths
     Using.resource(new PrintWriter(file.toIO)) { writer => renderTable(writer) }
 
 /** Vertical plain text table; rows as alignment points, columns as witnesses
