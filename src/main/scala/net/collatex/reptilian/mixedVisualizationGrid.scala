@@ -542,7 +542,7 @@ def createHorizontalRibbons(
                |  padding: .1em .1em 0 .1em;
                |  line-height: ${ribbonWidth - 1}px;
                |}""".stripMargin
-  val js = """"use strict";
+  val js = """<![CDATA["use strict";
              |document.addEventListener("DOMContentLoaded", function () {
              |  const groups = document.getElementsByClassName("group");
              |  for (var i = 0, len = groups.length; i < len; i++) {
@@ -613,7 +613,7 @@ def createHorizontalRibbons(
              |}
              |function toggleOne(target, width) {
              |  target.setAttribute("width", width);
-             |}""".stripMargin
+             |}]]>""".stripMargin
   val html =
     <html xmlns="http://www.w3.org/1999/xhtml">
       <head>
