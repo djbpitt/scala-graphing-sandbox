@@ -8,6 +8,7 @@ import scala.xml.Elem
 import net.collatex.reptilian.{AlignmentPoint, AlignmentRibbon}
 import os.{rel, temp}
 
+import java.io.ByteArrayOutputStream
 import scala.collection.mutable.ListBuffer
 
 /* Alignment fixture for use in tests */
@@ -49,7 +50,7 @@ def assertMatchesGolden(output: String, goldenFile: os.Path): Unit =
 
 class displayfunctionsTest extends AnyFunSuite:
 
-  import net.collatex.reptilian.DisplayTestFixtures.*
+  import DisplayTestFixtures.*
 
   test("emitTableHorizontal writes correct table output to file") {
 
@@ -69,7 +70,7 @@ class displayfunctionsTest extends AnyFunSuite:
   test("emitTableHorizontal writes to stdOut when no filename is provided") {
 
     // Capture stdout
-    val outputStream = new java.io.ByteArrayOutputStream()
+    val outputStream = new ByteArrayOutputStream()
     Console.withOut(outputStream) {
       emitTableHorizontal(alignment, sigla, gTa, Set.empty)
     }
@@ -98,7 +99,7 @@ class displayfunctionsTest extends AnyFunSuite:
 
   test("emitTableVertical writes to stdOut when no filename is provided") {
 
-    val outputStream = new java.io.ByteArrayOutputStream()
+    val outputStream = new ByteArrayOutputStream()
     Console.withOut(outputStream) {
       emitTableVertical(alignment, sigla, gTa, Set.empty)
     }
@@ -133,7 +134,7 @@ class displayfunctionsTest extends AnyFunSuite:
   }
 
   test("emitTableHorizontalHTML writes to stdOut when no filename is provided") {
-    val output = new java.io.ByteArrayOutputStream()
+    val output = new ByteArrayOutputStream()
     Console.withOut(output) {
       emitTableHorizontalHTML(
         alignment = alignment,
@@ -152,4 +153,90 @@ class displayfunctionsTest extends AnyFunSuite:
       .trim
 
     assert(actual == expected)
+  }
+
+  test("emitTableVerticalHTML writes correct table output to file") {
+    val tempDir = os.temp.dir(prefix = "table-v-dir-", deleteOnExit = true)
+    val outputBase = "test-table"
+    val outputBaseFilename = Set((tempDir / outputBase).toString)
+    val htmlExtension = Set("xhtml")
+
+    emitTableVerticalHTML(
+      alignment = alignment,
+      displaySigla = sigla,
+      gTa = gTa,
+      outputBaseFilename = outputBaseFilename,
+      htmlExtension = htmlExtension
+    )
+
+    val outputPath = tempDir / s"$outputBase-v.${htmlExtension.head}"
+    assert(os.exists(outputPath), s"Expected output file $outputPath does not exist")
+
+    val actual = os.read(outputPath)
+    val expected = os.read(os.pwd / "src" / "test" / "resources" / "gold" / "table-v.xhtml")
+    assert(actual.trim == expected.trim)
+  }
+
+  test("emitTableVerticalHTML writes to stdOut when no filename is provided") {
+    val output = new ByteArrayOutputStream()
+    Console.withOut(output) {
+      emitTableVerticalHTML(
+        alignment = alignment,
+        displaySigla = sigla,
+        gTa = gTa,
+        outputBaseFilename = Set.empty,
+        htmlExtension = Set("xhtml")
+      )
+    }
+
+    val actual = output.toString.trim
+    val expected = os
+      .read(
+        os.pwd / "src" / "test" / "resources" / "gold" / "table-v.xhtml"
+      )
+      .trim
+    assert(actual == expected)
+  }
+
+  test("emitAlignmentRibbon writes correct HTML to file") {
+    val tempDir = os.temp.dir(prefix = "alignment-ribbon-dir-", deleteOnExit = true)
+    val outputBase = "alignment-ribbon"
+    val outputBaseFilename = Set((tempDir / outputBase).toString)
+    val htmlExtension = Set("xhtml")
+
+    emitAlignmentRibbon(
+      alignment = alignment,
+      displaySigla = sigla,
+      displayColors = List("pink", "aqua"),
+      gTa = gTa,
+      outputBaseFilename = outputBaseFilename,
+      htmlExtension = htmlExtension
+    )
+
+    val outputPath = tempDir / s"$outputBase.${htmlExtension.head}"
+    assert(os.exists(outputPath), s"Expected output file $outputPath does not exist")
+    val actual = os.read(outputPath)
+    val expected = os.read(os.pwd / "src" / "test" / "resources" / "gold" / "alignment-ribbon.xhtml")
+    assert(actual.trim == expected.trim)
+  }
+
+  test("emitAlignmentRibbon writes to stdOut when no filename is provided") {
+    val output = new ByteArrayOutputStream()
+    Console.withOut(output) {
+      emitAlignmentRibbon(
+        alignment = alignment,
+        displaySigla = sigla,
+        displayColors = List("pink", "aqua"),
+        gTa = gTa,
+        outputBaseFilename = Set.empty,
+        htmlExtension = Set("html")
+      )
+    }
+
+    val actual = output.toString.trim
+    val expected = os
+      .read(os.pwd / "src" / "test" / "resources" / "gold" / "alignment-ribbon.xhtml")
+      .trim
+    assert(actual == expected)
+
   }

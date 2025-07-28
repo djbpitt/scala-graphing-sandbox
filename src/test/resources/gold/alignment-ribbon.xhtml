@@ -1,0 +1,177 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html >
+<html xmlns="http://www.w3.org/1999/xhtml">
+      <head>
+        <title>Alignments</title>
+        <style type="text/css">header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+#set_all {
+  display: flex;
+  gap: .5em;
+  flex-direction: column;
+  margin: auto 0 auto 0;
+  padding: .1em .3em .2em .2em;
+  font-size: .8rem;
+}
+#wrapper {
+  padding: 2px;
+  overflow-x: scroll;
+  display: flex;
+  flex-direction: row;
+  height: 105px;
+  width: 100%;
+  background: linear-gradient(
+    to bottom,
+    gainsboro 0,
+    gainsboro 72px,
+    gray 72px,
+    gray 100%
+  );
+}
+div {
+  position: relative;
+}
+.group {
+  display: flex;
+  flex-direction: row;
+}
+.innerWrapper {
+  position: absolute;
+  display: block;
+  top: -1px;
+  left: -1px;
+  height: 101px;
+}
+.gTaSigla {
+  font-weight: bold;
+  font-size: small;
+}
+foreignObject &gt; div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: &quot;Times New Roman&quot;; /* Match font metrics */
+  font-size: 16px; /* needed by Safari */
+  padding: .1em .1em 0 .1em;
+  line-height: 17px;
+}</style>
+        <script type="text/javascript"><![CDATA["use strict";
+document.addEventListener("DOMContentLoaded", function () {
+  const groups = document.getElementsByClassName("group");
+  for (var i = 0, len = groups.length; i < len; i++) {
+    groups[i].addEventListener("click", toggleSize);
+  }
+  document.getElementById("expand_all").addEventListener("click", expandAll);
+  document.getElementById("truncate_all").addEventListener("click", truncateAll);
+})
+function toggleSize() {
+  var newWidth, newWrapperWidth, apTargets, innerWrapTargets, i, len;
+  if (this.dataset.maxwidth > 160) {
+    apTargets = this.querySelectorAll("rect, foreignObject, div.ap > svg.alignment");
+    // Determine width
+    if (apTargets[0].getAttribute("width") == this.dataset.maxwidth) {
+      newWidth = 160;
+    } else {
+      newWidth = this.dataset.maxwidth;
+    }
+    // Reset width of alignment point groups
+    for (i = 0, len = apTargets.length; i < len; i++) {
+      toggleOne(apTargets[i], newWidth);
+    }
+    // Reset width of wrapper rects
+    innerWrapTargets = this.querySelectorAll("div.innerWrapper > svg");
+    if (newWidth == 160) {
+      newWrapperWidth = 162;
+    } else {
+      newWrapperWidth = parseFloat(newWidth) + 2;
+    }
+    for (i = 0, len = innerWrapTargets.length; i < len; i++) {
+      toggleOne(innerWrapTargets[i], newWrapperWidth);
+    }
+  }
+}
+function truncateAll() {
+  var i, j, groupLen, aps, apsLen, wrappers, wrapperLen, fullWidth, wrapperWidth;
+  const allGroups = document.getElementsByClassName("group");
+  for (i = 0, groupLen = allGroups.length; i < groupLen; i++) {
+    if (allGroups[i].dataset.maxwidth > 160) {
+    aps = allGroups[i].querySelectorAll("rect, foreignObject, div.ap > svg.alignment");
+    wrappers = allGroups[i].querySelectorAll("div.innerWrapper > svg");
+      for (j = 0, apsLen = aps.length; j < apsLen; j++) {
+        toggleOne(aps[j], 160);
+      }
+      for (j = 0, wrapperLen = wrappers.length; j < wrapperLen; j++) {
+        toggleOne(wrappers[j], 162);
+      }
+    }
+  }
+}
+function expandAll() {
+  var i, j, groupLen, aps, apsLen, wrappers, wrapperLen, fullWidth, wrapperWidth;
+  const allGroups = document.getElementsByClassName("group");
+  for (i = 0, groupLen = allGroups.length; i < groupLen; i++) {
+    fullWidth = allGroups[i].dataset.maxwidth;
+    if (fullWidth > 160) {
+      wrapperWidth = parseFloat(fullWidth) + 2;
+      aps = allGroups[i].querySelectorAll("rect, foreignObject, div.ap > svg.alignment");
+      wrappers = allGroups[i].querySelectorAll("div.innerWrapper > svg");
+      for (j = 0, apsLen = aps.length; j < apsLen; j++) {
+        toggleOne(aps[j], fullWidth);
+      }
+      for (j = 0, wrapperLen = wrappers.length; j < wrapperLen; j++) {
+        toggleOne(wrappers[j], wrapperWidth);
+      }
+    }
+  }
+}
+function toggleOne(target, width) {
+  target.setAttribute("width", width);
+}]]></script>
+      </head>
+      <body>
+        <header>
+          <h1>Alignments</h1>
+          <div id="set_all">
+            <button id="expand_all" type="button">Expand all</button>
+            <button id="truncate_all" type="button">Truncate all</button>
+          </div>
+        </header>
+        <main>
+          <div id="wrapper">
+            <svg width="0" height="0" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <defs><linearGradient id="pinkGradient" x1="0%" x2="100%" y1="0%" y2="0%"><stop offset="0%" stop-color="pink" stop-opacity="1.0"/><stop offset="6%" stop-color="pink" stop-opacity="1.0"/><stop offset="20%" stop-color="pink" stop-opacity="0.6"/><stop offset="35%" stop-color="pink" stop-opacity="0.4"/><stop offset="50%" stop-color="pink" stop-opacity="0.3"/><stop offset="65%" stop-color="pink" stop-opacity="0.4"/><stop offset="80%" stop-color="pink" stop-opacity="0.6"/><stop offset="94%" stop-color="pink" stop-opacity="1.0"/><stop offset="100%" stop-color="pink" stop-opacity="1.0"/></linearGradient><linearGradient id="aquaGradient" x1="0%" x2="100%" y1="0%" y2="0%"><stop offset="0%" stop-color="aqua" stop-opacity="1.0"/><stop offset="6%" stop-color="aqua" stop-opacity="1.0"/><stop offset="20%" stop-color="aqua" stop-opacity="0.6"/><stop offset="35%" stop-color="aqua" stop-opacity="0.4"/><stop offset="50%" stop-color="aqua" stop-opacity="0.3"/><stop offset="65%" stop-color="aqua" stop-opacity="0.4"/><stop offset="80%" stop-color="aqua" stop-opacity="0.6"/><stop offset="94%" stop-color="aqua" stop-opacity="1.0"/><stop offset="100%" stop-color="aqua" stop-opacity="1.0"/></linearGradient></defs>
+            </svg><div class="group" data-maxwidth="50.203125"><div class="ap">
+      <svg preserveAspectRatio="none" width="50.203125" height="101" class="alignment" xmlns="http://www.w3.org/2000/svg">
+      <g><rect x="0" y="0.0" width="50.203125" height="18" fill="pink"/><foreignObject x="1" y="-2.0" width="50.203125" height="18">
+      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">A: </span>
+        abc</div>
+    </foreignObject><rect x="0" y="18.0" width="50.203125" height="18" fill="aqua"/><foreignObject x="1" y="16.0" width="50.203125" height="18">
+      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">B: </span>
+        abc</div>
+    </foreignObject></g>
+      </svg>
+    </div><div class="flow">
+      <svg preserveAspectRatio="none" width="80" height="101" xmlns="http://www.w3.org/2000/svg"><path d="M 0,9.0 L 10,9.0 C 40,9.0 40,9.0001 70,9.0001 L 80,9.0001" stroke="url(#pinkGradient)" stroke-width="18" fill="none"/><path d="M 0,27.0 L 10,27.0 C 40,27.0 40,45.0001 70,45.0001 L 80,45.0001" stroke="url(#aquaGradient)" stroke-width="18" fill="none"/></svg>
+    </div><div class="innerWrapper">
+            <svg preserveAspectRatio="none" width="52.203125" height="101" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1.0" width="50.203125" height="36" fill="none" stroke="black" stroke-width="2" rx="3"/></svg>
+          </div></div><div class="group" data-maxwidth="48.4453125"><div class="ap">
+      <svg preserveAspectRatio="none" width="48.4453125" height="101" class="alignment" xmlns="http://www.w3.org/2000/svg">
+      <g><rect x="0" y="0.0" width="48.4453125" height="18" fill="pink"/><foreignObject x="1" y="-2.0" width="48.4453125" height="18">
+      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">A: </span>
+        def</div>
+    </foreignObject></g><g><rect x="0" y="36.0" width="48.4453125" height="18" fill="aqua"/><foreignObject x="1" y="34.0" width="48.4453125" height="18">
+      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">B: </span>
+        ghi</div>
+    </foreignObject></g>
+      </svg>
+    </div><div class="innerWrapper">
+            <svg preserveAspectRatio="none" width="50.4453125" height="101" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1.0" width="48.4453125" height="18" fill="none" stroke="black" stroke-width="2" rx="3"/><rect x="1" y="37.0" width="48.4453125" height="18" fill="none" stroke="black" stroke-width="2" rx="3"/></svg>
+          </div></div>
+          </div>
+        </main>
+      </body>
+    </html>
+
