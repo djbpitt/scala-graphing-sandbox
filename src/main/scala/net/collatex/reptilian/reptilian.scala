@@ -113,7 +113,7 @@ def readData(pathToData: Path): List[(String, String)] =
               }
 
           json match
-            case Left(err) => Left(err)
+            case Left(err)         => Left(err)
             case Right(parsedJson) =>
               // Apply JSON Schema validation first
               val schemaPath = os.resource / "manifestSchema.json"
@@ -130,7 +130,6 @@ def readData(pathToData: Path): List[(String, String)] =
                       Left(s"Manifest failed semantic validation:\n${ruleErrors.mkString("\n")}")
                     case Right(_) =>
                       retrieveWitnessDataJson(parsedJson, ManifestData(source, ManifestFormat.Json))
-
 
     } yield (witnessData, argMap)
 
@@ -172,10 +171,17 @@ def readData(pathToData: Path): List[(String, String)] =
           System.err.println("No witnesses found in the manifest.")
 
 def buildJsonGTaAndMetadata(
-    data: Seq[WitnessJsonData],
-    tokensPerWitnessLimit: WitId,
+    inData: Seq[WitnessJsonData],
+    tokensPerWitnessLimit: Int,
     tokenPattern: Regex
 ): Either[String, (Vector[TokenEnum], List[Siglum], List[String])] = {
+  val filteredData = inData.filter(e => Set("N", "P", "O", "S").contains(e.asInstanceOf[FromTokens].id))
+  val data = filteredData map { // Truncate n properties to three characters
+    case x: WitnessJsonData.FromTokens  => WitnessJsonData.FromTokens(x.id, x.tokens.map(f => TokenEnum.Token(f.t, f.n.take(3), f.w, f.g)))
+    case x: WitnessJsonData.FromContent => x
+  }
+  System.err.println(s"sigla: ${data.map(_.asInstanceOf[FromTokens].id)}")
+  System.err.println(s"n values: ${data.map(e => e.asInstanceOf[FromTokens].tokens.map(_.n))}")
   val defaultColors = List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
   val gBuilder = Vector.newBuilder[TokenEnum]
   val siglaBuilder = List.newBuilder[Siglum]
@@ -405,7 +411,7 @@ def validateRnc(xmlElem: Elem, rncSchema: String): Either[String, Boolean] = {
   val schemaLoaded = driver.loadSchema(schemaInput)
   if !schemaLoaded then Left("Failed to load RNC schema from string.")
 
-  val xmlInput = new InputSource(new StringReader(xmlElem.toString()))
+  val xmlInput = new InputSource(new StringReader(xmlElem.toString)
   val isValid = driver.validate(xmlInput)
 
   if isValid then Right(true)
@@ -443,7 +449,7 @@ def validateSchematron(
           val xsltExecutable = compiler.compile(new StreamSource(use(xsltStream)))
 
           // Serialize input XML to string for parsing by Saxon
-          val xmlInput = new java.io.StringReader(xml.toString())
+          val xmlInput = new java.io.StringReader(xml.toString
 
           // Build the source XML document with base URI
           val builder = processor.newDocumentBuilder()
@@ -559,7 +565,7 @@ def resolveManifestString(manifestPathString: String): Either[String, ManifestDa
     if os.exists(absoluteManifestPath) then Right(ManifestData(ManifestSource.Local(absoluteManifestPath), format))
     else Left(s"Manifest file cannot be found: $absoluteManifestPath")
 
-/** Retrieves manifest from eith file system path or remote url
+/** Retrieves manifest from either file system path or remote url
   *
   * @param source
   *   Location of manifest as file system path (absolute or relative to manifest file) or remote url
