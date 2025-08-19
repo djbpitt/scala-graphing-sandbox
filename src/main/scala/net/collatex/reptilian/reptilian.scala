@@ -411,7 +411,7 @@ def validateRnc(xmlElem: Elem, rncSchema: String): Either[String, Boolean] = {
   val schemaLoaded = driver.loadSchema(schemaInput)
   if !schemaLoaded then Left("Failed to load RNC schema from string.")
 
-  val xmlInput = new InputSource(new StringReader(xmlElem.toString)
+  val xmlInput = new InputSource(new StringReader(xmlElem.toString))
   val isValid = driver.validate(xmlInput)
 
   if isValid then Right(true)
@@ -449,7 +449,7 @@ def validateSchematron(
           val xsltExecutable = compiler.compile(new StreamSource(use(xsltStream)))
 
           // Serialize input XML to string for parsing by Saxon
-          val xmlInput = new java.io.StringReader(xml.toString
+          val xmlInput = new java.io.StringReader(xml.toString)
 
           // Build the source XML document with base URI
           val builder = processor.newDocumentBuilder()
