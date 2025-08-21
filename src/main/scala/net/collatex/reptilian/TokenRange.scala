@@ -24,9 +24,9 @@ enum TokenRange:
 
   def tokens: Vector[TokenEnum] =
     this match
-      case x: IllegalTokenRange => throw RuntimeException("Illegal Token Range! "+x.toString)
+      case x: IllegalTokenRange => throw RuntimeException("Illegal Token Range! " + x.toString)
       case _: EmptyTokenRange   => Vector()
-      case _                    =>
+      case _ =>
         val result = this.ta.slice(this.start, this.until)
         if result == Vector.empty then throw RuntimeException("Slice failed!")
         result
@@ -88,6 +88,9 @@ enum TokenRange:
           println(s"tokenRange.slice error with input tr $this, startOffset $startOffset, and untilOffset $untilOffset")
           Left(SliceTokenRangeError)
         else Right(TokenRange(x.start + startOffset, x.start + untilOffset, x.ta))
+
+  override def toString =
+    s"${this.getClass.getSimpleName}(${this.start},${this.until}, ${this.nString}, ${this.tString})"
 
 object TokenRange:
   def apply(start: Int, until: Int, ta: Vector[TokenEnum]): TokenRange = {
