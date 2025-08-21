@@ -47,7 +47,7 @@ def memoizeFnc[K, V](f: K => V): K => V = {
   *   Double
   */
 def computeTokenTextLength(in: String): Double =
-  val result = in.map(e => tnrCharLengths(e)).sum
+  val result = in.map(e => tnrCharLengths.getOrElse(e, 8.0)).sum
   result
 
 /** retrieveWitnessReadings()
