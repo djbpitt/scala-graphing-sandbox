@@ -139,7 +139,7 @@ def readData(pathToData: Path): List[(String, String)] =
 
     case Right((witnessDataJsonOrXml, argMap)) =>
       val defaultColors = List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
-      val tokensPerWitnessLimit = 2500 // Low values for debug; set to Int.MaxValue for production
+      val tokensPerWitnessLimit = Int.MaxValue // Low values for debug; set to Int.MaxValue for production
       val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
 
       // Pattern-match on JSON vs XML result
@@ -175,11 +175,13 @@ def buildJsonGTaAndMetadata(
     tokensPerWitnessLimit: Int,
     tokenPattern: Regex
 ): Either[String, (Vector[TokenEnum], List[Siglum], List[String])] = {
-  val filteredData = inData.filter(e => Set("N", "P", "O", "S").contains(e.asInstanceOf[FromTokens].id))
-  val data = filteredData map { // Truncate n properties to three characters
-    case x: WitnessJsonData.FromTokens  => WitnessJsonData.FromTokens(x.id, x.tokens.map(f => TokenEnum.Token(f.t, f.n.take(3), f.w, f.g)))
-    case x: WitnessJsonData.FromContent => x
-  }
+  val data = inData
+//  val filteredData = inData
+// val data = inData.filter(e => Set("N", "P", "O", "S").contains(e.asInstanceOf[FromTokens].id))
+//  val data = filteredData map { // Truncate n properties to three characters
+//    case x: WitnessJsonData.FromTokens  => WitnessJsonData.FromTokens(x.id, x.tokens.map(f => TokenEnum.Token(f.t, f.n.take(3), f.w, f.g)))
+//    case x: WitnessJsonData.FromContent => x
+//  }
 //  System.err.println(s"sigla: ${data.map(_.asInstanceOf[FromTokens].id)}")
 //  System.err.println(s"n values: ${data.map(e => e.asInstanceOf[FromTokens].tokens.map(_.n))}")
   val defaultColors = List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
