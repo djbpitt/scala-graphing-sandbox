@@ -22,8 +22,8 @@ def createAlignmentRibbon(
   val globalUnalignedZone: UnalignedZone = createGlobalUnalignedZone(gTaSigla, gTa)
   // align, recursively full depth blocks in this unaligned zone
   // 2025-08-19 Temporarily bypass phase 1 to debug phase 2
-  // val alignment = ListBuffer().appendAll(alignFullDepthBlocks(globalUnalignedZone, gTaSigla))
-  val alignment = ListBuffer().appendAll(alignByClustering(globalUnalignedZone, gTa))
+  val alignment = ListBuffer().appendAll(alignFullDepthBlocks(globalUnalignedZone, gTaSigla))
+  // val alignment = ListBuffer().appendAll(alignByClustering(globalUnalignedZone, gTa))
   AlignmentRibbon(alignment)
 
 def alignFullDepthBlocks(unalignedZone: UnalignedZone, gTaSigla: List[WitId]): List[AlignmentUnit] =
@@ -128,7 +128,7 @@ def alignByClustering(zone: UnalignedZone, gTa: Vector[TokenEnum]): List[Alignme
   val witnessReadings: List[List[Token]] = zone.convertToTokenLists()
   // println(s"witnessReadings: $witnessReadings")
   val nodesToCluster: List[ClusterInfo] = clusterWitnesses(witnessReadings)
-  nodesToCluster.foreach(System.err.println)
+  // nodesToCluster.foreach(System.err.println)
   if nodesToCluster.isEmpty then { // One witness, so construct local ribbon directly
     val wg: Set[Map[WitId, TokenRange]] = Set(zone.witnessReadings)
     List(AlignmentPoint(zone.witnessReadings, wg))
