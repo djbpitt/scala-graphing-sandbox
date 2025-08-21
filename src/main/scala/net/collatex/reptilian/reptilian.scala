@@ -180,8 +180,8 @@ def buildJsonGTaAndMetadata(
     case x: WitnessJsonData.FromTokens  => WitnessJsonData.FromTokens(x.id, x.tokens.map(f => TokenEnum.Token(f.t, f.n.take(3), f.w, f.g)))
     case x: WitnessJsonData.FromContent => x
   }
-  System.err.println(s"sigla: ${data.map(_.asInstanceOf[FromTokens].id)}")
-  System.err.println(s"n values: ${data.map(e => e.asInstanceOf[FromTokens].tokens.map(_.n))}")
+//  System.err.println(s"sigla: ${data.map(_.asInstanceOf[FromTokens].id)}")
+//  System.err.println(s"n values: ${data.map(e => e.asInstanceOf[FromTokens].tokens.map(_.n))}")
   val defaultColors = List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
   val gBuilder = Vector.newBuilder[TokenEnum]
   val siglaBuilder = List.newBuilder[Siglum]
