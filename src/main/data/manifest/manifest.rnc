@@ -3,17 +3,23 @@
 # Elements are in the established CollateX namespace with the established prefix
 # Attributes are in no namespace
 # Order of <witness> children determines vertical order in alignment ribbon
+# @font can be specified for all witnesses (on <witnesses>) of for individual <witness> elements
+#   Individual specifications override global
 # See sample manifest for additional documentation
 
 namespace cx = "http://interedition.eu/collatex/ns/1.0"
 namespace xsd = "http://www.w3.org/2001/XMLSchema-datatypes"
 
 start = witnesses
-witnesses = element cx:witnesses { witness+ }
-witness = element cx:witness { siglum, color?, url }
+witnesses = element cx:witnesses { font?, witness+ }
+witness = element cx:witness { siglum, color?, font?, url }
 siglum = attribute siglum { text }
 color =
-  attribute color {
-    xsd:string { minLength = "1" }
-  }
+    attribute color {
+        xsd:string { minLength = "1" }
+    }
+font =
+    attribute font {
+        xsd:string { minLength = "1" }
+    }
 url = attribute url { xsd:anyURI }
