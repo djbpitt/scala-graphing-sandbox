@@ -2,6 +2,7 @@
   "font": "BukyVede",
   "witnesses": [
     {
+      "font": "Monospaced",
       "id": "A",
       "tokens": [
         {

@@ -604,12 +604,15 @@ def retrieveWitnessDataXml(
     manifest: Elem,
     manifestSource: ManifestData
 ): Either[String, Seq[CollateXWitnessData]] =
+  val rootFontOpt = (manifest \ "@font").headOption.map(_.text)
   val results: Seq[Either[String, CollateXWitnessData]] =
     (manifest \ "_").map { e =>
       val maybeWitness: Either[String, CollateXWitnessData] = Try {
         val siglum = (e \ "@siglum").headOption.map(_.text).getOrElse {
           throw new RuntimeException(s"Missing required @siglum attribute in: ${e.toString}")
         }
+        val witnessFont = (e \ "@font").headOption.map(_.text)
+        val finalFont: Option[String] = witnessFont.orElse(rootFontOpt)
         // Defined as Option[String], will be None if missing or empty string
         val color = (e \ "@color").headOption.map(_.text).filter(_.nonEmpty)
         val witnessUrlAttr = (e \ "@url").head.text
@@ -626,7 +629,7 @@ def retrieveWitnessDataXml(
                 val resolvedPath = os.Path(pathLike, manifestParent)
                 Source.fromFile(resolvedPath.toString)
         Using(inputSource) { source =>
-          CollateXWitnessData(Siglum(siglum), color, source.getLines().mkString(" "))
+          CollateXWitnessData(Siglum(siglum), color, finalFont, source.getLines().mkString(" "))
         }.get
       }.toEither.left.map(ex => s"Error reading witness: ${ex.getMessage}")
       maybeWitness
@@ -693,6 +696,7 @@ def retrieveWitnessDataJson(
 case class CollateXWitnessData(
     siglum: Siglum,
     color: Option[String] = None,
+    font: Option[String] = None,
     content: String
 )
 
@@ -708,7 +712,11 @@ case class CollateXWitnessData(
   */
 enum WitnessJsonData:
   case FromContent(id: CollateXWitnessData)
-  case FromTokens(id: Siglum, tokens: Seq[TokenEnum.Token])
+  case FromTokens(
+      id: Siglum,
+      tokens: Seq[TokenEnum.Token],
+      font: Option[String] = None
+  )
 
 /** ManifestData has two properties:
   *
