@@ -8,9 +8,9 @@ import net.collatex.reptilian.{CollateXWitnessData, Siglum, TokenEnum}
 
 val wd: Seq[CollateXWitnessData] = // Sample input data
   Seq(
-    CollateXWitnessData(Siglum("First"), Some("peru"), "Once upon a midnight dreary,"),
-    CollateXWitnessData(Siglum("Second"), Some("orange"), "While I pondered, weak and weary,"),
-    CollateXWitnessData(Siglum("Third"), Some("yellow"), "Over many a quaint a curious volume of forgotten lore")
+    CollateXWitnessData(Siglum("First"), Some("peru"), None, "Once upon a midnight dreary,"),
+    CollateXWitnessData(Siglum("Second"), Some("orange"), None, "While I pondered, weak and weary,"),
+    CollateXWitnessData(Siglum("Third"), Some("yellow"), None, "Over many a quaint a curious volume of forgotten lore")
   )
 
 val tp: Regex = raw"(\w+|[^\w\s])\s*".r // Tokenization regex copied from real code

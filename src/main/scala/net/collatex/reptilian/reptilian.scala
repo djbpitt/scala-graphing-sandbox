@@ -200,7 +200,7 @@ def buildJsonGTaAndMetadata(
 
     // Add siglum and color
     val (siglum, color) = witnessData match {
-      case FromTokens(s, _) => (s, defaultColors(witIndex % defaultColors.length))
+      case FromTokens(s, _, _) => (s, defaultColors(witIndex % defaultColors.length))
       case FromContent(witness) =>
         (witness.siglum, witness.color.getOrElse(defaultColors(witIndex % defaultColors.length)))
     }
@@ -209,7 +209,7 @@ def buildJsonGTaAndMetadata(
 
     // Process tokens and update gBuilder and gCounter
     witnessData match {
-      case FromTokens(_, tokens) =>
+      case FromTokens(_, tokens, _) =>
         tokens.foreach { tok =>
           val updated = tok.copy(w = witIndex, g = gCounter)
           gBuilder += updated
@@ -644,17 +644,19 @@ def retrieveWitnessDataJson(
     json: ujson.Value,
     manifestSource: ManifestData
 ): Either[String, Seq[WitnessJsonData]] = boundary {
+  val rootFontOpt = json.obj.value.get("font").map(_.str)
   val witnesses = json("witnesses").arr.toSeq
   var gCounter = 0
   val result = scala.collection.mutable.ListBuffer.empty[WitnessJsonData]
 
   for ((w, witnessIndex) <- witnesses.zipWithIndex) {
     val siglum = w("id").str
-
+    val witnessFont = w.obj.value.get("font").map(_.str)
+    val finalFont = witnessFont.orElse(rootFontOpt)
     if (w.obj.contains("content")) {
       val content = w("content").str
       val color = w.obj.get("color").map(_.str)
-      result += WitnessJsonData.FromContent(CollateXWitnessData(Siglum(siglum), color, content))
+      result += WitnessJsonData.FromContent(CollateXWitnessData(Siglum(siglum), color, finalFont, content))
     } else if (w.obj.contains("tokens")) {
       val tokensJson = w("tokens").arr.toSeq
       val tokens: Seq[TokenEnum.Token] = tokensJson.map { tokenObj =>
@@ -675,7 +677,7 @@ def retrieveWitnessDataJson(
       }
 
       gCounter += 1 // skip one between witnesses
-      result += WitnessJsonData.FromTokens(Siglum(siglum), tokens)
+      result += WitnessJsonData.FromTokens(Siglum(siglum), tokens, finalFont)
     } else { // Scala 3 idiom for non-local return from inside map
       break(Left(s"Witness '$siglum' must contain either 'content' or 'tokens'"))
     }
