@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="manifest mikulka" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="net.collatex.reptilian.manifest" />
+    <module name="collatex-reptilian.main" />
+    <option name="PROGRAM_PARAMETERS" value="$PROJECT_DIR$/src/main/data/manifest/mikulka/mikulka.json" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="net.collatex.reptilian.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
