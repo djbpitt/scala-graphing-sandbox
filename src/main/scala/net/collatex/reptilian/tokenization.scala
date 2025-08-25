@@ -47,6 +47,7 @@ enum TokenEnum:
 
   override def toString: String = this match {
     case x:TokenEnum.TokenHG => (x.t, x.n, x.w, x.g).toString
+    case x:TokenEnum.Token => (x.t, x.n, x.w, x.g).toString
     case x:TokenEnum.TokenSep => "[TokenSep]"
     case x => super.toString
   }
