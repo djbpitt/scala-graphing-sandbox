@@ -1,0 +1,8 @@
+{
+  "witnesses": [
+    { "id": "A", "content": "dummy content A" },
+    { "id": "B", "content": "dummy content B" },
+    { "id": "C", "content": "dummy content C" }
+  ]
+}
+

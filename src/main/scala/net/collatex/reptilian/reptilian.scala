@@ -1,6 +1,7 @@
 package net.collatex.reptilian
 
 import os.Path
+import ujson.Value
 
 import scala.io.Source
 import scala.util.chaining.*
@@ -63,6 +64,24 @@ def readData(pathToData: Path): List[(String, String)] =
     .toList
     .map(e => (e.last, os.read(e)))
 
+def retrieveManifestJson(source: ManifestSource): Either[String, Value] = {
+  source match
+    case ManifestSource.Local(path) =>
+      try
+        val content = os.read(path) // using OS-lib to read local file
+        Right(ujson.read(content))
+      catch case e: Exception => Left(s"Failed to read local JSON manifest: ${e.getMessage}")
+    case ManifestSource.Remote(url) =>
+      try {
+        val stream = new URI(url.toString).toURL.openStream()
+        val content =
+          try scala.io.Source.fromInputStream(stream).mkString
+          finally stream.close()
+        Right(ujson.read(content))
+      } catch {
+        case e: Exception => Left(s"Failed to fetch remote JSON manifest: ${e.getMessage}")
+      }
+}
 /** Obtain input via manifest and process
   *
   * @param args
@@ -95,23 +114,7 @@ def readData(pathToData: Path): List[(String, String)] =
           } yield data
 
         case ManifestData(source, ManifestFormat.Json) =>
-          val json: Either[String, ujson.Value] = source match
-            case ManifestSource.Local(path) =>
-              try
-                val content = os.read(path) // using OS-lib to read local file
-                Right(ujson.read(content))
-              catch case e: Exception => Left(s"Failed to read local JSON manifest: ${e.getMessage}")
-            case ManifestSource.Remote(url) =>
-              try {
-                val stream = new URI(url.toString).toURL.openStream()
-                val content =
-                  try scala.io.Source.fromInputStream(stream).mkString
-                  finally stream.close()
-                Right(ujson.read(content))
-              } catch {
-                case e: Exception => Left(s"Failed to fetch remote JSON manifest: ${e.getMessage}")
-              }
-
+          val json: Either[String, Value] = retrieveManifestJson(source)
           json match
             case Left(err)         => Left(err)
             case Right(parsedJson) =>
