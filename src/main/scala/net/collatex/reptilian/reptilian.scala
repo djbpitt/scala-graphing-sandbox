@@ -82,6 +82,7 @@ def retrieveManifestJson(source: ManifestSource): Either[String, Value] = {
         case e: Exception => Left(s"Failed to fetch remote JSON manifest: ${e.getMessage}")
       }
 }
+
 /** Obtain input via manifest and process
   *
   * @param args
@@ -722,6 +723,15 @@ enum WitnessJsonData:
       tokens: Seq[TokenEnum.Token],
       font: Option[String] = None
   )
+  // Common accessor for siglum (temporary, during migration)
+  def siglum: Siglum = this match
+    case FromContent(data)    => data.siglum
+    case FromTokens(id, _, _) => id
+
+  // Common accessor for font (temporary, during migration)
+  def fontOpt: Option[String] = this match
+    case FromContent(data)      => data.font
+    case FromTokens(_, _, font) => font
 
 /** ManifestData has two properties:
   *
