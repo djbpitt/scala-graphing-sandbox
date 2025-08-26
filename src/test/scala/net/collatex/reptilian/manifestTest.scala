@@ -123,7 +123,6 @@ class manifestTest extends AnyFunSuite:
    * The "font" property is the same for JSON content and JSON tokens, so the JSON tokens test is abbreviated
    * */
   object FontTestFixtures {
-
     // Sample XML manifest with namespace, witness URLs, and optional font attributes
     val xmlWithRootFont: String =
       """<witnesses xmlns="http://interedition.eu/collatex/ns/1.0" font="RootFont">
@@ -228,38 +227,77 @@ class manifestTest extends AnyFunSuite:
         Files.deleteIfExists(path)
       deleteRecursive(tempDir)
   }
+  test("JSON manifest font inheritance with root font") {
+    import FontTestFixtures._
+    val tempDir = Files.createTempDirectory("font-test-json")
 
-  /* Test JSON manifest font propagation */
-//  test("JSON manifest font inheritance with root font") {
-//    import FontTestFixtures._
-//
-//    val parsedJson = ujson.read(jsonWithRootFont)
-//    val manifestData = ManifestData(ManifestSource.Local(os.pwd / "dummy.json"), ManifestFormat.Json)
-//
-//    val witnesses = retrieveWitnessDataJson(parsedJson, manifestData)
-//
-//    witnesses match
-//      case Left(msg) => fail(s"Could not retrieve data from JSON manifest: $msg")
-//      case Right(data) =>
-//        val fontsBySiglum = data.map(w => w.id.value -> w.font).toMap
-//        assert(fontsBySiglum("A") contains "RootFont") // inherited from root
-//        assert(fontsBySiglum("B") contains "WitnessBFont") // witness-specific font overrides
-//        assert(fontsBySiglum("C") contains "RootFont") // inherited from root
-//  }
-//
-//  test("JSON manifest font inheritance without root font") {
-//    import FontTestFixtures._
-//
-//    val parsedJson = ujson.read(jsonWithoutRootFont)
-//    val manifestData = ManifestData(ManifestSource.Local(os.pwd / "dummy.json"), ManifestFormat.Json)
-//
-//    val witnesses = retrieveWitnessDataJson(parsedJson, manifestData)
-//
-//    witnesses match
-//      case Left(msg) => fail(s"Could not retrieve data from JSON manifest: $msg")
-//      case Right(data) =>
-//        val fontsBySiglum = data.map(w => w.siglum.value -> w.font).toMap
-//        assert(fontsBySiglum("A").isEmpty) // no root font, no witness font
-//        assert(fontsBySiglum("B") contains "WitnessBFont") // witness-specific font
-//        assert(fontsBySiglum("C").isEmpty) // no font at all
-//  }
+    try
+      // Write manifest to temporary file
+      val manifestFile = tempDir.resolve("manifest.json")
+      Files.write(manifestFile, jsonWithRootFont.getBytes("UTF-8"), StandardOpenOption.CREATE)
+
+      // Load JSON as ujson.Value
+      val jsonValue = ujson.read(Files.readString(manifestFile))
+
+      // Wrap manifest path in ManifestData
+      val manifestData =
+        ManifestData(ManifestSource.Local(os.Path(manifestFile.toAbsolutePath.toString)), ManifestFormat.Json)
+
+      // Retrieve witnesses
+      val witnesses = retrieveWitnessDataJson(jsonValue, manifestData)
+
+      witnesses match
+        case Left(msg) => fail(s"Could not retrieve data from JSON manifest: $msg")
+        case Right(data) =>
+          val fontsBySiglum = data.map { w =>
+            val fromContent = w.asInstanceOf[WitnessJsonData.FromContent]
+            fromContent.id.siglum.value -> fromContent.id.font
+          }.toMap
+
+          assert(fontsBySiglum("A") contains "RootFont")
+          assert(fontsBySiglum("B") contains "WitnessBFont")
+          assert(fontsBySiglum("C") contains "RootFont")
+    finally
+      def deleteRecursive(path: JPath): Unit =
+        if Files.isDirectory(path) then Files.list(path).forEach(deleteRecursive)
+        Files.deleteIfExists(path)
+
+      deleteRecursive(tempDir)
+  }
+  test("JSON manifest font inheritance without root font") {
+    import FontTestFixtures._
+    val tempDir = Files.createTempDirectory("font-test-json")
+
+    try
+      // Write manifest to temporary file
+      val manifestFile = tempDir.resolve("manifest.json")
+      Files.write(manifestFile, jsonWithoutRootFont.getBytes("UTF-8"), StandardOpenOption.CREATE)
+
+      // Load JSON as ujson.Value
+      val jsonValue = ujson.read(Files.readString(manifestFile))
+
+      // Wrap manifest path in ManifestData
+      val manifestData =
+        ManifestData(ManifestSource.Local(os.Path(manifestFile.toAbsolutePath.toString)), ManifestFormat.Json)
+
+      // Retrieve witnesses
+      val witnesses = retrieveWitnessDataJson(jsonValue, manifestData)
+
+      witnesses match
+        case Left(msg) => fail(s"Could not retrieve data from JSON manifest: $msg")
+        case Right(data) =>
+          val fontsBySiglum = data.map { w =>
+            val fromContent = w.asInstanceOf[WitnessJsonData.FromContent]
+            fromContent.id.siglum.value -> fromContent.id.font
+          }.toMap
+
+          assert(fontsBySiglum("A").isEmpty)
+          assert(fontsBySiglum("B") contains "WitnessBFont")
+          assert(fontsBySiglum("C").isEmpty)
+    finally
+      def deleteRecursive(path: JPath): Unit =
+        if Files.isDirectory(path) then Files.list(path).forEach(deleteRecursive)
+        Files.deleteIfExists(path)
+
+      deleteRecursive(tempDir)
+  }
