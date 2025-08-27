@@ -1,7 +1,7 @@
 package net.collatex.reptilian
 
 import scala.annotation.{tailrec, unused}
-import scala.xml.{Elem, NodeSeq}
+import scala.xml.{Elem, NodeSeq, Unparsed}
 import math.Ordered.orderingToOrdered
 
 /* ====================================================================== */
@@ -47,7 +47,7 @@ def memoizeFnc[K, V](f: K => V): K => V = {
   *   Double
   */
 def computeTokenTextLength(in: String): Double =
-  val result = in.map(e => tnrCharLengths(e)).sum
+  val result = in.map(e => tnrCharLengths.getOrElse(e, 8.0)).sum
   result
 
 /** retrieveWitnessReadings()
@@ -195,8 +195,6 @@ def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   *
   * @param root
   *   Expanded node root of entire alignment tree
-  * @param gTaSigla
-  *   Set of Siglum instances
   * @param gTa
   *   Global token array
   * @return
@@ -204,11 +202,11 @@ def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   */
 def createHorizontalRibbons(
     root: AlignmentRibbon,
-    gTaSigla: List[WitId],
     displaySigla: List[Siglum],
     displayColors: List[String],
     gTa: Vector[TokenEnum]
 ): scala.xml.Node =
+  val gTaSigla = displaySigla.indices.toList
   /** Constants */
   val ribbonWidth = 18
   // val missingTop = allSigla.size * ribbonWidth * 2 + ribbonWidth / 2
@@ -544,7 +542,7 @@ def createHorizontalRibbons(
                |  padding: .1em .1em 0 .1em;
                |  line-height: ${ribbonWidth - 1}px;
                |}""".stripMargin
-  val js = """"use strict";
+  val js = """<![CDATA["use strict";
              |document.addEventListener("DOMContentLoaded", function () {
              |  const groups = document.getElementsByClassName("group");
              |  for (var i = 0, len = groups.length; i < len; i++) {
@@ -615,13 +613,13 @@ def createHorizontalRibbons(
              |}
              |function toggleOne(target, width) {
              |  target.setAttribute("width", width);
-             |}""".stripMargin
+             |}]]>""".stripMargin
   val html =
     <html xmlns="http://www.w3.org/1999/xhtml">
       <head>
         <title>Alignments</title>
         <style type="text/css">{css}</style>
-        <script type="text/javascript">{js}</script>
+        <script type="text/javascript">{Unparsed(js)}</script>
       </head>
       <body>
         <header>

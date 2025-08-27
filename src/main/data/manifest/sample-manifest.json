@@ -1,0 +1,32 @@
+{
+  "witnesses": [
+    {
+      "id": "A",
+      "content": "Once upon a midnight dreary,"
+    },
+    {
+      "id": "B",
+      "tokens": [
+        {
+          "t": "Once ",
+          "extra1": "ignored"
+        },
+        {
+          "t": "upon ",
+          "n": "upon",
+          "note": "should appear in other"
+        },
+        {
+          "t": "a "
+        },
+        {
+          "t": "midnight "
+        },
+        {
+          "t": "dreary"
+        }
+      ]
+    }
+  ]
+}
+

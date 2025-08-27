@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "witnesses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": {"type": "string"},
+          "content": {"type": "string"},
+          "tokens": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["t"],
+              "properties": {
+                "t": {"type": "string"},
+                "n": {"type": "string"},
+                "w": {"type": "integer"},
+                "g": {"type": "integer"}
+              },
+              "additionalProperties": true
+            }
+          },
+          "color": {"type": "string"},
+          "font": {"type": "string"}
+        },
+        "additionalProperties": true,
+        "oneOf": [
+          {
+            "required": ["content"]
+          },
+          {
+            "required": ["tokens"]
+          }
+        ]
+      }
+    },
+    "algorithm": {"type": "string"},
+    "tokenComparator": {"type": "string"},
+    "font": {"type": "string"}
+  },
+  "required": ["witnesses"],
+  "additionalProperties": false
+}

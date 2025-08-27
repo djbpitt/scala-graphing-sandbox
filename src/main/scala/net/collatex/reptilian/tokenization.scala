@@ -26,14 +26,33 @@ case class TokenJSON(t: String, n: String, w: Int, g: Int) derives ReadWriter
 type WitId = Int
 
 enum TokenEnum:
-  case Token(t: String, n: String, w: WitId, g: Int) extends TokenEnum
+  case Token(t: String, n: String, w: WitId, g: Int, override val other: Map[String, ujson.Value] = Map.empty)
+      extends TokenEnum
   case TokenSep(t: String, n: String, w: WitId, g: Int) extends TokenEnum
   case TokenSg(t: String, n: String, w: WitId, g: Int) extends TokenEnum
-  case TokenHG(t: String, n: String, w: WitId, g: Int, hg: Hypergraph[EdgeLabel, TokenRange], he: EdgeLabel, tr: TokenRange) extends TokenEnum
+  case TokenHG(
+      t: String,
+      n: String,
+      w: WitId,
+      g: Int,
+      override val other: Map[String, ujson.Value] = Map.empty,
+      hg: Hypergraph[EdgeLabel, TokenRange],
+      he: EdgeLabel,
+      tr: TokenRange
+  ) extends TokenEnum
   def t: String
   def n: String
   def w: WitId
   def g: Int
+
+  override def toString: String = this match {
+    case x:TokenEnum.TokenHG => (x.t, x.n, x.w, x.g).toString
+    case x:TokenEnum.Token => (x.t, x.n, x.w, x.g).toString
+    case x:TokenEnum.TokenSep => "[TokenSep]"
+    case x => super.toString
+  }
+  /* Extra token fields for pretokenized JSON input; unused in TokenSep. */
+  def other: Map[String, ujson.Value] = Map.empty
 
 /** Normalize witness data
   *
@@ -64,7 +83,12 @@ def processToken(str: String): TokenState[TokenEnum] = State { state =>
   if str.isEmpty then
     (
       state.copy(offset = offset + 1, emptyCount = emptyCount + 1),
-      TokenEnum.TokenSep("sep" + offset.toString, "sep" + offset.toString, emptyCount, offset) // WitId isn't used; could be anything
+      TokenEnum.TokenSep(
+        "sep" + offset.toString,
+        "sep" + offset.toString,
+        emptyCount,
+        offset
+      ) // WitId isn't used; could be anything
     )
   else (state.copy(offset = offset + 1), TokenEnum.Token(str, normalize(str), emptyCount, offset))
 }

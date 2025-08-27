@@ -1,5 +1,7 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.NodeContent.TerminalNode
+
 import scala.annotation.tailrec
 import scala.sys.process.*
 import java.io.*
@@ -8,17 +10,22 @@ import java.io.*
   *
   * @param ar
   *   Alignment ribbon, same as for other visualizations.
+  *
   * @return
   *   Vector of NodeProperties instances
   */
-def createNodes(ar: AlignmentRibbon): Vector[NodeProperties] = // Start and End are created elsewhere
+def createNodes(
+    ar: AlignmentRibbon
+): Vector[NodeProperties] = // Start and End are created elsewhere
   val nodeInfos: Vector[NodeProperties] =
     ar.children.zipWithIndex.flatMap { case (data, apId) =>
       data
         .asInstanceOf[AlignmentPoint]
         .witnessGroups
         .zipWithIndex
-        .map((wr, gId) => NodeProperties(List(apId, ".", gId).mkString, wr.keySet, wr.head._2.tString))
+        .map((wr, gId) =>
+          NodeProperties(List(apId, ".", gId).mkString, wr.keySet, wr.head._2.nString, NodeContent.RealContent(wr))
+        )
     }.toVector
   nodeInfos
 
@@ -87,16 +94,55 @@ def createEdges(
 def createDot(
     nodes: Vector[NodeProperties],
     edges: Vector[EdgeProperties],
-    displaySigla: List[Siglum]
+    displaySigla: List[Siglum],
+    rich: Boolean
 ): String =
+  def cleanContent(orig: String) = // Graphviz HTML requires escaping; Replace & before < and >
+    orig.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&lt;")
   val dotStart = "digraph G {"
   val dotEnd = "}"
-  val nodeLines =
-    nodes
-      .map(e =>
-        val cleanedContent = e.content.replace("\"", "\\\"") // Escape quote (only?)
-        List("  ", e.gId, " [label=\"", cleanedContent, "\"]").mkString
-      )
+  val nodeLines = {
+    if rich then
+      nodes.map { e =>
+        val nRow =
+          <tr>
+            <td align="left" bgcolor="lightblue">n</td>
+            <td align="left" bgcolor="lightblue">{cleanContent(e.nValue)}</td>
+          </tr>.toString
+
+        val tRows = e.group match
+          case NodeContent.RealContent(group) =>
+            group.toSeq
+              .groupBy { case (_, tokenRange) => tokenRange.tString.normalizeSpace }
+              .toSeq
+              .map { case (readingText, groupedEntries) =>
+                val witIds = groupedEntries.map { case (witId, _) => witId }
+                val sortedSigla = witIds
+                  .map(displaySigla)
+                  .sortBy(s => displaySigla.indexOf(s))
+                  .mkString(", ")
+
+                <tr>
+                  <td align="left">{sortedSigla}</td>
+                  <td align="left">{readingText}</td>
+                </tr>
+              }
+              .mkString("\n")
+
+          case NodeContent.TerminalNode => ""
+
+        val cleanedContent =
+          List("<table cellspacing=\"0\" border=\"0\" cellborder=\"1\">", nRow, tRows, "</table>").mkString
+
+        List("  ", e.gId, "[shape=\"plain\" label=<", cleanedContent, ">]").mkString
+      }
+    else
+      nodes
+        .map(e =>
+          val cleanedContent = cleanContent(e.nValue).replace("\"", "\\\"") // Replace quotes only for non-HTML labels
+          List("  ", e.gId, " [label=\"", cleanedContent, "\"]").mkString
+        )
+  }
   val edgeLines =
     edges
       .map(e =>
@@ -121,12 +167,14 @@ def createDot(
   * @return
   *   Rhine delta SVG visualization as String
   */
-def createSvg(dotFile: String): Either[String, String] =
+def createSvg(dotFile: String, rich: Boolean = false): Either[String, String] =
   val dotExecutable = sys.env.getOrElse(
     "GRAPHVIZ_DOT", // Use environment variable if set
     "dot" // Otherwise expect to find dot on system path
   )
-  val process = Process(Seq(dotExecutable, "-Tsvg"))
+  val process =
+    if rich then Process(Seq(dotExecutable, "-Tsvg:cairo")) // cairo required for stable font metrics
+    else Process(Seq(dotExecutable, "-Tsvg"))
   val output = new StringBuilder
   val error = new StringBuilder
   val io = new ProcessIO(
@@ -157,20 +205,55 @@ def createSvg(dotFile: String): Either[String, String] =
   *   AlignmentRibbon
   * @param displaySigla
   *   User-supplied sigla as List[Siglum]
+  * @param rich
+  *   Boolean; true = rich SVG output (t values), false (default) = traditional SVG output (n values)
+  *
   * @return
   *   Rhine delta SVG representation as String, created by Graphviz
   */
-def createRhineDelta(ar: AlignmentRibbon, displaySigla: List[Siglum]): Either[String, String] =
+/* Sample rich output
+# https://www.renenyffenegger.ch/notes/tools/Graphviz/attributes/label/HTML-like/index
+digraph G {
+A [shape="plain"; label=<
+    <table cellspacing="0">
+        <tr>
+            <td align="left" bgcolor="lightblue">n</td>
+            <td align="left" bgcolor="lightblue"><font face="Bukyvede">greeting</font></td>
+        </tr>
+        <tr>
+            <td align="left" bgcolor="gainsboro">59, 61</td>
+            <td align="left"><font face="Bukyvede">Приветъ</font></td>
+        </tr>
+        <tr>
+            <td align="left" bgcolor="gainsboro">66, 69</td>
+            <td align="left"><font face="Bukyvede">Hello</font></td>
+        </tr>
+    </table>
+>]
+}
+ * */
+def createRhineDelta(
+    ar: AlignmentRibbon,
+    displaySigla: List[Siglum],
+    rich: Boolean = false
+): Either[String, String] =
   val allWitIds = displaySigla.indices.toSet
-  val start = NodeProperties("-1.0", allWitIds, "Start")
-  val end = NodeProperties(Int.MaxValue.toString, allWitIds, "End")
+  val start = NodeProperties("-1.0", allWitIds, "[Start]", TerminalNode)
+  val end = NodeProperties(Int.MaxValue.toString, allWitIds, "[End]", TerminalNode)
   val nodes = createNodes(ar) // Extract, label, and flatten reading groups into vector of NodeProperty
   val edges = createEdges(nodes, start, end, displaySigla) // Create edges as vector of EdgeProperty
-  val dotFile = createDot(start +: nodes :+ end, edges, displaySigla)
-  createSvg(dotFile)
+  val dotFile = createDot(start +: nodes :+ end, edges, displaySigla, rich)
+  // System.err.println(dotFile)
+  createSvg(dotFile, rich)
 
 // gId is stringified Int.Int, e.g. 2.5
 // gId is for development, the intersection of the witnesses on the source and target of an edge is the edge label
 type GId = String
-case class NodeProperties(gId: GId, witnesses: Set[WitId], content: String)
+
+// Start and end nodes don't have token ranges; this lets us process them with special handling
+enum NodeContent:
+  case RealContent(group: WitnessReadings) // normal nodes with TokenRange mappings
+  case TerminalNode // Start and End have no witness readings
+case class NodeProperties(gId: GId, witnesses: Set[WitId], nValue: String, group: NodeContent)
+
 case class EdgeProperties(source: GId, target: GId, witnesses: Seq[Int])

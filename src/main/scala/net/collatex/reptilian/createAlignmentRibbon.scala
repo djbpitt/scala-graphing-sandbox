@@ -21,7 +21,9 @@ def createAlignmentRibbon(
 ): AlignmentRibbon =
   val globalUnalignedZone: UnalignedZone = createGlobalUnalignedZone(gTaSigla, gTa)
   // align, recursively full depth blocks in this unaligned zone
+  // 2025-08-19 Temporarily bypass phase 1 to debug phase 2
   val alignment = ListBuffer().appendAll(alignFullDepthBlocks(globalUnalignedZone, gTaSigla))
+  // val alignment = ListBuffer().appendAll(alignByClustering(globalUnalignedZone, gTa))
   AlignmentRibbon(alignment)
 
 def alignFullDepthBlocks(unalignedZone: UnalignedZone, gTaSigla: List[WitId]): List[AlignmentUnit] =
@@ -34,6 +36,7 @@ def alignFullDepthBlocks(unalignedZone: UnalignedZone, gTaSigla: List[WitId]): L
   val lTa = unalignedZone.createLocalTokenArrayForUnalignedZone
   val witnessCount = unalignedZone.witnessReadings.size
   val (_, _, longestFullDepthNonRepeatingBlocks) = createAlignedBlocks(lTa, witnessCount)
+  // System.err.println(s"longestFullDepthNonRepeatingBlocks: $longestFullDepthNonRepeatingBlocks")
   if longestFullDepthNonRepeatingBlocks.isEmpty
   then { // align unaligned zones
     alignByClustering(unalignedZone, gTa)
@@ -122,16 +125,15 @@ def getAlignmentPointsByTraversingNavigationGraph(
   sortedReadingNodes
 
 def alignByClustering(zone: UnalignedZone, gTa: Vector[TokenEnum]): List[AlignmentUnit] =
-  val darwinReadings: List[List[Token]] = zone.convertToTokenLists()
-  // println(s"darwinReadings: $darwinReadings")
-  val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
-  // println(s"clusters: $nodesToCluster")
+  val witnessReadings: List[List[Token]] = zone.convertToTokenLists()
+  // println(s"witnessReadings: $witnessReadings")
+  val nodesToCluster: List[ClusterInfo] = clusterWitnesses(witnessReadings)
+  // nodesToCluster.foreach(System.err.println)
   if nodesToCluster.isEmpty then { // One witness, so construct local ribbon directly
     val wg: Set[Map[WitId, TokenRange]] = Set(zone.witnessReadings)
     List(AlignmentPoint(zone.witnessReadings, wg))
   } else // Variation node with … er … variation
-    // println("Align by clustering")
-    val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
+    val hg = mergeClustersIntoHG(nodesToCluster, witnessReadings, gTa)
     val ranking: Map[NodeType, Int] = hg.rank()
     val hyperedgesByRank = hg.hyperedges.groupBy(e => ranking(NodeType(e.label))) // unsorted
     val sortedRanks = hyperedgesByRank.keySet.toSeq.sorted

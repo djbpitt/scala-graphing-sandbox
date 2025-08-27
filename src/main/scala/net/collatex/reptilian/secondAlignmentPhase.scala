@@ -46,13 +46,13 @@ def groupPatternsTogetherByHyperedge(
 ): Map[EdgeLabel, List[AlignedPatternOccurrencePhaseTwo]] =
   val resultUnsorted = patterns.flatMap(_.occurrences).groupBy(_.originalHe)
   val result = resultUnsorted.map((k, v) => k -> v.sortBy(_.patternTr.start))
-  result.foreach((k ,v) => if v.size > 1 then println(s"key: $k value: $v"))
-  //println(result.f)
+  // result.foreach((k, v) => if v.size > 1 then System.err.println(s"key: $k value: $v"))
+  // System.err.println(result.f)
   // debug
   // unmark to check conflicting blocks. If two blocks have the same end position in an occurrence then we have a problem
-   val xxTmp = patterns.flatMap(_.occurrences).groupBy(_.patternTr.until)
-   val xx = xxTmp.map((k, v) => k -> v.size)
-   if xx.exists((k,v) => v>1) then throw RuntimeException("Two blocks conflict with each other!")
+  val xxTmp = patterns.flatMap(_.occurrences).groupBy(_.patternTr.until)
+  val xx = xxTmp.map((k, v) => k -> v.size)
+  if xx.exists((k, v) => v > 1) then throw RuntimeException("Two blocks conflict with each other!")
   result
 
 def mergeHgHg(
@@ -68,10 +68,7 @@ def mergeHgHg(
   val HGTokensForBoth = HGTokensForHG1 ++ HGTokensForHG2
   // Now we insert the separators
   val lTa = insertSeparators(HGTokensForBoth)
-  // println(lTs)
-
   val bothHgs = hg1 + hg2
-  // debug
 //  val _dg = bothHgs.toDependencyGraph()
 //  System.err.println("Combined HG input")
 //  dependencyGraphToDot(_dg, bothHgs)
@@ -177,7 +174,7 @@ def identifyHGTokenRanges(hg: Hypergraph[EdgeLabel, TokenRange]): Vector[Vector[
   val HGTokenRange: Set[(EdgeLabel, TokenRange)] =
     hg.hyperedges map (e => (e.label, e.verticesIterator.next()))
   val HGTokens: Vector[Vector[TokenHG]] = HGTokenRange.toVector
-    .map((id, tr) => tr.tokens.map(f => TokenHG(f.t, f.n, f.w, f.g, hg, id, tr)))
+    .map((id, tr) => tr.tokens.map(f => TokenHG(f.t, f.n, f.w, f.g, Map.empty, hg, id, tr)))
   HGTokens
 
 def insertSeparators(HGTokens: Vector[Vector[TokenEnum]]): Vector[TokenEnum] =
@@ -256,8 +253,7 @@ def splitOneHyperedge(
       val newLengthOfPre: Int =
         nextOccurrence.patternTr.start - currentOccurrence.patternTr.until
       // println(s"Calculating preLength: ${nextOccurrence.patternTr.start} ${currentOccurrence.patternTr.until}")
-      if newLengthOfPre < 0 then
-        throw RuntimeException("Patterns either overlap or not sorted correctly!")
+      if newLengthOfPre < 0 then throw RuntimeException("Patterns either overlap or not sorted correctly!")
       val newLengthOfPost: Int =
         nextOccurrence.originalTr.until - nextOccurrence.patternTr.until
       val hyperedgePartsNew = hyperedgeParts + newPre
@@ -330,7 +326,8 @@ def splitHesOnAlignedPatterns(
 // involve two instances from the same witness / hyperedge
 // FIXME: Although we prevent the merge, we currently throw away the pieces. Oops!
 def isSpuriousMatch(candidate: HyperedgeMatch): Boolean =
-  candidate.head.verticesIterator.filter(_.tokens.nonEmpty)
+  candidate.head.verticesIterator
+    .filter(_.tokens.nonEmpty)
     .map(_.tokens.head.w)
     .toSet
     .intersect(
