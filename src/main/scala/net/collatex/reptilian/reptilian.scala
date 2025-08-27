@@ -706,6 +706,24 @@ case class CollateXWitnessData(
     content: String
 )
 
+/** Unified witnessData case class for both XML and JSON input
+  *
+  * @param siglum
+  *   Siglum; user-supplied name, used for output
+  * @param color
+  *   Option[String]; used in alignment ribbon output
+  * @param font
+  *   Option[String]; used in HTML and SVG output formats
+  * @param tokens
+  *   Seq[TokenEnum.Token]; `t`, `n`, `w`, and `g` properties
+  */
+case class witnessData(
+    siglum: Siglum,
+    color: Option[String] = None,
+    font: Option[String] = None,
+    tokens: Seq[TokenEnum.Token]
+)
+
 /** Data retrieved from JSON manifest
   *
   * `content` property is a string, which can be tokenized in the same way as strings retrieved from an XML manifest
