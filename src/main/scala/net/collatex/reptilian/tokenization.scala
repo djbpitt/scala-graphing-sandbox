@@ -93,7 +93,7 @@ def processToken(str: String): TokenState[TokenEnum] = State { state =>
   else (state.copy(offset = offset + 1), TokenEnum.Token(str, normalize(str), emptyCount, offset))
 }
 
-def createGTa(tokensPerWitnessLimit: WitId, data: Seq[CollateXWitnessData], tokenPattern: Regex) = {
+def createGTa(tokensPerWitnessLimit: Int, data: Seq[CollateXWitnessData], tokenPattern: Regex) = {
   val tokenizer = makeTokenizer(tokenPattern, tokensPerWitnessLimit)
   val inputTokens: Vector[String] = tokenizer(data)
   val program: TokenState[Vector[TokenEnum]] = inputTokens.traverse(processToken)
