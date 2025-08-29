@@ -1,0 +1,32 @@
+{
+  "font": "RootFont",
+  "witnesses": [
+    {
+      "id": "A",
+      "content": "Some content A"
+    },
+    {
+      "id": "B",
+      "content": "Some content B",
+      "font": "WitnessBFont"
+    },
+    {
+      "id": "C",
+      "tokens": [
+        {
+          "t": "Some ",
+          "n": "some"
+        },
+        {
+          "t": "content ",
+          "n": "content",
+          "x-extra": 123
+        },
+        {
+          "t": "C"
+        }
+      ]
+    }
+  ]
+}
+
