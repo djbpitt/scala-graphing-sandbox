@@ -73,8 +73,6 @@ object GtaUnifiedBuilder:
           out <- buildFromXmlWitnesses(witnesses, cfg)
         yield out
 
-  // ---------- JSON / XML internals ----------
-
   // ---------- JSON unified implementation (no legacy delegation) ----------
 
   private def buildFromJsonWitnesses(
@@ -128,8 +126,39 @@ object GtaUnifiedBuilder:
   }
 
   private def buildFromXmlWitnesses(
-      witData: Seq[CollateXWitnessData],
+      wits: Seq[CollateXWitnessData],
       cfg: BuildConfig
   ): Either[String, (Vector[TokenEnum], List[Siglum], List[String])] =
-    // When you wire XML, pass cfg through the legacy XML builder the same way
-    Left("XML unified build not implemented yet")
+
+    final case class Acc(
+        gta: Vector[TokenEnum],
+        sigla: List[Siglum],
+        colors: List[String],
+        g: Int
+    )
+
+    val init = Acc(Vector.empty, Nil, Nil, g = 0)
+
+    val out = wits.zipWithIndex.foldLeft(init) { case (acc0, (w, witIndex)) =>
+      // 1) Insert TokenSep BETWEEN witnesses (not before first)
+      val acc1 =
+        if witIndex == 0 then acc0
+        else {
+          // Match legacy XML: label uses current global g; w = previous witness index
+          val sepId = s"sep${acc0.g}"
+          val sep = TokenEnum.TokenSep(sepId, sepId, /* w = */ witIndex - 1, /* g = */ acc0.g)
+          acc0.copy(gta = acc0.gta :+ sep, g = acc0.g + 1)
+        }
+
+      // 2) Siglum + color (match legacy: witness.color or palette default)
+      val siglum: Siglum = w.siglum
+      val color: String = w.color.getOrElse(defaultColors(witIndex % defaultColors.length))
+      val acc2 = acc1.copy(sigla = acc1.sigla :+ siglum, colors = acc1.colors :+ color)
+
+      // 3) Tokenize XML content and emit tokens with w/g
+      val raws = tokenizeContent(w.content, cfg)
+      val (emitted, nextG) = emitFromStrings(raws, witIndex, acc2.g)
+      acc2.copy(gta = acc2.gta ++ emitted, g = nextG)
+    }
+
+    Right((out.gta, out.sigla, out.colors))
