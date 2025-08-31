@@ -1,5 +1,6 @@
 package net.collatex.reptilian
 import org.scalatest.*
+import scala.util.Using
 import net.collatex.reptilian.ManifestSource.Local
 import net.collatex.reptilian.ManifestValidator.{
   validateJsonManifest,
@@ -154,22 +155,36 @@ class reptilianTest extends AnyFunSuite:
 
   test("validateJsonManifest should accept a valid manifest") {
     val json = readResource("/manifests/validManifest.json")
-    val schemaStream = getClass.getResourceAsStream("/manifestSchema.json")
-    require(schemaStream != null, "Schema resource not found")
-    val result = validateJsonManifest(json, schemaStream)
+
+    val result =
+      Option(getClass.getResourceAsStream("/manifestSchema.json")) match {
+        case None => fail("Schema resource not found")
+        case Some(stream) =>
+          Using.resource(stream) { is =>
+            ManifestValidator.validateJsonManifest(json, is)
+          }
+      }
+
     assert(result == Right(true))
   }
 
   test("validateJsonManifest should reject a manifest missing required keys") {
     val json = readResource("/manifests/invalidManifest.json")
-    val schemaStream = getClass.getResourceAsStream("/manifestSchema.json")
-    require(schemaStream != null, "Schema resource not found")
-    val result = validateJsonManifest(json, schemaStream)
-    result match
+
+    val result =
+      Option(getClass.getResourceAsStream("/manifestSchema.json")) match {
+        case None => fail("Schema resource not found")
+        case Some(stream) =>
+          Using.resource(stream) { is =>
+            ManifestValidator.validateJsonManifest(json, is)
+          }
+      }
+
+    result match {
       case Left(error) => assert(error.contains("required property"))
       case Right(_)    => fail("Expected validation to fail but it succeeded.")
+    }
   }
-
   test("valid manifest with content witnesses should pass validation") {
     val manifest =
       """
