@@ -1,44 +1,24 @@
 package net.collatex.reptilian
 
+import ManifestValidator._
+
 import os.Path
 import ujson.Value
 
 import scala.io.Source
-import scala.util.chaining.*
 import scala.util.matching.Regex
 import scala.util.{CommandLineParser, Try, Using}
 import scala.xml.*
 
 // To process JSON input
-import cats.syntax.all.*
-import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
-import com.networknt.schema.{JsonSchema, JsonSchemaFactory, SpecVersion, ValidationMessage}
 import net.collatex.reptilian.WitnessJsonData.*
 
-import java.io.InputStream
-
 // Scala 3 prohibits local returns and uses boundary.break instead
-import java.io.{PrintWriter, StringReader, StringWriter}
 import java.net.{URI, URL}
 import java.nio.file.{Files, Paths}
 import scala.annotation.tailrec
 import scala.util.boundary
 import scala.util.boundary.break
-
-// Relax NG validation
-import com.thaiopensource.datatype.xsd.DatatypeLibraryFactoryImpl
-import com.thaiopensource.util.PropertyMapBuilder
-import com.thaiopensource.validate.{ValidateProperty, ValidationDriver}
-import com.thaiopensource.validate.prop.rng.RngProperty
-import com.thaiopensource.validate.rng.CompactSchemaReader
-import org.xml.sax.{ErrorHandler, InputSource, SAXParseException}
-
-import scala.jdk.CollectionConverters.*
-
-// Schematron (via XSLT) validation
-import net.sf.saxon.s9api.{Processor, Serializer}
-
-import javax.xml.transform.stream.StreamSource
 
 /** Mimic XPath normalize-space()
   *
@@ -94,53 +74,25 @@ def retrieveManifestJson(source: ManifestSource): Either[String, Value] = {
   val defaultColors = List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
   val tokensPerWitnessLimit = Int.MaxValue
   val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
-
-  // ---- small local helpers to validate (no behavior change) ----
-  def validateXml(source: ManifestSource): Either[String, Unit] =
-    for
-      manifestXml <- retrieveManifestXml(source)
-      manifestUri = source match
-        case ManifestSource.Local(path) => path.toNIO.toUri
-        case ManifestSource.Remote(url) => url.toURI
-      manifestRnc = Source.fromResource("manifest.rnc").mkString
-      _ <- validateRnc(manifestXml, manifestRnc)
-      _ <- validateSchematron(manifestXml, "manifest-sch-compiled.xsl", manifestUri).left.map(_.mkString("\n"))
-    yield ()
-
-  def validateJson(source: ManifestSource): Either[String, ujson.Value] =
-    retrieveManifestJson(source).flatMap { parsedJson =>
-      val schemaPath = os.resource / "manifestSchema.json"
-      val schemaInputStream = new java.io.ByteArrayInputStream(os.read.bytes(schemaPath))
-      validateJsonManifest(parsedJson.render(), schemaInputStream) match
-        case Left(errors) =>
-          Left(s"Manifest failed JSON Schema validation:\n${errors.mkString("\n")}")
-        case Right(_) =>
-          validatePostSchemaRules(parsedJson) match
-            case Left(ruleErrors) =>
-              Left(s"Manifest failed semantic validation:\n${ruleErrors.mkString("\n")}")
-            case Right(_) =>
-              Right(parsedJson)
-    }
-
-  // ---- parse args, resolve manifest, validate only ----
+  
+  // ---- parse args, resolve manifest, validate manifest ----
 
   val parsedValidated: Either[String, (ManifestData, Map[String, Set[String]], Option[ujson.Value])] =
-  for {
-    // Parse args
-    result <- parseArgs(args)
-    (manifestPathString, argMap) = result
+    for {
+      // Parse args
+      result <- parseArgs(args)
+      (manifestPathString, argMap) = result
 
-    // Resolve to ManifestData
-    manifestData <- resolveManifestString(manifestPathString)
+      // Resolve to ManifestData
+      manifestData <- resolveManifestString(manifestPathString)
 
-    // Validate (XML: Unit; JSON: return parsed JSON for reuse)
-    jsonOpt <- manifestData match
-      case ManifestData(source, ManifestFormat.Xml)  =>
-        validateXml(source).map(_ => None)
-      case ManifestData(source, ManifestFormat.Json) =>
-        validateJson(source).map(Some(_))
-  } yield (manifestData, argMap, jsonOpt)
-
+      // Validate (XML: Unit; JSON: return parsed JSON for reuse)
+      jsonOpt <- manifestData match
+        case ManifestData(source, ManifestFormat.Xml) =>
+          validateXml(source).map(_ => None)
+        case ManifestData(source, ManifestFormat.Json) =>
+          validateJson(source).map(Some(_))
+    } yield (manifestData, argMap, jsonOpt)
 
   parsedValidated match
     case Left(e) =>
@@ -148,120 +100,14 @@ def retrieveManifestJson(source: ManifestSource): Either[String, Value] = {
 
     case Right((manifestData, argMap, maybeParsedJson)) =>
       // ---- single seam: temporary toggle for unified builder ----
-      val useUnifiedBuilder: Boolean = true // TODO: flip to true, then remove when satisfied
-
-      if useUnifiedBuilder then
-        // Unified path (handles XML/JSON internally)
-        val cfg = GtaUnifiedBuilder.BuildConfig(tokensPerWitnessLimit, tokenPattern)
-        GtaUnifiedBuilder.build(manifestData, cfg) match
-          case Left(err) =>
-            System.err.println(s"Unified builder failed: $err")
-          case Right((gTa, siglaList, colorList)) =>
-            val gTaSigla: List[WitId] = siglaList.indices.toList
-            val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
-            displayDispatch(root, gTa, siglaList, colorList, argMap)
-      else
-        // ---- legacy path (your original branching, unchanged in behavior) ----
-        manifestData match
-          case ManifestData(source, ManifestFormat.Xml) =>
-            val legacyXmlFlow: Either[String, Unit] =
-              for
-                // We validated above; re-load XML for witness extraction (keeps old flow intact)
-                manifestXml <- retrieveManifestXml(source)
-                // Build witness data exactly as before
-                witnessData <- retrieveWitnessDataXml(manifestXml, ManifestData(source, ManifestFormat.Xml))
-              yield
-                val xmlData = witnessData
-                val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, xmlData, tokenPattern)
-                val gTaSigla: List[WitId] = xmlData.indices.toList
-                val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
-                val siglaList: List[Siglum] = xmlData.map(_.siglum).toList
-                val colorList: List[String] =
-                  xmlData.zipWithIndex.map { case (w, i) =>
-                    w.color.getOrElse(defaultColors(i % defaultColors.length))
-                  }.toList
-                displayDispatch(root, gTa, siglaList, colorList, argMap)
-
-            legacyXmlFlow.left.foreach(err => System.err.println(err))
-
-          case ManifestData(source, ManifestFormat.Json) =>
-            // We already validated and have parsed JSON available
-            val jsonEither: Either[String, ujson.Value] =
-              maybeParsedJson.toRight("Unexpected: JSON was not parsed during validation")
-
-            jsonEither match
-              case Left(err) =>
-                System.err.println(err)
-
-              case Right(parsedJson) =>
-                retrieveWitnessDataJson(parsedJson, manifestData) match
-                  case Left(error) =>
-                    System.err.println(s"Error building JSON witnesses: $error")
-                  case Right(jsonData) =>
-                    buildJsonGTaAndMetadata(jsonData, tokensPerWitnessLimit, tokenPattern) match
-                      case Left(error) =>
-                        System.err.println(s"Error building JSON gTa and metadata: $error")
-                      case Right((gTa, siglaList, colorList)) =>
-                        val gTaSigla: List[WitId] = siglaList.indices.toList
-                        val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
-                        displayDispatch(root, gTa, siglaList, colorList, argMap)
-
-def buildJsonGTaAndMetadata(
-    inData: Seq[WitnessJsonData],
-    tokensPerWitnessLimit: Int,
-    tokenPattern: Regex
-): Either[String, (Vector[TokenEnum], List[Siglum], List[String])] = {
-  val data = inData
-  val defaultColors = List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
-  val gBuilder = Vector.newBuilder[TokenEnum]
-  val siglaBuilder = List.newBuilder[Siglum]
-  val colorBuilder = List.newBuilder[String]
-
-  var gCounter = 0 // running global g value
-
-  data.zipWithIndex.foreach { case (witnessData, witIndex) =>
-    // Only insert a TokenSep *after* the first witness
-    if (witIndex != 0) {
-      gBuilder += TokenEnum.TokenSep(s"sep$witIndex", s"sep$witIndex", witIndex, gCounter)
-      gCounter += 1 // TokenSep uses one g value
-    }
-
-    // Add siglum and color
-    val (siglum, color) = witnessData match {
-      case FromTokens(s, _, _) => (s, defaultColors(witIndex % defaultColors.length))
-      case FromContent(witness) =>
-        (witness.siglum, witness.color.getOrElse(defaultColors(witIndex % defaultColors.length)))
-    }
-    siglaBuilder += siglum
-    colorBuilder += color
-
-    // Process tokens and update gBuilder and gCounter
-    witnessData match {
-      case FromTokens(_, tokens, _) =>
-        tokens.foreach { tok =>
-          val updated = tok.copy(w = witIndex, g = gCounter)
-          gBuilder += updated
-          gCounter += 1
-        }
-
-      case FromContent(witness) =>
-        val tokenizer = makeTokenizer(tokenPattern, tokensPerWitnessLimit)
-        val tokenStrings = tokenizer(Seq(witness))
-
-        val tokenState = tokenStrings.traverse(processToken)
-        val tokens = tokenState.runA(ParseState(0, 0)).value
-
-        tokens.foreach {
-          case tok: TokenEnum.Token =>
-            gBuilder += tok.copy(w = witIndex, g = gCounter)
-            gCounter += 1
-          case _ => // should not happen
-        }
-    }
-  }
-
-  Right((gBuilder.result(), siglaBuilder.result(), colorBuilder.result()))
-}
+      val cfg = GtaUnifiedBuilder.BuildConfig(tokensPerWitnessLimit, tokenPattern)
+      GtaUnifiedBuilder.build(manifestData, cfg) match
+        case Left(err) =>
+          System.err.println(s"Unified builder failed: $err")
+        case Right((gTa, siglaList, colorList)) =>
+          val gTaSigla: List[WitId] = siglaList.indices.toList
+          val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
+          displayDispatch(root, gTa, siglaList, colorList, argMap)
 
 /** Parse command line arguments
   *
@@ -402,175 +248,6 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
           Left("Error: Manifest filename must end with '.xml' or '.json'.\n" + usage)
         else Right((manifestFilename, parsedMap))
       }
-
-/** Validate manifest xml against a Relax NG XML schema
-  *
-  * @param xmlElem
-  *   manifest as xml document (XML.Elem)
-  * @param rncSchema
-  *   Relax NG compact syntax schema as string
-  * @return
-  *   Boolean result, which is ignored, if success; error report if not.
-  */
-def validateRnc(xmlElem: Elem, rncSchema: String): Either[String, Boolean] = {
-  val datatypeLibraryFactory = new DatatypeLibraryFactoryImpl()
-  val propertyMapBuilder = new PropertyMapBuilder()
-
-  // Set datatype factory for RNG
-  propertyMapBuilder.put(RngProperty.DATATYPE_LIBRARY_FACTORY, datatypeLibraryFactory)
-
-  // Collect error messages here
-  val errorWriter = new StringWriter()
-  val errorPrinter = new PrintWriter(errorWriter)
-
-  // Custom error handler
-  val errorHandler = new ErrorHandler {
-    override def warning(e: SAXParseException): Unit = errorPrinter.println(s"Warning: ${e.getMessage}")
-
-    override def error(e: SAXParseException): Unit = errorPrinter.println(s"Error: ${e.getMessage}")
-
-    override def fatalError(e: SAXParseException): Unit = errorPrinter.println(s"Fatal error: ${e.getMessage}")
-  }
-
-  propertyMapBuilder.put(ValidateProperty.ERROR_HANDLER, errorHandler)
-
-  val propertyMap = propertyMapBuilder.toPropertyMap
-  val driver = new ValidationDriver(propertyMap, CompactSchemaReader.getInstance())
-
-  val schemaInput = new InputSource(new StringReader(rncSchema))
-  val schemaLoaded = driver.loadSchema(schemaInput)
-  if !schemaLoaded then Left("Failed to load RNC schema from string.")
-
-  val xmlInput = new InputSource(new StringReader(xmlElem.toString))
-  val isValid = driver.validate(xmlInput)
-
-  if isValid then Right(true)
-  else Left(errorWriter.toString.trim)
-}
-
-/** Validate manifest against precompiled xslt version of Schematron schema
-  *
-  * @param xml
-  *   manifest as xml element
-  * @param xsltResourcePath
-  *   Location of precompiled xslt version of Schematron, supplied as string
-  * @param baseUri
-  *   Determined from computed manifest uri
-  * @return
-  *   Boolean result, which is ignored, if success; error report (from Schematron report and assert statements) if not.
-  */
-def validateSchematron(
-    xml: Elem,
-    xsltResourcePath: String,
-    baseUri: java.net.URI
-): Either[Seq[String], Boolean] = {
-  // Load the precompiled XSLT from resources
-  val xsltStreamOpt =
-    Option(Thread.currentThread().getContextClassLoader.getResourceAsStream(xsltResourcePath))
-
-  xsltStreamOpt match {
-    case Some(xsltStream) =>
-      Using
-        .Manager { use =>
-          val processor = new Processor(false)
-          val compiler = processor.newXsltCompiler()
-
-          // Compile the XSLT
-          val xsltExecutable = compiler.compile(new StreamSource(use(xsltStream)))
-
-          // Serialize input XML to string for parsing by Saxon
-          val xmlInput = new java.io.StringReader(xml.toString)
-
-          // Build the source XML document with base URI
-          val builder = processor.newDocumentBuilder()
-          builder.setBaseURI(baseUri)
-          val sourceDoc = builder.build(new StreamSource(xmlInput))
-
-          // Prepare the transformer
-          val transformer = xsltExecutable.load()
-
-          // Set the initial context node to our source document
-          transformer.setInitialContextNode(sourceDoc)
-
-          // Capture output in memory
-          val outputStream = new java.io.ByteArrayOutputStream()
-          transformer.setDestination(
-            processor
-              .newSerializer(outputStream)
-              .tap(
-                _.setOutputProperty(Serializer.Property.METHOD, "xml")
-              )
-          )
-
-          // Perform the transformation
-          transformer.transform()
-
-          // Parse SVRL output from transformation
-          val svrlXml = scala.xml.XML.loadString(outputStream.toString("UTF-8"))
-
-          // Extract failed assertions and reports
-          val failedMessages = (svrlXml \\ "failed-assert").map(node =>
-            (node \ "text").text.normalizeSpace
-          ) ++ (svrlXml \\ "successful-report").map(node => (node \ "text").text.normalizeSpace)
-
-          if failedMessages.isEmpty then Right(true)
-          else Left(failedMessages)
-
-        }
-        .recover { case e =>
-          Left(Seq(s"Error processing Schematron XSLT using Saxon: ${e.getMessage}"))
-        }
-        .get
-
-    case None =>
-      Left(Seq(s"Could not load XSLT resource: $xsltResourcePath"))
-  }
-}
-
-def validateJsonManifest(jsonInput: String, schemaInput: InputStream): Either[String, Boolean] = {
-  val mapper = new ObjectMapper()
-
-  try {
-    val jsonNode: JsonNode = mapper.readTree(jsonInput)
-    val schemaFactory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7)
-    val schema: JsonSchema = schemaFactory.getSchema(schemaInput)
-
-    val validationResult: java.util.Set[ValidationMessage] = schema.validate(jsonNode)
-
-    if validationResult.isEmpty then Right(true)
-    else
-      Left(
-        validationResult.asScala.map(_.getMessage).mkString("\n")
-      )
-  } catch {
-    case e: Exception => Left(s"Exception during validation: ${e.getMessage}")
-  }
-}
-
-def validatePostSchemaRules(json: ujson.Value): Either[List[String], Unit] = {
-  val witnesses = json("witnesses").arr
-
-  // Rule 1: All or none have "color"
-  val withColor = witnesses.count(w => w.obj.contains("color"))
-  val allHaveColor = withColor == witnesses.length
-  val noneHaveColor = withColor == 0
-
-  val colorError =
-    if (allHaveColor || noneHaveColor) None
-    else Some("Either all witnesses must have 'color' or none may have it.")
-
-  // Rule 2: Unique ids
-  val ids = witnesses.map(_("id").str)
-  val duplicateIds = ids.diff(ids.distinct).distinct
-  val idError =
-    if (duplicateIds.nonEmpty)
-      Some(s"Duplicate witness id(s): ${duplicateIds.mkString(", ")}")
-    else None
-
-  val allErrors = List(colorError, idError).flatten
-  if (allErrors.isEmpty) Right(())
-  else Left(allErrors)
-}
 
 /** Resolves manifest location (input as string) as absolute path (if local) or URL (if remote)
   *

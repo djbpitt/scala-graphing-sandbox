@@ -1,6 +1,12 @@
 package net.collatex.reptilian
 import org.scalatest.*
 import net.collatex.reptilian.ManifestSource.Local
+import net.collatex.reptilian.ManifestValidator.{
+  validateJsonManifest,
+  validatePostSchemaRules,
+  validateRnc,
+  validateSchematron
+}
 import org.scalatest.funsuite.AnyFunSuite
 
 import scala.io.Source
@@ -143,7 +149,7 @@ class reptilianTest extends AnyFunSuite:
   // Utility to read JSON files from resources
   def readResource(path: String): String =
     val stream = getClass.getResourceAsStream(path)
-    assert(stream != null, s"Could not load resource: $path")
+    Option(stream).getOrElse(throw new RuntimeException(s"Could not load resource: $path"))
     scala.io.Source.fromInputStream(stream).mkString
 
   test("validateJsonManifest should accept a valid manifest") {

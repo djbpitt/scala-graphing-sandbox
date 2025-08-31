@@ -1,10 +1,11 @@
 package net.collatex.reptilian
 
+import com.sun.net.httpserver.HttpServer
 import org.scalatest.funsuite.AnyFunSuite
 import os.Path
-import com.sun.net.httpserver.HttpServer
+
 import java.net.{InetSocketAddress, URI}
-import java.nio.file.{Files, Path => JPath, StandardOpenOption}
+import java.nio.file.{Files, StandardOpenOption, Path as JPath}
 import scala.xml.XML
 
 class manifestTest extends AnyFunSuite:
@@ -163,7 +164,7 @@ class manifestTest extends AnyFunSuite:
         |""".stripMargin
   }
   test("XML manifest font inheritance with root font") {
-    import FontTestFixtures._
+    import FontTestFixtures.*
     val tempDir = Files.createTempDirectory("font-test-xml")
 
     try
@@ -196,7 +197,7 @@ class manifestTest extends AnyFunSuite:
       deleteRecursive(tempDir)
   }
   test("XML manifest font inheritance without root font") {
-    import FontTestFixtures._
+    import FontTestFixtures.*
     val tempDir = Files.createTempDirectory("font-test-xml")
 
     try
@@ -228,7 +229,7 @@ class manifestTest extends AnyFunSuite:
       deleteRecursive(tempDir)
   }
   test("JSON manifest font inheritance with root font") {
-    import FontTestFixtures._
+    import FontTestFixtures.*
     val tempDir = Files.createTempDirectory("font-test-json")
 
     try
@@ -265,7 +266,7 @@ class manifestTest extends AnyFunSuite:
       deleteRecursive(tempDir)
   }
   test("JSON manifest font inheritance without root font") {
-    import FontTestFixtures._
+    import FontTestFixtures.*
     val tempDir = Files.createTempDirectory("font-test-json")
 
     try
