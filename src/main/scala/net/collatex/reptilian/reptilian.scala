@@ -90,89 +90,121 @@ def retrieveManifestJson(source: ManifestSource): Either[String, Value] = {
   * @return
   */
 @main def manifest(args: String*): Unit =
-  val parsedInput =
-    for {
-      // Parse args into (manifestPathString, argMap)
-      result <- parseArgs(args)
-      (manifestPathString, argMap) = result
+  // ---- constants used later (unchanged) ----
+  val defaultColors = List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
+  val tokensPerWitnessLimit = Int.MaxValue
+  val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
 
-      // Resolve to ManifestData (source + format)
-      manifestData <- resolveManifestString(manifestPathString)
+  // ---- small local helpers to validate (no behavior change) ----
+  def validateXml(source: ManifestSource): Either[String, Unit] =
+    for
+      manifestXml <- retrieveManifestXml(source)
+      manifestUri = source match
+        case ManifestSource.Local(path) => path.toNIO.toUri
+        case ManifestSource.Remote(url) => url.toURI
+      manifestRnc = Source.fromResource("manifest.rnc").mkString
+      _ <- validateRnc(manifestXml, manifestRnc)
+      _ <- validateSchematron(manifestXml, "manifest-sch-compiled.xsl", manifestUri).left.map(_.mkString("\n"))
+    yield ()
 
-      // Branch on format
-      witnessData <- manifestData match
-        case ManifestData(source, ManifestFormat.Xml) =>
-          val manifestUri = source match
-            case ManifestSource.Local(path) => path.toNIO.toUri
-            case ManifestSource.Remote(url) => url.toURI
+  def validateJson(source: ManifestSource): Either[String, ujson.Value] =
+    retrieveManifestJson(source).flatMap { parsedJson =>
+      val schemaPath = os.resource / "manifestSchema.json"
+      val schemaInputStream = new java.io.ByteArrayInputStream(os.read.bytes(schemaPath))
+      validateJsonManifest(parsedJson.render(), schemaInputStream) match
+        case Left(errors) =>
+          Left(s"Manifest failed JSON Schema validation:\n${errors.mkString("\n")}")
+        case Right(_) =>
+          validatePostSchemaRules(parsedJson) match
+            case Left(ruleErrors) =>
+              Left(s"Manifest failed semantic validation:\n${ruleErrors.mkString("\n")}")
+            case Right(_) =>
+              Right(parsedJson)
+    }
 
-          for {
-            manifestXml <- retrieveManifestXml(source)
-            manifestRnc = Source.fromResource("manifest.rnc").mkString
-            _ <- validateRnc(manifestXml, manifestRnc)
-            _ <- validateSchematron(manifestXml, "manifest-sch-compiled.xsl", manifestUri).left.map(_.mkString("\n"))
-            data <- retrieveWitnessDataXml(manifestXml, ManifestData(source, ManifestFormat.Xml))
-          } yield data
+  // ---- parse args, resolve manifest, validate only ----
 
-        case ManifestData(source, ManifestFormat.Json) =>
-          val json: Either[String, Value] = retrieveManifestJson(source)
-          json match
-            case Left(err)         => Left(err)
-            case Right(parsedJson) =>
-              // Apply JSON Schema validation first
-              val schemaPath = os.resource / "manifestSchema.json"
-              val schemaInputStream = new java.io.ByteArrayInputStream(os.read.bytes(schemaPath))
-              val schemaValidation = validateJsonManifest(parsedJson.render(), schemaInputStream)
+  val parsedValidated: Either[String, (ManifestData, Map[String, Set[String]], Option[ujson.Value])] =
+  for {
+    // Parse args
+    result <- parseArgs(args)
+    (manifestPathString, argMap) = result
 
-              schemaValidation match
-                case Left(errors) =>
-                  Left(s"Manifest failed JSON Schema validation:\n${errors.mkString("\n")}")
-                case Right(_) =>
-                  // Apply post-schema rules (color consistency, unique ids)
-                  validatePostSchemaRules(parsedJson) match
-                    case Left(ruleErrors) =>
-                      Left(s"Manifest failed semantic validation:\n${ruleErrors.mkString("\n")}")
-                    case Right(_) =>
-                      retrieveWitnessDataJson(parsedJson, ManifestData(source, ManifestFormat.Json))
+    // Resolve to ManifestData
+    manifestData <- resolveManifestString(manifestPathString)
 
-    } yield (witnessData, argMap)
+    // Validate (XML: Unit; JSON: return parsed JSON for reuse)
+    jsonOpt <- manifestData match
+      case ManifestData(source, ManifestFormat.Xml)  =>
+        validateXml(source).map(_ => None)
+      case ManifestData(source, ManifestFormat.Json) =>
+        validateJson(source).map(Some(_))
+  } yield (manifestData, argMap, jsonOpt)
 
-  parsedInput match
+
+  parsedValidated match
     case Left(e) =>
       System.err.println(e)
 
-    case Right((witnessDataJsonOrXml, argMap)) =>
-      val defaultColors = List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
-      val tokensPerWitnessLimit = Int.MaxValue // Low values for debug; set to Int.MaxValue for production
-      val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
+    case Right((manifestData, argMap, maybeParsedJson)) =>
+      // ---- single seam: temporary toggle for unified builder ----
+      val useUnifiedBuilder: Boolean = true // TODO: flip to true, then remove when satisfied
 
-      // Pattern-match on JSON vs XML result
-      witnessDataJsonOrXml.headOption match
-        case Some(_: CollateXWitnessData) =>
-          val xmlData = witnessDataJsonOrXml.asInstanceOf[Seq[CollateXWitnessData]]
-          val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, xmlData, tokenPattern)
-          val gTaSigla: List[WitId] = xmlData.indices.toList
-          val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
-          val siglaList: List[Siglum] = xmlData.map(w => w.siglum).toList
-          val colorList: List[String] =
-            xmlData.zipWithIndex.map { case (w, i) =>
-              w.color.getOrElse(defaultColors(i % defaultColors.length))
-            }.toList
-          displayDispatch(root, gTa, siglaList, colorList, argMap)
+      if useUnifiedBuilder then
+        // Unified path (handles XML/JSON internally)
+        val cfg = GtaUnifiedBuilder.BuildConfig(tokensPerWitnessLimit, tokenPattern)
+        GtaUnifiedBuilder.build(manifestData, cfg) match
+          case Left(err) =>
+            System.err.println(s"Unified builder failed: $err")
+          case Right((gTa, siglaList, colorList)) =>
+            val gTaSigla: List[WitId] = siglaList.indices.toList
+            val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
+            displayDispatch(root, gTa, siglaList, colorList, argMap)
+      else
+        // ---- legacy path (your original branching, unchanged in behavior) ----
+        manifestData match
+          case ManifestData(source, ManifestFormat.Xml) =>
+            val legacyXmlFlow: Either[String, Unit] =
+              for
+                // We validated above; re-load XML for witness extraction (keeps old flow intact)
+                manifestXml <- retrieveManifestXml(source)
+                // Build witness data exactly as before
+                witnessData <- retrieveWitnessDataXml(manifestXml, ManifestData(source, ManifestFormat.Xml))
+              yield
+                val xmlData = witnessData
+                val gTa: Vector[TokenEnum] = createGTa(tokensPerWitnessLimit, xmlData, tokenPattern)
+                val gTaSigla: List[WitId] = xmlData.indices.toList
+                val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
+                val siglaList: List[Siglum] = xmlData.map(_.siglum).toList
+                val colorList: List[String] =
+                  xmlData.zipWithIndex.map { case (w, i) =>
+                    w.color.getOrElse(defaultColors(i % defaultColors.length))
+                  }.toList
+                displayDispatch(root, gTa, siglaList, colorList, argMap)
 
-        case Some(x: WitnessJsonData) =>
-          val jsonData = witnessDataJsonOrXml.asInstanceOf[Seq[WitnessJsonData]]
-          buildJsonGTaAndMetadata(jsonData, tokensPerWitnessLimit, tokenPattern) match
-            case Left(error) =>
-              System.err.println(s"Error building JSON gTa and metadata: $error")
-            // Handle error as needed, possibly return or exit
-            case Right((gTa, siglaList, colorList)) =>
-              val gTaSigla: List[WitId] = siglaList.indices.toList
-              val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
-              displayDispatch(root, gTa, siglaList, colorList, argMap)
+            legacyXmlFlow.left.foreach(err => System.err.println(err))
 
-        case None =>
-          System.err.println("No witnesses found in the manifest.")
+          case ManifestData(source, ManifestFormat.Json) =>
+            // We already validated and have parsed JSON available
+            val jsonEither: Either[String, ujson.Value] =
+              maybeParsedJson.toRight("Unexpected: JSON was not parsed during validation")
+
+            jsonEither match
+              case Left(err) =>
+                System.err.println(err)
+
+              case Right(parsedJson) =>
+                retrieveWitnessDataJson(parsedJson, manifestData) match
+                  case Left(error) =>
+                    System.err.println(s"Error building JSON witnesses: $error")
+                  case Right(jsonData) =>
+                    buildJsonGTaAndMetadata(jsonData, tokensPerWitnessLimit, tokenPattern) match
+                      case Left(error) =>
+                        System.err.println(s"Error building JSON gTa and metadata: $error")
+                      case Right((gTa, siglaList, colorList)) =>
+                        val gTaSigla: List[WitId] = siglaList.indices.toList
+                        val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
+                        displayDispatch(root, gTa, siglaList, colorList, argMap)
 
 def buildJsonGTaAndMetadata(
     inData: Seq[WitnessJsonData],
@@ -376,7 +408,7 @@ def parseArgs(args: Seq[String]): Either[String, (String, Map[String, Set[String
   * @param xmlElem
   *   manifest as xml document (XML.Elem)
   * @param rncSchema
-  *   Relax NG compact systax schema as string
+  *   Relax NG compact syntax schema as string
   * @return
   *   Boolean result, which is ignored, if success; error report if not.
   */
