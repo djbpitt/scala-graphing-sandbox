@@ -74,7 +74,7 @@ def retrieveManifestJson(source: ManifestSource): Either[String, Value] = {
   val defaultColors = List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
   val tokensPerWitnessLimit = Int.MaxValue
   val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
-  
+
   // ---- parse args, resolve manifest, validate manifest ----
 
   val parsedValidated: Either[String, (ManifestData, Map[String, Set[String]], Option[ujson.Value])] =
@@ -345,6 +345,7 @@ def retrieveWitnessDataXml(
   if errors.nonEmpty then Left(errors.mkString("\n"))
   else Right(witnesses)
 
+
 def retrieveWitnessDataJson(
     json: ujson.Value,
     manifestSource: ManifestData
@@ -418,7 +419,7 @@ case class CollateXWitnessData(
   * @param tokens
   *   Seq[TokenEnum.Token]; `t`, `n`, `w`, and `g` properties
   */
-case class witnessData(
+case class WitnessData(
     siglum: Siglum,
     color: Option[String] = None,
     font: Option[String] = None,
