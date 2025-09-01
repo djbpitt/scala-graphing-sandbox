@@ -192,7 +192,7 @@ def xmlToWitnessData(
   val rootFontOpt = (manifest \ "@font").headOption.map(_.text)
   val results: Seq[WitnessData] =
     val witnessUrlAttr = (manifest \ "_").map(e => (e \ "@url").head.text)
-    val witTokenStrings = witnessUrlAttr map {
+    val witTokenStrings: Seq[BufferedSource] = witnessUrlAttr map {
       case remote if remote.startsWith("http://") || remote.startsWith("https://") =>
         Source.fromURL(remote)
       case pathLike =>
@@ -209,15 +209,15 @@ def xmlToWitnessData(
     val gCounter = 0
     val out = witTokenStrings.zipWithIndex
       .foldLeft((Vector.empty[WitnessData], gCounter)) { (acc, current) =>
-        val currentBs: BufferedSource = current._1 // Current witness data as buffered string
-        val currentWitOffset: Int = current._2 // Current witness offset (index into sigla)
-        val currentSiglum: Siglum = Siglum(allSigla(currentWitOffset).head.text) // Current siglum
-        val currentColor: String =
+        val currentBs: BufferedSource = current._1 // current witness data as buffered string
+        val currentWitOffset: Int = current._2 // current witness offset (index into sigla)
+        val currentSiglum: Siglum = Siglum(allSigla(currentWitOffset).head.text) // current siglum
+        val currentColor: String = // if not specified on witness, retrieve correct offset from default sequence
           ((manifest \ "_")(currentWitOffset) \ "@color").headOption
             .map(_.text)
             .getOrElse(GtaUnifiedBuilder.defaultColors(currentWitOffset % defaultColors.length))
-        val ts: Iterator[String] =
-          GtaUnifiedBuilder.tokenizeContent(currentBs.mkString, cfg) // raw token strings (t values)
+        val ts: Iterator[String] = // raw token strings (t values)
+          GtaUnifiedBuilder.tokenizeContent(currentBs.mkString, cfg)
         val (currentTokens, nextG) =
           GtaUnifiedBuilder.emitFromStrings(
             ts,
@@ -230,7 +230,7 @@ def xmlToWitnessData(
           Some("TmpFont"),
           currentTokens.map(_.asInstanceOf[TokenEnum.Token])
         )
-        (acc._1 :+ currentWitnessData, gCounter) // gCounter isn't used in final result
+        (acc._1 :+ currentWitnessData, gCounter) // gCounter is ignored in final result
       }
-    out._1
+    out._1 // we no longer need gCounter
   Right(results)
