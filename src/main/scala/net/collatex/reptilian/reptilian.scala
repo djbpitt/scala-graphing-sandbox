@@ -26,7 +26,7 @@ import scala.util.boundary.break
   *   1. Collapse all sequences of space characters to single space
   *   1. Remove leading and trailing space characters
   */
-extension (s: String) def normalizeSpace: String = s.replaceAll("\\s+", " ").trim
+extension (s: String) def normalizeSpace: String = raw"\s+".r.replaceAllIn(s, " ").trim
 
 /** Read data files from supplied path to directory (one file per witness)
   *

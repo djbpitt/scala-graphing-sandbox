@@ -1,9 +1,7 @@
 package net.collatex.reptilian
 
-import net.collatex.reptilian.GtaUnifiedBuilder.tokenizeContent
-
 import java.net.URI
-import scala.io.Source
+import scala.io.{BufferedSource, Source}
 import scala.util.{Try, Using}
 import scala.util.matching.Regex
 import scala.xml.Elem
@@ -22,7 +20,7 @@ object GtaUnifiedBuilder:
 
   // Normalize ‘n’ consistently
   def normalizeToken(s: String): String =
-    java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFC).trim.toLowerCase
+    java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFC).normalizeSpace.toLowerCase
 
   // Emit tokens from raw strings (assign w/g, build Token)
   def emitFromStrings(raws: Iterator[String], witIndex: Int, startG: Int): (Vector[TokenEnum], Int) = {
@@ -178,8 +176,11 @@ object GtaUnifiedBuilder:
   * Tokenize each witness, creating `n`, `w`, and `g` properties
   *
   * @param manifest
+  *   XML manifest as XML Elem
   * @param manifestSource
+  *   Contains pointer to manifest location and type (XML or JSON)
   * @return
+  *   Seq[WitnessData]
   */
 def xmlToWitnessData(
     manifest: Elem,
@@ -187,22 +188,15 @@ def xmlToWitnessData(
     cfg: GtaUnifiedBuilder.BuildConfig
 ): Either[String, Seq[WitnessData]] =
   val rootFontOpt = (manifest \ "@font").headOption.map(_.text)
-  val results: Seq[Either[String, WitnessData]] =
+  val results: Seq[WitnessData] =
 
     // RESUME HERE 2025-08-31
     // We create the wrong output types
     // We incorrectly build gTa and lists of sigla and colors instead of sequence of WitnessData instances
     // Instead of Acc, just track witness number and global token number, including skip for TokenSep
-    final case class Acc(
-      gta: Vector[TokenEnum],
-      sigla: List[Siglum],
-      colors: List[String],
-      g: Int
-    )
 
-    val init = Acc(Vector.empty, Nil, Nil, g = 0)
     val witnessUrlAttr = (manifest \ "_").map(e => (e \ "@url").head.text)
-    val wits = witnessUrlAttr map {
+    val witTokenStrings = witnessUrlAttr map {
       case remote if remote.startsWith("http://") || remote.startsWith("https://") =>
         Source.fromURL(remote)
       case pathLike =>
@@ -215,74 +209,23 @@ def xmlToWitnessData(
             val resolvedPath = os.Path(pathLike, manifestParent)
             Source.fromFile(resolvedPath.toString)
     }
-    val out = wits.zipWithIndex.foldLeft(init) { case (currentAcc, (bs, witIndex)) =>
-      // 1) Insert TokenSep BETWEEN witnesses (not before first)
-      val acc1 =
-        if witIndex == 0 then currentAcc
-        else {
-          // Match legacy XML: label uses current global g; w = previous witness index
-          val sepId = s"sep${currentAcc.g}"
-          val sep = TokenEnum.TokenSep(sepId, sepId, witIndex - 1, currentAcc.g)
-          currentAcc.copy(gta = currentAcc.gta :+ sep, g = currentAcc.g + 1)
-        }
-
-      // 2) Siglum + color (match legacy: witness.color or palette default)
-      val siglum: Siglum = Siglum((manifest \ "_")(witIndex).text)
-      val color: String = "Tmp" // w.color.getOrElse(defaultColors(witIndex % defaultColors.length))
-      val acc2 = acc1.copy(sigla = acc1.sigla :+ siglum, colors = acc1.colors :+ color)
-
-      // 3) Tokenize XML content and emit tokens with w/g
-      val raws = GtaUnifiedBuilder.tokenizeContent(bs.mkString, cfg)
-      val (emitted, nextG) = GtaUnifiedBuilder.emitFromStrings(raws, witIndex, acc2.g)
-      acc2.copy(gta = acc2.gta ++ emitted, g = nextG)
-    }
-
-    Right((out.gta, out.sigla, out.colors))
-
-
-    (manifest \ "_").zipWithIndex).foldLeft()(
-      
-    )
-      
-    { (e, witNo) =>
-      val maybeWitness: Either[String, WitnessData] = Try {
-        val siglum = (e \ "@siglum").headOption.map(_.text).getOrElse {
-          throw new RuntimeException(s"Missing required @siglum attribute in: ${e.toString}")
-        }
-        val witnessFont = (e \ "@font").headOption.map(_.text)
-        val finalFont: Option[String] = witnessFont.orElse(rootFontOpt)
-        // Defined as Option[String], will be None if missing or empty string
-        val color = (e \ "@color").headOption.map(_.text).filter(_.nonEmpty)
-        val witnessUrlAttr = (e \ "@url").head.text // pointer to witness data location (file or remote)
-        val inputSource = witnessUrlAttr match
-          case remote if remote.startsWith("http://") || remote.startsWith("https://") =>
-            Source.fromURL(remote)
-          case pathLike =>
-            manifestSource.source match
-              case ManifestSource.Remote(baseUrl) =>
-                val resolvedUrl = URI.create(baseUrl.toString).resolve(pathLike).toURL
-                Source.fromURL(resolvedUrl)
-              case ManifestSource.Local(basePath) =>
-                val manifestParent = basePath / os.up
-                val resolvedPath = os.Path(pathLike, manifestParent)
-                Source.fromFile(resolvedPath.toString)
-        Using(inputSource) { source =>
-          val tValues = GtaUnifiedBuilder.tokenizeContent(
-            inputSource.mkString,
-            cfg
-          ) // tokenize, maintain global counter, add `w` and `g`
-          val witTokens = GtaUnifiedBuilder.emitFromStrings(tValues, witNo, 0)
-          val tokens = witTokens._1.map(_.asInstanceOf[TokenEnum.Token])
-          System.err.println(s"Next witness will start counting at ${witTokens._2}")
-
-          WitnessData(Siglum(siglum), color, finalFont, tokens)
-        }.get
-      }.toEither.left.map(ex => s"Error reading witness: ${ex.getMessage}")
-      System.err.println(s"Current maybeWitness: $maybeWitness")
-      maybeWitness
-    }
-  }
-  val (errors, witnesses) = results.partitionMap(identity)
-
-  if errors.nonEmpty then Left(errors.mkString("\n"))
-  else Right(witnesses)
+    val allSigla = (manifest \ "_").map(_ \ "@siglum")
+    val gCounter = 0
+    val out = witTokenStrings.zipWithIndex
+      .foldLeft((Vector.empty[WitnessData], gCounter)) { (acc, current) =>
+        val currentBs: BufferedSource = current._1 // Current witness data as buffered string
+        val currentWitOffset: Int = current._2 // Current witness offset (index into sigla)
+        val currentSiglum: Siglum = Siglum(allSigla(currentWitOffset).head.text) // Current siglum
+        val ts: Iterator[String] =
+          GtaUnifiedBuilder.tokenizeContent(currentBs.mkString, cfg) // raw token strings (t values)
+        val (currentTokens, nextG) = GtaUnifiedBuilder.emitFromStrings(ts, currentWitOffset, gCounter)
+        val currentWitnessData = WitnessData(
+          currentSiglum,
+          Some("TmpColor"),
+          Some("TmpFont"),
+          currentTokens.map(_.asInstanceOf[TokenEnum.Token])
+        )
+        (acc._1 :+ currentWitnessData, gCounter + 1)
+      }
+    out._1
+  Right(results)
