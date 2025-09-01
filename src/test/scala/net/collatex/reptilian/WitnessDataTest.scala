@@ -17,12 +17,11 @@ class WitnessDataTest extends AnyFunSuite:
     val manifestData = ManifestData(manifestSource, Xml)
     val cfg = GtaUnifiedBuilder.BuildConfig(Int.MaxValue, raw"(\w+|[^\w\s])\s*".r)
     val manifest = retrieveManifestXml(manifestSource).getOrElse(fail("Oops!"))
-    System.err.println(manifest)
     val expected = Right(
       Vector(
         WitnessData(
           Siglum("A"),
-          Some("TmpColor"),
+          "peru",
           Some("TmpFont"),
           Vector(
             Token("This ", "this", 0, 0),
@@ -33,30 +32,29 @@ class WitnessDataTest extends AnyFunSuite:
         ),
         WitnessData(
           Siglum("B"),
-          Some("TmpColor"),
+          "orange",
           Some("TmpFont"),
           Vector(
-            Token("This ", "this", 1, 0),
-            Token("is ", "is", 1, 1),
-            Token("witness ", "witness", 1, 2),
-            Token("B" + "\u000a", "b", 1, 3)
+            Token("This ", "this", 1, 5),
+            Token("is ", "is", 1, 6),
+            Token("witness ", "witness", 1, 7),
+            Token("B" + "\u000a", "b", 1, 8)
           )
         ),
         WitnessData(
           Siglum("C"),
-          Some("TmpColor"),
+          "yellow",
           Some("TmpFont"),
           Vector(
-            Token("This ", "this", 2, 0),
-            Token("is ", "is", 2, 1),
-            Token("witness ", "witness", 2, 2),
-            Token("C" + "\u000a", "c", 2, 3)
+            Token("This ", "this", 2, 10),
+            Token("is ", "is", 2, 11),
+            Token("witness ", "witness", 2, 12),
+            Token("C" + "\u000a", "c", 2, 13)
           )
         )
       )
     )
     val result = xmlToWitnessData(manifest, manifestData, cfg)
-    System.err.println(result)
     assert(result == expected)
   }
 

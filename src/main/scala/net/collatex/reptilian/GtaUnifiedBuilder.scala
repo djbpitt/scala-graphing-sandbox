@@ -1,5 +1,7 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.GtaUnifiedBuilder.defaultColors
+
 import java.net.URI
 import scala.io.{BufferedSource, Source}
 import scala.util.{Try, Using}
@@ -11,7 +13,7 @@ object GtaUnifiedBuilder:
   // --- helpers used by the JSON builder ---
 
   /** Default color palette (same order/logic as legacy). */
-  private val defaultColors: List[String] =
+  val defaultColors: List[String] =
     List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
 
   // Shared tokenizer for any content string (JSON or XML)
@@ -210,16 +212,25 @@ def xmlToWitnessData(
         val currentBs: BufferedSource = current._1 // Current witness data as buffered string
         val currentWitOffset: Int = current._2 // Current witness offset (index into sigla)
         val currentSiglum: Siglum = Siglum(allSigla(currentWitOffset).head.text) // Current siglum
+        val currentColor: String =
+          ((manifest \ "_")(currentWitOffset) \ "@color").headOption
+            .map(_.text)
+            .getOrElse(GtaUnifiedBuilder.defaultColors(currentWitOffset % defaultColors.length))
         val ts: Iterator[String] =
           GtaUnifiedBuilder.tokenizeContent(currentBs.mkString, cfg) // raw token strings (t values)
-        val (currentTokens, nextG) = GtaUnifiedBuilder.emitFromStrings(ts, currentWitOffset, gCounter)
+        val (currentTokens, nextG) =
+          GtaUnifiedBuilder.emitFromStrings(
+            ts,
+            currentWitOffset,
+            gCounter + acc._1.map(_.tokens.size).sum + currentWitOffset
+          ) // currentWitOffset is, coincidentally and helpfully, also a count of TokenSep instances
         val currentWitnessData = WitnessData(
           currentSiglum,
-          Some("TmpColor"),
+          currentColor,
           Some("TmpFont"),
           currentTokens.map(_.asInstanceOf[TokenEnum.Token])
         )
-        (acc._1 :+ currentWitnessData, gCounter + 1)
+        (acc._1 :+ currentWitnessData, gCounter) // gCounter isn't used in final result
       }
     out._1
   Right(results)

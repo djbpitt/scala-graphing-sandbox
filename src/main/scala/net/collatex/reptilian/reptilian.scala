@@ -345,7 +345,6 @@ def retrieveWitnessDataXml(
   if errors.nonEmpty then Left(errors.mkString("\n"))
   else Right(witnesses)
 
-
 def retrieveWitnessDataJson(
     json: ujson.Value,
     manifestSource: ManifestData
@@ -421,8 +420,8 @@ case class CollateXWitnessData(
   */
 case class WitnessData(
     siglum: Siglum,
-    color: Option[String] = None,
-    font: Option[String] = None,
+    color: String, // May be missing from manifest, but then positional default is added to case class
+    font: Option[String] = None, // May be missing from manifest and case class (uses global default)
     tokens: Seq[TokenEnum.Token]
 )
 
