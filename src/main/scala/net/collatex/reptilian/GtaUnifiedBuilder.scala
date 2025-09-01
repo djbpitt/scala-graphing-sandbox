@@ -189,12 +189,6 @@ def xmlToWitnessData(
 ): Either[String, Seq[WitnessData]] =
   val rootFontOpt = (manifest \ "@font").headOption.map(_.text)
   val results: Seq[WitnessData] =
-
-    // RESUME HERE 2025-08-31
-    // We create the wrong output types
-    // We incorrectly build gTa and lists of sigla and colors instead of sequence of WitnessData instances
-    // Instead of Acc, just track witness number and global token number, including skip for TokenSep
-
     val witnessUrlAttr = (manifest \ "_").map(e => (e \ "@url").head.text)
     val witTokenStrings = witnessUrlAttr map {
       case remote if remote.startsWith("http://") || remote.startsWith("https://") =>
