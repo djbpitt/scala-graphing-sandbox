@@ -7,6 +7,8 @@ import scala.io.{BufferedSource, Source}
 import scala.util.{Try, Using}
 import scala.util.matching.Regex
 import scala.xml.Elem
+import upickle.default.* // uses ReadWriter and given
+import ujson.Value
 
 object GtaUnifiedBuilder:
 
@@ -188,6 +190,7 @@ def xmlToWitnessData(
     manifest: Elem,
     manifestSource: ManifestData,
     cfg: GtaUnifiedBuilder.BuildConfig
+    // TODO: Cannot fail (?), so cannot return Left(); Either to allow use in for-comprehension
 ): Either[String, Seq[WitnessData]] =
   val rootFontOpt = (manifest \ "@font").headOption.map(_.text)
   val results: Seq[WitnessData] =
@@ -209,7 +212,7 @@ def xmlToWitnessData(
     val gCounter = 0
     val out = witTokenStrings.zipWithIndex
       .foldLeft((Vector.empty[WitnessData], gCounter)) { (acc, current) =>
-        val (currentBs, currentWitOffset) : (BufferedSource, Int) = current // current witness data as buffered string
+        val (currentBs, currentWitOffset): (BufferedSource, Int) = current // current witness data as buffered string
         val currentSiglum: Siglum = Siglum(allSigla(currentWitOffset).head.text) // current siglum
         val currentColor: String = // if not specified on witness, retrieve correct offset from default sequence
           ((manifest \ "_")(currentWitOffset) \ "@color").headOption
@@ -233,3 +236,67 @@ def xmlToWitnessData(
       }
     out._1 // we no longer need gCounter
   Right(results)
+
+case class WitObj(
+    id: String,
+    font: Option[String],
+    color: Option[String],
+    content: Option[String],
+    tokens: Option[Seq[ujson.Value]] // ← Value, not Obj
+) derives ReadWriter
+case class JsonDataForAlignment(witnesses: Seq[WitObj]) derives ReadWriter
+
+def jsonToWitnessData(
+    manifest: ujson.Value,
+    cfg: GtaUnifiedBuilder.BuildConfig
+): Either[String, Seq[WitnessData]] = {
+  val witObjs = read[JsonDataForAlignment](manifest)
+
+  System.err.println(s"witObjs: $witObjs")
+//  val rootFontOpt = (manifest \ "@font").headOption.map(_.text)
+//  val results: Seq[WitnessData] =
+//    val witnessUrlAttr: Seq[String] = (manifest \ "_").map(e => (e \ "@url").head.text)
+//    val witTokenStrings: Seq[BufferedSource] = witnessUrlAttr map {
+//      case remote if remote.startsWith("http://") || remote.startsWith("https://") =>
+//        Source.fromURL(remote)
+//      case pathLike =>
+//        manifestSource.source match
+//          case ManifestSource.Remote(baseUrl) =>
+//            val resolvedUrl = URI.create(baseUrl.toString).resolve(pathLike).toURL
+//            Source.fromURL(resolvedUrl)
+//          case ManifestSource.Local(basePath) =>
+//            val manifestParent = basePath / os.up
+//            val resolvedPath = os.Path(pathLike, manifestParent)
+//            Source.fromFile(resolvedPath.toString)
+//    }
+//  val allSigla = manifest("witnesses").arr.map(obj => obj("id").str)
+//  System.err.println(allSigla)
+//    val gCounter = 0
+//    val out = witTokenStrings.zipWithIndex
+//      .foldLeft((Vector.empty[WitnessData], gCounter)) { (acc, current) =>
+//        val (currentBs, currentWitOffset): (BufferedSource, Int) = current // current witness data as buffered string
+//        val currentSiglum: Siglum = Siglum(allSigla(currentWitOffset).head.text) // current siglum
+//        val currentColor: String = // if not specified on witness, retrieve correct offset from default sequence
+//          ((manifest \ "_")(currentWitOffset) \ "@color").headOption
+//            .map(_.text)
+//            .getOrElse(GtaUnifiedBuilder.defaultColors(currentWitOffset % defaultColors.length))
+//        val ts: Iterator[String] = // raw token strings (t values)
+//          GtaUnifiedBuilder.tokenizeContent(currentBs.mkString, cfg)
+//        val (currentTokens, nextG) =
+//          GtaUnifiedBuilder.emitFromStrings(
+//            ts,
+//            currentWitOffset,
+//            gCounter + acc._1.map(_.tokens.size).sum + currentWitOffset
+//          ) // currentWitOffset is, coincidentally and helpfully, also a count of TokenSep instances
+//        val currentWitnessData = WitnessData(
+//          currentSiglum,
+//          currentColor,
+//          Some("TmpFont"),
+//          currentTokens.map(_.asInstanceOf[TokenEnum.Token])
+//        )
+//        (acc._1 :+ currentWitnessData, gCounter) // gCounter is ignored in final result
+//      }
+//    out._1 // we no longer need gCounter
+  val results = Vector[WitnessData]()
+  Right(results)
+}

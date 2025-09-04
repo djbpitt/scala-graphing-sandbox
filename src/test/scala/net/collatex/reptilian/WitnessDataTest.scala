@@ -1,7 +1,7 @@
 package net.collatex.reptilian
 
 import net.collatex.reptilian.GtaUnifiedBuilder.{normalizeToken, tokenizeContent}
-import net.collatex.reptilian.ManifestFormat.Xml
+import net.collatex.reptilian.ManifestFormat.{Json, Xml}
 import net.collatex.reptilian.TokenEnum.Token
 import org.scalatest.funsuite.AnyFunSuite
 import os.Path
@@ -56,6 +56,17 @@ class WitnessDataTest extends AnyFunSuite:
     )
     val result = xmlToWitnessData(manifest, manifestData, cfg)
     assert(result == expected)
+  }
+
+  test("jsonToWitnessData basics with no root font") {
+    val manifestPath = Path("src/test/resources/manifests/jsonWithoutRootFont.json", os.pwd)
+    val manifestSource = ManifestSource.Local(manifestPath)
+    val manifestData = ManifestData(manifestSource, Json)
+    val cfg = GtaUnifiedBuilder.BuildConfig(Int.MaxValue, raw"(\w+|[^\w\s])\s*".r)
+    val manifest: ujson.Value = retrieveManifestJson(manifestSource).getOrElse(fail("Oops!"))
+    val result = jsonToWitnessData(manifest, cfg)
+    System.err.println(result)
+    assert(1 == 1)
   }
 
   /* Verify that normalizeToken() correctly removes trailing newline */
