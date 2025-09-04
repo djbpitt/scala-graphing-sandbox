@@ -63,7 +63,7 @@ class WitnessDataTest extends AnyFunSuite:
     val manifestSource = ManifestSource.Local(manifestPath)
     val manifestData = ManifestData(manifestSource, Json)
     val cfg = GtaUnifiedBuilder.BuildConfig(Int.MaxValue, raw"(\w+|[^\w\s])\s*".r)
-    val manifest: ujson.Value = retrieveManifestJson(manifestSource).getOrElse(fail("Oops!"))
+    val manifest = retrieveManifestJson(manifestSource).getOrElse(fail("Oops!"))
     val result = jsonToWitnessData(manifest, cfg)
     System.err.println(result)
     assert(1 == 1)

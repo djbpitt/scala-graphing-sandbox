@@ -44,12 +44,12 @@ def readData(pathToData: Path): List[(String, String)] =
     .toList
     .map(e => (e.last, os.read(e)))
 
-def retrieveManifestJson(source: ManifestSource): Either[String, Value] = {
+def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
   source match
     case ManifestSource.Local(path) =>
       try
         val content = os.read(path) // using OS-lib to read local file
-        Right(ujson.read(content))
+        Right(content)
       catch case e: Exception => Left(s"Failed to read local JSON manifest: ${e.getMessage}")
     case ManifestSource.Remote(url) =>
       try {
@@ -57,7 +57,7 @@ def retrieveManifestJson(source: ManifestSource): Either[String, Value] = {
         val content =
           try scala.io.Source.fromInputStream(stream).mkString
           finally stream.close()
-        Right(ujson.read(content))
+        Right(content)
       } catch {
         case e: Exception => Left(s"Failed to fetch remote JSON manifest: ${e.getMessage}")
       }
