@@ -83,19 +83,19 @@ class manifestTest extends AnyFunSuite:
   /* Test ability to retrieve JSON manifest */
   test("retrieveManifestJson loads from local relative ManifestSource") {
     val manifestPath = Path("src/test/resources/manifests/test-manifest.json", os.pwd)
-    val expected = Right(ujson.read(os.read(manifestPath)))
+    val expected = Right(os.read(manifestPath))
     val result = retrieveManifestJson(ManifestSource.Local(manifestPath))
     assert(result == expected)
   }
   test("retrieveManifestJson loads from local absolute ManifestSource") {
     val manifestPath = os.pwd / "src" / "test" / "resources" / "manifests" / "test-manifest.json"
-    val expected = Right(ujson.read(os.read(manifestPath)))
+    val expected = Right(os.read(manifestPath))
     val result = retrieveManifestJson(ManifestSource.Local(manifestPath))
     assert(result == expected)
   }
   test("retrieveManifestJson loads from remote ManifestSource via ad-hoc http server") {
     val manifestPath = Path("src/test/resources/manifests/test-manifest.json", os.pwd)
-    val expected = Right(ujson.read(os.read(manifestPath)))
+    val expected = Right(os.read(manifestPath))
 
     val server = HttpServer.create(new InetSocketAddress(0), 0)
     server.createContext(

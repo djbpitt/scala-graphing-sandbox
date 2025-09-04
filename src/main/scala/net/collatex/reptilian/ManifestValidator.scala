@@ -61,7 +61,7 @@ object ManifestValidator {
       val schemaPath = os.resource / "manifestSchema.json"
       val schemaInputStream = new java.io.ByteArrayInputStream(os.read.bytes(schemaPath))
 
-      validateJsonManifest(parsedJson.render(), schemaInputStream) match
+      validateJsonManifest(parsedJson, schemaInputStream) match
         case Left(errors) =>
           Left(s"Manifest failed JSON Schema validation:\n${errors.mkString("\n")}")
         case Right(_) =>

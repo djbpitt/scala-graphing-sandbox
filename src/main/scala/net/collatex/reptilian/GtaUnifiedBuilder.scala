@@ -239,15 +239,15 @@ def xmlToWitnessData(
 
 case class WitObj(
     id: String,
-    font: Option[String],
-    color: Option[String],
-    content: Option[String],
-    tokens: Option[Seq[ujson.Value]] // ← Value, not Obj
+    font: Option[String] = None,
+    color: Option[String] = None,
+    content: Option[String] = None,
+    tokens: Option[Seq[ujson.Value]]  =  None// ← Value, not Obj
 ) derives ReadWriter
 case class JsonDataForAlignment(witnesses: Seq[WitObj]) derives ReadWriter
 
 def jsonToWitnessData(
-    manifest: ujson.Value,
+    manifest: String,
     cfg: GtaUnifiedBuilder.BuildConfig
 ): Either[String, Seq[WitnessData]] = {
   val witObjs = read[JsonDataForAlignment](manifest)
