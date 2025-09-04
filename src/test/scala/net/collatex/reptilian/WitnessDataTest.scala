@@ -11,7 +11,7 @@ import scala.util.Using
 import scala.xml.Elem
 
 class WitnessDataTest extends AnyFunSuite:
-  test("xmlToWitnessData basics") {
+  test("xmlToWitnessData basics with no root font") {
     val manifestPath = Path("src/test/resources/manifests/xmlNoRootFont.xml", os.pwd)
     val manifestSource = ManifestSource.Local(manifestPath)
     val manifestData = ManifestData(manifestSource, Xml)
