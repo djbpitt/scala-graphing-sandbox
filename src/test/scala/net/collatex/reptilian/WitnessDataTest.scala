@@ -16,7 +16,7 @@ class WitnessDataTest extends AnyFunSuite:
     val manifestSource = ManifestSource.Local(manifestPath)
     val manifestData = ManifestData(manifestSource, Xml)
     val cfg = GtaUnifiedBuilder.BuildConfig(Int.MaxValue, raw"(\w+|[^\w\s])\s*".r)
-    val manifest = retrieveManifestXml(manifestSource).getOrElse(fail("Oops!"))
+    val manifest: Elem = retrieveManifestXml(manifestSource).getOrElse(fail("Oops!"))
     val expected = Right(
       Vector(
         WitnessData(

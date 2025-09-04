@@ -191,7 +191,7 @@ def xmlToWitnessData(
 ): Either[String, Seq[WitnessData]] =
   val rootFontOpt = (manifest \ "@font").headOption.map(_.text)
   val results: Seq[WitnessData] =
-    val witnessUrlAttr = (manifest \ "_").map(e => (e \ "@url").head.text)
+    val witnessUrlAttr: Seq[String] = (manifest \ "_").map(e => (e \ "@url").head.text)
     val witTokenStrings: Seq[BufferedSource] = witnessUrlAttr map {
       case remote if remote.startsWith("http://") || remote.startsWith("https://") =>
         Source.fromURL(remote)
@@ -209,8 +209,7 @@ def xmlToWitnessData(
     val gCounter = 0
     val out = witTokenStrings.zipWithIndex
       .foldLeft((Vector.empty[WitnessData], gCounter)) { (acc, current) =>
-        val currentBs: BufferedSource = current._1 // current witness data as buffered string
-        val currentWitOffset: Int = current._2 // current witness offset (index into sigla)
+        val (currentBs, currentWitOffset) : (BufferedSource, Int) = current // current witness data as buffered string
         val currentSiglum: Siglum = Siglum(allSigla(currentWitOffset).head.text) // current siglum
         val currentColor: String = // if not specified on witness, retrieve correct offset from default sequence
           ((manifest \ "_")(currentWitOffset) \ "@color").headOption
