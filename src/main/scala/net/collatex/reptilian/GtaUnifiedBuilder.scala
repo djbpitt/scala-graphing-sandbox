@@ -1,13 +1,13 @@
 package net.collatex.reptilian
 
-import net.collatex.reptilian.GtaUnifiedBuilder.defaultColors
+import net.collatex.reptilian.GtaUnifiedBuilder.{defaultColors, emitFromProvided, normalizeToken}
 
 import java.net.URI
 import scala.io.{BufferedSource, Source}
 import scala.util.{Try, Using}
 import scala.util.matching.Regex
 import scala.xml.Elem
-import upickle.default.* // uses ReadWriter and given
+import upickle.default.*
 import ujson.Value
 
 object GtaUnifiedBuilder:
@@ -38,7 +38,7 @@ object GtaUnifiedBuilder:
   }
 
   // Emit tokens from provided TokenEnum.Token (preserve ‘other’, backfill/normalize n)
-  private def emitFromProvided(tokens: Seq[TokenEnum.Token], witIndex: Int, startG: Int): (Vector[TokenEnum], Int) = {
+  def emitFromProvided(tokens: Seq[TokenEnum.Token], witIndex: Int, startG: Int): (Vector[TokenEnum], Int) = {
     var g = startG
     val out = Vector.newBuilder[TokenEnum]
     tokens.foreach { inTok =>
@@ -242,61 +242,65 @@ case class WitObj(
     font: Option[String] = None,
     color: Option[String] = None,
     content: Option[String] = None,
-    tokens: Option[Seq[ujson.Value]]  =  None// ← Value, not Obj
+    tokens: Option[Seq[ujson.Value]] = None // ← Value, not Obj
 ) derives ReadWriter
-case class JsonDataForAlignment(witnesses: Seq[WitObj]) derives ReadWriter
+case class JsonDataForAlignment(rootFont: Option[String] = None, witnesses: Seq[WitObj]) derives ReadWriter
 
 def jsonToWitnessData(
     manifest: String,
     cfg: GtaUnifiedBuilder.BuildConfig
-): Either[String, Seq[WitnessData]] = {
-  val witObjs = read[JsonDataForAlignment](manifest)
-
-  System.err.println(s"witObjs: $witObjs")
-//  val rootFontOpt = (manifest \ "@font").headOption.map(_.text)
-//  val results: Seq[WitnessData] =
-//    val witnessUrlAttr: Seq[String] = (manifest \ "_").map(e => (e \ "@url").head.text)
-//    val witTokenStrings: Seq[BufferedSource] = witnessUrlAttr map {
-//      case remote if remote.startsWith("http://") || remote.startsWith("https://") =>
-//        Source.fromURL(remote)
-//      case pathLike =>
-//        manifestSource.source match
-//          case ManifestSource.Remote(baseUrl) =>
-//            val resolvedUrl = URI.create(baseUrl.toString).resolve(pathLike).toURL
-//            Source.fromURL(resolvedUrl)
-//          case ManifestSource.Local(basePath) =>
-//            val manifestParent = basePath / os.up
-//            val resolvedPath = os.Path(pathLike, manifestParent)
-//            Source.fromFile(resolvedPath.toString)
-//    }
-//  val allSigla = manifest("witnesses").arr.map(obj => obj("id").str)
-//  System.err.println(allSigla)
-//    val gCounter = 0
-//    val out = witTokenStrings.zipWithIndex
-//      .foldLeft((Vector.empty[WitnessData], gCounter)) { (acc, current) =>
-//        val (currentBs, currentWitOffset): (BufferedSource, Int) = current // current witness data as buffered string
-//        val currentSiglum: Siglum = Siglum(allSigla(currentWitOffset).head.text) // current siglum
-//        val currentColor: String = // if not specified on witness, retrieve correct offset from default sequence
-//          ((manifest \ "_")(currentWitOffset) \ "@color").headOption
-//            .map(_.text)
-//            .getOrElse(GtaUnifiedBuilder.defaultColors(currentWitOffset % defaultColors.length))
-//        val ts: Iterator[String] = // raw token strings (t values)
-//          GtaUnifiedBuilder.tokenizeContent(currentBs.mkString, cfg)
-//        val (currentTokens, nextG) =
-//          GtaUnifiedBuilder.emitFromStrings(
-//            ts,
-//            currentWitOffset,
-//            gCounter + acc._1.map(_.tokens.size).sum + currentWitOffset
-//          ) // currentWitOffset is, coincidentally and helpfully, also a count of TokenSep instances
-//        val currentWitnessData = WitnessData(
-//          currentSiglum,
-//          currentColor,
-//          Some("TmpFont"),
-//          currentTokens.map(_.asInstanceOf[TokenEnum.Token])
-//        )
-//        (acc._1 :+ currentWitnessData, gCounter) // gCounter is ignored in final result
-//      }
-//    out._1 // we no longer need gCounter
-  val results = Vector[WitnessData]()
-  Right(results)
+): Either[String, Vector[WitnessData]] = {
+  val jd: JsonDataForAlignment = read[JsonDataForAlignment](manifest)
+  val rootFontOpt: Option[String] = jd.rootFont
+  val gCounter = 0
+  val out: (Vector[WitnessData], Int) = jd.witnesses.zipWithIndex
+    .foldLeft(Vector.empty[WitnessData], gCounter) { (acc, current) =>
+      val (currentWitnessObj, currentWitOffset) = current
+      val currentSiglum = Siglum(currentWitnessObj.id)
+      val currentColor: String = // if not specified on witness, retrieve correct offset from default sequence
+        currentWitnessObj.color.getOrElse(GtaUnifiedBuilder.defaultColors(currentWitOffset % defaultColors.length))
+      val witnessTokens: Seq[TokenEnum.Token] = currentWitnessObj match {
+        case WitObj(_, _, _, Some(content), None) =>
+          val ts: Iterator[String] = // raw token strings (t values)
+            GtaUnifiedBuilder.tokenizeContent(content, cfg)
+          val (currentTokens: Vector[TokenEnum], nextG: Int) = {
+            GtaUnifiedBuilder.emitFromStrings(
+              ts,
+              currentWitOffset,
+              gCounter + acc._1.map(_.tokens.size).sum + currentWitOffset
+            ) // currentWitOffset is, coincidentally and helpfully, also a count of TokenSep instances
+          }
+          currentTokens.map(_.asInstanceOf[TokenEnum.Token])
+        case WitObj(_, _, _, None, Some(tokens)) => // Only t and option n properties are real
+          val suppliedTokens: Seq[TokenEnum.Token] = tokens.arr
+            .map(t =>
+              TokenEnum
+                .Token(
+                  t.obj("t").str,
+                  t.obj.get("n").strOpt.getOrElse(normalizeToken(t.obj("t").str)), // Short for flatMap(_.strOpt)
+                  0,
+                  0
+                )
+                .asInstanceOf[TokenEnum.Token]
+            )
+            .toSeq
+          val (emittedTokens, nextG: Int) = emitFromProvided(
+            suppliedTokens,
+            currentWitOffset,
+            gCounter + acc._1.map(_.tokens.size).sum + currentWitOffset
+          )
+          val result = emittedTokens.map(_.asInstanceOf[TokenEnum.Token])
+          println(s"result: $result")
+          result
+        case _ => throw new RuntimeException(s"WitObj should have either content or tokens: $currentWitnessObj")
+      }
+      val currentWitnessData = WitnessData(
+        currentSiglum,
+        currentColor,
+        Some("TmpFont"),
+        witnessTokens
+      )
+      (acc._1 :+ currentWitnessData, gCounter) // gCounter is ignored in final result
+    }
+  Right(out._1) // we no longer need gCounter
 }
