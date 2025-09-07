@@ -59,9 +59,9 @@ class WitnessDataTest extends AnyFunSuite:
     assert(result == expected)
   }
 
-  //RESUME HERE 2025-09-07
-  //x-extra: 123 not carried forward
-  //test reports results are identical, but they shouldn't be (yet)
+  // RESUME HERE 2025-09-07
+  // x-extra: 123 not carried forward
+  // test reports results are identical, but they shouldn't be (yet) because comparing toString results instead of objects
   test("jsonToWitnessData basics with no root font") {
     val manifestPath = Path("src/test/resources/manifests/jsonWithoutRootFont.json", os.pwd)
     val manifestSource = ManifestSource.Local(manifestPath)
@@ -97,7 +97,7 @@ class WitnessDataTest extends AnyFunSuite:
 
     val result = jsonToWitnessData(manifest, cfg)
     System.err.println(result)
-    assert(result == expected)
+    assert(result === expected)
   }
 
   /* Verify that normalizeToken() correctly removes trailing newline */
