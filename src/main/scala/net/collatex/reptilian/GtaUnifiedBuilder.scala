@@ -183,6 +183,8 @@ object GtaUnifiedBuilder:
   *   XML manifest as XML Elem
   * @param manifestSource
   *   Contains pointer to manifest location and type (XML or JSON)
+  * @param cfg
+  *   Configuration case class with tokensPerWitnessLimit and tokenPattern
   * @return
   *   Seq[WitnessData]
   */
@@ -237,6 +239,24 @@ def xmlToWitnessData(
     out._1 // we no longer need gCounter
   Right(results)
 
+/** Intermediary WitObj case class for transforming JSON manifest to Seq[WitnessData]
+  *
+  * @param id
+  *   Siglum as String
+  * @param font
+  *   Optional String
+  * @param color
+  *   Optional String
+  * @param content
+  *   Optional string
+  * @param tokens
+  *   Optional Seq[ujson.Value]
+  *
+  * NB: Every witness must have either `content` or `tokens`, but not both; this is validated earlier
+  *
+  * Tokens are represented as a sequence of JSON values to accommodate the optional `other` property, the keys for which
+  * cannot be predicted, and therefore cannot be represented directly as case class property names
+  */
 case class WitObj(
     id: String,
     font: Option[String] = None,
