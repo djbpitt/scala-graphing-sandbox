@@ -294,12 +294,17 @@ def jsonToWitnessData(
         case WitObj(_, _, _, None, Some(tokens)) => // Only t and option n properties are real
           val suppliedTokens: Seq[TokenEnum.Token] = tokens.arr
             .map(t =>
+              val otherFields: Map[String, ujson.Value] =
+                t.obj.view
+                  // "Other" properties; filters out t, n, w, and g, which we handle explicitly
+                  .filter { case (k, _) => !Set("t", "n", "w", "g")(k) }.toMap
               TokenEnum
                 .Token(
                   t.obj("t").str,
                   t.obj.get("n").strOpt.getOrElse(normalizeToken(t.obj("t").str)), // Short for flatMap(_.strOpt)
                   0,
-                  0
+                  0,
+                  otherFields
                 )
                 .asInstanceOf[TokenEnum.Token]
             )
@@ -309,9 +314,7 @@ def jsonToWitnessData(
             currentWitOffset,
             gCounter + acc._1.map(_.tokens.size).sum + currentWitOffset
           )
-          val result = emittedTokens.map(_.asInstanceOf[TokenEnum.Token])
-          println(s"result: $result")
-          result
+          emittedTokens.map(_.asInstanceOf[TokenEnum.Token])
         case _ => throw new RuntimeException(s"WitObj should have either content or tokens: $currentWitnessObj")
       }
       val currentWitnessData = WitnessData(
