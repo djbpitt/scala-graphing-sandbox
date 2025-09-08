@@ -38,6 +38,7 @@ object GtaUnifiedBuilder:
   }
 
   // Emit tokens from provided TokenEnum.Token (preserve ‘other’, including `n`, which we create, if needed, before calling)
+  // TODO: See https://github.com/djbpitt/scala-graphing-sandbox/issues/83
   def emitFromProvided(tokens: Seq[TokenEnum.Token], witIndex: Int, startG: Int): (Vector[TokenEnum], Int) = {
     var g = startG
     val out = Vector.newBuilder[TokenEnum]
@@ -291,6 +292,7 @@ def jsonToWitnessData(
           }
           currentTokens.map(_.asInstanceOf[TokenEnum.Token])
         case WitObj(_, _, _, None, Some(tokens)) => // Only t and option n properties are real
+          // TODO: See https://github.com/djbpitt/scala-graphing-sandbox/issues/83
           val suppliedTokens: Seq[TokenEnum.Token] = tokens.arr
             .map(t =>
               val otherFields: Map[String, ujson.Value] =
