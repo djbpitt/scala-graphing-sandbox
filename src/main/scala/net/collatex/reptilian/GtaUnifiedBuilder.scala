@@ -37,13 +37,12 @@ object GtaUnifiedBuilder:
     (out.result(), g)
   }
 
-  // Emit tokens from provided TokenEnum.Token (preserve ‘other’, backfill/normalize n)
+  // Emit tokens from provided TokenEnum.Token (preserve ‘other’, including `n`, which we create, if needed, before calling)
   def emitFromProvided(tokens: Seq[TokenEnum.Token], witIndex: Int, startG: Int): (Vector[TokenEnum], Int) = {
     var g = startG
     val out = Vector.newBuilder[TokenEnum]
     tokens.foreach { inTok =>
-      val nFixed = Option(inTok.n).filter(_.nonEmpty).getOrElse(normalizeToken(inTok.t))
-      out += inTok.copy(w = witIndex, g = g, n = nFixed)
+      out += inTok.copy(w = witIndex, g = g)
       g += 1
     }
     (out.result(), g)
@@ -299,7 +298,7 @@ def jsonToWitnessData(
                   // "Other" properties; filters out t, n, w, and g, which we handle explicitly
                   .filter { case (k, _) => !Set("t", "n", "w", "g")(k) }.toMap
               TokenEnum
-                .Token(
+                .Token( // Create `n` if missing; `w` and `g` are fakes because Token case class requires them
                   t.obj("t").str,
                   t.obj.get("n").strOpt.getOrElse(normalizeToken(t.obj("t").str)), // Short for flatMap(_.strOpt)
                   0,
