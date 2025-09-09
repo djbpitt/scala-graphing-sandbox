@@ -76,7 +76,7 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
   val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
 
   // Parse args, resolve manifest, validate manifest
-  val parsedValidated: Either[String, (ManifestData, Map[String, Set[String]], Option[ujson.Value])] =
+  val parsedValidated: Either[String, (ManifestData, Map[String, Set[String]])] =
     for {
       // Parse args
       result <- parseArgs(args)
@@ -95,13 +95,13 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
       // (gTa, gTaSigla, colors) = gTaTuple
       // root <- createAlignmentRibbon(gTaSigla, gTa)
       // Yield here; manage output outside for-comprehension
-    } yield (manifestData, argMap, jsonOpt)
+    } yield (manifestData, argMap)
 
   parsedValidated match
     case Left(e) =>
       System.err.println(e)
 
-    case Right((manifestData, argMap, maybeParsedJson)) =>
+    case Right((manifestData, argMap)) =>
       val cfg = GtaUnifiedBuilder.BuildConfig(tokensPerWitnessLimit, tokenPattern)
       GtaUnifiedBuilder.build(manifestData, cfg) match
         case Left(err) =>
