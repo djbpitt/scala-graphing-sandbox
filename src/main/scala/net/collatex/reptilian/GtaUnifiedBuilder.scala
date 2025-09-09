@@ -1,6 +1,7 @@
 package net.collatex.reptilian
 
 import net.collatex.reptilian.GtaUnifiedBuilder.{defaultColors, emitFromProvided, normalizeToken}
+import net.collatex.reptilian.ManifestValidator.{validateJson, validateXml}
 
 import java.net.URI
 import scala.io.{BufferedSource, Source}
@@ -69,6 +70,7 @@ object GtaUnifiedBuilder:
     md match
       case ManifestData(source, ManifestFormat.Json) =>
         for
+          _ <- validateJson(source)
           json <- retrieveManifestJson(source)
           witnesses <- retrieveWitnessDataJson(json, md)
           out <- buildFromJsonWitnesses(witnesses, cfg)
@@ -76,6 +78,7 @@ object GtaUnifiedBuilder:
 
       case ManifestData(source, ManifestFormat.Xml) =>
         for
+          _ <- validateXml(source)
           xml <- retrieveManifestXml(source)
           witnesses <- retrieveWitnessDataXml(xml, md) // Seq[CollateXWitnessData], change to Seq[WitnessData]
           out <- buildFromXmlWitnesses(

@@ -85,13 +85,7 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
       // Resolve to ManifestData
       manifestData <- resolveManifestString(manifestPathString)
 
-      // Validate (XML: Unit; JSON: return parsed JSON for reuse)
-      jsonOpt <- manifestData match
-        case ManifestData(source, ManifestFormat.Xml) =>
-          validateXml(source).map(_ => None)
-        case ManifestData(source, ManifestFormat.Json) =>
-          validateJson(source).map(Some(_))
-      // gTaTuple <- GtaUnifiedBuilder.build(ManifestData, cfg)
+      // gTaTuple <- GtaUnifiedBuilder.build(manifestData, cfg)
       // (gTa, gTaSigla, colors) = gTaTuple
       // root <- createAlignmentRibbon(gTaSigla, gTa)
       // Yield here; manage output outside for-comprehension
