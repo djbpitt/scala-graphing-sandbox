@@ -70,8 +70,8 @@ object GtaBuilder:
         for
           _ <- validateJson(source)
           json <- retrieveManifestJson(source)
-          witnesses <- retrieveWitnessDataJson(json, md)
-          out <- buildFromJsonWitnesses(witnesses, cfg)
+          witnesses <- jsonToWitnessData(json, cfg)
+          out <- buildFromWitnessData(witnesses, cfg, defaultColors)
         yield out
 
       case ManifestData(source, ManifestFormat.Xml) =>

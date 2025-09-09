@@ -1,7 +1,7 @@
 package net.collatex.reptilian
 
-import net.collatex.reptilian.GtaBuilder._
-import net.collatex.reptilian.TokenEnum.Token
+import net.collatex.reptilian.GtaBuilder.*
+import net.collatex.reptilian.TokenEnum.{Token, TokenSep}
 import org.scalatest.funsuite.AnyFunSuite
 import os.Path
 import ujson.Num
@@ -239,6 +239,34 @@ class WitnessDataTest extends AnyFunSuite:
       )
     )
     val result = jsonToWitnessData(json, cfg)
+    assert(result == expected)
+  }
+
+  test("build() with json manifest using Seq[WitnessData]") {
+    val manifestFilename = "jsonWithColors.json"
+    val manifestPath = os.pwd / "src" / "test" / "resources" / "manifests" / manifestFilename
+    val manifestSource = ManifestSource.Local(manifestPath)
+    val manifestData = ManifestData(manifestSource, ManifestFormat.Json)
+    val expected = Right(
+      (
+        Vector(
+          Token("Some ", "some", 0, 0, Map()),
+          Token("content ", "content", 0, 1, Map()),
+          Token("A", "a", 0, 2, Map()),
+          TokenSep("sep3", "sep3", 0, 3),
+          Token("Some ", "some", 1, 4, Map()),
+          Token("content ", "content", 1, 5, Map()),
+          Token("B", "b", 1, 6, Map()),
+          TokenSep("sep7", "sep7", 1, 7),
+          Token("Some ", "some", 2, 8, Map()),
+          Token("content ", "content", 2, 9, Map("x-extra" -> 123)),
+          Token("C", "c", 2, 10, Map())
+        ),
+        List("A", "B", "C"),
+        List("red", "blue", "green")
+      )
+    )
+    val result = build(manifestData, cfg)
     assert(result == expected)
   }
 
