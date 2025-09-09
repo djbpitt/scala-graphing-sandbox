@@ -111,7 +111,6 @@ class WitnessDataTest extends AnyFunSuite:
   }
 
   // Helpers for JSON manifest tests with and without root font
-
   /** expectedForJson()
     *
     * Synopsis: Create expected output for JSON manifest tests
@@ -242,6 +241,7 @@ class WitnessDataTest extends AnyFunSuite:
     val result = jsonToWitnessData(json, cfg)
     assert(result == expected)
   }
+
   /* Verify that normalizeToken() correctly removes trailing newline */
   test("Normalize token test") {
     val cfg = GtaBuilder.BuildConfig(Int.MaxValue, raw"(\w+|[^\w\s])\s*".r)
