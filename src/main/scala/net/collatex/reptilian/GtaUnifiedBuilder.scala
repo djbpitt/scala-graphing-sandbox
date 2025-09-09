@@ -194,7 +194,7 @@ def xmlToWitnessData(
     cfg: GtaUnifiedBuilder.BuildConfig
     // TODO: Cannot fail (?), so cannot return Left(); Either to allow use in for-comprehension
 ): Either[String, Seq[WitnessData]] =
-  val rootFontOpt = (manifest \ "@font").headOption.map(_.text)
+  val rootFontOpt: Option[String] = (manifest \ "@font").headOption.map(_.text)
   val results: Seq[WitnessData] =
     val witnessUrlAttr: Seq[String] = (manifest \ "_").map(e => (e \ "@url").head.text)
     val witTokenStrings: Seq[BufferedSource] = witnessUrlAttr map {
@@ -215,6 +215,7 @@ def xmlToWitnessData(
     val out = witTokenStrings.zipWithIndex
       .foldLeft((Vector.empty[WitnessData], gCounter)) { (acc, current) =>
         val (currentBs, currentWitOffset): (BufferedSource, Int) = current // current witness data as buffered string
+        val currentFont: Option[String] = ((manifest \ "_")(currentWitOffset) \ "@font").headOption.map(_.text).orElse(rootFontOpt)
         val currentSiglum: Siglum = Siglum(allSigla(currentWitOffset).head.text) // current siglum
         val currentColor: String = // if not specified on witness, retrieve correct offset from default sequence
           ((manifest \ "_")(currentWitOffset) \ "@color").headOption
@@ -231,7 +232,7 @@ def xmlToWitnessData(
         val currentWitnessData = WitnessData(
           currentSiglum,
           currentColor,
-          Some("TmpFont"),
+          currentFont,
           currentTokens.map(_.asInstanceOf[TokenEnum.Token])
         )
         (acc._1 :+ currentWitnessData, gCounter) // gCounter is ignored in final result
@@ -252,7 +253,8 @@ def xmlToWitnessData(
   * @param tokens
   *   Optional Seq[ujson.Value]
   *
-  * NB: Every witness must have either `content` or `tokens`, but not both; this is validated earlier
+  * NB: Every witness must have either `content` or `tokens`, but not both; this is validated earlier, but we also throw
+  * an error here if this condition is not met
   *
   * Tokens are represented as a sequence of JSON values to accommodate the optional `other` property, the keys for which
   * cannot be predicted, and therefore cannot be represented directly as case class property names

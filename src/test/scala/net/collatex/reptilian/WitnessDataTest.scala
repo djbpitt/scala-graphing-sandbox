@@ -12,51 +12,101 @@ import scala.util.Using
 import scala.xml.Elem
 
 class WitnessDataTest extends AnyFunSuite:
-  test("xmlToWitnessData basics with no root font") {
-    val manifestPath = Path("src/test/resources/manifests/xmlNoRootFont.xml", os.pwd)
-    val manifestSource = ManifestSource.Local(manifestPath)
-    val manifestData = ManifestData(manifestSource, Xml)
-    val cfg = GtaUnifiedBuilder.BuildConfig(Int.MaxValue, raw"(\w+|[^\w\s])\s*".r)
-    val manifest: Elem = retrieveManifestXml(manifestSource).getOrElse(fail("Oops!"))
-    val expected = Right(
-      Vector(
-        WitnessData(
-          Siglum("A"),
-          "peru",
-          Some("TmpFont"),
-          Vector(
-            Token("This ", "this", 0, 0),
-            Token("is ", "is", 0, 1),
-            Token("witness ", "witness", 0, 2),
-            Token("A" + "\u000a", "a", 0, 3)
-          )
-        ),
-        WitnessData(
-          Siglum("B"),
-          "orange",
-          Some("TmpFont"),
-          Vector(
-            Token("This ", "this", 1, 5),
-            Token("is ", "is", 1, 6),
-            Token("witness ", "witness", 1, 7),
-            Token("B" + "\u000a", "b", 1, 8)
-          )
-        ),
-        WitnessData(
-          Siglum("C"),
-          "yellow",
-          Some("TmpFont"),
-          Vector(
-            Token("This ", "this", 2, 10),
-            Token("is ", "is", 2, 11),
-            Token("witness ", "witness", 2, 12),
-            Token("C" + "\u000a", "c", 2, 13)
-          )
+
+  // Shared helpers for XML manifest tests with and without root font
+  /** expectedFor()
+    *
+    * Synopsis: Create expected output for XML manifest tests
+    *
+    * @param fonts
+    *   Three-item tuple of Option[String] with expected fonts for witnesses A, B, and C (fonts may be specified on the
+    *   witness, inherited from a root font, or absent)
+    * @return
+    *   Vector[WitnessData] with correct test-specific fonts
+    */
+  private def expectedFor(fonts: (Option[String], Option[String], Option[String])): Vector[WitnessData] =
+    val (fontA, fontB, fontC) = fonts
+    Vector(
+      WitnessData(
+        Siglum("A"),
+        "peru",
+        fontA,
+        Vector(
+          Token("This ", "this", 0, 0),
+          Token("is ", "is", 0, 1),
+          Token("witness ", "witness", 0, 2),
+          Token("A" + "\u000a", "a", 0, 3)
+        )
+      ),
+      WitnessData(
+        Siglum("B"),
+        "orange",
+        fontB,
+        Vector(
+          Token("This ", "this", 1, 5),
+          Token("is ", "is", 1, 6),
+          Token("witness ", "witness", 1, 7),
+          Token("B" + "\u000a", "b", 1, 8)
+        )
+      ),
+      WitnessData(
+        Siglum("C"),
+        "yellow",
+        fontC,
+        Vector(
+          Token("This ", "this", 2, 10),
+          Token("is ", "is", 2, 11),
+          Token("witness ", "witness", 2, 12),
+          Token("C" + "\u000a", "c", 2, 13)
         )
       )
     )
+
+  /** checkXmlToWitnessData()
+    *
+    * Run XML manifest test with supplied manifest file and expected fonts
+    *
+    * Tests differ in presence vs absence of root font
+    *
+    * @param manifestFilename
+    *   Bare filename as string; manifests are all in the same `src/test/resources/manifests` directory
+    * @param expectedFonts
+    *   Font values are either Some("Fontname") or None
+    *
+    * @return
+    *   No return; runs test using `assert()`
+    */
+  private def checkXmlToWitnessData(
+      manifestFilename: String,
+      expectedFonts: (Option[String], Option[String], Option[String])
+  ): Unit = {
+    val manifestPath = Path(s"src/test/resources/manifests/$manifestFilename", os.pwd)
+    val manifestSource = ManifestSource.Local(manifestPath)
+    val manifestData = ManifestData(manifestSource, ManifestFormat.Xml)
+    val cfg = GtaUnifiedBuilder.BuildConfig(Int.MaxValue, raw"(\w+|[^\w\s])\s*".r)
+
+    val manifest: Elem = retrieveManifestXml(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
+    val expected = Right(expectedFor(expectedFonts))
+
     val result = xmlToWitnessData(manifest, manifestData, cfg)
     assert(result == expected)
+  }
+
+  // XML manifest tests with and without root font
+  test("xmlToWitnessData basics with root font") {
+    // Font specified only on WitnessB, with root font
+    checkXmlToWitnessData(
+      manifestFilename = "xmlWithRootFont.xml",
+      expectedFonts = (Some("RootFont"), Some("WitnessBFont"), Some("RootFont"))
+    )
+  }
+
+  test("xmlToWitnessData basics with no root font") {
+    // Font specified only on WitnessB, no root font
+    checkXmlToWitnessData(
+      manifestFilename = "xmlNoRootFont.xml",
+      expectedFonts = (None, Some("WitnessBFont"), None)
+    )
   }
 
   test("jsonToWitnessData basics with no root font") {
