@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="manifest mikulka" type="Application" factoryName="Application">
+  <configuration default="false" name="manifest darwin" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="net.collatex.reptilian.manifest" />
     <module name="collatex-reptilian.main" />
-    <option name="PROGRAM_PARAMETERS" value="$PROJECT_DIR$/src/main/data/manifest/mikulka/mikulka.json" />
+    <option name="PROGRAM_PARAMETERS" value="$PROJECT_DIR$/src/main/data/manifest/darwin-manifest-local.xml" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="net.collatex.reptilian.*" />

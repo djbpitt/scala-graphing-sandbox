@@ -271,10 +271,9 @@ case class JsonDataForAlignment(font: Option[String] = None, witnesses: Seq[WitO
 def jsonToWitnessData(
     manifest: String,
     cfg: GtaUnifiedBuilder.BuildConfig
-): Either[String, Vector[WitnessData]] = {
+): Either[String, Seq[WitnessData]] = {
   val jd: JsonDataForAlignment = read[JsonDataForAlignment](manifest)
   val rootFontOpt: Option[String] = jd.font
-  System.err.println(s"rootFontOpt: $rootFontOpt")
   val gCounter = 0
   val out: (Vector[WitnessData], Int) = jd.witnesses.zipWithIndex
     .foldLeft(Vector.empty[WitnessData], gCounter) { (acc, current) =>

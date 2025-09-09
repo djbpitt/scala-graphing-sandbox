@@ -70,13 +70,12 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
   * @return
   */
 @main def manifest(args: String*): Unit =
-  // ---- constants used later (unchanged) ----
+  // ---- constants used later ----
   val defaultColors = List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
   val tokensPerWitnessLimit = Int.MaxValue
   val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
 
-  // ---- parse args, resolve manifest, validate manifest ----
-
+  // Parse args, resolve manifest, validate manifest
   val parsedValidated: Either[String, (ManifestData, Map[String, Set[String]], Option[ujson.Value])] =
     for {
       // Parse args
@@ -92,6 +91,10 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
           validateXml(source).map(_ => None)
         case ManifestData(source, ManifestFormat.Json) =>
           validateJson(source).map(Some(_))
+      // gTaTuple <- GtaUnifiedBuilder.build(ManifestData, cfg)
+      // (gTa, gTaSigla, colors) = gTaTuple
+      // root <- createAlignmentRibbon(gTaSigla, gTa)
+      // Yield here; manage output outside for-comprehension
     } yield (manifestData, argMap, jsonOpt)
 
   parsedValidated match
@@ -99,7 +102,6 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
       System.err.println(e)
 
     case Right((manifestData, argMap, maybeParsedJson)) =>
-      // ---- single seam: temporary toggle for unified builder ----
       val cfg = GtaUnifiedBuilder.BuildConfig(tokensPerWitnessLimit, tokenPattern)
       GtaUnifiedBuilder.build(manifestData, cfg) match
         case Left(err) =>
@@ -346,9 +348,10 @@ def retrieveWitnessDataXml(
   else Right(witnesses)
 
 def retrieveWitnessDataJson(
-    json: ujson.Value,
+    jsonString: String,
     manifestSource: ManifestData
 ): Either[String, Seq[WitnessJsonData]] = boundary {
+  val json: ujson.Value = ujson.read(jsonString)
   val rootFontOpt = json.obj.value.get("font").map(_.str)
   val witnesses = json("witnesses").arr.toSeq
   var gCounter = 0

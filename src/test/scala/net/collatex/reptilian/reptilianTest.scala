@@ -317,14 +317,14 @@ class reptilianTest extends AnyFunSuite:
   }
 
   test("post-schema validation fails when some but not all witnesses have color") {
-    val manifest = ujson.read("""
+    val manifest = """
       {
         "witnesses": [
           { "id": "A", "content": "A text", "color": "#ff0000" },
           { "id": "B", "content": "B text" }
         ]
       }
-    """)
+    """
     val result = validatePostSchemaRules(manifest)
     assert(result.isLeft)
     result match
@@ -335,14 +335,14 @@ class reptilianTest extends AnyFunSuite:
   }
 
   test("post-schema validation fails when witness ids are not unique") {
-    val manifest = ujson.read("""
+    val manifest = """
       {
         "witnesses": [
           { "id": "dup", "content": "Text A" },
           { "id": "dup", "content": "Text B" }
         ]
       }
-    """)
+    """
     val result = validatePostSchemaRules(manifest)
     assert(result.isLeft)
     result match
@@ -353,27 +353,27 @@ class reptilianTest extends AnyFunSuite:
   }
 
   test("post-schema validation succeeds when color is consistent and ids are unique") {
-    val manifest = ujson.read("""
+    val manifest = """
       {
         "witnesses": [
           { "id": "A", "content": "First", "color": "#ff0000" },
           { "id": "B", "content": "Second", "color": "#00ff00" }
         ]
       }
-    """)
+    """
     val result = validatePostSchemaRules(manifest)
     assert(result.isRight)
   }
 
   test("post-schema validation succeeds when no witness has color") {
-    val manifest = ujson.read("""
+    val manifest = """
       {
         "witnesses": [
           { "id": "W1", "content": "X" },
           { "id": "W2", "content": "Y" }
         ]
       }
-    """)
+    """
     val result = validatePostSchemaRules(manifest)
     assert(result.isRight)
   }

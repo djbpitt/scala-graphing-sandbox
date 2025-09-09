@@ -239,13 +239,14 @@ class manifestTest extends AnyFunSuite:
 
       // Load JSON as ujson.Value
       val jsonValue = ujson.read(Files.readString(manifestFile))
+      val jsonString = jsonValue.toString
 
       // Wrap manifest path in ManifestData
       val manifestData =
         ManifestData(ManifestSource.Local(os.Path(manifestFile.toAbsolutePath.toString)), ManifestFormat.Json)
 
       // Retrieve witnesses
-      val witnesses = retrieveWitnessDataJson(jsonValue, manifestData)
+      val witnesses = retrieveWitnessDataJson(jsonString, manifestData)
 
       witnesses match
         case Left(msg) => fail(s"Could not retrieve data from JSON manifest: $msg")
@@ -282,7 +283,7 @@ class manifestTest extends AnyFunSuite:
         ManifestData(ManifestSource.Local(os.Path(manifestFile.toAbsolutePath.toString)), ManifestFormat.Json)
 
       // Retrieve witnesses
-      val witnesses = retrieveWitnessDataJson(jsonValue, manifestData)
+      val witnesses = retrieveWitnessDataJson(jsonValue.toString, manifestData)
 
       witnesses match
         case Left(msg) => fail(s"Could not retrieve data from JSON manifest: $msg")

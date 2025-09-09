@@ -1,6 +1,8 @@
 package net.collatex.reptilian
 
 // --- Standard Scala library and Java ---
+import ujson.read
+
 import java.io.{InputStream, PrintWriter, StringReader, StringWriter}
 import javax.xml.transform.stream.StreamSource
 import scala.io.Source
@@ -97,7 +99,8 @@ object ManifestValidator {
   }
 
   /** Post-schema semantic checks (invariants that schema can’t easily express) */
-  def validatePostSchemaRules(json: ujson.Value): Either[List[String], Unit] = {
+  def validatePostSchemaRules(jsonString: String): Either[List[String], Unit] = {
+    val json = read(jsonString)
     val witnesses = json("witnesses").arr
 
     // Rule 1: All or none have "color"
