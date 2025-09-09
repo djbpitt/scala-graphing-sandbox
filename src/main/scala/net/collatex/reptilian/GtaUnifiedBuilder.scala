@@ -266,14 +266,15 @@ case class WitObj(
     content: Option[String] = None,
     tokens: Option[Seq[ujson.Value]] = None // ← Value, not Obj
 ) derives ReadWriter
-case class JsonDataForAlignment(rootFont: Option[String] = None, witnesses: Seq[WitObj]) derives ReadWriter
+case class JsonDataForAlignment(font: Option[String] = None, witnesses: Seq[WitObj]) derives ReadWriter
 
 def jsonToWitnessData(
     manifest: String,
     cfg: GtaUnifiedBuilder.BuildConfig
 ): Either[String, Vector[WitnessData]] = {
   val jd: JsonDataForAlignment = read[JsonDataForAlignment](manifest)
-  val rootFontOpt: Option[String] = jd.rootFont
+  val rootFontOpt: Option[String] = jd.font
+  System.err.println(s"rootFontOpt: $rootFontOpt")
   val gCounter = 0
   val out: (Vector[WitnessData], Int) = jd.witnesses.zipWithIndex
     .foldLeft(Vector.empty[WitnessData], gCounter) { (acc, current) =>
@@ -281,6 +282,7 @@ def jsonToWitnessData(
       val currentSiglum = Siglum(currentWitnessObj.id)
       val currentColor: String = // if not specified on witness, retrieve correct offset from default sequence
         currentWitnessObj.color.getOrElse(GtaUnifiedBuilder.defaultColors(currentWitOffset % defaultColors.length))
+      val currentFont: Option[String] = currentWitnessObj.font.orElse(rootFontOpt)
       val witnessTokens: Seq[TokenEnum.Token] = currentWitnessObj match {
         case WitObj(_, _, _, Some(content), None) =>
           val ts: Iterator[String] = // raw token strings (t values)
@@ -323,7 +325,7 @@ def jsonToWitnessData(
       val currentWitnessData = WitnessData(
         currentSiglum,
         currentColor,
-        Some("TmpFont"),
+        currentFont,
         witnessTokens
       )
       (acc._1 :+ currentWitnessData, gCounter) // gCounter is ignored in final result
