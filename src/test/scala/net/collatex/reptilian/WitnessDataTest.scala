@@ -1,7 +1,6 @@
 package net.collatex.reptilian
 
 import net.collatex.reptilian.GtaBuilder._
-import net.collatex.reptilian.ManifestFormat.{Json, Xml}
 import net.collatex.reptilian.TokenEnum.Token
 import org.scalatest.funsuite.AnyFunSuite
 import os.Path
@@ -32,7 +31,7 @@ class WitnessDataTest extends AnyFunSuite:
     Vector(
       WitnessData(
         Siglum("A"),
-        "peru",
+        None,
         fontA,
         Vector(
           Token("This ", "this", 0, 0),
@@ -43,7 +42,7 @@ class WitnessDataTest extends AnyFunSuite:
       ),
       WitnessData(
         Siglum("B"),
-        "orange",
+        None,
         fontB,
         Vector(
           Token("This ", "this", 1, 5),
@@ -54,7 +53,7 @@ class WitnessDataTest extends AnyFunSuite:
       ),
       WitnessData(
         Siglum("C"),
-        "yellow",
+        None,
         fontC,
         Vector(
           Token("This ", "this", 2, 10),
@@ -128,7 +127,7 @@ class WitnessDataTest extends AnyFunSuite:
     Vector(
       WitnessData(
         Siglum("A"),
-        "peru",
+        None,
         fontA,
         Vector(
           Token("Some ", "some", 0, 0),
@@ -138,7 +137,7 @@ class WitnessDataTest extends AnyFunSuite:
       ),
       WitnessData(
         Siglum("B"),
-        "orange",
+        None,
         fontB,
         Vector(
           Token("Some ", "some", 1, 4),
@@ -148,7 +147,7 @@ class WitnessDataTest extends AnyFunSuite:
       ),
       WitnessData(
         Siglum("C"),
-        "yellow",
+        None,
         fontC,
         Vector(
           Token("Some ", "some", 2, 8),
@@ -183,7 +182,7 @@ class WitnessDataTest extends AnyFunSuite:
     val json = retrieveManifestJson(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
     val expected = Right(expectedForJson(expectedFonts))
     val result = jsonToWitnessData(json, cfg)
-    assert(result === expected)
+    assert(result == expected)
   }
 
   // JSON manifest tests with and without root font
@@ -201,6 +200,48 @@ class WitnessDataTest extends AnyFunSuite:
     )
   }
 
+  test("jsontoWitnessData basics with colors") {
+    val manifestFilename = "jsonWithColors.json"
+    val manifestPath = os.pwd / "src" / "test" / "resources" / "manifests" / manifestFilename
+    val manifestSource = ManifestSource.Local(manifestPath)
+    val json = retrieveManifestJson(manifestSource).getOrElse(fail(s"Count not load $manifestFilename"))
+    val expected = Right(
+      Vector(
+        WitnessData(
+          Siglum("A"),
+          Some("red"),
+          None,
+          Vector(
+            Token("Some ", "some", 0, 0, Map()),
+            Token("content ", "content", 0, 1, Map()),
+            Token("A", "a", 0, 2, Map())
+          )
+        ),
+        WitnessData(
+          Siglum("B"),
+          Some("blue"),
+          Some("WitnessBFont"),
+          Vector(
+            Token("Some ", "some", 1, 4, Map()),
+            Token("content ", "content", 1, 5, Map()),
+            Token("B", "b", 1, 6, Map())
+          )
+        ),
+        WitnessData(
+          Siglum("C"),
+          Some("green"),
+          None,
+          Vector(
+            Token("Some ", "some", 2, 8, Map()),
+            Token("content ", "content", 2, 9, Map("x-extra" -> 123)),
+            Token("C", "c", 2, 10, Map())
+          )
+        )
+      )
+    )
+    val result = jsonToWitnessData(json, cfg)
+    assert(result == expected)
+  }
   /* Verify that normalizeToken() correctly removes trailing newline */
   test("Normalize token test") {
     val cfg = GtaBuilder.BuildConfig(Int.MaxValue, raw"(\w+|[^\w\s])\s*".r)

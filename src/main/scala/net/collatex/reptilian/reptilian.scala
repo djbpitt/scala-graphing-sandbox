@@ -75,17 +75,15 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
   val tokensPerWitnessLimit = Int.MaxValue
   val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
 
-  // Parse args, resolve manifest, validate manifest
+  // Parse args, resolve manifest
   val parsedValidated: Either[String, (ManifestData, Map[String, Set[String]])] =
     for {
-      // Parse args
+      // Parse args (two-step unpacking because Scala choked on one-step version)
       result <- parseArgs(args)
       (manifestPathString, argMap) = result
-
-      // Resolve to ManifestData
       manifestData <- resolveManifestString(manifestPathString)
 
-      // gTaTuple <- GtaUnifiedBuilder.build(manifestData, cfg)
+      // gTaTuple <- GtaBuilder.build(manifestData, cfg)
       // (gTa, gTaSigla, colors) = gTaTuple
       // root <- createAlignmentRibbon(gTaSigla, gTa)
       // Yield here; manage output outside for-comprehension
@@ -417,7 +415,7 @@ case class CollateXWitnessData(
   */
 case class WitnessData(
     siglum: Siglum,
-    color: String, // May be missing from manifest, but then positional default is added to case class
+    color: Option[String], // May be missing from manifest, but then positional default is added to case class
     font: Option[String] = None, // May be missing from manifest and case class (uses global default)
     tokens: Seq[TokenEnum.Token]
 )

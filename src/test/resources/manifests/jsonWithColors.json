@@ -1,0 +1,34 @@
+{
+  "witnesses": [
+    {
+      "id": "A",
+      "content": "Some content A",
+      "color": "red"
+    },
+    {
+      "id": "B",
+      "content": "Some content B",
+      "font": "WitnessBFont",
+      "color": "blue"
+    },
+    {
+      "id": "C",
+      "color": "green",
+      "tokens": [
+        {
+          "t": "Some ",
+          "n": "some"
+        },
+        {
+          "t": "content ",
+          "n": "content",
+          "x-extra": 123
+        },
+        {
+          "t": "C"
+        }
+      ]
+    }
+  ]
+}
+

@@ -175,6 +175,36 @@ object GtaBuilder:
 
     Right((out.gta, out.sigla, out.colors))
 
+  private def buildFromWitnessData(
+      wits: Seq[WitnessData],
+      cfg: BuildConfig,
+      defaultColors: List[String]
+  ): Either[String, (Vector[TokenEnum], List[Siglum], List[String])] =
+    final case class Acc(
+        gta: Vector[TokenEnum],
+        sigla: List[Siglum],
+        colors: List[String],
+        g: Int
+    )
+    val init = Acc(Vector.empty, Nil, Nil, g = 0)
+    val out: Acc = wits.zipWithIndex.foldLeft(init) { case (acc0, (witData, witIndex)) =>
+      // 1) Insert TokenSep BETWEEN witnesses (not before first)
+      val acc1 =
+        if witIndex == 0 then acc0
+        else {
+          val sepId = s"sep${acc0.g}"
+          val sep = TokenEnum.TokenSep(sepId, sepId, /* w = */ witIndex - 1, /* g = */ acc0.g)
+          acc0.copy(gta = acc0.gta :+ sep, g = acc0.g + 1)
+        }
+      // 2) Siglum + color (match legacy: witness.color or palette default)
+      val siglum: Siglum = witData.siglum
+      val color: String = witData.color.getOrElse(defaultColors(witIndex % defaultColors.length))
+      val acc2 = acc1.copy(sigla = acc1.sigla :+ siglum, colors = acc1.colors :+ color)
+      // 3) Emit tokens with w/g
+      val (emitted, nextG) = emitFromProvided(witData.tokens, witIndex, acc2.g)
+      acc2.copy(gta = acc2.gta ++ emitted, g = nextG)
+    }
+    Right(out.gta, out.sigla, out.colors)
 
   /** Convert incoming XML manifest to Seq[WitnessData]
     *
@@ -216,12 +246,11 @@ object GtaBuilder:
       val out = witTokenStrings.zipWithIndex
         .foldLeft((Vector.empty[WitnessData], gCounter)) { (acc, current) =>
           val (currentBs, currentWitOffset): (BufferedSource, Int) = current // current witness data as buffered string
-          val currentFont: Option[String] = ((manifest \ "_")(currentWitOffset) \ "@font").headOption.map(_.text).orElse(rootFontOpt)
+          val currentFont: Option[String] =
+            ((manifest \ "_")(currentWitOffset) \ "@font").headOption.map(_.text).orElse(rootFontOpt)
           val currentSiglum: Siglum = Siglum(allSigla(currentWitOffset).head.text) // current siglum
-          val currentColor: String = // if not specified on witness, retrieve correct offset from default sequence
-            ((manifest \ "_")(currentWitOffset) \ "@color").headOption
-              .map(_.text)
-              .getOrElse(defaultColors(currentWitOffset % defaultColors.length))
+          val currentColor: Option[String] =
+            ((manifest \ "_")(currentWitOffset) \ "@color").headOption.map(_.text)
           val ts: Iterator[String] = // raw token strings (t values)
             tokenizeContent(currentBs.mkString, cfg)
           val (currentTokens, nextG) =
@@ -254,11 +283,11 @@ object GtaBuilder:
     * @param tokens
     *   Optional Seq[ujson.Value]
     *
-    * NB: Every witness must have either `content` or `tokens`, but not both; this is validated earlier, but we also throw
-    * an error here if this condition is not met
+    * NB: Every witness must have either `content` or `tokens`, but not both; this is validated earlier, but we also
+    * throw an error here if this condition is not met
     *
-    * Tokens are represented as a sequence of JSON values to accommodate the optional `other` property, the keys for which
-    * cannot be predicted, and therefore cannot be represented directly as case class property names
+    * Tokens are represented as a sequence of JSON values to accommodate the optional `other` property, the keys for
+    * which cannot be predicted, and therefore cannot be represented directly as case class property names
     */
   case class WitObj(
       id: String,
@@ -280,8 +309,7 @@ object GtaBuilder:
       .foldLeft(Vector.empty[WitnessData], gCounter) { (acc, current) =>
         val (currentWitnessObj, currentWitOffset) = current
         val currentSiglum = Siglum(currentWitnessObj.id)
-        val currentColor: String = // if not specified on witness, retrieve correct offset from default sequence
-          currentWitnessObj.color.getOrElse(defaultColors(currentWitOffset % defaultColors.length))
+        val currentColor: Option[String] = currentWitnessObj.color
         val currentFont: Option[String] = currentWitnessObj.font.orElse(rootFontOpt)
         val witnessTokens: Seq[TokenEnum.Token] = currentWitnessObj match {
           case WitObj(_, _, _, Some(content), None) =>
