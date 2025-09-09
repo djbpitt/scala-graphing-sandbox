@@ -1,6 +1,6 @@
 package net.collatex.reptilian
 
-import net.collatex.reptilian.GtaUnifiedBuilder.{normalizeToken, tokenizeContent}
+import net.collatex.reptilian.GtaBuilder._
 import net.collatex.reptilian.ManifestFormat.{Json, Xml}
 import net.collatex.reptilian.TokenEnum.Token
 import org.scalatest.funsuite.AnyFunSuite
@@ -14,7 +14,7 @@ import scala.xml.Elem
 class WitnessDataTest extends AnyFunSuite:
 
   // Shared by XML manifest and JSON manifest tests
-  private val cfg = GtaUnifiedBuilder.BuildConfig(Int.MaxValue, raw"(\w+|[^\w\s])\s*".r)
+  private val cfg = GtaBuilder.BuildConfig(Int.MaxValue, raw"(\w+|[^\w\s])\s*".r)
 
   // Helpers for XML manifest tests with and without root font
   /** expectedForXml()
@@ -203,7 +203,7 @@ class WitnessDataTest extends AnyFunSuite:
 
   /* Verify that normalizeToken() correctly removes trailing newline */
   test("Normalize token test") {
-    val cfg = GtaUnifiedBuilder.BuildConfig(Int.MaxValue, raw"(\w+|[^\w\s])\s*".r)
+    val cfg = GtaBuilder.BuildConfig(Int.MaxValue, raw"(\w+|[^\w\s])\s*".r)
     val ts: Vector[String] =
       Using(Source.fromURL(getClass.getResource("/manifests/localA.txt"))) { source =>
         tokenizeContent(source.mkString, cfg)

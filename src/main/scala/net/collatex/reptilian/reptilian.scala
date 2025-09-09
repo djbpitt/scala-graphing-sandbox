@@ -96,8 +96,8 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
       System.err.println(e)
 
     case Right((manifestData, argMap)) =>
-      val cfg = GtaUnifiedBuilder.BuildConfig(tokensPerWitnessLimit, tokenPattern)
-      GtaUnifiedBuilder.build(manifestData, cfg) match
+      val cfg = GtaBuilder.BuildConfig(tokensPerWitnessLimit, tokenPattern)
+      GtaBuilder.build(manifestData, cfg) match
         case Left(err) =>
           System.err.println(s"Unified builder failed: $err")
         case Right((gTa, siglaList, colorList)) =>
