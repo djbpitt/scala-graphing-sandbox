@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>XML and JSON Manifest (CollateX Reptilian documentation)</title>
+    </head>
+    <body>
+        <h1>CollateX Reptilian Documentation: XML and JSON Manifest</h1>
+        <section>
+            <h2>Synopsis</h2>
+            <p>Information about the witness data to be collated must be supplied to CollateX
+                Reptilian with the help of a <em>manifest</em>, which is a JSON or XML document that
+                either supplies the witness data directly (JSON manifest) or contains pointers to
+                where it can be found on the local file system or at a remote location (XML
+                manifest). This page documents the structure of both types of manifest.</p>
+            <p><em>Breaking change:</em> Earlier releases of CollateX (Java and Python) allowed file
+                paths for individual witnesses to be specified on the command line. This method of
+                specifying file paths is not supported in CollateX Reptilian; users who wish to use
+                file paths should instead incorporate them into an XML manifest.</p>
+        </section>
+        <section>
+            <h2>XML manifest</h2>
+            <p>The following is a sample minimal XML manifest:</p>
+            <pre><![CDATA[<witnesses xmlns="http://interedition.eu/collatex/ns/1.0">
+  <witness siglum="A" url="localA.txt"/>
+  <witness siglum="B" url="localB.txt"/>
+  <witness siglum="C" url="localC.txt"/>
+</witnesses>]]></pre>
+            <p>The required components of an XML manifest are:</p>
+            <ul>
+                <li><p>All elements in an XML manifest must be in the
+                        <code>http://interedition.eu/collatex/ns/1.0</code> namespace. This
+                        requirement can be met, as above, by specifying a default namespace on the
+                        root element.</p></li>
+                <li>
+                    <p>The root element of an XML manifest must be
+                        <code><![CDATA[<witnesses>]]></code> and it must contain two or more child
+                        elements of type <code><![CDATA[<witness>]]></code>.</p></li>
+                <li><p>A <code><![CDATA[<witness>]]></code> element must contain a
+                        <code>@siglum</code> attribute and a <code>@url</code> attribute. The value
+                        of the <code>@siglum</code> attribute will be used to represent the witness
+                        siglum (identifier) in human-readable output. The value of the
+                        <code>@url</code> attribute must be 1) a relative path to a file on the
+                        local file system (relative to the location of the manifest file), 2) an
+                        absolute path to a file on the local file system, or 3) a remote URL that
+                        begins with <code>http://</code> or <code>https://</code>. In the example
+                        above, the <code>@url</code> values are all relative local paths.</p></li>
+            </ul>
+            <p>The order of witness information in the output formats will conform to the order of
+                the <code><![CDATA[<witness>]]></code> elements in the manifest, and what this means
+                is different for different formats. For example, it is absolute for table formats,
+                it applies within and between agreement groups for the alignment ribbon and TEI XML
+                parallel segmentation, and it applies to sigla within individual edge labels in
+                graph output.
+                <!-- A future release will provide the option of choosing between manifest order
+                and an order computed on the basis of witness similarity. --></p>
+            <p>An XML manifest supports two optional attributes, as follows:</p>
+            <ul>
+                <li><p>A <code>@font</code> attribute may be specified on
+                        <code><![CDATA[<witnesses>]]></code> and <code><![CDATA[<witness>]]></code>
+                        elements. A font specified on a <code><![CDATA[<witness>]]></code> element
+                        will be used to render the text of that witness in output formats that
+                        support font specifications (all HTML and SVG formats). A font specified on
+                        a <code><![CDATA[<witnesses>]]></code> element will be used for <em>all</em>
+                        witnesses, except that a <code>@font</code> value on a
+                        <code><![CDATA[<witness>]]></code> element overrides a global font
+                        value.</p>
+                    <p>Font specifications are supported primarily because some writing systems are
+                        inadequately represented by system fonts, and users may need to specify a
+                        font that provides appropriate coverage. If no font is specified for a
+                        witness on either the <code><![CDATA[<witness>]]></code> or
+                        <code><![CDATA[<witnesses>]]></code> element, output will use whatever
+                        default font the browser selects. Font information can be specified on a per
+                        witness basis because collations of different writing systems (e.g., Old
+                        Church Slavonic and Greek) may require different fonts in order to support
+                        the character sets adequately. CollateX Reptilian does not attempt to
+                        validate whether a specified font is available on your system; if it is not,
+                        your browser will fall back on its own default font, with unpredictable
+                        results.</p></li>
+                <li><p>A <code>@color</code> attribute may be specified on either all
+                        <code><![CDATA[<witness>]]></code> elements or no
+                        <code><![CDATA[<witness>]]></code> elements. It is an error to supply a
+                        color specification for some but not all witnesses. Color is used to render
+                        witness-specific background colors behind the text of individual witnesses
+                        in the alignment-ribbon output format; it is ignored elsewhere, including in
+                        other HTML or SVG output. User-specified color values will be used directly
+                        to style the output in CSS, which means that they can be expressed using any
+                        color notation that CSS understands. CollateX Reptilian does not attempt to
+                        validate whether a user-specified color value is meaningful; if it is not,
+                        the fallback behavior is browser specific and therefore unpredictable. If
+                        the user does not specify color values, CollateX Reptilian will use a
+                        built-in default palette.</p>
+                    <p>User-specified colors are supported because it is not realistic to anticipate
+                        default colors that will meet the requirements of all projects by all users.
+                        For example, the choice of colors may depend on the number of witnesses, and
+                        also on whether the user wishes to use colors in the same range (e.g.,
+                        different shades of the same basic color) to express relationships. Color
+                        must be specified for all witnesses or for no witnesses because it is not
+                        realistic to expect a combination of some user-specified colors and some
+                        default ones to harmonize adequately. Unlike with the <code>@font</code>
+                        attribute, there is no global <code>@color</code> attribute because the
+                        point of color coding in the alignment-ribbon output format is to assist the
+                        reader in distinguishing the witnesses from one another.</p></li>
+            </ul>
+            <p>Below is a sample XML manifest that specifies font and color information:</p>
+            <pre><![CDATA[<witnesses xmlns="http://interedition.eu/collatex/ns/1.0" font="GlobalFont">
+  <witness siglum="A" url="localA.txt" color="red"/>
+  <witness siglum="B" url="localB.txt" font="WitnessBFont" color="blue"/>
+  <witness siglum="C" url="localC.txt" color="green"/>
+</witnesses>]]></pre>
+            <p>In the example above, witnesses A and C will be rendered using the global font and
+                witness B will be rendered using the witness-B font.</p>
+        </section>
+    </body>
+</html>
