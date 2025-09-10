@@ -39,12 +39,13 @@
                 <li><p>A <code><![CDATA[<witness>]]></code> element must contain a
                         <code>@siglum</code> attribute and a <code>@url</code> attribute. The value
                         of the <code>@siglum</code> attribute will be used to represent the witness
-                        siglum (identifier) in human-readable output. The value of the
-                        <code>@url</code> attribute must be 1) a relative path to a file on the
-                        local file system (relative to the location of the manifest file), 2) an
-                        absolute path to a file on the local file system, or 3) a remote URL that
-                        begins with <code>http://</code> or <code>https://</code>. In the example
-                        above, the <code>@url</code> values are all relative local paths.</p></li>
+                        siglum (identifier) in human-readable output, and it an error if sigla are
+                        not unique. The value of the <code>@url</code> attribute must be 1) a
+                        relative path to a file on the local file system (relative to the location
+                        of the manifest file), 2) an absolute path to a file on the local file
+                        system, or 3) a remote URL that begins with <code>http://</code> or
+                        <code>https://</code>. In the example above, the <code>@url</code> values
+                        are all relative local paths.</p></li>
             </ul>
             <p>The order of witness information in the output formats will conform to the order of
                 the <code><![CDATA[<witness>]]></code> elements in the manifest, and what this means
@@ -110,6 +111,92 @@
 </witnesses>]]></pre>
             <p>In the example above, witnesses A and C will be rendered using the global font and
                 witness B will be rendered using the witness-B font.</p>
+        </section>
+        <section>
+            <h2>JSON manifest</h2>
+            <p>The CollateX Reptilian JSON manifest is an extension of the JSON input format
+                supported in earlier releases of CollateX (Java and Python). All new features are
+                optional, which means that CollateX Reptilian should work properly with JSON input
+                developed originally for those earlier releases.</p>
+            <p>The following minimal JSON manifest is copied from earlier CollateX
+                documentation:</p>
+            <pre>{
+  "witnesses" : [
+    {
+      "id" : "A",
+      "content" : "A black cat in a black basket"
+    },
+    {
+      "id" : "B",
+      "content" : "A black cat in a black basket"
+    },
+    {
+      "id" : "C",
+      "content" : "A striped cat in a black basket"
+    },
+    {
+      "id" : "D",
+      "content" : "A striped cat in a white basket"
+    }
+  ]
+}</pre>
+            <p>Like the XML manifest described above, the JSON manifest has required and optional
+                features. The required components are:</p>
+            <ul>
+                <li><p>The JSON manifest is a JSON object with, at a minimum, a
+                        <code>witnesses</code> property, the value of which is an array of
+                        witness-specific objects.</p></li>
+                <li><p>A witness object in that array must have an <code>id</code> property, which
+                        will be used a siglum in output formats. It is an error if sigla are not
+                        unique. A witness object must also have either a <code>content</code>
+                        property or a <code>tokens</code> property, but not both. It is an error to
+                        omit or include both of those properties; exactly one of the two must be
+                        present for each witness, and not all witnesses need to use the same
+                        one.</p></li>
+                <li><p>The <code>content</code> property is a plain-text string, which CollateX
+                        Reptilian will tokenize on whitespace and normalize by lowercasing and
+                        performing Unicode normalization. Users who require alternative tokenization
+                        or normalization should perform that in preprocessing and create a
+                        <code>tokens</code> representation of the witness, described immediately
+                        below.</p></li>
+                <li><p>The representation of witness information with a <code>tokens</code> property
+                        instead of a <code>content</code> property is called <em>pretokenized
+                            JSON</em>. The value of the <code>tokens</code> property is an array of
+                        objects, each of which represents a single token, for example:</p>
+                    <pre>"tokens": [
+  {
+    "t": "Some ",
+    "n": "some"
+  },
+  {
+    "t": "content ",
+    "n": "content",
+    "x-extra": 123
+  },
+  {
+    "t": "C"
+  }
+]</pre>
+                    <p>A token object must have a <code>t</code> property, which represents the word
+                        token as it appears in the witness. If a token object has an <code>n</code>
+                        property, that is used as the normalized value during alignment; this is the
+                        mechanism for users to implement there own tokenization and normalization
+                        instead of using the built-in defaults. If no <code>n</code> property is
+                        specified, CollateX will perform default normalization, as described above.
+                        All other properties (<code>x-extra</code> in the example above) are passed
+                        through unchanged to JSON output (and discarded for other output formats),
+                        with two exceptions: the property names <code>w</code> and <code>g</code>
+                        are reserved for internal use by CollateX Reptilian and any user-supplied
+                        values will be overwritten.</p></li>
+            </ul>
+            <p>A JSON manifest supports the following optional properties, with the same semantics
+                as in an XML manifest:</p>
+            <ul>
+                <li><p>A <code>font</code> property may be specified for either the root object or
+                        an indivisual witness object.</p></li>
+            </ul>
+            <p>Below is a sample pretokenized JSON manifest:</p>
+            <pre></pre>
         </section>
     </body>
 </html>
