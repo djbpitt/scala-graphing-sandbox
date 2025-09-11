@@ -39,8 +39,8 @@
                 <li><p>A <code><![CDATA[<witness>]]></code> element must contain a
                         <code>@siglum</code> attribute and a <code>@url</code> attribute. The value
                         of the <code>@siglum</code> attribute will be used to represent the witness
-                        siglum (identifier) in human-readable output, and it an error if sigla are
-                        not unique. The value of the <code>@url</code> attribute must be 1) a
+                        siglum (identifier) in human-readable output, and it is an error if sigla
+                        are not unique. The value of the <code>@url</code> attribute must be 1) a
                         relative path to a file on the local file system (relative to the location
                         of the manifest file), 2) an absolute path to a file on the local file
                         system, or 3) a remote URL that begins with <code>http://</code> or
@@ -59,38 +59,41 @@
             <ul>
                 <li><p>A <code>@font</code> attribute may be specified on
                         <code><![CDATA[<witnesses>]]></code> and <code><![CDATA[<witness>]]></code>
-                        elements. A font specified on a <code><![CDATA[<witness>]]></code> element
-                        will be used to render the text of that witness in output formats that
-                        support font specifications (all HTML and SVG formats). A font specified on
-                        a <code><![CDATA[<witnesses>]]></code> element will be used for <em>all</em>
+                        elements. User-specified font values will be used directly to style the
+                        output in CSS, which means that they must be names that would be meaningful
+                        if used as values for the CSS <code>font-family</code> property. A font
+                        specified on a <code><![CDATA[<witness>]]></code> element will be used to
+                        render the text of that witness in output formats that support font
+                        specification (all HTML and SVG formats). A global font specified on a
+                        <code><![CDATA[<witnesses>]]></code> element will be used for <em>all</em>
                         witnesses, except that a <code>@font</code> value on a
                         <code><![CDATA[<witness>]]></code> element overrides a global font
                         value.</p>
-                    <p>Font specifications are supported primarily because some writing systems are
-                        inadequately represented by system fonts, and users may need to specify a
-                        font that provides appropriate coverage. If no font is specified for a
-                        witness on either the <code><![CDATA[<witness>]]></code> or
-                        <code><![CDATA[<witnesses>]]></code> element, output will use whatever
-                        default font the browser selects. Font information can be specified on a per
-                        witness basis because collations of different writing systems (e.g., Old
-                        Church Slavonic and Greek) may require different fonts in order to support
-                        the character sets adequately. CollateX Reptilian does not attempt to
-                        validate whether a specified font is available on your system; if it is not,
-                        your browser will fall back on its own default font, with unpredictable
-                        results.</p></li>
+                    <p>Font specifications are supported primarily because the characters required
+                        by some writing systems are inadequately represented by system fonts, and
+                        users may need to specify a font that provides appropriate coverage. If no
+                        font is specified for a witness on either the
+                        <code><![CDATA[<witness>]]></code> or <code><![CDATA[<witnesses>]]></code>
+                        element, output will use whatever default font the browser selects. Font
+                        information can be specified on a per witness basis because collations of
+                        different writing systems (e.g., Old Church Slavonic and Greek) may require
+                        different fonts in order to support the character inventories adequately.
+                        CollateX Reptilian does not attempt to validate whether a specified font is
+                        available on your system; if it is not, the browser will fall back on its
+                        own default font, with unpredictable results.</p></li>
                 <li><p>A <code>@color</code> attribute may be specified on either all
                         <code><![CDATA[<witness>]]></code> elements or no
-                        <code><![CDATA[<witness>]]></code> elements. It is an error to supply a
-                        color specification for some but not all witnesses. Color is used to render
-                        witness-specific background colors behind the text of individual witnesses
-                        in the alignment-ribbon output format; it is ignored elsewhere, including in
-                        other HTML or SVG output. User-specified color values will be used directly
-                        to style the output in CSS, which means that they can be expressed using any
-                        color notation that CSS understands. CollateX Reptilian does not attempt to
-                        validate whether a user-specified color value is meaningful; if it is not,
-                        the fallback behavior is browser specific and therefore unpredictable. If
-                        the user does not specify color values, CollateX Reptilian will use a
-                        built-in default palette.</p>
+                        <code><![CDATA[<witness>]]></code> elements. User-specified color values
+                        will be used directly to style the output in CSS, which means that they can
+                        be expressed using any color notation that CSS understands. It is an error
+                        to supply a color specification for some but not all witnesses. Color is
+                        used to render witness-specific background colors behind the text of
+                        individual witnesses in the alignment-ribbon output format; it is ignored
+                        elsewhere, including in other HTML or SVG output. CollateX Reptilian does
+                        not attempt to validate whether a user-specified color value is meaningful;
+                        if it is not, the fallback behavior is browser specific and therefore
+                        unpredictable. If the user does not specify color values, CollateX Reptilian
+                        will use a built-in default palette.</p>
                     <p>User-specified colors are supported because it is not realistic to anticipate
                         default colors that will meet the requirements of all projects by all users.
                         For example, the choice of colors may depend on the number of witnesses, and
@@ -110,7 +113,9 @@
   <witness siglum="C" url="localC.txt" color="green"/>
 </witnesses>]]></pre>
             <p>In the example above, witnesses A and C will be rendered using the global font and
-                witness B will be rendered using the witness-B font.</p>
+                witness B will be rendered using the witness-B font. The text of each witness will
+                have a different background color in the alignment ribbon output: red for witness A,
+                blue for witness B, and green for witness C.</p>
         </section>
         <section>
             <h2>JSON manifest</h2>
@@ -145,16 +150,17 @@
             <ul>
                 <li><p>The JSON manifest is a JSON object with, at a minimum, a
                         <code>witnesses</code> property, the value of which is an array of
-                        witness-specific objects.</p></li>
+                        witness-specific objects. The manifest may also have optional properties,
+                        which are described below.</p></li>
                 <li><p>A witness object in that array must have an <code>id</code> property, which
-                        will be used a siglum in output formats. It is an error if sigla are not
-                        unique. A witness object must also have either a <code>content</code>
-                        property or a <code>tokens</code> property, but not both. It is an error to
-                        omit or include both of those properties; exactly one of the two must be
-                        present for each witness, and not all witnesses need to use the same
-                        one.</p></li>
+                        will be used as a siglum value in output formats. It is an error if sigla
+                        are not unique. A witness object must also have either a
+                        <code>content</code> property or a <code>tokens</code> property, but not
+                        both. It is an error to omit or include both of those properties; exactly
+                        one of the two must be present for each witness, and not all witnesses need
+                        to use the same one.</p></li>
                 <li><p>The <code>content</code> property is a plain-text string, which CollateX
-                        Reptilian will tokenize on whitespace and normalize by lowercasing and
+                        Reptilian will tokenize on whitespace and normalize by lower-casing and
                         performing Unicode normalization. Users who require alternative tokenization
                         or normalization should perform that in preprocessing and create a
                         <code>tokens</code> representation of the witness, described immediately
@@ -178,25 +184,85 @@
   }
 ]</pre>
                     <p>A token object must have a <code>t</code> property, which represents the word
-                        token as it appears in the witness. If a token object has an <code>n</code>
-                        property, that is used as the normalized value during alignment; this is the
-                        mechanism for users to implement there own tokenization and normalization
-                        instead of using the built-in defaults. If no <code>n</code> property is
-                        specified, CollateX will perform default normalization, as described above.
-                        All other properties (<code>x-extra</code> in the example above) are passed
+                        token as it appears in the witness. The CollateX Reptilian default
+                        tokenization (used for the value of a <code>content</code> property and for
+                        witnesses specified in an XML manifest) keeps trailing space with a token,
+                        and the example above copie that behvaior, but users can apply alternative
+                        tokenization strategies. If a token object has an <code>n</code> property,
+                        that is used as the normalized value during alignment; specifying an
+                        <code>n</code> property is the mechanism for users to implement their own
+                        tokenization and normalization instead of using the built-in defaults. If no
+                        <code>n</code> property is specified, CollateX will perform default
+                        normalization, as described above. Any other property is at the discretion
+                        of the user (e.g., <code>x-extra</code> in the example above) and is passed
                         through unchanged to JSON output (and discarded for other output formats),
                         with two exceptions: the property names <code>w</code> and <code>g</code>
                         are reserved for internal use by CollateX Reptilian and any user-supplied
                         values will be overwritten.</p></li>
             </ul>
-            <p>A JSON manifest supports the following optional properties, with the same semantics
-                as in an XML manifest:</p>
+            <p>A JSON manifest supports the following optional properties, with the same behavior
+                and semantics as in an XML manifest:</p>
             <ul>
                 <li><p>A <code>font</code> property may be specified for either the root object or
                         an indivisual witness object.</p></li>
+                <li><p>A <code>color</code> property may be specified for either all witness objects
+                        or no witness objects.</p></li>
             </ul>
             <p>Below is a sample pretokenized JSON manifest:</p>
-            <pre></pre>
+            <pre>{
+  "witnesses": [
+    {
+      "id": "A",
+      "content": "Some content A",
+      "color": "red"
+    },
+    {
+      "id": "B",
+      "content": "Some content B",
+      "font": "WitnessBFont",
+      "color": "blue"
+    },
+    {
+      "id": "C",
+      "color": "green",
+      "tokens": [
+        {
+          "t": "Some ",
+          "n": "some"
+        },
+        {
+          "t": "content ",
+          "n": "content",
+          "x-extra": 123
+        },
+        {
+          "t": "C"
+        }
+      ]
+    }
+  ]
+}</pre>
+            <p>This example includes three witnesses, with sigla <q>A</q>, <q>B</q>, and <q>C</q>
+                and colors red, blue, and green, respectively. No root ront is specified (that is,
+                the manifest object does not have a <code>font</code> property, so witnesses A and C
+                will be rendered using whatever default font the browser selects. Witness B
+                specifies a font that will be used, if available on the system, for that witness.
+                Witnesses A and B have a <code>content</code> property, so the strings will be
+                tokenized and normalized using the CollateX Reptilian defaults. Witness C has a
+                <code>tokens</code> property, the value of which is an array of three token objects.
+                The normalization (<code>n</code> properties) will be used as the normalized form of
+                the first two tokens; the third token does not include an <code>n</code> property,
+                so the <code>t</code> value will be normalized according to the CollateX Reptilian
+                default normalization. The <code>x-extra</code> property on the second token will be
+                passed through to JSON output and discarded for other output formats.</p>
+        </section>
+        <hr />
+        <section>
+            <h2>Appendix: Schema validation</h2>
+            <section>
+                <h3>XML validation</h3>
+                <p></p>
+            </section>
         </section>
     </body>
 </html>
