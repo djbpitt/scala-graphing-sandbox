@@ -12,7 +12,10 @@
                 Reptilian with the help of a <em>manifest</em>, which is a JSON or XML document that
                 either supplies the witness data directly (JSON manifest) or contains pointers to
                 where it can be found on the local file system or at a remote location (XML
-                manifest). This page documents the structure of both types of manifest.</p>
+                manifest). The manifest is specified on the command line as either a local file
+                system path or a remote URL that begins with <code>http://</code> or
+                <code>https://</code>. This page documents the structure of both types of
+                manifest.</p>
             <p><em>Breaking change:</em> Earlier releases of CollateX (Java and Python) allowed file
                 paths for individual witnesses to be specified on the command line. This method of
                 specifying file paths is not supported in CollateX Reptilian; users who wish to use
