@@ -2,10 +2,10 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
-        <title>XML and JSON Manifest (CollateX Reptilian documentation)</title>
+        <title>XML and JSON Manifests (CollateX Reptilian documentation)</title>
     </head>
     <body>
-        <h1>CollateX Reptilian Documentation: XML and JSON Manifest</h1>
+        <h1>CollateX Reptilian Documentation: XML and JSON Manifests</h1>
         <section>
             <h2>Synopsis</h2>
             <p>Information about the witness data to be collated must be supplied to CollateX
@@ -30,8 +30,8 @@
             <ul>
                 <li><p>All elements in an XML manifest must be in the
                         <code>http://interedition.eu/collatex/ns/1.0</code> namespace. This
-                        requirement can be met, as above, by specifying a default namespace on the
-                        root element.</p></li>
+                        requirement can be met, as in the example above, by specifying a default
+                        namespace on the root element.</p></li>
                 <li>
                     <p>The root element of an XML manifest must be
                         <code><![CDATA[<witnesses>]]></code> and it must contain two or more child
@@ -70,7 +70,7 @@
                         <code><![CDATA[<witness>]]></code> element overrides a global font
                         value.</p>
                     <p>Font specifications are supported primarily because the characters required
-                        by some writing systems are inadequately represented by system fonts, and
+                        by some writing systems may be represented inadequately by system fonts, and
                         users may need to specify a font that provides appropriate coverage. If no
                         font is specified for a witness on either the
                         <code><![CDATA[<witness>]]></code> or <code><![CDATA[<witnesses>]]></code>
@@ -149,9 +149,14 @@
                 features. The required components are:</p>
             <ul>
                 <li><p>The JSON manifest is a JSON object with, at a minimum, a
-                        <code>witnesses</code> property, the value of which is an array of
-                        witness-specific objects. The manifest may also have optional properties,
-                        which are described below.</p></li>
+                        <code>witnesses</code> property, the value of which is an array of witness
+                        objects. The order of the witness objects in a JSON manifest controls the
+                        order of witness information in the output formats in the same way as it
+                        does in an XML manifest. A JSON manifest may also have an optional
+                        <code>font</code> property, which is described below. The
+                        <code>algorithm</code> and <code>tokenComparator</code> properties supported
+                        in earlier version of CollateX Java and Python are ignored in CollateX
+                        Reptilian.</p></li>
                 <li><p>A witness object in that array must have an <code>id</code> property, which
                         will be used as a siglum value in output formats. It is an error if sigla
                         are not unique. A witness object must also have either a
@@ -187,24 +192,24 @@
                         token as it appears in the witness. The CollateX Reptilian default
                         tokenization (used for the value of a <code>content</code> property and for
                         witnesses specified in an XML manifest) keeps trailing space with a token,
-                        and the example above copie that behvaior, but users can apply alternative
+                        and the example above copies that behvaior, but users can apply alternative
                         tokenization strategies. If a token object has an <code>n</code> property,
-                        that is used as the normalized value during alignment; specifying an
-                        <code>n</code> property is the mechanism for users to implement their own
-                        tokenization and normalization instead of using the built-in defaults. If no
-                        <code>n</code> property is specified, CollateX will perform default
-                        normalization, as described above. Any other property is at the discretion
-                        of the user (e.g., <code>x-extra</code> in the example above) and is passed
-                        through unchanged to JSON output (and discarded for other output formats),
-                        with two exceptions: the property names <code>w</code> and <code>g</code>
-                        are reserved for internal use by CollateX Reptilian and any user-supplied
-                        values will be overwritten.</p></li>
+                        that is used as the normalized value during alignment; specifying
+                        <code>t</code> and <code>n</code> properties is the mechanism for users to
+                        implement their own tokenization and normalization instead of using the
+                        built-in defaults. If no <code>n</code> property is specified, CollateX will
+                        perform default normalization, as described above. Any other property is at
+                        the discretion of the user (e.g., <code>x-extra</code> in the example above)
+                        and is passed through unchanged to JSON output (and discarded for other
+                        output formats), with two exceptions: the property names <code>w</code> and
+                        <code>g</code> are reserved for internal use by CollateX Reptilian and any
+                        user-supplied values will be overwritten.</p></li>
             </ul>
             <p>A JSON manifest supports the following optional properties, with the same behavior
                 and semantics as in an XML manifest:</p>
             <ul>
                 <li><p>A <code>font</code> property may be specified for either the root object or
-                        an indivisual witness object.</p></li>
+                        an individual witness object.</p></li>
                 <li><p>A <code>color</code> property may be specified for either all witness objects
                         or no witness objects.</p></li>
             </ul>
@@ -243,8 +248,8 @@
   ]
 }</pre>
             <p>This example includes three witnesses, with sigla <q>A</q>, <q>B</q>, and <q>C</q>
-                and colors red, blue, and green, respectively. No root ront is specified (that is,
-                the manifest object does not have a <code>font</code> property, so witnesses A and C
+                and colors red, blue, and green, respectively. No root font is specified (that is,
+                the root object does not have a <code>font</code> property), so witnesses A and C
                 will be rendered using whatever default font the browser selects. Witness B
                 specifies a font that will be used, if available on the system, for that witness.
                 Witnesses A and B have a <code>content</code> property, so the strings will be
@@ -260,8 +265,10 @@
         <section>
             <h2>Appendix: Schema validation</h2>
             <section>
-                <h3>XML validation</h3>
-                <p></p>
+                <p>XML manifests are validated against Relax NG and Schematron schemas. JSON
+                    manifests are validated against a JSON Schema schema, with post-schema
+                    validation of features that cannot be expressed within JSON Schema.</p>
+
             </section>
         </section>
     </body>
