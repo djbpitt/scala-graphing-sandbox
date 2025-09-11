@@ -71,7 +71,6 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
   */
 @main def manifest(args: String*): Unit =
   // ---- constants used later ----
-  val defaultColors = List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
   val tokensPerWitnessLimit = Int.MaxValue
   val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
 

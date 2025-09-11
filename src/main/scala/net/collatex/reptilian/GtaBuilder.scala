@@ -14,10 +14,21 @@ object GtaBuilder:
 
   // --- helpers used by the JSON builder ---
 
-  /** Default color palette (same order/logic as legacy). */
-  val defaultColors: List[String] =
-    List("peru", "orange", "yellow", "limegreen", "dodgerblue", "violet")
-
+  /** Default color palette, generated at https://colordesigner.io/color-palette-generator */
+  val defaultColors: List[String] = List(
+    "#ff7d94",
+    "#52fece",
+    "#e074c0",
+    "#abf8a3",
+    "#93a034",
+    "#01a9fd",
+    "#d1883b",
+    "#54a371",
+    "#ff9982",
+    "#b7f3ca",
+    "#9b8bc2",
+    "#fbbac9"
+  )
   // Shared tokenizer for any content string (JSON or XML)
   def tokenizeContent(text: String, cfg: BuildConfig): Iterator[String] =
     cfg.tokenPattern.findAllMatchIn(text).map(_.matched).take(cfg.tokensPerWitnessLimit)
