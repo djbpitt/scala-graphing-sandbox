@@ -11,7 +11,7 @@ namespace cx = "http://interedition.eu/collatex/ns/1.0"
 namespace xsd = "http://www.w3.org/2001/XMLSchema-datatypes"
 
 start = witnesses
-witnesses = element cx:witnesses { font?, witness+ }
+witnesses = element cx:witnesses { font?, witness, witness+ }
 witness = element cx:witness { siglum, color?, font?, url }
 siglum = attribute siglum { text }
 color =
