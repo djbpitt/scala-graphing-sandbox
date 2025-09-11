@@ -33,7 +33,8 @@ lazy val root = (project in file("."))
       "org.scala-lang.modules" %% "scala-collection-contrib" % "0.3.0",
       "net.sf.saxon" % "Saxon-HE" % "12.8",
       "com.lihaoyi" %% "requests" % "0.9.0",
-      "com.networknt" % "json-schema-validator" % "1.5.8"
+      "com.networknt" % "json-schema-validator" % "1.5.8",
+      "org.virtuslab" %% "scala-yaml" % "0.3.0"
     ),
     assembly / assemblyMergeStrategy := {
       case PathList("META-INF", "services", _ @_*) => MergeStrategy.concat

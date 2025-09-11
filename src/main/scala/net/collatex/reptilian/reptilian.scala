@@ -4,6 +4,7 @@ import ManifestValidator._
 
 import os.Path
 import ujson.Value
+import org.virtuslab.yaml.*
 
 import scala.io.Source
 import scala.util.matching.Regex
@@ -63,6 +64,10 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
       }
 }
 
+// For config.yaml
+case class Config(tokensPerWitnessLimit: Option[Int] = None, tokenPattern: String, defaultColors: List[String])
+    derives YamlCodec
+
 /** Obtain input via manifest and process
   *
   * @param args
@@ -71,8 +76,11 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
   */
 @main def manifest(args: String*): Unit =
   // ---- constants used later ----
-  val tokensPerWitnessLimit = Int.MaxValue
-  val tokenPattern: Regex = raw"(\w+|[^\w\s])\s*".r
+  val configYaml: String = scala.io.Source.fromResource("config.yaml").mkString
+  val config = configYaml.as[Config].getOrElse(throw new RuntimeException("Missing or invalid config.yaml"))
+  val tokensPerWitnessLimit = config.tokensPerWitnessLimit.getOrElse(Int.MaxValue)
+  val tokenPattern = Regex(config.tokenPattern)
+  val defaultColors = config.defaultColors
 
   // Parse args, resolve manifest
   val parsedValidated: Either[String, (ManifestData, Map[String, Set[String]])] =
