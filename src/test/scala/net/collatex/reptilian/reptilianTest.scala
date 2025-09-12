@@ -1,5 +1,7 @@
 package net.collatex.reptilian
+import net.collatex.reptilian.GtaBuilder.{normalizeToken, xmlToWitnessData}
 import org.scalatest.*
+
 import scala.util.Using
 import net.collatex.reptilian.ManifestSource.Local
 import net.collatex.reptilian.ManifestValidator.{
@@ -8,11 +10,28 @@ import net.collatex.reptilian.ManifestValidator.{
   validateRnc,
   validateSchematron
 }
+import net.collatex.reptilian.TokenEnum.Token
 import org.scalatest.funsuite.AnyFunSuite
 
 import scala.io.Source
 
 class reptilianTest extends AnyFunSuite:
+
+  private val cfg: GtaBuilder.BuildConfig = GtaBuilder.BuildConfig(Int.MaxValue, raw"(\w+|[^\w\s])\s*".r)
+  private val defaultColors: List[String] = List(
+    "#ff7d94",
+    "#52fece",
+    "#e074c0",
+    "#abf8a3",
+    "#93a034",
+    "#01a9fd",
+    "#d1883b",
+    "#54a371",
+    "#ff9982",
+    "#b7f3ca",
+    "#9b8bc2",
+    "#fbbac9"
+  )
 
   test("XML manifest: valid file parses, validates, and loads correctly") {
     val xml =
@@ -48,26 +67,30 @@ class reptilianTest extends AnyFunSuite:
                 fail(s"Schematron validation failed: $schErr")
 
               case Right(_) =>
-                retrieveWitnessDataXml(
+                xmlToWitnessData(
                   xmlElem,
-                  ManifestData(ManifestSource.Local(manifestPath), ManifestFormat.Xml)
+                  ManifestData(ManifestSource.Local(manifestPath), ManifestFormat.Xml),
+                  cfg
                 ) match
                   case Left(err) => fail(s"Failed to retrieve witness data: $err")
 
                   case Right(witnessData) =>
                     assert(witnessData.length == 2)
+                    System.err.println(s"witnessData: $witnessData")
 
                     val w1Data = witnessData.head
                     assert(w1Data.siglum.value == "A")
                     assert(w1Data.color.contains("red"))
-                    val expectedContent1 = os.read(w1)
-                    assert(w1Data.content == expectedContent1)
+                    val expectedContent1: String = os.read(w1)
+                    val expectedTokens1 = Vector(Token(expectedContent1, normalizeToken(expectedContent1), 0, 0))
+                    assert(w1Data.tokens == expectedTokens1)
 
                     val w2Data = witnessData(1)
                     assert(w2Data.siglum.value == "B")
                     assert(w2Data.color.contains("blue"))
                     val expectedContent2 = os.read(w2)
-                    assert(w2Data.content == expectedContent2)
+                    val expectedTokens2 = Vector(Token(expectedContent2, normalizeToken(expectedContent2), 1, 2))
+                    assert(w2Data.tokens == expectedTokens2)
   }
 
   test("XML manifest: fails to parse malformed XML") {
