@@ -80,21 +80,21 @@ object ManifestValidator {
 
   /** JSON Schema validation (networknt) for a manifest JSON string. */
   def validateJsonManifest(jsonInput: String, schemaInput: InputStream): Either[String, Boolean] = {
-    val safeSchemaInput = Option(schemaInput).getOrElse {
-      return Left("Schema resource not found")
-    }
+    Option(schemaInput) match {
+      case None => Left("Schema resource not found")
+      case Some(safeSchemaInput) =>
+        try {
+          val mapper = new ObjectMapper()
+          val jsonNode: JsonNode = mapper.readTree(jsonInput)
+          val schemaFactory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7)
+          val schema = schemaFactory.getSchema(safeSchemaInput)
 
-    val mapper = new ObjectMapper()
-    try {
-      val jsonNode: JsonNode = mapper.readTree(jsonInput)
-      val schemaFactory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7)
-      val schema = schemaFactory.getSchema(safeSchemaInput)
-
-      val validationResult: java.util.Set[ValidationMessage] = schema.validate(jsonNode)
-      if validationResult.isEmpty then Right(true)
-      else Left(validationResult.asScala.map(_.getMessage).mkString("\n"))
-    } catch {
-      case e: Exception => Left(s"Exception during validation: ${e.getMessage}")
+          val validationResult: java.util.Set[ValidationMessage] = schema.validate(jsonNode)
+          if (validationResult.isEmpty) Right(true)
+          else Left(validationResult.asScala.map(_.getMessage).mkString("\n"))
+        } catch {
+          case e: Exception => Left(s"Exception during validation: ${e.getMessage}")
+        }
     }
   }
 
