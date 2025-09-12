@@ -64,16 +64,6 @@ enum TokenEnum:
 def normalize(witnessData: String): String =
   witnessData.toLowerCase.trim
 
-def makeTokenizer(tokenPattern: Regex, tokenWitnessLimit: Int)(witnessData: Seq[CollateXWitnessData]): Vector[String] =
-  val result = witnessData
-    .map(_.content) // Use only witness string
-    .flatMap(e =>
-      "" :: tokenPattern.findAllIn(e).toList.take(tokenWitnessLimit)
-    ) // Prepend empty string to each group of witness tokens
-    .tail // Strip initial empty string; others will signal witness separation
-    .toVector
-  result
-
 // Create gTa using State monad
 case class ParseState(offset: Int, emptyCount: Int)
 type TokenState[A] = State[ParseState, A]
@@ -91,12 +81,4 @@ def processToken(str: String): TokenState[TokenEnum] = State { state =>
       ) // WitId isn't used; could be anything
     )
   else (state.copy(offset = offset + 1), TokenEnum.Token(str, normalize(str), emptyCount, offset))
-}
-
-def createGTa(tokensPerWitnessLimit: Int, data: Seq[CollateXWitnessData], tokenPattern: Regex) = {
-  val tokenizer = makeTokenizer(tokenPattern, tokensPerWitnessLimit)
-  val inputTokens: Vector[String] = tokenizer(data)
-  val program: TokenState[Vector[TokenEnum]] = inputTokens.traverse(processToken)
-  val gTa = program.runA(ParseState(0, 0)).value
-  gTa
 }

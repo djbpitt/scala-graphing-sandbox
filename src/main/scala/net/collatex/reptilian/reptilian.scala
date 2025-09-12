@@ -6,13 +6,9 @@ import os.Path
 import ujson.Value
 import org.virtuslab.yaml.*
 
-import scala.io.Source
 import scala.util.matching.Regex
 import scala.util.{CommandLineParser, Try, Using}
 import scala.xml.*
-
-// To process JSON input
-import net.collatex.reptilian.WitnessJsonData.*
 
 // Scala 3 prohibits local returns and uses boundary.break instead
 import java.net.{URI, URL}
@@ -297,118 +293,6 @@ def retrieveManifestXml(source: ManifestSource): Either[String, Elem] =
 
   Right(manifestXml)
 
-/** Retrieves witness data from witness sources in manifest
-  *
-  * @param manifest
-  *   manifest as xml document
-  * @param manifestSource
-  *   location of manifest: file system path or remote (http:// or https://) url.
-  * @return
-  *   Sequence of WitnessData instances if successful; otherwise error messages as string
-  */
-def retrieveWitnessDataXml(
-    manifest: Elem,
-    manifestSource: ManifestData
-): Either[String, Seq[CollateXWitnessData]] =
-  val rootFontOpt = (manifest \ "@font").headOption.map(_.text)
-  val results: Seq[Either[String, CollateXWitnessData]] =
-    (manifest \ "_").map { e =>
-      val maybeWitness: Either[String, CollateXWitnessData] = Try {
-        val siglum = (e \ "@siglum").headOption.map(_.text).getOrElse {
-          throw new RuntimeException(s"Missing required @siglum attribute in: ${e.toString}")
-        }
-        val witnessFont = (e \ "@font").headOption.map(_.text)
-        val finalFont: Option[String] = witnessFont.orElse(rootFontOpt)
-        // Defined as Option[String], will be None if missing or empty string
-        val color = (e \ "@color").headOption.map(_.text).filter(_.nonEmpty)
-        val witnessUrlAttr = (e \ "@url").head.text
-        val inputSource = witnessUrlAttr match
-          case remote if remote.startsWith("http://") || remote.startsWith("https://") =>
-            Source.fromURL(remote)
-          case pathLike =>
-            manifestSource.source match
-              case ManifestSource.Remote(baseUrl) =>
-                val resolvedUrl = URI.create(baseUrl.toString).resolve(pathLike).toURL
-                Source.fromURL(resolvedUrl)
-              case ManifestSource.Local(basePath) =>
-                val manifestParent = basePath / os.up
-                val resolvedPath = os.Path(pathLike, manifestParent)
-                Source.fromFile(resolvedPath.toString)
-        Using(inputSource) { source =>
-          CollateXWitnessData(Siglum(siglum), color, finalFont, source.getLines().mkString(" "))
-        }.get
-      }.toEither.left.map(ex => s"Error reading witness: ${ex.getMessage}")
-      maybeWitness
-    }
-
-  val (errors, witnesses) = results.partitionMap(identity)
-
-  if errors.nonEmpty then Left(errors.mkString("\n"))
-  else Right(witnesses)
-
-def retrieveWitnessDataJson(
-    jsonString: String,
-    manifestSource: ManifestData
-): Either[String, Seq[WitnessJsonData]] = boundary {
-  val json: ujson.Value = ujson.read(jsonString)
-  val rootFontOpt = json.obj.value.get("font").map(_.str)
-  val witnesses = json("witnesses").arr.toSeq
-  var gCounter = 0
-  val result = scala.collection.mutable.ListBuffer.empty[WitnessJsonData]
-
-  for ((w, witnessIndex) <- witnesses.zipWithIndex) {
-    val siglum = w("id").str
-    val witnessFont = w.obj.value.get("font").map(_.str)
-    val finalFont = witnessFont.orElse(rootFontOpt)
-    if (w.obj.contains("content")) {
-      val content = w("content").str
-      val color = w.obj.get("color").map(_.str)
-      result += WitnessJsonData.FromContent(CollateXWitnessData(Siglum(siglum), color, finalFont, content))
-    } else if (w.obj.contains("tokens")) {
-      val tokensJson = w("tokens").arr.toSeq
-      val tokens: Seq[TokenEnum.Token] = tokensJson.map { tokenObj =>
-        val tField = tokenObj.obj.get("t").map(_.str).getOrElse {
-          break(Left(s"Missing required 't' property in a token of witness '$siglum'"))
-        }
-
-        val nField = tokenObj.obj.get("n").map(_.str).getOrElse(normalize(tField))
-        val wField = witnessIndex
-        val gField = gCounter
-
-        gCounter += 1
-
-        val knownKeys = Set("t", "n", "w", "g")
-        val otherFields = tokenObj.obj.view.filterKeys(k => !knownKeys.contains(k)).toMap
-
-        TokenEnum.Token(t = tField, n = nField, w = wField, g = gField, other = otherFields)
-      }
-
-      gCounter += 1 // skip one between witnesses
-      result += WitnessJsonData.FromTokens(Siglum(siglum), tokens, finalFont)
-    } else { // Scala 3 idiom for non-local return from inside map
-      break(Left(s"Witness '$siglum' must contain either 'content' or 'tokens'"))
-    }
-  }
-
-  Right(result.toSeq)
-}
-
-/** Data retrieved from link in manifest
-  *
-  * @param siglum
-  *   User-supplied string for rendering
-  * @param color
-  *   User-supplied string to color ribbon
-  * @param content
-  *   Plain-text string, to be tokenized
-  */
-case class CollateXWitnessData(
-    siglum: Siglum,
-    color: Option[String] = None,
-    font: Option[String] = None,
-    content: String
-)
-
 /** Unified witnessData case class for both XML and JSON input
   *
   * @param siglum
@@ -426,33 +310,6 @@ case class WitnessData(
     font: Option[String] = None, // May be missing from manifest and case class (uses global default)
     tokens: Seq[TokenEnum.Token]
 )
-
-/** Data retrieved from JSON manifest
-  *
-  * `content` property is a string, which can be tokenized in the same way as strings retrieved from an XML manifest
-  *
-  * `tokens` is pretokenized JSON, which needs to be cleaned up:
-  *
-  *   - `n` properties created if they aren’t present
-  *   - `w` and`g` properties created
-  *   - `other` property managed as `Map`
-  */
-enum WitnessJsonData:
-  case FromContent(id: CollateXWitnessData)
-  case FromTokens(
-      id: Siglum,
-      tokens: Seq[TokenEnum.Token],
-      font: Option[String] = None
-  )
-  // Common accessor for siglum (temporary, during migration)
-  def siglum: Siglum = this match
-    case FromContent(data)    => data.siglum
-    case FromTokens(id, _, _) => id
-
-  // Common accessor for font (temporary, during migration)
-  def fontOpt: Option[String] = this match
-    case FromContent(data)      => data.font
-    case FromTokens(_, _, font) => font
 
 /** ManifestData has two properties:
   *
