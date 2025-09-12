@@ -14,8 +14,7 @@
                 where it can be found on the local file system or at a remote location (XML
                 manifest). The manifest is specified on the command line as either a local file
                 system path or a remote URL that begins with <code>http://</code> or
-                <code>https://</code>. This page documents the structure of both types of
-                manifest.</p>
+                <code>https://</code>.</p>
             <p><em>Breaking change:</em> Earlier releases of CollateX (Java and Python) allowed file
                 paths for individual witnesses to be specified on the command line. This method of
                 specifying file paths is not supported in CollateX Reptilian; users who wish to use
@@ -44,53 +43,64 @@
                         of the <code>@siglum</code> attribute will be used to represent the witness
                         siglum (identifier) in human-readable output, and it is an error if sigla
                         are not unique. The value of the <code>@url</code> attribute must be 1) a
-                        relative path to a file on the local file system (relative to the location
-                        of the manifest file), 2) an absolute path to a file on the local file
-                        system, or 3) a remote URL that begins with <code>http://</code> or
-                        <code>https://</code>. In the example above, the <code>@url</code> values
-                        are all relative local paths.</p></li>
+                        relative path to a file on the file system (relative to the location of the
+                        manifest file), 2) an absolute path to a file on the file system, or 3) a
+                        remote URL that begins with <code>http://</code> or <code>https://</code>.
+                        In the example above, the <code>@url</code> values are all relative
+                        file-system paths.</p></li>
             </ul>
             <p>The order of witness information in the output formats will conform to the order of
-                the <code><![CDATA[<witness>]]></code> elements in the manifest, and what this means
-                is different for different formats. For example, it is absolute for table formats,
-                it applies within and between agreement groups for the alignment ribbon and TEI XML
-                parallel segmentation, and it applies to sigla within individual edge labels in
-                graph output.
-                <!-- A future release will provide the option of choosing between manifest order
-                and an order computed on the basis of witness similarity. --></p>
+                the <code><![CDATA[<witness>]]></code> elements in the manifest, which means
+                that:</p>
+            <ul>
+                <li>
+                    <p>In tables, which do not group witnesses, the order of wigla in the manifest
+                        determines the order of the table rows or columns (depending on the
+                        orientation).</p></li>
+                <li>
+                    <p>In output formats that group witnesses (e.g., alignment ribbon, TEI XML
+                        parallel segmentation, Rhine delta (i.e., variant graph)), the order of
+                        sigla in the manifest determines the order of witnesses within each group.
+                        Additionally, in the case of the alignment ribbon and TEI XML
+                        visualizations, the groups are ordered according to the manifest order of
+                        the first siglum. For example, if the siglum order in the manifest is A, B,
+                        C, D and at a specific location B, C have one reading and A, D have a
+                        different reading, the order within the groups will be A, D and B, C
+                        (following the relative order in the manifest) and the A, D group will
+                        precede the B, C group (because the first members of the groups, A and B,
+                        are ordered in the manifest with A before B).</p></li>
+            </ul>
+            <!-- A future release will provide the option of choosing between manifest order
+                and an order computed on the basis of witness similarity. -->
             <p>An XML manifest supports two optional attributes, as follows:</p>
             <ul>
                 <li><p>A <code>@font</code> attribute may be specified on
                         <code><![CDATA[<witnesses>]]></code> and <code><![CDATA[<witness>]]></code>
                         elements. User-specified font values will be used directly to style the
                         output in CSS, which means that they must be names that would be meaningful
-                        if used as values for the CSS <code>font-family</code> property. A font
-                        specified on a <code><![CDATA[<witness>]]></code> element will be used to
-                        render the text of that witness in output formats that support font
-                        specification (all HTML and SVG formats). A global font specified on a
-                        <code><![CDATA[<witnesses>]]></code> element will be used for <em>all</em>
-                        witnesses, except that a <code>@font</code> value on a
-                        <code><![CDATA[<witness>]]></code> element overrides a global font
-                        value.</p>
+                        if used as values for the CSS <code>font-family</code> property. A global
+                        font (specified on a <code><![CDATA[<witnesses>]]></code> element) will be
+                        used for <em>all</em> witnesses, except that a <code>@font</code> value on a
+                        <code><![CDATA[<witness>]]></code> element overrides a global font value. If
+                        no font is specified for a witness on either the
+                        <code><![CDATA[<witness>]]></code> or <code><![CDATA[<witnesses>]]></code>
+                        element, output will use whatever default font the browser selects.</p>
                     <p>Font specifications are supported primarily because the characters required
                         by some writing systems may be represented inadequately by system fonts, and
-                        users may need to specify a font that provides appropriate coverage. If no
-                        font is specified for a witness on either the
-                        <code><![CDATA[<witness>]]></code> or <code><![CDATA[<witnesses>]]></code>
-                        element, output will use whatever default font the browser selects. Font
+                        users may need to specify a font that provides appropriate coverage. Font
                         information can be specified on a per witness basis because collations of
                         different writing systems (e.g., Old Church Slavonic and Greek) may require
                         different fonts in order to support the character inventories adequately.
                         CollateX Reptilian does not attempt to validate whether a specified font is
-                        available on your system; if it is not, the browser will fall back on its
-                        own default font, with unpredictable results.</p></li>
+                        available; if it is not, the browser will fall back on its own default font,
+                        with unpredictable results.</p></li>
                 <li><p>A <code>@color</code> attribute may be specified on either all
                         <code><![CDATA[<witness>]]></code> elements or no
-                        <code><![CDATA[<witness>]]></code> elements. User-specified color values
-                        will be used directly to style the output in CSS, which means that they can
-                        be expressed using any color notation that CSS understands. It is an error
-                        to supply a color specification for some but not all witnesses. Color is
-                        used to render witness-specific background colors behind the text of
+                        <code><![CDATA[<witness>]]></code> elements. It is an error to supply a
+                        color specification for some but not all witnesses. User-specified color
+                        values will be used directly to style the output in CSS, which means that
+                        they can be expressed using any color notation that CSS understands. Color
+                        is used to render witness-specific background colors behind the text of
                         individual witnesses in the alignment-ribbon output format; it is ignored
                         elsewhere, including in other HTML or SVG output. CollateX Reptilian does
                         not attempt to validate whether a user-specified color value is meaningful;
@@ -99,15 +109,16 @@
                         will use a built-in default palette.</p>
                     <p>User-specified colors are supported because it is not realistic to anticipate
                         default colors that will meet the requirements of all projects by all users.
-                        For example, the choice of colors may depend on the number of witnesses, and
-                        also on whether the user wishes to use colors in the same range (e.g.,
-                        different shades of the same basic color) to express relationships. Color
-                        must be specified for all witnesses or for no witnesses because it is not
-                        realistic to expect a combination of some user-specified colors and some
-                        default ones to harmonize adequately. Unlike with the <code>@font</code>
-                        attribute, there is no global <code>@color</code> attribute because the
-                        point of color coding in the alignment-ribbon output format is to assist the
-                        reader in distinguishing the witnesses from one another.</p></li>
+                        For example, a satisfactory choice of colors may depend on the number of
+                        witnesses, and also on whether the user wishes to use colors in the same
+                        range (e.g., different shades of the same basic color) to express
+                        relationships. Color must be specified for all witnesses or for no witnesses
+                        because it is not realistic to expect a combination of some user-specified
+                        colors and some default ones to harmonize adequately. Unlike with the
+                        <code>@font</code> attribute, there is no global <code>@color</code>
+                        attribute because the purpose of color coding in the alignment-ribbon output
+                        format is to assist the reader in distinguishing the witnesses from one
+                        another.</p></li>
             </ul>
             <p>Below is a sample XML manifest that specifies font and color information:</p>
             <pre><![CDATA[<witnesses xmlns="http://interedition.eu/collatex/ns/1.0" font="GlobalFont">
@@ -195,8 +206,10 @@
                         token as it appears in the witness. The CollateX Reptilian default
                         tokenization (used for the value of a <code>content</code> property and for
                         witnesses specified in an XML manifest) keeps trailing space with a token,
-                        and the example above copies that behvaior, but users can apply alternative
-                        tokenization strategies. If a token object has an <code>n</code> property,
+                        and the example above copies that behavior. Users may apply alternative
+                        tokenization strategies, but some output formats rely on the presence or
+                        absence of trailing whitespace in the <code>t</code> property for correct
+                        spacing during rendering. If a token object has an <code>n</code> property,
                         that is used as the normalized value during alignment; specifying
                         <code>t</code> and <code>n</code> properties is the mechanism for users to
                         implement their own tokenization and normalization instead of using the
@@ -216,7 +229,8 @@
                 <li><p>A <code>color</code> property may be specified for either all witness objects
                         or no witness objects.</p></li>
             </ul>
-            <p>Below is a sample pretokenized JSON manifest:</p>
+            <p>Below is a sample JSON manifest with a <code>content</code> property for witnesses A
+                and B and pretokenized JSON for witness C:</p>
             <pre>{
   "witnesses": [
     {
@@ -258,9 +272,9 @@
                 Witnesses A and B have a <code>content</code> property, so the strings will be
                 tokenized and normalized using the CollateX Reptilian defaults. Witness C has a
                 <code>tokens</code> property, the value of which is an array of three token objects.
-                The normalization (<code>n</code> properties) will be used as the normalized form of
-                the first two tokens; the third token does not include an <code>n</code> property,
-                so the <code>t</code> value will be normalized according to the CollateX Reptilian
+                The supplied <code>n</code> properties will be used as the normalized forms of the
+                first two tokens; the third token does not include an <code>n</code> property, so
+                the <code>t</code> value will be normalized according to the CollateX Reptilian
                 default normalization. The <code>x-extra</code> property on the second token will be
                 passed through to JSON output and discarded for other output formats.</p>
         </section>
