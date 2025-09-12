@@ -102,7 +102,7 @@ case class Config(tokensPerWitnessLimit: Option[Int] = None, tokenPattern: Strin
 
     case Right((manifestData, argMap)) =>
       val cfg = GtaBuilder.BuildConfig(tokensPerWitnessLimit, tokenPattern)
-      GtaBuilder.build(manifestData, cfg) match
+      GtaBuilder.build(manifestData, cfg, defaultColors) match
         case Left(err) =>
           System.err.println(s"Unified builder failed: $err")
         case Right((gTa, siglaList, colorList)) =>
@@ -304,7 +304,7 @@ def retrieveManifestXml(source: ManifestSource): Either[String, Elem] =
   * @param manifestSource
   *   location of manifest: file system path or remote (http:// or https://) url.
   * @return
-  *   Sequence of CollateXWitnessData instances if successful; otherwise error messages as string
+  *   Sequence of WitnessData instances if successful; otherwise error messages as string
   */
 def retrieveWitnessDataXml(
     manifest: Elem,
