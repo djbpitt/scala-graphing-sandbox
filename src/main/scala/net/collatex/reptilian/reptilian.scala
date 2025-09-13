@@ -60,13 +60,11 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
   * @return
   */
 @main def manifest(args: String*): Unit =
-  // ---- constants used later ----
-  val ResolvedConfig(tokensPerWitnessLimit, tokenPattern, defaultColors) =
-    loadResolvedConfig().getOrElse(sys.error("Missing or invalid config.yaml"))
 
-  // Parse args, resolve manifest
-  val parsedValidated: Either[String, (AlignmentRibbon, Vector[TokenEnum], List[Siglum], List[String], Map[String, Set[String]])] =
+  val parsedValidated
+      : Either[String, (AlignmentRibbon, Vector[TokenEnum], List[Siglum], List[String], Map[String, Set[String]])] =
     for {
+      ResolvedConfig(tokensPerWitnessLimit, tokenPattern, defaultColors) <- loadResolvedConfig()
       // Parse args (two-step unpacking because Scala choked on one-step version)
       result <- parseArgs(args)
       (manifestPathString, argMap) = result
