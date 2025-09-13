@@ -84,26 +84,30 @@ object GtaBuilder:
     final case class Acc(
         gta: Vector[TokenEnum],
         sigla: List[Siglum],
-        colors: List[String],
-        g: Int
+        colors: List[String]
     )
-    val init = Acc(Vector.empty, Nil, Nil, g = 0)
+    val init = Acc(Vector.empty, Nil, Nil)
     val out: Acc = wits.zipWithIndex.foldLeft(init) { case (acc0, (witData, witIndex)) =>
       // 1) Insert TokenSep BETWEEN witnesses (not before first)
       val acc1 =
         if witIndex == 0 then acc0
         else {
-          val sepId = s"sep${acc0.g}"
-          val sep = TokenEnum.TokenSep(sepId, sepId, /* w = */ witIndex - 1, /* g = */ acc0.g)
-          acc0.copy(gta = acc0.gta :+ sep, g = acc0.g + 1)
+          val sepG = acc0.gta.last.g + 1
+          val sepId = s"sep$sepG"
+          val sep = TokenEnum.TokenSep(
+            sepId,
+            sepId,
+            /* w = */ acc0.gta.last.w,
+            /* g = */ sepG
+          )
+          acc0.copy(gta = acc0.gta :+ sep)
         }
       // 2) Siglum + color (match legacy: witness.color or palette default)
       val siglum: Siglum = witData.siglum
       val color: String = witData.color.getOrElse(defaultColors(witIndex % defaultColors.length))
       val acc2 = acc1.copy(sigla = acc1.sigla :+ siglum, colors = acc1.colors :+ color)
       // 3) Emit tokens with w/g
-      val (emitted, nextG) = emitFromProvided(witData.tokens, witIndex, acc2.g)
-      acc2.copy(gta = acc2.gta ++ emitted, g = nextG)
+      acc2.copy(gta = acc2.gta ++ witData.tokens)
     }
     Right(out.gta, out.sigla, out.colors)
 
