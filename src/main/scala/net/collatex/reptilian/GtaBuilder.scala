@@ -20,27 +20,26 @@ object GtaBuilder:
     java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFC).normalizeSpace.toLowerCase
 
   // Emit tokens from raw strings (assign w/g, build Token)
-  private def emitFromStrings(raws: Iterator[String], witIndex: Int, startG: Int): (Vector[TokenEnum], Int) = {
+  private def emitFromStrings(raws: Iterator[String], witIndex: Int, startG: Int): Vector[TokenEnum] =
     var g = startG
     val out = Vector.newBuilder[TokenEnum]
     raws.foreach { t =>
       out += TokenEnum.Token(t = t, n = normalizeToken(t), w = witIndex, g = g, other = Map.empty)
       g += 1
     }
-    (out.result(), g)
-  }
+    out.result()
+
 
   // Emit tokens from provided TokenEnum.Token (preserve ‘other’, including `n`, which we create, if needed, before calling)
   // TODO: See https://github.com/djbpitt/scala-graphing-sandbox/issues/83
-  private def emitFromProvided(tokens: Seq[TokenEnum.Token], witIndex: Int, startG: Int): (Vector[TokenEnum], Int) = {
+  private def emitFromProvided(tokens: Seq[TokenEnum.Token], witIndex: Int, startG: Int): Vector[TokenEnum] =
     var g = startG
     val out = Vector.newBuilder[TokenEnum]
     tokens.foreach { inTok =>
       out += inTok.copy(w = witIndex, g = g)
       g += 1
     }
-    (out.result(), g)
-  }
+    out.result()
 
   /** Tunable knobs for building GTa. */
   final case class BuildConfig(tokensPerWitnessLimit: Int, tokenPattern: Regex)
@@ -149,7 +148,7 @@ object GtaBuilder:
       val allSigla = (manifest \ "_").map(_ \ "@siglum")
       val gCounter = 0
       val out = witTokenStrings.zipWithIndex
-        .foldLeft((Vector.empty[WitnessData], gCounter)) { (acc, current) =>
+        .foldLeft(Vector.empty[WitnessData]) { (acc, current) =>
           val (currentBs, currentWitOffset): (BufferedSource, Int) = current // current witness data as buffered string
           val currentFont: Option[String] =
             ((manifest \ "_")(currentWitOffset) \ "@font").headOption.map(_.text).orElse(rootFontOpt)
@@ -158,11 +157,11 @@ object GtaBuilder:
             ((manifest \ "_")(currentWitOffset) \ "@color").headOption.map(_.text)
           val ts: Iterator[String] = // raw token strings (t values)
             tokenizeContent(currentBs.mkString, cfg)
-          val (currentTokens, nextG) =
+          val currentTokens =
             emitFromStrings(
               ts,
               currentWitOffset,
-              gCounter + acc._1.map(_.tokens.size).sum + currentWitOffset
+              gCounter + acc.map(_.tokens.size).sum + currentWitOffset
             ) // currentWitOffset is, coincidentally and helpfully, also a count of TokenSep instances
           val currentWitnessData = WitnessData(
             currentSiglum,
@@ -170,9 +169,9 @@ object GtaBuilder:
             currentFont,
             currentTokens.map(_.asInstanceOf[TokenEnum.Token])
           )
-          (acc._1 :+ currentWitnessData, gCounter) // gCounter is ignored in final result
+          acc :+ currentWitnessData
         }
-      out._1 // we no longer need gCounter
+      out
     Right(results)
 
   /** Intermediary WitObj case class for transforming JSON manifest to Seq[WitnessData]
@@ -199,7 +198,7 @@ object GtaBuilder:
       font: Option[String] = None,
       color: Option[String] = None,
       content: Option[String] = None,
-      tokens: Option[Seq[ujson.Value]] = None // ← Value, not Obj
+      tokens: Option[Seq[ujson.Value]] = None // Value, not Obj
   ) derives ReadWriter
   private case class JsonDataForAlignment(font: Option[String] = None, witnesses: Seq[WitObj]) derives ReadWriter
 
@@ -209,9 +208,8 @@ object GtaBuilder:
   ): Either[String, Seq[WitnessData]] = {
     val jd: JsonDataForAlignment = read[JsonDataForAlignment](manifest)
     val rootFontOpt: Option[String] = jd.font
-    val gCounter = 0
-    val out: (Vector[WitnessData], Int) = jd.witnesses.zipWithIndex
-      .foldLeft(Vector.empty[WitnessData], gCounter) { (acc, current) =>
+    val out: Vector[WitnessData] = jd.witnesses.zipWithIndex
+      .foldLeft(Vector.empty[WitnessData]) { (acc, current) =>
         val (currentWitnessObj, currentWitOffset) = current
         val currentSiglum = Siglum(currentWitnessObj.id)
         val currentColor: Option[String] = currentWitnessObj.color
@@ -220,16 +218,14 @@ object GtaBuilder:
           case WitObj(_, _, _, Some(content), None) =>
             val ts: Iterator[String] = // raw token strings (t values)
               tokenizeContent(content, cfg)
-            val (currentTokens: Vector[TokenEnum], nextG: Int) = {
+            val currentTokens: Vector[TokenEnum] =
               emitFromStrings(
                 ts,
                 currentWitOffset,
-                gCounter + acc._1.map(_.tokens.size).sum + currentWitOffset
+                acc.map(_.tokens.size).sum + currentWitOffset // startG
               ) // currentWitOffset is, coincidentally and helpfully, also a count of TokenSep instances
-            }
             currentTokens.map(_.asInstanceOf[TokenEnum.Token])
           case WitObj(_, _, _, None, Some(tokens)) => // Only t and option n properties are real
-            // TODO: See https://github.com/djbpitt/scala-graphing-sandbox/issues/83
             val suppliedTokens: Seq[TokenEnum.Token] = tokens.arr
               .map(t =>
                 val otherFields: Map[String, ujson.Value] =
@@ -247,10 +243,10 @@ object GtaBuilder:
                   .asInstanceOf[TokenEnum.Token]
               )
               .toSeq
-            val (emittedTokens, nextG: Int) = emitFromProvided(
+            val emittedTokens = emitFromProvided(
               suppliedTokens,
               currentWitOffset,
-              gCounter + acc._1.map(_.tokens.size).sum + currentWitOffset
+              acc.map(_.tokens.size).sum + currentWitOffset // startG
             )
             emittedTokens.map(_.asInstanceOf[TokenEnum.Token])
           case _ => throw new RuntimeException(s"WitObj should have either content or tokens: $currentWitnessObj")
@@ -261,7 +257,7 @@ object GtaBuilder:
           currentFont,
           witnessTokens
         )
-        (acc._1 :+ currentWitnessData, gCounter) // gCounter is ignored in final result
+        acc :+ currentWitnessData
       }
-    Right(out._1) // we no longer need gCounter
+    Right(out)
   }
