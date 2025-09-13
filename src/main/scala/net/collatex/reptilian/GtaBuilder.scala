@@ -10,7 +10,7 @@ import upickle.default.*
 import ujson.Value
 
 object GtaBuilder:
-  
+
   // Shared tokenizer for any content string (JSON or XML)
   def tokenizeContent(text: String, cfg: BuildConfig): Iterator[String] =
     cfg.tokenPattern.findAllMatchIn(text).map(_.matched).take(cfg.tokensPerWitnessLimit)
@@ -20,7 +20,7 @@ object GtaBuilder:
     java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFC).normalizeSpace.toLowerCase
 
   // Emit tokens from raw strings (assign w/g, build Token)
-  def emitFromStrings(raws: Iterator[String], witIndex: Int, startG: Int): (Vector[TokenEnum], Int) = {
+  private def emitFromStrings(raws: Iterator[String], witIndex: Int, startG: Int): (Vector[TokenEnum], Int) = {
     var g = startG
     val out = Vector.newBuilder[TokenEnum]
     raws.foreach { t =>
@@ -32,7 +32,7 @@ object GtaBuilder:
 
   // Emit tokens from provided TokenEnum.Token (preserve ‘other’, including `n`, which we create, if needed, before calling)
   // TODO: See https://github.com/djbpitt/scala-graphing-sandbox/issues/83
-  def emitFromProvided(tokens: Seq[TokenEnum.Token], witIndex: Int, startG: Int): (Vector[TokenEnum], Int) = {
+  private def emitFromProvided(tokens: Seq[TokenEnum.Token], witIndex: Int, startG: Int): (Vector[TokenEnum], Int) = {
     var g = startG
     val out = Vector.newBuilder[TokenEnum]
     tokens.foreach { inTok =>
@@ -190,14 +190,14 @@ object GtaBuilder:
     * Tokens are represented as a sequence of JSON values to accommodate the optional `other` property, the keys for
     * which cannot be predicted, and therefore cannot be represented directly as case class property names
     */
-  case class WitObj(
+  private case class WitObj(
       id: String,
       font: Option[String] = None,
       color: Option[String] = None,
       content: Option[String] = None,
       tokens: Option[Seq[ujson.Value]] = None // ← Value, not Obj
   ) derives ReadWriter
-  case class JsonDataForAlignment(font: Option[String] = None, witnesses: Seq[WitObj]) derives ReadWriter
+  private case class JsonDataForAlignment(font: Option[String] = None, witnesses: Seq[WitObj]) derives ReadWriter
 
   def jsonToWitnessData(
       manifest: String,

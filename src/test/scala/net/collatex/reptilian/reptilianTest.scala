@@ -18,20 +18,6 @@ import scala.io.Source
 class reptilianTest extends AnyFunSuite:
 
   private val cfg: GtaBuilder.BuildConfig = GtaBuilder.BuildConfig(Int.MaxValue, raw"(\w+|[^\w\s])\s*".r)
-  private val defaultColors: List[String] = List(
-    "#ff7d94",
-    "#52fece",
-    "#e074c0",
-    "#abf8a3",
-    "#93a034",
-    "#01a9fd",
-    "#d1883b",
-    "#54a371",
-    "#ff9982",
-    "#b7f3ca",
-    "#9b8bc2",
-    "#fbbac9"
-  )
 
   test("XML manifest: valid file parses, validates, and loads correctly") {
     val xml =

@@ -1,11 +1,8 @@
 package net.collatex.reptilian
 
 import cats.data.State
-import cats.syntax.all.*
 import net.collatex.util.Hypergraph
 import upickle.default.*
-
-import scala.util.matching.Regex
 
 /** Token as complex object
   *

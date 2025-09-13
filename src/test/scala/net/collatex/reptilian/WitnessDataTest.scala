@@ -28,7 +28,7 @@ class WitnessDataTest extends AnyFunSuite:
       "#9b8bc2",
       "#fbbac9"
     )
-  
+
   // Helpers for XML manifest tests with and without root font
   /** expectedForXml()
     *
@@ -213,7 +213,7 @@ class WitnessDataTest extends AnyFunSuite:
     )
   }
 
-  test("jsontoWitnessData basics with colors") {
+  test("jsonToWitnessData basics with colors") {
     val manifestFilename = "jsonWithColors.json"
     val manifestPath = os.pwd / "src" / "test" / "resources" / "manifests" / manifestFilename
     val manifestSource = ManifestSource.Local(manifestPath)
