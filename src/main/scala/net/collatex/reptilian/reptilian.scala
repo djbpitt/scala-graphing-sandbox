@@ -65,7 +65,7 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
     loadResolvedConfig().getOrElse(sys.error("Missing or invalid config.yaml"))
 
   // Parse args, resolve manifest
-  val parsedValidated: Either[String, (Vector[TokenEnum], List[Siglum], List[String], Map[String, Set[String]])] =
+  val parsedValidated: Either[String, (AlignmentRibbon, Vector[TokenEnum], List[Siglum], List[String], Map[String, Set[String]])] =
     for {
       // Parse args (two-step unpacking because Scala choked on one-step version)
       result <- parseArgs(args)
@@ -74,14 +74,14 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
       cfg = GtaBuilder.BuildConfig(tokensPerWitnessLimit, tokenPattern)
       gTaBundle <- GtaBuilder.build(manifestData, cfg, defaultColors)
       (gTa, displaySigla, colors) = gTaBundle
-    } yield (gTa, displaySigla, colors, argMap)
+      root = createAlignmentRibbon(gTa)
+    } yield (root, gTa, displaySigla, colors, argMap)
 
   parsedValidated match
     case Left(e) =>
       System.err.println(e)
 
-    case Right((gTa, displaySigla, colors, argMap)) =>
-      val root: AlignmentRibbon = createAlignmentRibbon(gTa)
+    case Right((root, gTa, displaySigla, colors, argMap)) =>
       displayDispatch(root, gTa, displaySigla, colors, argMap)
 
 /** Parse command line arguments
