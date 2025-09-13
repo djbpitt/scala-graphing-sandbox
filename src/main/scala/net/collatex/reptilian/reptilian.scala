@@ -65,32 +65,25 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
     loadResolvedConfig().getOrElse(sys.error("Missing or invalid config.yaml"))
 
   // Parse args, resolve manifest
-  val parsedValidated: Either[String, (ManifestData, Map[String, Set[String]])] =
+  val parsedValidated: Either[String, (Vector[TokenEnum], List[Siglum], List[String], Map[String, Set[String]])] =
     for {
       // Parse args (two-step unpacking because Scala choked on one-step version)
       result <- parseArgs(args)
       (manifestPathString, argMap) = result
       manifestData <- resolveManifestString(manifestPathString)
-
-      // gTaTuple <- GtaBuilder.build(manifestData, cfg)
-      // (gTa, gTaSigla, colors) = gTaTuple
-      // root <- createAlignmentRibbon(gTaSigla, gTa)
-      // Yield here; manage output outside for-comprehension
-    } yield (manifestData, argMap)
+      cfg = GtaBuilder.BuildConfig(tokensPerWitnessLimit, tokenPattern)
+      gTaBundle <- GtaBuilder.build(manifestData, cfg, defaultColors)
+      (gTa, displaySigla, colors) = gTaBundle
+    } yield (gTa, displaySigla, colors, argMap)
 
   parsedValidated match
     case Left(e) =>
       System.err.println(e)
 
-    case Right((manifestData, argMap)) =>
-      val cfg = GtaBuilder.BuildConfig(tokensPerWitnessLimit, tokenPattern)
-      GtaBuilder.build(manifestData, cfg, defaultColors) match
-        case Left(err) =>
-          System.err.println(s"Unified builder failed: $err")
-        case Right((gTa, siglaList, colorList)) =>
-          val gTaSigla: List[WitId] = siglaList.indices.toList
-          val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
-          displayDispatch(root, gTa, siglaList, colorList, argMap)
+    case Right((gTa, displaySigla, colors, argMap)) =>
+      val gTaSigla: List[WitId] = Range(0, displaySigla.size).toList
+      val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
+      displayDispatch(root, gTa, displaySigla, colors, argMap)
 
 /** Parse command line arguments
   *
