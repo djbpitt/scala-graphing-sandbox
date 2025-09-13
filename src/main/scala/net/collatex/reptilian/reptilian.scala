@@ -1,21 +1,14 @@
 package net.collatex.reptilian
 
-import ManifestValidator._
-
 import os.Path
-import ujson.Value
-import org.virtuslab.yaml.*
 
-import scala.util.matching.Regex
-import scala.util.{CommandLineParser, Try, Using}
+import scala.util.CommandLineParser
 import scala.xml.*
 
 // Scala 3 prohibits local returns and uses boundary.break instead
 import java.net.{URI, URL}
 import java.nio.file.{Files, Paths}
 import scala.annotation.tailrec
-import scala.util.boundary
-import scala.util.boundary.break
 
 /** Mimic XPath normalize-space()
   *
@@ -60,10 +53,6 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
       }
 }
 
-// For config.yaml
-case class Config(tokensPerWitnessLimit: Option[Int] = None, tokenPattern: String, defaultColors: List[String])
-    derives YamlCodec
-
 /** Obtain input via manifest and process
   *
   * @param args
@@ -72,11 +61,8 @@ case class Config(tokensPerWitnessLimit: Option[Int] = None, tokenPattern: Strin
   */
 @main def manifest(args: String*): Unit =
   // ---- constants used later ----
-  val configYaml: String = scala.io.Source.fromResource("config.yaml").mkString
-  val config = configYaml.as[Config].getOrElse(throw new RuntimeException("Missing or invalid config.yaml"))
-  val tokensPerWitnessLimit = config.tokensPerWitnessLimit.getOrElse(Int.MaxValue)
-  val tokenPattern = Regex(config.tokenPattern)
-  val defaultColors = config.defaultColors
+  val ResolvedConfig(tokensPerWitnessLimit, tokenPattern, defaultColors) =
+    loadResolvedConfig().getOrElse(sys.error("Missing or invalid config.yaml"))
 
   // Parse args, resolve manifest
   val parsedValidated: Either[String, (ManifestData, Map[String, Set[String]])] =
