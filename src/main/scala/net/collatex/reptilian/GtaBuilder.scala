@@ -21,29 +21,30 @@ object GtaBuilder:
 
   // Emit tokens from raw strings (assign w/g, build Token)
   private def emitFromStrings(raws: Iterator[String], witIndex: Int, startG: Int): Vector[TokenEnum] =
-    var g = startG
-    val out = Vector.newBuilder[TokenEnum]
-    raws.foreach { t =>
-      out += TokenEnum.Token(t = t, n = normalizeToken(t), w = witIndex, g = g, other = Map.empty)
-      g += 1
-    }
-    out.result()
+    val result = raws.zipWithIndex.map { (rawT, localTokenOffset) =>
+      TokenEnum.Token(
+        rawT,
+        normalizeToken(rawT),
+        witIndex,
+        startG + localTokenOffset,
+        Map.empty
+      )
+    }.toVector
+    result
 
   // Emit tokens from provided JSON object (ujson.Value of type JSON array)
-  // Preserve ‘other’, create `n` if needed
+  // Create `n` if needed, preserve `other`
   private def emitFromProvided(tokens: Seq[Value], witIndex: Int, startG: Int): Vector[TokenEnum] =
-    var g = startG
-    val out = Vector.newBuilder[TokenEnum]
-    tokens.arr.foreach { jsonToken =>
+    val result = tokens.arr.zipWithIndex.map { (jsonToken, localTokenOffset) =>
       val t: String = jsonToken.obj("t").str
       val n: String =
         jsonToken.obj.get("n").strOpt.getOrElse(normalizeToken(jsonToken.obj("t").str)) // Short for flatMap(_.strOpt)
       val w: Int = witIndex
+      val g = startG + localTokenOffset
       val other = jsonToken.obj.view.filter { case (k, _) => !Set("t", "n", "w", "g")(k) }.toMap
-      out += TokenEnum.Token(t, n, w, g, other)
-      g += 1
-    }
-    out.result()
+      TokenEnum.Token(t, n, w, g, other)
+    }.toVector
+    result
 
   /** Tunable knobs for building GTa. */
   final case class BuildConfig(tokensPerWitnessLimit: Int, tokenPattern: Regex)
