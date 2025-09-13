@@ -81,8 +81,7 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
       System.err.println(e)
 
     case Right((gTa, displaySigla, colors, argMap)) =>
-      val gTaSigla: List[WitId] = Range(0, displaySigla.size).toList
-      val root: AlignmentRibbon = createAlignmentRibbon(gTaSigla, gTa)
+      val root: AlignmentRibbon = createAlignmentRibbon(gTa)
       displayDispatch(root, gTa, displaySigla, colors, argMap)
 
 /** Parse command line arguments

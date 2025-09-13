@@ -16,10 +16,11 @@ import upickle.default.write
 // Basically an inverse of the current control flow.
 
 def createAlignmentRibbon(
-    gTaSigla: List[WitId],
+//    gTaSigla: List[WitId],
     gTa: Vector[TokenEnum]
 ): AlignmentRibbon =
-  val globalUnalignedZone: UnalignedZone = createGlobalUnalignedZone(gTaSigla, gTa)
+  val gTaSigla = Range(0, gTa.last.w + 1).toList
+  val globalUnalignedZone: UnalignedZone = createGlobalUnalignedZone(gTa)
   // align, recursively full depth blocks in this unaligned zone
   // 2025-08-19 Temporarily bypass phase 1 to debug phase 2
   val alignment = ListBuffer().appendAll(alignFullDepthBlocks(globalUnalignedZone, gTaSigla))
@@ -193,9 +194,10 @@ def fullDepthBlockToAlignmentPoint(
   val wg = Set(readings)
   AlignmentPoint(readings, wg)
 
-def createGlobalUnalignedZone(sigla: List[WitId], gTa: Vector[TokenEnum]) = {
+def createGlobalUnalignedZone(gTa: Vector[TokenEnum]) = {
   // NB: We are embarrassed by the mutable map (and by other things, such has having to scan token array)
   // Housekeeping; TODO: Think about witness-set metadata
+  val sigla = Range(0, gTa.last.w + 1).toList
   val witnessRanges: mutable.Map[WitId, TokenRange] = mutable.Map.empty
   // go over the tokens and assign the lowest and the highest to the map
   // token doesn't know its position in a specific witness, so use indices
