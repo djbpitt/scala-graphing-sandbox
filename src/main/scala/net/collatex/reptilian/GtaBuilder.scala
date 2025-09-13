@@ -29,14 +29,18 @@ object GtaBuilder:
     }
     out.result()
 
-
-  // Emit tokens from provided TokenEnum.Token (preserve ‘other’, including `n`, which we create, if needed, before calling)
-  // TODO: See https://github.com/djbpitt/scala-graphing-sandbox/issues/83
-  private def emitFromProvided(tokens: Seq[TokenEnum.Token], witIndex: Int, startG: Int): Vector[TokenEnum] =
+  // Emit tokens from provided JSON object (ujson.Value of type JSON array)
+  // Preserve ‘other’, create `n` if needed
+  private def emitFromProvided(tokens: Seq[Value], witIndex: Int, startG: Int): Vector[TokenEnum] =
     var g = startG
     val out = Vector.newBuilder[TokenEnum]
-    tokens.foreach { inTok =>
-      out += inTok.copy(w = witIndex, g = g)
+    tokens.arr.foreach { jsonToken =>
+      val t: String = jsonToken.obj("t").str
+      val n: String =
+        jsonToken.obj.get("n").strOpt.getOrElse(normalizeToken(jsonToken.obj("t").str)) // Short for flatMap(_.strOpt)
+      val w: Int = witIndex
+      val other = jsonToken.obj.view.filter { case (k, _) => !Set("t", "n", "w", "g")(k) }.toMap
+      out += TokenEnum.Token(t, n, w, g, other)
       g += 1
     }
     out.result()
@@ -226,25 +230,8 @@ object GtaBuilder:
               ) // currentWitOffset is, coincidentally and helpfully, also a count of TokenSep instances
             currentTokens.map(_.asInstanceOf[TokenEnum.Token])
           case WitObj(_, _, _, None, Some(tokens)) => // Only t and option n properties are real
-            val suppliedTokens: Seq[TokenEnum.Token] = tokens.arr
-              .map(t =>
-                val otherFields: Map[String, ujson.Value] =
-                  t.obj.view
-                    // "Other" properties; filters out t, n, w, and g, which we handle explicitly
-                    .filter { case (k, _) => !Set("t", "n", "w", "g")(k) }.toMap
-                TokenEnum
-                  .Token( // Create `n` if missing; `w` and `g` are fakes because Token case class requires them
-                    t.obj("t").str,
-                    t.obj.get("n").strOpt.getOrElse(normalizeToken(t.obj("t").str)), // Short for flatMap(_.strOpt)
-                    0,
-                    0,
-                    otherFields
-                  )
-                  .asInstanceOf[TokenEnum.Token]
-              )
-              .toSeq
             val emittedTokens = emitFromProvided(
-              suppliedTokens,
+              tokens,
               currentWitOffset,
               acc.map(_.tokens.size).sum + currentWitOffset // startG
             )
