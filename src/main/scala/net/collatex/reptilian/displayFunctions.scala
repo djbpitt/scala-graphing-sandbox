@@ -766,6 +766,7 @@ def emitTeiXml(
           .sortBy(s => siglumOrder(s.value))
         val witAttr = sortedSigla.map(s => "#" + s.value).mkString(" ")
         Elem(
+          // noinspection IllegalNull
           null,
           "rdg",
           new UnprefixedAttribute("wit", witAttr, xml.Null),
@@ -775,6 +776,7 @@ def emitTeiXml(
         )
       )
       val nString = group.headOption.map(_._2.nString).getOrElse("")
+      // noinspection IllegalNull
       Elem(null, "rdgGrp", new UnprefixedAttribute("n", nString, xml.Null), TopScope, minimizeEmpty = true, rdgs*)
     }
 
@@ -783,9 +785,24 @@ def emitTeiXml(
         val sortedMissing = missingWitIds.map(displaySigla(_)).toList.sortBy(s => siglumOrder(s.value))
         val witAttr = sortedMissing.map(s => "#" + s.value).mkString(" ")
         val missingRdg =
-          Elem(null, "rdg", new UnprefixedAttribute("wit", witAttr, xml.Null), TopScope, minimizeEmpty = true)
+          Elem(
+            // noinspection IllegalNull
+            null,
+            "rdg",
+            new UnprefixedAttribute("wit", witAttr, xml.Null),
+            TopScope,
+            minimizeEmpty = true
+          )
         Some(
-          Elem(null, "rdgGrp", new UnprefixedAttribute("n", "", xml.Null), TopScope, minimizeEmpty = true, missingRdg)
+          Elem(
+            // noinspection IllegalNull
+            null,
+            "rdgGrp",
+            new UnprefixedAttribute("n", "", xml.Null),
+            TopScope,
+            minimizeEmpty = true,
+            missingRdg
+          )
         )
       } else None
 
@@ -821,7 +838,15 @@ def emitTeiXml(
 
       val trailingSpace = if (allEndWithSpace) Some(Text(" ")) else None
 
-      val appElem = Elem(null, "app", xml.Null, TopScope, minimizeEmpty = true, cleanedGroups*)
+      val appElem = Elem(
+        // noinspection IllegalNull
+        null,
+        "app",
+        xml.Null,
+        TopScope,
+        minimizeEmpty = true,
+        cleanedGroups*
+      )
       trailingSpace match {
         case Some(space) => Seq(appElem, space)
         case None        => Seq(appElem)
@@ -833,7 +858,16 @@ def emitTeiXml(
     "cx",
     "apparatus",
     xml.Null,
-    NamespaceBinding("cx", nsCx, NamespaceBinding(null, nsTei, TopScope)),
+    NamespaceBinding(
+      "cx",
+      nsCx,
+      NamespaceBinding(
+        // noinspection IllegalNull
+        null,
+        nsTei,
+        TopScope
+      )
+    ),
     minimizeEmpty = true,
     content*
   )
