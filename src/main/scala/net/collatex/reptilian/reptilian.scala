@@ -5,7 +5,6 @@ import os.Path
 import scala.util.CommandLineParser
 import scala.xml.*
 
-// Scala 3 prohibits local returns and uses boundary.break instead
 import java.net.{URI, URL}
 import java.nio.file.{Files, Paths}
 import scala.annotation.tailrec
@@ -17,22 +16,6 @@ import scala.annotation.tailrec
   *   1. Remove leading and trailing space characters
   */
 extension (s: String) def normalizeSpace: String = raw"\s+".r.replaceAllIn(s, " ").trim
-
-/** Read data files from supplied path to directory (one file per witness)
-  *
-  * @param pathToData
-  *   os.Path object that points to data directory
-  * @return
-  *   List of tuples of 1) abbreviated filename and 2) string (token lists)
-  */
-def readData(pathToData: Path): List[(String, String)] =
-  os.walk(
-    path = pathToData,
-    skip = _.last.startsWith(".")
-  ) // exclude hidden files
-    .sorted
-    .toList
-    .map(e => (e.last, os.read(e)))
 
 def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
   source match
@@ -65,7 +48,7 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
       : Either[String, (AlignmentRibbon, Vector[TokenEnum], List[Siglum], List[String], Map[String, Set[String]])] =
     for {
       ResolvedConfig(tokensPerWitnessLimit, tokenPattern, defaultColors) <- loadResolvedConfig()
-      // Parse args (two-step unpacking because Scala choked on one-step version)
+      // Parse args (two-step unpacking because Scala chokes on one-step version)
       result <- parseArgs(args)
       (manifestPathString, argMap) = result
       manifestData <- resolveManifestString(manifestPathString)
