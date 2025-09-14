@@ -5,6 +5,10 @@ lazy val root = (project in file("."))
     scalaVersion := "3.7.1",
     assemblyJarName := s"collatex-reptilian-0.1.0-SNAPSHOT.jar",
     Compile / mainClass := Some("net.collatex.reptilian.manifest"),
+    // Exclude from IntelliJ inspection
+    Compile / resourceDirectories -= baseDirectory.value / "src" / "main" / "outputs",
+    Compile / resourceDirectories -= baseDirectory.value / "src" / "main" / "mockups",
+    Compile / resourceDirectories -= baseDirectory.value / "src" / "main" / "docs" / "refs",
     assembly / mainClass := Some("net.collatex.reptilian.manifest"),
     scalacOptions := Seq(
       "-unchecked",
