@@ -1,7 +1,5 @@
 package net.collatex.reptilian
 
-import scalatags.Text.all.*
-
 import scala.annotation.{tailrec, targetName}
 
 /** Wrap text to specified length by inserting newlines

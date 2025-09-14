@@ -1,7 +1,6 @@
 package net.collatex.reptilian
 
 import net.collatex.reptilian.TokenEnum.*
-import net.collatex.reptilian.TokenRange.*
 import net.collatex.util.Hypergraph.Hyperedge
 import net.collatex.util.{Graph, Hypergraph, SetOf2}
 
@@ -9,7 +8,7 @@ import scala.collection.mutable
 import os.Path
 import upickle.default.*
 
-import scala.annotation.tailrec
+import scala.annotation.{tailrec, unused}
 import scala.collection.immutable.Vector
 import scala.util.chaining.scalaUtilChainingOps
 
@@ -52,7 +51,7 @@ def groupPatternsTogetherByHyperedge(
   // unmark to check conflicting blocks. If two blocks have the same end position in an occurrence then we have a problem
   val xxTmp = patterns.flatMap(_.occurrences).groupBy(_.patternTr.until)
   val xx = xxTmp.map((k, v) => k -> v.size)
-  if xx.exists((k, v) => v > 1) then throw RuntimeException("Two blocks conflict with each other!")
+  if xx.exists((_, v) => v > 1) then throw RuntimeException("Two blocks conflict with each other!")
   result
 
 def mergeHgHg(
@@ -377,8 +376,8 @@ def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange]): Unit
 
     processEdge(sortedTargets, Vector(), Set())
 
-  // NOTE: We should return these
-  val allLabels = edges.toSeq.map((source, targets) =>
+  // NB: We should return or remove these
+  @unused val allLabels = edges.toSeq.map((source, targets) =>
     val sortedTargets = targets.toSeq.sortBy(e => fullHgRanking(e)) // TODO: Remove; just for debug
     (source, sortedTargets, createEdgeLabels(source, targets))
   )

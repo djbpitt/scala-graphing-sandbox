@@ -1,7 +1,6 @@
 package net.collatex.util
 
 import net.collatex.reptilian.{EdgeLabel, TokenEnum, TokenRange}
-import net.collatex.reptilian.TokenEnum.*
 
 /** Print sorted list of hyperedges
   *
@@ -11,7 +10,7 @@ import net.collatex.reptilian.TokenEnum.*
   *   Hypergraph
   */
 def hypergraphToText(h: Map[Int, Hypergraph[String, TokenRange]]): Unit =
-  val output = h map ((i: Int, x: Hypergraph[String, TokenRange]) =>
+  val output = h map ((_: Int, x: Hypergraph[String, TokenRange]) =>
     val lines = x.hyperedgeLabels.toSeq.sorted map (e => s"$e : ${x.members(e)}")
     lines.mkString("\n")
   )

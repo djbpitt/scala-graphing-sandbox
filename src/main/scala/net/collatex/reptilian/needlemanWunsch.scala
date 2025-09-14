@@ -1,9 +1,6 @@
 package net.collatex.reptilian
 
-import smile.data.DataFrame
-
-import scala.annotation.tailrec
-import scala.collection.mutable
+import scala.annotation.{tailrec, unused}
 
 def alignWitnesses(
     w1: List[TokenEnum], // rows
@@ -40,7 +37,7 @@ def nwCreateMatrix(a: List[String], b: List[String]): Array[Array[Double]] =
     if (i > 1 && j > 1 && a(i - 1) == b(j - 2) && a(i - 2) == b(j - 1))
       d(i)(j) = math.min(d(i)(j), d(i - 2)(j - 2) + transpositionCost) // transposition
   }
-  val distance = d(a.size)(b.size)
+  @unused val distance = d(a.size)(b.size)
   // val dfm = DataFrame.of(d) // just to look; we don't need the DataFrame
   // println(dfm.toString(dfm.size))
   d // return entire matrix

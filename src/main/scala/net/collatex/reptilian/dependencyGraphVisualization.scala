@@ -1,6 +1,5 @@
 package net.collatex.reptilian
 
-import net.collatex.reptilian.TokenEnum.Token
 import net.collatex.util.{Graph, Hypergraph}
 
 import scala.xml.dtd.DocType
@@ -146,7 +145,6 @@ def dependencyGraphToDot(
     depGraph: Graph[NodeType],
     hg: Hypergraph[EdgeLabel, TokenRange]
 ): Unit =
-  val gTa = hg.verticesIterator.next.ta
   val hgId = hg.hyperedgeLabels.map(_.toString).toSeq.sorted.mkString("-").slice(0, 200)
   val prologue = "digraph G {\n\t"
   val epilogue = "\n}"

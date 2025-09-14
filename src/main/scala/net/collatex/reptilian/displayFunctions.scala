@@ -4,7 +4,7 @@ import scala.util.Using
 import scala.xml.*
 import scala.xml.dtd.DocType
 import java.nio.file.Paths
-import scala.annotation.tailrec
+import scala.annotation.{tailrec, unused}
 
 // JSON output
 import ujson.*
@@ -232,7 +232,7 @@ def emitTableHorizontalHTML(
     return
 
   val numRows = allWitIds.size
-  val numCols = tableContent.size // needed only if thead includes alignment-point numbering
+  @unused val numCols = tableContent.size // needed only if thead includes alignment-point numbering
   val rotated = (0 until numRows).map { rowIdx =>
     tableContent.map(_(rowIdx))
   }
@@ -354,7 +354,7 @@ def emitTableVerticalHTML(
       </thead>
       <tbody>
         {
-      tableContent.zipWithIndex.map { (row, idx) => // idx used only if APs are numbered
+      tableContent.zipWithIndex.map { (row, _) => // second value (idx) used only if APs are numbered
         <tr>
             <!--<td>AP
             {idx + 1}

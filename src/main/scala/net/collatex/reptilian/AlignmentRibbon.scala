@@ -3,7 +3,6 @@ package net.collatex.reptilian
 import net.collatex.reptilian.TokenEnum.{Token, TokenSep}
 import net.collatex.reptilian.TokenRange.*
 
-import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.language.postfixOps
 import scala.math.Ordering

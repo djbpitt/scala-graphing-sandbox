@@ -11,14 +11,12 @@ package net.collatex.reptilian
   * (Integer.MAX_VALUE) nodes Edges weighted by number of witnesses that share order (1 < n < witnessCount)
   */
 
-import net.collatex.reptilian.TokenEnum.Token
 import scalax.collection.GraphPredef.EdgeAssoc
 import scalax.collection.edge.Implicits.edge2WDiEdgeAssoc
 import scalax.collection.mutable.Graph
 import scalax.collection.config.CoreConfig
 import scalax.collection.edge.WDiEdge
 
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 val endNodeId = Integer.MAX_VALUE // End-node uses maximum possible integer value (i.e., inconveniently large value)

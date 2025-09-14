@@ -232,12 +232,12 @@ def greedy(
 
 /* TODO: Write and use
  * */
-def beamSearch(dg: Graph[DecisionGraphStepPhase2]): Hypergraph[EdgeLabel, TokenRange] = ???
+//def beamSearch(dg: Graph[DecisionGraphStepPhase2]): Hypergraph[EdgeLabel, TokenRange] = ???
 
 /* TODO: Write and use
  * */
-def astar(dg: Graph[DecisionGraphStepPhase2]): Hypergraph[EdgeLabel, TokenRange] =
-  val aStarInputSorted = dg.topologicalSort
-  val startNode = aStarInputSorted.head
-  val endNode = aStarInputSorted.last
-  Hypergraph.empty
+//def astar(dg: Graph[DecisionGraphStepPhase2]): Hypergraph[EdgeLabel, TokenRange] =
+//  val aStarInputSorted = dg.topologicalSort
+//  val startNode = aStarInputSorted.head
+//  val endNode = aStarInputSorted.last
+//  Hypergraph.empty

@@ -1,11 +1,9 @@
 package net.collatex.reptilian
 
 import scala.annotation.tailrec
-import scala.collection.{immutable, mutable}
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import TokenRange.*
 import net.collatex.reptilian.TokenEnum.Token
-import upickle.default.write
 
 // This method transform an alignment on the global level of the fullest depth blocks
 // into an alignment tree by splitting

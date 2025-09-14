@@ -1,6 +1,5 @@
 package net.collatex.reptilian
 
-import net.collatex.reptilian.TokenRange.IllegalTokenRange
 import net.collatex.util.Hypergraph
 import net.collatex.util.Hypergraph.Hyperedge
 

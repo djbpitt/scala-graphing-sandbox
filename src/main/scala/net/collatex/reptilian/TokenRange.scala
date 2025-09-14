@@ -2,7 +2,6 @@ package net.collatex.reptilian
 
 import SplitTokenRangeResult.*
 import SplitTokenRangeError.*
-import net.collatex.reptilian.TokenEnum.Token
 import net.collatex.reptilian.TokenRange.{EmptyTokenRange, LegalTokenRange}
 
 // From witness id to start and until (exclusive "until") offset in global token array

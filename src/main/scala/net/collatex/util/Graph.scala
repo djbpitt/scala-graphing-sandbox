@@ -1,7 +1,6 @@
 package net.collatex.util
 
 import cats.implicits.catsSyntaxSemigroup
-import net.collatex.reptilian.{DGNodeType, NodeInfo}
 
 import scala.annotation.{tailrec, targetName}
 import scala.collection.immutable.Set

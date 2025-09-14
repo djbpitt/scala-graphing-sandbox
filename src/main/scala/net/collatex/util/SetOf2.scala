@@ -1,5 +1,6 @@
 package net.collatex.util
 
+import scala.annotation.unused
 import scala.collection.StrictOptimizedIterableOps
 import scala.collection.immutable.AbstractSet
 import scala.collection.immutable.Set
@@ -25,7 +26,7 @@ class SetOf2[A](elem1: A, elem2: A) extends AbstractSet[A] with StrictOptimizedI
 
   def iterator: Iterator[A] = Iterator[A](elem1, elem2)
 
-  private def getElem(i: Int) = i match {
+  @unused private def getElem(i: Int) = i match {
     case 0 => elem1
     case 1 => elem2
   }
