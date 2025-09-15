@@ -993,5 +993,12 @@ A [shape="plain"; label=<
       rank: Int,
       witIds: Set[WitId]
   )
+
+  /** Internal representation of edge metadata for GraphML output.
+    *
+    * Visibility note:
+    *   - Declared `private[display]` so that it can be accessed in unit tests within the `display` package.
+    *   - **Not** part of the public API; it is an implementation detail of `DisplayFunctions`.
+    */
   private[display] case class GraphMlEdgeProperties(source: String, target: String, witIds: Seq[WitId])
 }
