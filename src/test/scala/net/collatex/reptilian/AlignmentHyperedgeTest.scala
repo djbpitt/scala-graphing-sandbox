@@ -104,26 +104,5 @@ class AlignmentHyperedgeTest extends AnyFunSuite:
     assert(result == expected)
 
   test("Bad data"):
-    val expected = FullHypergraph(
-      Map(
-        EdgeLabel(0) -> Set(
-          LegalTokenRange(0, 3, fakeGTa),
-          LegalTokenRange(10, 13, fakeGTa),
-          LegalTokenRange(20, 23, fakeGTa)
-        ),
-        EdgeLabel(3) -> Set(
-          LegalTokenRange(3, 8, fakeGTa),
-          LegalTokenRange(13, 18, fakeGTa),
-          LegalTokenRange(23, 28, fakeGTa)
-        ),
-        EdgeLabel(8) -> Set(
-          IllegalTokenRange(8, 11, fakeGTa),
-          IllegalTokenRange(18, 21, fakeGTa),
-          IllegalTokenRange(28, 31, fakeGTa)
-        )
-      ),
-      Set.empty
-    )
-
-    val result = he.split(3, 5, 3) // values should sum to 10
-    assert(result == expected)
+    val caught = intercept[RuntimeException](he.split(3, 5, 3)) // values should sum to 10
+    assert(caught.getMessage == "Slice failed!")
