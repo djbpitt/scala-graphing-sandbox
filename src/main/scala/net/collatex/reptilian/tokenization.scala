@@ -26,7 +26,6 @@ enum TokenEnum:
   case Token(t: String, n: String, w: WitId, g: Int, override val other: Map[String, ujson.Value] = Map.empty)
       extends TokenEnum
   case TokenSep(t: String, n: String, w: WitId, g: Int) extends TokenEnum
-  case TokenSg(t: String, n: String, w: WitId, g: Int) extends TokenEnum
   case TokenHG(
       t: String,
       n: String,
@@ -46,7 +45,6 @@ enum TokenEnum:
     case x:TokenEnum.TokenHG => (x.t, x.n, x.w, x.g).toString
     case x:TokenEnum.Token => (x.t, x.n, x.w, x.g, x.other).toString
     case x:TokenEnum.TokenSep => "[TokenSep]"
-    case x => super.toString
   }
   /* Extra token fields for pretokenized JSON input; unused in TokenSep. */
   def other: Map[String, ujson.Value] = Map.empty
