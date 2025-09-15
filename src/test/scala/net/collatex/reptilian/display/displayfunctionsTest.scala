@@ -1,12 +1,12 @@
-package net.collatex.reptilian
+package net.collatex.reptilian.display
 
+import DisplayFunctions.*
 import net.collatex.reptilian.TokenEnum.{Token, TokenSep}
 import org.scalatest.*
 import org.scalatest.funsuite.AnyFunSuite
 
 import scala.xml.Elem
-import net.collatex.reptilian.{AlignmentPoint, AlignmentRibbon}
-import os.{rel, temp}
+import net.collatex.reptilian.{AlignmentPoint, AlignmentRibbon, Siglum, TokenEnum, TokenRange}
 
 import java.io.ByteArrayOutputStream
 import scala.collection.mutable.ListBuffer

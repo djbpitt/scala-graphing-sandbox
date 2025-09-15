@@ -7,6 +7,7 @@ import scala.xml.*
 import java.net.{URI, URL}
 
 import ParseArgs._
+import net.collatex.reptilian.display.DisplayFunctions.displayDispatch
 
 /** Mimic XPath normalize-space()
   *
