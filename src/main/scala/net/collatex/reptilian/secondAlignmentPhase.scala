@@ -152,21 +152,6 @@ def createGlobalTokenArray(darwinReadings: List[List[Token]]) =
         .toVector
   tokenArray
 
-// FIXME: Used only in test; we create lTa elsewhere in real code.
-// Remove this function and update the test to point to the real one
-def createLocalTA(
-    singletonTokens: Vector[TokenEnum],
-    hg: Hypergraph[EdgeLabel, TokenRange]
-): Vector[TokenEnum] = {
-  val HGTokens: Vector[Vector[TokenHG]] = identifyHGTokenRanges(hg) // needed for local TA
-  val result: Vector[Vector[TokenEnum]] =
-    singletonTokens.map(e => TokenSg(e.t, e.n, e.w, e.g))
-      +:
-        HGTokens.zipWithIndex
-          .map((innerVector, index) => Vector(TokenSep(index.toString, index.toString, index, -1)) ++ innerVector)
-  result.flatten
-}
-
 // expand this with the graph information
 // Do not combine the hypergraphs together
 def identifyHGTokenRanges(hg: Hypergraph[EdgeLabel, TokenRange]): Vector[Vector[TokenHG]] =
