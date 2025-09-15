@@ -2,7 +2,6 @@ package net.collatex.reptilian
 
 import os.Path
 
-import scala.util.CommandLineParser
 import scala.xml.*
 
 import java.net.{URI, URL}
