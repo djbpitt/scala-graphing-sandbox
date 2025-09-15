@@ -54,7 +54,7 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
       manifestData <- resolveManifestString(manifestPathString)
       cfg = GtaBuilder.BuildConfig(tokensPerWitnessLimit, tokenPattern)
       gTaBundle <- GtaBuilder.build(manifestData, cfg, defaultColors)
-      (gTa, displaySigla, colors) = gTaBundle
+      (gTa, displaySigla, colors, fonts) = gTaBundle
       root = createAlignmentRibbon(gTa)
     } yield (root, gTa, displaySigla, colors, argMap)
 

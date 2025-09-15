@@ -277,7 +277,8 @@ class WitnessDataTest extends AnyFunSuite:
           Token("C", "c", 2, 10, Map())
         ),
         List("A", "B", "C"),
-        List("red", "blue", "green")
+        List("red", "blue", "green"),
+        List(None, Some("WitnessBFont"), None)
       )
     )
     val result = build(manifestData, cfg, defaultColors)

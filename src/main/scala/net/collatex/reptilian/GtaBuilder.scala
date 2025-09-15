@@ -62,7 +62,7 @@ object GtaBuilder:
       md: ManifestData,
       cfg: BuildConfig,
       defaultColors: List[String]
-  ): Either[String, (Vector[TokenEnum], List[Siglum], List[String])] =
+  ): Either[String, (Vector[TokenEnum], List[Siglum], /* colors */ List[String], /* fonts*/ List[Option[String]])] =
     md match
       case ManifestData(source, ManifestFormat.Json) =>
         for
@@ -84,13 +84,14 @@ object GtaBuilder:
       wits: Seq[WitnessData],
       cfg: BuildConfig,
       defaultColors: List[String]
-  ): Either[String, (Vector[TokenEnum], List[Siglum], List[String])] =
+  ): Either[String, (Vector[TokenEnum], List[Siglum], List[String], List[Option[String]])] =
     final case class Acc(
         gta: Vector[TokenEnum],
         sigla: List[Siglum],
-        colors: List[String]
+        colors: List[String],
+        fonts: List[Option[String]]
     )
-    val init = Acc(Vector.empty, Nil, Nil)
+    val init = Acc(Vector.empty, Nil, Nil, Nil)
     val out: Acc = wits.zipWithIndex.foldLeft(init) { case (acc0, (witData, witIndex)) =>
       // 1) Insert TokenSep BETWEEN witnesses (not before first)
       val acc1 =
@@ -106,14 +107,15 @@ object GtaBuilder:
           )
           acc0.copy(gta = acc0.gta :+ sep)
         }
-      // 2) Siglum + color (match legacy: witness.color or palette default)
+      // 2) Siglum + color + font (color is witness.color or palette default)
       val siglum: Siglum = witData.siglum
       val color: String = witData.color.getOrElse(defaultColors(witIndex % defaultColors.length))
-      val acc2 = acc1.copy(sigla = acc1.sigla :+ siglum, colors = acc1.colors :+ color)
+      val font: Option[String] = witData.font
+      val acc2 = acc1.copy(sigla = acc1.sigla :+ siglum, colors = acc1.colors :+ color, fonts = acc1.fonts :+ font)
       // 3) Emit tokens with w/g
       acc2.copy(gta = acc2.gta ++ witData.tokens)
     }
-    Right(out.gta, out.sigla, out.colors)
+    Right(out.gta, out.sigla, out.colors, out.fonts)
 
   /** Convert incoming XML manifest to Seq[WitnessData]
     *
