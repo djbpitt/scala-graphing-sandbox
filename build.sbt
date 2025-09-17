@@ -1,3 +1,5 @@
+val http4sVersion = "1.0.0-M44"
+val log4catsVersion = "2.7.1"
 lazy val root = (project in file("."))
   .settings(
     name := "collatex-reptilian",
@@ -38,7 +40,11 @@ lazy val root = (project in file("."))
       "net.sf.saxon" % "Saxon-HE" % "12.8",
       "com.lihaoyi" %% "requests" % "0.9.0",
       "com.networknt" % "json-schema-validator" % "1.5.8",
-      "org.virtuslab" %% "scala-yaml" % "0.3.0"
+      "org.virtuslab" %% "scala-yaml" % "0.3.0",
+      "org.http4s" %% "http4s-dsl" % http4sVersion,
+      "org.http4s" %% "http4s-ember-server" % http4sVersion,
+      "org.http4s" %% "http4s-ember-client" % http4sVersion,
+      "org.typelevel" %% "log4cats-slf4j" % log4catsVersion
     ),
     assembly / assemblyMergeStrategy := {
       case PathList("META-INF", "services", _ @_*) => MergeStrategy.concat
