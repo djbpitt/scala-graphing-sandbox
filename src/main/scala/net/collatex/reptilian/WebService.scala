@@ -17,8 +17,9 @@ object WebService extends IOApp.Simple {
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   // Define routes
-  private val helloWorldService = HttpRoutes.of[IO] { case GET -> Root / "hello" / name =>
-    Ok(s"Hello, $name.")
+  private val helloWorldService = HttpRoutes.of[IO] { case req @ GET -> Root / "hello" / name =>
+    logger.info(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}") *>
+      Ok(s"Hello, $name.")
   }
 
   // Combine routes
