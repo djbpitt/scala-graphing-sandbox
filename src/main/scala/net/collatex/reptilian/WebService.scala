@@ -10,6 +10,7 @@ import org.http4s.server.Router
 import org.typelevel.log4cats.{Logger, LoggerFactory}
 import org.typelevel.log4cats.slf4j.{Slf4jFactory, Slf4jLogger}
 
+//noinspection IllegalOptionGet
 // `extends IOApp.Simple` creates a Cats Effect runtime (don't use `@main`)
 // Because IOApp.Simple automatically calls its run method (`run: IO[Unit]`)
 // we define the method without having to call it explicitly
@@ -30,10 +31,12 @@ object WebService extends IOApp.Simple {
 
   private def defaultRoute(): HttpRoutes[IO] = HttpRoutes.of[IO] { request =>
     logger.error(s"404: ${request.method} ${request.uri} from ${request.remoteAddr.getOrElse("unknown")}") *>
-    Response[IO](
-      status = Status.NotFound,
-      entity = Entity.stream(fs2.Stream.emits(s"404: The requested resource (${request.uri}) was not found!".getBytes).covary[IO])
-    ).pure[IO]
+      Response[IO](
+        status = Status.NotFound,
+        entity = Entity.stream(
+          fs2.Stream.emits(s"404: The requested resource (${request.uri}) was not found!".getBytes).covary[IO]
+        )
+      ).pure[IO]
   }
 
   private val myRoutes = Router.define(
@@ -45,7 +48,7 @@ object WebService extends IOApp.Simple {
 
   // Combine routes
   private val httpApp: HttpApp[IO] = HttpApp[IO]({ request =>
-    myRoutes.run(request).getOrElse(throw new RuntimeException("Should not happen"))
+    myRoutes.run(request).value.map(_.get)
   })
 
   // Server setup
