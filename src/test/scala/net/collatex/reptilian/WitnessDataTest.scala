@@ -3,7 +3,6 @@ package net.collatex.reptilian
 import net.collatex.reptilian.GtaBuilder.*
 import net.collatex.reptilian.TokenEnum.{Token, TokenSep}
 import org.scalatest.funsuite.AnyFunSuite
-import os.Path
 import ujson.Num
 
 import scala.io.Source
@@ -15,20 +14,21 @@ class WitnessDataTest extends AnyFunSuite:
   // Shared by XML manifest and JSON manifest tests
   private val cfg = GtaBuilder.BuildConfig(Int.MaxValue, raw"(\w+|[^\w\s])\s*".r)
   private val defaultColors: List[String] = List(
-      "#ff7d94",
-      "#52fece",
-      "#e074c0",
-      "#abf8a3",
-      "#93a034",
-      "#01a9fd",
-      "#d1883b",
-      "#54a371",
-      "#ff9982",
-      "#b7f3ca",
-      "#9b8bc2",
-      "#fbbac9"
-    )
+    "#ff7d94",
+    "#52fece",
+    "#e074c0",
+    "#abf8a3",
+    "#93a034",
+    "#01a9fd",
+    "#d1883b",
+    "#54a371",
+    "#ff9982",
+    "#b7f3ca",
+    "#9b8bc2",
+    "#fbbac9"
+  )
 
+  // TODO: Golden result, currently unused; use in integration or end-to-end tests or remove
   // Helpers for XML manifest tests with and without root font
   /** expectedForXml()
     *
@@ -78,11 +78,9 @@ class WitnessDataTest extends AnyFunSuite:
       )
     )
 
-  /** checkXmlToWitnessData()
+  /** checkXmlFonts()
     *
-    * Run XML manifest test with supplied manifest file and expected fonts
-    *
-    * Tests differ in presence vs absence of root font
+    * Tests differ in presence vs absence of root and witness-specific fonts
     *
     * @param manifestFilename
     *   Bare filename as string; manifests are all in the same `src/test/resources/manifests` directory
@@ -92,35 +90,111 @@ class WitnessDataTest extends AnyFunSuite:
     * @return
     *   No return; runs test using `assert()`
     */
-  private def checkXmlToWitnessData(
+  private def checkXmlFonts(
       manifestFilename: String,
-      expectedFonts: (Option[String], Option[String], Option[String])
+      expectedFonts: List[Option[String]]
   ): Unit = {
-    val manifestPath = Path(s"src/test/resources/manifests/$manifestFilename", os.pwd)
+    // Load from classpath, which is more robust against changes in working directory
+    // than loading from project-relative path like os.pwd / "src" / ...
+    val manifestUrlOpt = Option(getClass.getResource(s"/manifests/$manifestFilename"))
+      .getOrElse(fail(s"Fixture not found on classpath: $manifestFilename"))
+    val manifestPath = os.Path(manifestUrlOpt.toURI)
     val manifestSource = ManifestSource.Local(manifestPath)
     val manifestData = ManifestData(manifestSource, ManifestFormat.Xml)
 
-    val manifest: Elem = retrieveManifestXml(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
-    val expected = Right(expectedForXml(expectedFonts))
+    val manifest: Elem =
+      retrieveManifestXml(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
 
-    val result = xmlToWitnessData(manifest, manifestData, cfg)
-    assert(result == expected)
+    val Right(results) = xmlToWitnessData(manifest, manifestData, cfg): @unchecked
+    assert(results.map(_.siglum.value).toList == List("A", "B", "C")) // protect against accidental reordering
+    // keep fonts and colors orthogonal
+    assert(results.map(_.font) == expectedFonts)
+    assert(results.forall(_.color.isEmpty))
   }
 
-  // XML manifest tests with and without root font
-  test("xmlToWitnessData basics with root font") {
+  /** checkXmlColors()
+    *
+    * Tests differ in presence or absence of color specifications
+    *
+    * Color must be specified on all witnesses or no witnesses (tested elsewhere)
+    *
+    * @param manifestFilename
+    *   Bare filename as string; manifests are all in the same `src/test/resources/manifests` directory
+    * @param expectedColors
+    *   Color values are either all Some(colorName) or all None
+    */
+  private def checkXmlColors(
+      manifestFilename: String,
+      expectedColors: List[Option[String]]
+  ): Unit = {
+    val manifestUrlOpt = Option(getClass.getResource(s"/manifests/$manifestFilename"))
+      .getOrElse(fail(s"Fixture not found on classpath: $manifestFilename"))
+    val manifestPath = os.Path(manifestUrlOpt.toURI)
+    val manifestSource = ManifestSource.Local(manifestPath)
+    val manifestData = ManifestData(manifestSource, ManifestFormat.Xml)
+
+    val manifest: Elem =
+      retrieveManifestXml(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
+    val Right(results) = xmlToWitnessData(manifest, manifestData, cfg): @unchecked
+
+    assert(results.map(_.siglum.value).toList == List("A", "B", "C")) // protect against accidental reordering
+    // keep fonts and colors orthogonal
+    assert(results.map(_.color).toList == expectedColors)
+    assert(results.forall(_.font.isEmpty))
+  }
+
+  // XML manifest unit tests for fonts and colors
+  test("xmlToWitnessData fonts: root font , some local") {
     // Font specified only on WitnessB, with root font
-    checkXmlToWitnessData(
+    // Root inherited, but overridden if local present
+    checkXmlFonts(
       manifestFilename = "xmlWithRootFont.xml",
-      expectedFonts = (Some("RootFont"), Some("WitnessBFont"), Some("RootFont"))
+      expectedFonts = List(Some("RootFont"), Some("WitnessBFont"), Some("RootFont"))
     )
   }
 
-  test("xmlToWitnessData basics with no root font") {
+  test("xmlToWitnessData fonts: no root, some witness fonts") {
     // Font specified only on WitnessB, no root font
-    checkXmlToWitnessData(
+    // Only local emerges; others have None
+    checkXmlFonts(
       manifestFilename = "xmlNoRootFont.xml",
-      expectedFonts = (None, Some("WitnessBFont"), None)
+      expectedFonts = List(None, Some("WitnessBFont"), None)
+    )
+  }
+
+  test("xmlToWitnessData fonts: no root, no witness fonts") {
+    checkXmlFonts(
+      manifestFilename = "xmlNoRootNoFonts.xml",
+      expectedFonts = List(None, None, None)
+    )
+  }
+
+  test("xmlToWitnessData fonts: root only, all inherit root") {
+    checkXmlFonts(
+      manifestFilename = "xmlRootFontOnly.xml",
+      expectedFonts = List(Some("RootFont"), Some("RootFont"), Some("RootFont"))
+    )
+  }
+
+  test("xmlToWitnessData fonts: all locals + root (locals win everywhere)") {
+    checkXmlFonts(
+      manifestFilename = "xmlAllLocalFonts.xml",
+      expectedFonts = List(Some("AF"), Some("BF"), Some("CF"))
+    )
+  }
+
+  test("xmlToWitnessData colors: all present are preserved (fonts None)") {
+    checkXmlColors(
+      manifestFilename = "xmlWithColorsNoFonts.xml",
+      expectedColors = List(Some("#aa"), Some("#bb"), Some("#cc"))
+    )
+  }
+
+  test("xmlToWitnessData colors: none specified -> WitnessData.color = None") {
+    // Reuse the existing fixture: no root font, no local fonts, and no colors
+    checkXmlColors(
+      manifestFilename = "xmlNoRootNoFonts.xml",
+      expectedColors = List(None, None, None)
     )
   }
 
