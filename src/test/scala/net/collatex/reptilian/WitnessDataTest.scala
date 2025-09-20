@@ -171,6 +171,7 @@ class WitnessDataTest extends AnyFunSuite:
       val tokenWitIds = witnessData.tokens.collect { case t: TokenEnum.Token => t.w }.distinct
       assert(tokenWitIds == List(witnessOffset))
 
+      // TODO: Enhance to ensure that values not only increase, but increase by one for each token
       // g strictly increasing within individual witness
       val gs = witnessData.tokens.collect { case t: TokenEnum.Token => t.g }
       assert(gs == gs.sorted.distinct, s"g must be strictly increasing for witness ${witnessData.siglum.value}")
