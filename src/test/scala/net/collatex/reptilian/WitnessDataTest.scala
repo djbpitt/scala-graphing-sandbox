@@ -106,7 +106,8 @@ class WitnessDataTest extends AnyFunSuite:
       retrieveManifestXml(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
 
     val Right(results) = xmlToWitnessData(manifest, manifestData, cfg): @unchecked
-    assert(results.map(_.siglum.value).toList == List("A", "B", "C")) // protect against accidental reordering
+    // protect against accidental reordering
+    assert(results.map(_.siglum.value).toList == List("A", "B", "C"))
     // keep fonts and colors orthogonal
     assert(results.map(_.font) == expectedFonts)
     assert(results.forall(_.color.isEmpty))
@@ -141,6 +142,39 @@ class WitnessDataTest extends AnyFunSuite:
     // keep fonts and colors orthogonal
     assert(results.map(_.color).toList == expectedColors)
     assert(results.forall(_.font.isEmpty))
+  }
+
+  private def checkXmlTokens(
+      manifestFilename: String,
+      // expected per witness, in manifest order: List of tokens (t, n)
+      expectedPerWitness: List[List[(String, String)]]
+  ): Unit = {
+    val manifestUrlOpt = Option(getClass.getResource(s"/manifests/$manifestFilename"))
+      .getOrElse(fail(s"Fixture not found on classpath: $manifestFilename"))
+    val manifestPath = os.Path(manifestUrlOpt.toURI)
+    val manifestSource = ManifestSource.Local(manifestPath)
+    val manifestData = ManifestData(manifestSource, ManifestFormat.Xml)
+    val manifest: Elem = retrieveManifestXml(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
+
+    val Right(results) = xmlToWitnessData(manifest, manifestData, cfg): @unchecked
+
+    // Protect against accidental witness reordering
+    assert(results.map(_.siglum.value).toList == List("A", "B", "C"))
+    assert(results.size == expectedPerWitness.size) // number of witnesses
+
+    results.zipWithIndex.foreach { case (witnessData, witnessOffset) =>
+      val exp = expectedPerWitness(witnessOffset)
+      val gotPairs: Seq[(String, String)] = witnessData.tokens.collect { case t: TokenEnum.Token => (t.t, t.n) }
+      assert(gotPairs == exp)
+
+      // WitId constant within witness
+      val tokenWitIds = witnessData.tokens.collect { case t: TokenEnum.Token => t.w }.distinct
+      assert(tokenWitIds == List(witnessOffset))
+
+      // g strictly increasing within individual witness
+      val gs = witnessData.tokens.collect { case t: TokenEnum.Token => t.g }
+      assert(gs == gs.sorted.distinct, s"g must be strictly increasing for witness ${witnessData.siglum.value}")
+    }
   }
 
   // XML manifest unit tests for fonts and colors
@@ -195,6 +229,17 @@ class WitnessDataTest extends AnyFunSuite:
     checkXmlColors(
       manifestFilename = "xmlNoRootNoFonts.xml",
       expectedColors = List(None, None, None)
+    )
+  }
+
+  test("xmlToWitnessData tokens: per-witness tokenization and normalization") {
+    checkXmlTokens(
+      manifestFilename = "xmlNoRootNoFonts.xml",
+      expectedPerWitness = List(
+        List(("This ", "this"), ("is ", "is"), ("witness ", "witness"), ("A\n", "a")),
+        List(("This ", "this"), ("is ", "is"), ("witness ", "witness"), ("B\n", "b")),
+        List(("This ", "this"), ("is ", "is"), ("witness ", "witness"), ("C\n", "c"))
+      )
     )
   }
 
