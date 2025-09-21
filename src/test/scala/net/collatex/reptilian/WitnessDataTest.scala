@@ -28,55 +28,6 @@ class WitnessDataTest extends AnyFunSuite:
     "#fbbac9"
   )
 
-  // TODO: Golden result, currently unused; use in integration or end-to-end tests or remove
-  /** expectedForXml()
-    *
-    * Synopsis: Create expected output for XML manifest tests
-    *
-    * @param fonts
-    *   Three-item tuple of Option[String] with expected fonts for witnesses A, B, and C (fonts may be specified on the
-    *   witness, inherited from a root font, or absent)
-    * @return
-    *   Vector[WitnessData] with correct test-specific fonts
-    */
-  private def expectedForXml(fonts: (Option[String], Option[String], Option[String])): Vector[WitnessData] =
-    val (fontA, fontB, fontC) = fonts
-    Vector(
-      WitnessData(
-        Siglum("A"),
-        None,
-        fontA,
-        Vector(
-          Token("This ", "this", 0, 0),
-          Token("is ", "is", 0, 1),
-          Token("witness ", "witness", 0, 2),
-          Token("A" + "\u000a", "a", 0, 3)
-        )
-      ),
-      WitnessData(
-        Siglum("B"),
-        None,
-        fontB,
-        Vector(
-          Token("This ", "this", 1, 5),
-          Token("is ", "is", 1, 6),
-          Token("witness ", "witness", 1, 7),
-          Token("B" + "\u000a", "b", 1, 8)
-        )
-      ),
-      WitnessData(
-        Siglum("C"),
-        None,
-        fontC,
-        Vector(
-          Token("This ", "this", 2, 10),
-          Token("is ", "is", 2, 11),
-          Token("witness ", "witness", 2, 12),
-          Token("C" + "\u000a", "c", 2, 13)
-        )
-      )
-    )
-
   // Helper functions to build Seq[WitnessData] from XML and JSON manifests
   // Used in both unit and integration tests
   private def createWitnessDataFromXml(manifestFilename: String): Seq[WitnessData] =
@@ -91,7 +42,6 @@ class WitnessDataTest extends AnyFunSuite:
       retrieveManifestXml(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
     val Right(results) = xmlToWitnessData(manifest, manifestData, cfg): @unchecked
     results
-
   private def createWitnessDataFromJson(manifestFilename: String): Seq[WitnessData] =
     // Load from classpath, which is more robust against changes in working directory
     // than loading from project-relative path like os.pwd / "src" / ...
@@ -103,7 +53,7 @@ class WitnessDataTest extends AnyFunSuite:
     val Right(results) = jsonToWitnessData(manifest, cfg): @unchecked
     results
 
-  // Helpers for XML manifest tests for fonts, colors, and tokens
+  // Helpers for XML manifest tests for fonts, colors, and token content (`t`, `n`)
   /** checkXmlFonts()
     *
     * Tests differ in presence vs absence of root and witness-specific fonts
@@ -120,14 +70,17 @@ class WitnessDataTest extends AnyFunSuite:
       manifestFilename: String,
       expectedFonts: List[Option[String]]
   ): Unit = {
-    // Load from classpath, which is more robust against changes in working directory
-    // than loading from project-relative path like os.pwd / "src" / ...
-    val results = createWitnessDataFromXml(manifestFilename)
-    // protect against accidental reordering
-    assert(results.map(_.siglum.value).toList == List("A", "B", "C"))
-    // keep fonts and colors orthogonal
-    assert(results.map(_.font) == expectedFonts)
-    assert(results.forall(_.color.isEmpty))
+    val wds = createWitnessDataFromXml(manifestFilename)
+    assume(
+      wds.length == expectedFonts.length,
+      s"test setup bug: expected ${expectedFonts.length} witnesses, got ${wds.length}"
+    )
+    for (i <- expectedFonts.indices) {
+      val wd = wds(i)
+      withClue(s"witness ${wd.siglum.value} (index $i): ") {
+        assert(wd.font == expectedFonts(i))
+      }
+    }
   }
 
   /** checkXmlColors()
@@ -145,40 +98,40 @@ class WitnessDataTest extends AnyFunSuite:
       manifestFilename: String,
       expectedColors: List[Option[String]]
   ): Unit = {
-    val results = createWitnessDataFromXml(manifestFilename)
-    assert(results.map(_.siglum.value).toList == List("A", "B", "C")) // protect against accidental reordering
-    // keep fonts and colors orthogonal
-    assert(results.map(_.color).toList == expectedColors)
-    assert(results.forall(_.font.isEmpty))
+    val wds = createWitnessDataFromXml(manifestFilename)
+    assume(
+      wds.length == expectedColors.length,
+      s"test setup bug: expected ${expectedColors.length} witnesses, got ${wds.length}"
+    )
+    for (i <- expectedColors.indices) {
+      val wd = wds(i)
+      withClue(s"witness ${wd.siglum.value} (index $i): ") {
+        assert(wd.color == expectedColors(i))
+      }
+    }
   }
 
-  private def checkXmlTokens(
+  /** Check `t` and `n` values against golden
+    *
+    * @param manifestFilename
+    *   String
+    * @param expectedPerWitness
+    *   List of lists of two-item tuples (`t`, `n`), one inner list per witness
+    */
+  private def checkXmlTokensContent(
       manifestFilename: String,
-      // expected per witness, in manifest order: List of tokens (t, n)
       expectedPerWitness: List[List[(String, String)]]
   ): Unit = {
-    val results = createWitnessDataFromXml(manifestFilename)
-    // Protect against accidental witness reordering
-    assert(results.map(_.siglum.value).toList == List("A", "B", "C"))
-    assert(results.size == expectedPerWitness.size) // number of witnesses
-
-    results.zipWithIndex.foreach { case (witnessData, witnessOffset) =>
-      val exp = expectedPerWitness(witnessOffset)
-      val gotPairs: Seq[(String, String)] = witnessData.tokens.collect { case t: TokenEnum.Token => (t.t, t.n) }
-      assert(gotPairs == exp)
-
-      // WitId constant within witness
-      val tokenWitIds = witnessData.tokens.map(_.w).distinct
-      assert(tokenWitIds == List(witnessOffset))
-
-      // g increases by 1 with each successive token within a witness
-      // NB: No test across witnesses because this test suite is for WitnessData instances, and
-      //   changes across witnesses are not within a single instance
-      val gs = witnessData.tokens.map(_.g)
-      assert(
-        gs == Range(gs.head, gs.last + 1),
-        s"g must be strictly increasing for witness ${witnessData.siglum.value}"
-      )
+    val wds = createWitnessDataFromXml(manifestFilename)
+    assume(
+      wds.length == expectedPerWitness.length,
+      s"test setup bug: expected ${expectedPerWitness.length} witnesses, got ${wds.length}"
+    )
+    wds.zipWithIndex.foreach { case (wd, i) =>
+      val gotPairs = wd.tokens.map(t => (t.t, t.n))
+      withClue(s"witness ${wd.siglum.value} (index $i): ") {
+        assert(gotPairs == expectedPerWitness(i))
+      }
     }
   }
 
@@ -191,7 +144,6 @@ class WitnessDataTest extends AnyFunSuite:
       expectedFonts = List(Some("RootFont"), Some("WitnessBFont"), Some("RootFont"))
     )
   }
-
   test("xmlToWitnessData fonts: no root, some witness fonts") {
     // Font specified only on WitnessB, no root font
     // Only local emerges; others have None
@@ -200,35 +152,30 @@ class WitnessDataTest extends AnyFunSuite:
       expectedFonts = List(None, Some("WitnessBFont"), None)
     )
   }
-
   test("xmlToWitnessData fonts: no root, no witness fonts") {
     checkXmlFonts(
       manifestFilename = "xmlNoRootNoFonts.xml",
       expectedFonts = List(None, None, None)
     )
   }
-
   test("xmlToWitnessData fonts: root only, all inherit root") {
     checkXmlFonts(
       manifestFilename = "xmlRootFontOnly.xml",
       expectedFonts = List(Some("RootFont"), Some("RootFont"), Some("RootFont"))
     )
   }
-
   test("xmlToWitnessData fonts: all locals + root (locals win everywhere)") {
     checkXmlFonts(
       manifestFilename = "xmlAllLocalFonts.xml",
       expectedFonts = List(Some("AF"), Some("BF"), Some("CF"))
     )
   }
-
   test("xmlToWitnessData colors: all present are preserved (fonts None)") {
     checkXmlColors(
       manifestFilename = "xmlWithColorsNoFonts.xml",
       expectedColors = List(Some("#aa"), Some("#bb"), Some("#cc"))
     )
   }
-
   test("xmlToWitnessData colors: none specified -> WitnessData.color = None") {
     // Reuse the existing fixture: no root font, no local fonts, and no colors
     checkXmlColors(
@@ -236,62 +183,13 @@ class WitnessDataTest extends AnyFunSuite:
       expectedColors = List(None, None, None)
     )
   }
-
   test("xmlToWitnessData tokens: per-witness tokenization and normalization") {
-    checkXmlTokens(
+    checkXmlTokensContent(
       manifestFilename = "xmlNoRootNoFonts.xml",
       expectedPerWitness = List(
         List(("This ", "this"), ("is ", "is"), ("witness ", "witness"), ("A\n", "a")),
         List(("This ", "this"), ("is ", "is"), ("witness ", "witness"), ("B\n", "b")),
         List(("This ", "this"), ("is ", "is"), ("witness ", "witness"), ("C\n", "c"))
-      )
-    )
-  }
-
-  // TODO: Golden result, currently unused; use in integration or end-to-end tests or remove
-  /** expectedForJson()
-    *
-    * Synopsis: Create expected output for JSON manifest tests
-    *
-    * @param fonts
-    *   Three-item tuple of Option[String] with expected fonts for witnesses A, B, and C (fonts may be specified on the
-    *   witness, inherited from a root font, or absent)
-    * @return
-    *   Vector[WitnessData] with correct test-specific fonts
-    */
-  private def expectedForJson(fonts: (Option[String], Option[String], Option[String])): Vector[WitnessData] = {
-    val (fontA, fontB, fontC) = fonts
-    Vector(
-      WitnessData(
-        Siglum("A"),
-        None,
-        fontA,
-        Vector(
-          Token("Some ", "some", 0, 0),
-          Token("content ", "content", 0, 1),
-          Token("A", "a", 0, 2)
-        )
-      ),
-      WitnessData(
-        Siglum("B"),
-        None,
-        fontB,
-        Vector(
-          Token("Some ", "some", 1, 4),
-          Token("content ", "content", 1, 5),
-          Token("B", "b", 1, 6)
-        )
-      ),
-      WitnessData(
-        Siglum("C"),
-        None,
-        fontC,
-        Vector(
-          Token("Some ", "some", 2, 8),
-          // note: witness C includes an "other" field example
-          Token("content ", "content", 2, 9, Map("x-extra" -> Num(123))),
-          Token("C", "c", 2, 10)
-        )
       )
     )
   }
@@ -315,12 +213,17 @@ class WitnessDataTest extends AnyFunSuite:
       manifestFilename: String,
       expectedFonts: List[Option[String]]
   ): Unit = {
-    val results = createWitnessDataFromJson(manifestFilename)
-    // protect against accidental reordering
-    assert(results.map(_.siglum.value).toList == List("A", "B", "C"))
-    // keep fonts and colors orthogonal
-    assert(results.map(_.font) == expectedFonts)
-    assert(results.forall(_.color.isEmpty))
+    val wds = createWitnessDataFromJson(manifestFilename)
+    assume(
+      wds.length == expectedFonts.length,
+      s"test setup bug: expected ${expectedFonts.length} witnesses, got ${wds.length}"
+    )
+    for (i <- expectedFonts.indices) {
+      val wd = wds(i)
+      withClue(s"witness ${wd.siglum.value} (index $i): ") {
+        assert(wd.font == expectedFonts(i))
+      }
+    }
   }
 
   /** checkJsonColors()
@@ -338,57 +241,50 @@ class WitnessDataTest extends AnyFunSuite:
       manifestFilename: String,
       expectedColors: List[Option[String]]
   ): Unit = {
-    val results = createWitnessDataFromJson(manifestFilename)
-    assert(results.map(_.siglum.value).toList == List("A", "B", "C")) // protect against accidental reordering
-    // No fonts to keep fonts and colors orthogonal
-    assert(results.forall(_.font.isEmpty))
-    assert(results.map(_.color).toList == expectedColors)
-  }
-
-  private def checkJsonTokensTN(
-      manifestFilename: String,
-      // expected per witness, in manifest order: List of tokens (t, n)
-      expectedPerWitness: List[List[(String, String)]]
-  ): Unit = {
-    val results = createWitnessDataFromJson(manifestFilename)
-    // Protect against accidental witness reordering
-    assert(results.map(_.siglum.value).toList == List("A", "B", "C"))
-    assert(results.size == expectedPerWitness.size) // number of witnesses
-
-    results.zipWithIndex.foreach { case (witnessData, witnessOffset) =>
-      val exp = expectedPerWitness(witnessOffset)
-      val gotPairs: Seq[(String, String)] = witnessData.tokens.collect { case t: TokenEnum.Token => (t.t, t.n) }
-      assert(gotPairs == exp)
-
-      // WitId constant within witness
-      val tokenWitIds = witnessData.tokens.map(_.w).distinct
-      assert(tokenWitIds == List(witnessOffset))
-
-      // g increases by 1 with each successive token within a witness
-      // NB: No test across witnesses because this test suite is for WitnessData instances, and
-      //   changes across witnesses are not within a single instance
-      val gs = witnessData.tokens.map(_.g)
-      assert(
-        gs == Range(gs.head, gs.last + 1),
-        s"g must be strictly increasing for witness ${witnessData.siglum.value}"
-      )
+    val wds = createWitnessDataFromJson(manifestFilename)
+    assume(
+      wds.length == expectedColors.length,
+      s"test setup bug: expected ${expectedColors.length} witnesses, got ${wds.length}"
+    )
+    for (i <- expectedColors.indices) {
+      val wd = wds(i)
+      withClue(s"witness ${wd.siglum.value} (index $i): ") {
+        assert(wd.color == expectedColors(i))
+      }
     }
   }
-
-  private def checkJsonTokensExtra(
+  private def checkJsonTokensContent(
+      manifestFilename: String,
+      // per witness, in manifest order: List of tokens (t, n)
+      expectedPerWitness: List[List[(String, String)]]
+  ): Unit = {
+    val wds = createWitnessDataFromJson(manifestFilename)
+    assume(
+      wds.length == expectedPerWitness.length,
+      s"test setup bug: expected ${expectedPerWitness.length} witnesses, got ${wds.length}"
+    )
+    wds.zipWithIndex.foreach { case (wd, i) =>
+      val gotPairs = wd.tokens.map(t => (t.t, t.n))
+      withClue(s"witness ${wd.siglum.value} (index $i): ") {
+        assert(gotPairs == expectedPerWitness(i))
+      }
+    }
+  }
+  private def checkJsonTokensOther(
       manifestFilename: String,
       // expected per witness, in manifest order: List of maps for `other` property
       expectedPerWitness: List[List[Map[String, Value]]]
   ): Unit = {
-    val results = createWitnessDataFromJson(manifestFilename)
-    // Protect against accidental witness reordering
-    assert(results.map(_.siglum.value).toList == List("A", "B", "C"))
-    assert(results.size == expectedPerWitness.size) // number of witnesses
-
-    results.zipWithIndex.foreach { case (witnessData, witnessOffset) =>
-      val exp = expectedPerWitness(witnessOffset)
-      val gotExtras: Seq[Map[String, Value]] = witnessData.tokens.collect { case t: TokenEnum.Token => t.other }
-      assert(gotExtras == exp, s"Error in other property of token")
+    val wds = createWitnessDataFromJson(manifestFilename)
+    assume(
+      wds.length == expectedPerWitness.length,
+      s"test setup bug: expected ${expectedPerWitness.length} witnesses, got ${wds.length}"
+    )
+    wds.zipWithIndex.foreach { case (wd, wi) =>
+      val gotOthers: Seq[Map[String, Value]] = wd.tokens.map(_.other)
+      withClue(s"witness ${wd.siglum.value} (index $wi): ") {
+        assert(gotOthers == expectedPerWitness(wi), s"Error in other property of token")
+      }
     }
   }
 
@@ -399,51 +295,44 @@ class WitnessDataTest extends AnyFunSuite:
       expectedFonts = List(Some("RootFont"), Some("WitnessBFont"), Some("RootFont"))
     )
   }
-
   test("jsonToWitnessData fonts: no root, some witness fonts") {
     checkJsonFonts(
       manifestFilename = "jsonWithoutRootFont.json",
       expectedFonts = List(None, Some("WitnessBFont"), None)
     )
   }
-
   test("jsonToWitnessData fonts: no root, no witness fonts") {
     checkJsonFonts(
       manifestFilename = "jsonNoRootNoFonts.json",
       expectedFonts = List(None, None, None)
     )
   }
-
   test("jsonToWitnessData fonts: root only, all inherit root") {
     checkJsonFonts(
       manifestFilename = "jsonRootFontOnly.json",
       expectedFonts = List(Some("RootFont"), Some("RootFont"), Some("RootFont"))
     )
   }
-
   test("jsonToWitnessData fonts: all locals + root (locals win everywhere)") {
     checkJsonFonts(
       manifestFilename = "jsonAllLocalFonts.json",
       expectedFonts = List(Some("WitnessAFont"), Some("WitnessBFont"), Some("WitnessCFont"))
     )
   }
-
   test("jsonToWitnessData colors: all present are preserved (fonts None)") {
     checkJsonColors(
       manifestFilename = "jsonWithColors.json",
       expectedColors = List(Some("red"), Some("blue"), Some("green"))
     )
   }
-
   test("jsonToWitnessData colors: none specified -> WitnessData.color = None") {
     checkJsonColors(
       manifestFilename = "jsonNoRootNoFonts.json",
       expectedColors = List(None, None, None)
     )
   }
-
   test("jsonToWitnessData tokens: per-witness tokenization and normalization, content") {
-    checkJsonTokensTN(
+    checkJsonTokensContent(
       manifestFilename = "jsonContent.json",
       expectedPerWitness = List(
         List(("Some ", "some"), ("content ", "content"), ("A", "a")),
@@ -452,9 +341,8 @@ class WitnessDataTest extends AnyFunSuite:
       )
     )
   }
-
   test("jsonToWitnessData tokens: per-witness tokenization and normalization, tokens with n") {
-    checkJsonTokensTN(
+    checkJsonTokensContent(
       manifestFilename = "jsonTokensWithN.json",
       expectedPerWitness = List(
         List(("Some ", "some"), ("tokens ", "tokens"), ("A", "a")),
@@ -463,9 +351,8 @@ class WitnessDataTest extends AnyFunSuite:
       )
     )
   }
-
   test("jsonToWitnessData tokens: per-witness tokenization and normalization, tokens without n") {
-    checkJsonTokensTN(
+    checkJsonTokensContent(
       manifestFilename = "jsonTokensWithoutN.json",
       expectedPerWitness = List(
         List(("Some ", "some"), ("tokens ", "tokens"), ("A", "a")),
@@ -474,9 +361,8 @@ class WitnessDataTest extends AnyFunSuite:
       )
     )
   }
-
-  test("jsonToWitnessData tokens: extra properties") {
-    checkJsonTokensExtra(
+  test("jsonToWitnessData tokens: other properties") {
+    checkJsonTokensOther(
       manifestFilename = "jsonTokensWithoutN.json",
       expectedPerWitness = List(
         List(Map.empty, Map.empty, Map.empty),
@@ -486,11 +372,71 @@ class WitnessDataTest extends AnyFunSuite:
     )
   }
 
-  // Pre-build() (set-level) integration tests on Seq[WitnessData]
+  // Pre-build() (set-level) unit tests on Seq[WitnessData]
+  // Tests witness order preservation, w values, g values
+  test("xml: witness ordering is preserved") {
+    val manifestFilename: String = "xmlNoRootNoFonts.xml"
+    val wds = createWitnessDataFromXml(manifestFilename)
+    val expected = Seq(Siglum("A"), Siglum("B"), Siglum("C"))
+    val actual = wds.map(_.siglum)
+    assert(actual == expected)
+  }
+  test("json: witness ordering is preserved") {
+    val manifestFilename: String = "jsonNoRootNoFonts.json"
+    val wds = createWitnessDataFromJson(manifestFilename)
+    val expected = Seq(Siglum("A"), Siglum("B"), Siglum("C"))
+    val actual = wds.map(_.siglum)
+    assert(actual == expected)
+  }
+  test("xml: w is uniform within each witness and equals the witness index") {
+    val wds = createWitnessDataFromXml("xmlNoRootNoFonts.xml")
+    wds.zipWithIndex.foreach { case (wd, wi) =>
+      val toks = wd.tokens
+      withClue(s"witness ${wd.siglum.value} (index $wi): ") {
+        assert(toks.nonEmpty, "no tokens found")
+        val distinctW = toks.map(_.w).distinct
+        assert(distinctW == List(wi), s"expected all w == $wi, got distinct = $distinctW")
+      }
+    }
+  }
+  test("json: w is uniform within each witness and equals the witness index") {
+    val wds = createWitnessDataFromJson("jsonNoRootNoFonts.json")
+    wds.zipWithIndex.foreach { case (wd, wi) =>
+      val toks = wd.tokens
+      withClue(s"witness ${wd.siglum.value} (index $wi): ") {
+        assert(toks.nonEmpty, "no tokens found")
+        val distinctW = toks.map(_.w).distinct
+        assert(distinctW == List(wi), s"expected all w == $wi, got distinct = $distinctW")
+      }
+    }
+  }
+  test("xml: g is strictly increasing within each witness") {
+    val manifestFilename = "xmlNoRootNoFonts.xml"
+    val wds = createWitnessDataFromXml(manifestFilename)
+    wds.foreach { wd =>
+      val gs = wd.tokens.collect { case t: TokenEnum.Token => t.g }
+      withClue(s"witness ${wd.siglum.value}: ") {
+        assert(gs.nonEmpty, "no tokens found")
+        // strictly increasing: equal to sorted and also no duplicates
+        assert(gs == gs.sorted, s"g not nondecreasing: $gs")
+        assert(gs.distinct.size == gs.size, s"g has duplicates: $gs")
+      }
+    }
+  }
+  test("json: g is strictly increasing within each witness") {
+    val manifestFilename: String = "jsonNoRootNoFonts.json"
+    val wds = createWitnessDataFromJson(manifestFilename)
+    wds.zipWithIndex.foreach { case (wd, wi) =>
+      val toks = wd.tokens
+      withClue(s"witness ${wd.siglum.value} (index $wi): ") {
+        assert(toks.nonEmpty, "no tokens found")
+        val distinctW = toks.map(_.w).distinct
+        assert(distinctW == List(wi), s"expected all w == $wi, got distinct = $distinctW")
+        assert(toks.forall(_.w == wi), s"some tokens have w != $wi")
+      }
+    }
+  }
 
-  // Verify properties that span witnesses but are fully specified without running build()
-
-  ignore("x") { ??? }
   // JSON integration tests (build())
   // Confirm that all properties of all witnesses match golden
   test("build() with json manifest using Seq[WitnessData]") {
