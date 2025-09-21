@@ -29,7 +29,6 @@ class WitnessDataTest extends AnyFunSuite:
   )
 
   // TODO: Golden result, currently unused; use in integration or end-to-end tests or remove
-  // Helpers for XML manifest tests for fonts, colors, and tokens
   /** expectedForXml()
     *
     * Synopsis: Create expected output for XML manifest tests
@@ -78,6 +77,33 @@ class WitnessDataTest extends AnyFunSuite:
       )
     )
 
+  // Helper functions to build Seq[WitnessData] from XML and JSON manifests
+  // Used in both unit and integration tests
+  private def createWitnessDataFromXml(manifestFilename: String): Seq[WitnessData] =
+    // Load from classpath, which is more robust against changes in working directory
+    // than loading from project-relative path like os.pwd / "src" / ...
+    val manifestUrlOpt = Option(getClass.getResource(s"/manifests/$manifestFilename"))
+      .getOrElse(fail(s"Fixture not found on classpath: $manifestFilename"))
+    val manifestPath = os.Path(manifestUrlOpt.toURI)
+    val manifestSource = ManifestSource.Local(manifestPath)
+    val manifestData = ManifestData(manifestSource, ManifestFormat.Xml)
+    val manifest: Elem =
+      retrieveManifestXml(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
+    val Right(results) = xmlToWitnessData(manifest, manifestData, cfg): @unchecked
+    results
+
+  private def createWitnessDataFromJson(manifestFilename: String): Seq[WitnessData] =
+    // Load from classpath, which is more robust against changes in working directory
+    // than loading from project-relative path like os.pwd / "src" / ...
+    val manifestUrlOpt = Option(getClass.getResource(s"/manifests/$manifestFilename"))
+      .getOrElse(fail(s"Fixture not found on classpath: $manifestFilename"))
+    val manifestPath = os.Path(manifestUrlOpt.toURI)
+    val manifestSource = ManifestSource.Local(manifestPath)
+    val manifest = retrieveManifestJson(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
+    val Right(results) = jsonToWitnessData(manifest, cfg): @unchecked
+    results
+
+  // Helpers for XML manifest tests for fonts, colors, and tokens
   /** checkXmlFonts()
     *
     * Tests differ in presence vs absence of root and witness-specific fonts
@@ -96,14 +122,7 @@ class WitnessDataTest extends AnyFunSuite:
   ): Unit = {
     // Load from classpath, which is more robust against changes in working directory
     // than loading from project-relative path like os.pwd / "src" / ...
-    val manifestUrlOpt = Option(getClass.getResource(s"/manifests/$manifestFilename"))
-      .getOrElse(fail(s"Fixture not found on classpath: $manifestFilename"))
-    val manifestPath = os.Path(manifestUrlOpt.toURI)
-    val manifestSource = ManifestSource.Local(manifestPath)
-    val manifestData = ManifestData(manifestSource, ManifestFormat.Xml)
-    val manifest: Elem =
-      retrieveManifestXml(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
-    val Right(results) = xmlToWitnessData(manifest, manifestData, cfg): @unchecked
+    val results = createWitnessDataFromXml(manifestFilename)
     // protect against accidental reordering
     assert(results.map(_.siglum.value).toList == List("A", "B", "C"))
     // keep fonts and colors orthogonal
@@ -126,16 +145,7 @@ class WitnessDataTest extends AnyFunSuite:
       manifestFilename: String,
       expectedColors: List[Option[String]]
   ): Unit = {
-    val manifestUrlOpt = Option(getClass.getResource(s"/manifests/$manifestFilename"))
-      .getOrElse(fail(s"Fixture not found on classpath: $manifestFilename"))
-    val manifestPath = os.Path(manifestUrlOpt.toURI)
-    val manifestSource = ManifestSource.Local(manifestPath)
-    val manifestData = ManifestData(manifestSource, ManifestFormat.Xml)
-
-    val manifest: Elem =
-      retrieveManifestXml(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
-    val Right(results) = xmlToWitnessData(manifest, manifestData, cfg): @unchecked
-
+    val results = createWitnessDataFromXml(manifestFilename)
     assert(results.map(_.siglum.value).toList == List("A", "B", "C")) // protect against accidental reordering
     // keep fonts and colors orthogonal
     assert(results.map(_.color).toList == expectedColors)
@@ -147,15 +157,7 @@ class WitnessDataTest extends AnyFunSuite:
       // expected per witness, in manifest order: List of tokens (t, n)
       expectedPerWitness: List[List[(String, String)]]
   ): Unit = {
-    val manifestUrlOpt = Option(getClass.getResource(s"/manifests/$manifestFilename"))
-      .getOrElse(fail(s"Fixture not found on classpath: $manifestFilename"))
-    val manifestPath = os.Path(manifestUrlOpt.toURI)
-    val manifestSource = ManifestSource.Local(manifestPath)
-    val manifestData = ManifestData(manifestSource, ManifestFormat.Xml)
-    val manifest: Elem = retrieveManifestXml(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
-
-    val Right(results) = xmlToWitnessData(manifest, manifestData, cfg): @unchecked
-
+    val results = createWitnessDataFromXml(manifestFilename)
     // Protect against accidental witness reordering
     assert(results.map(_.siglum.value).toList == List("A", "B", "C"))
     assert(results.size == expectedPerWitness.size) // number of witnesses
@@ -313,14 +315,7 @@ class WitnessDataTest extends AnyFunSuite:
       manifestFilename: String,
       expectedFonts: List[Option[String]]
   ): Unit = {
-    // Load from classpath, which is more robust against changes in working directory
-    // than loading from project-relative path like os.pwd / "src" / ...
-    val manifestUrlOpt = Option(getClass.getResource(s"/manifests/$manifestFilename"))
-      .getOrElse(fail(s"Fixture not found on classpath: $manifestFilename"))
-    val manifestPath = os.Path(manifestUrlOpt.toURI)
-    val manifestSource = ManifestSource.Local(manifestPath)
-    val manifest = retrieveManifestJson(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
-    val Right(results) = jsonToWitnessData(manifest, cfg): @unchecked
+    val results = createWitnessDataFromJson(manifestFilename)
     // protect against accidental reordering
     assert(results.map(_.siglum.value).toList == List("A", "B", "C"))
     // keep fonts and colors orthogonal
@@ -343,13 +338,7 @@ class WitnessDataTest extends AnyFunSuite:
       manifestFilename: String,
       expectedColors: List[Option[String]]
   ): Unit = {
-    val manifestUrlOpt = Option(getClass.getResource(s"/manifests/$manifestFilename"))
-      .getOrElse(fail(s"Fixture not found on classpath: $manifestFilename"))
-    val manifestPath = os.Path(manifestUrlOpt.toURI)
-    val manifestSource = ManifestSource.Local(manifestPath)
-    val manifest = retrieveManifestJson(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
-    val Right(results) = jsonToWitnessData(manifest, cfg): @unchecked
-
+    val results = createWitnessDataFromJson(manifestFilename)
     assert(results.map(_.siglum.value).toList == List("A", "B", "C")) // protect against accidental reordering
     // No fonts to keep fonts and colors orthogonal
     assert(results.forall(_.font.isEmpty))
@@ -361,13 +350,7 @@ class WitnessDataTest extends AnyFunSuite:
       // expected per witness, in manifest order: List of tokens (t, n)
       expectedPerWitness: List[List[(String, String)]]
   ): Unit = {
-    val manifestUrlOpt = Option(getClass.getResource(s"/manifests/$manifestFilename"))
-      .getOrElse(fail(s"Fixture not found on classpath: $manifestFilename"))
-    val manifestPath = os.Path(manifestUrlOpt.toURI)
-    val manifestSource = ManifestSource.Local(manifestPath)
-    val manifest = retrieveManifestJson(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
-    val Right(results) = jsonToWitnessData(manifest, cfg): @unchecked
-
+    val results = createWitnessDataFromJson(manifestFilename)
     // Protect against accidental witness reordering
     assert(results.map(_.siglum.value).toList == List("A", "B", "C"))
     assert(results.size == expectedPerWitness.size) // number of witnesses
@@ -394,16 +377,10 @@ class WitnessDataTest extends AnyFunSuite:
 
   private def checkJsonTokensExtra(
       manifestFilename: String,
-      // expected per witness, in manifest order: List of tokens (t, n)
+      // expected per witness, in manifest order: List of maps for `other` property
       expectedPerWitness: List[List[Map[String, Value]]]
   ): Unit = {
-    val manifestUrlOpt = Option(getClass.getResource(s"/manifests/$manifestFilename"))
-      .getOrElse(fail(s"Fixture not found on classpath: $manifestFilename"))
-    val manifestPath = os.Path(manifestUrlOpt.toURI)
-    val manifestSource = ManifestSource.Local(manifestPath)
-    val manifest = retrieveManifestJson(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
-    val Right(results) = jsonToWitnessData(manifest, cfg): @unchecked
-
+    val results = createWitnessDataFromJson(manifestFilename)
     // Protect against accidental witness reordering
     assert(results.map(_.siglum.value).toList == List("A", "B", "C"))
     assert(results.size == expectedPerWitness.size) // number of witnesses
@@ -509,9 +486,15 @@ class WitnessDataTest extends AnyFunSuite:
     )
   }
 
+  // Pre-build() (set-level) integration tests on Seq[WitnessData]
+
+  // Verify properties that span witnesses but are fully specified without running build()
+
+  ignore("x") { ??? }
   // JSON integration tests (build())
-  ignore("build() with json manifest using Seq[WitnessData]") {
-    val manifestFilename = "jsonWithColors.json"
+  // Confirm that all properties of all witnesses match golden
+  test("build() with json manifest using Seq[WitnessData]") {
+    val manifestFilename = "jsonIntegration.json"
     val manifestPath = os.pwd / "src" / "test" / "resources" / "manifests" / manifestFilename
     val manifestSource = ManifestSource.Local(manifestPath)
     val manifestData = ManifestData(manifestSource, ManifestFormat.Json)
