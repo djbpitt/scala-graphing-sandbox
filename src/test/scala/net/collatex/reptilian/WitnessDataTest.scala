@@ -29,7 +29,7 @@ class WitnessDataTest extends AnyFunSuite:
   )
 
   // TODO: Golden result, currently unused; use in integration or end-to-end tests or remove
-  // Helpers for XML manifest tests with and without root font
+  // Helpers for XML manifest tests for fonts, colors, and tokens
   /** expectedForXml()
     *
     * Synopsis: Create expected output for XML manifest tests
@@ -101,10 +101,8 @@ class WitnessDataTest extends AnyFunSuite:
     val manifestPath = os.Path(manifestUrlOpt.toURI)
     val manifestSource = ManifestSource.Local(manifestPath)
     val manifestData = ManifestData(manifestSource, ManifestFormat.Xml)
-
     val manifest: Elem =
       retrieveManifestXml(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
-
     val Right(results) = xmlToWitnessData(manifest, manifestData, cfg): @unchecked
     // protect against accidental reordering
     assert(results.map(_.siglum.value).toList == List("A", "B", "C"))
@@ -175,7 +173,10 @@ class WitnessDataTest extends AnyFunSuite:
       // NB: No test across witnesses because this test suite is for WitnessData instances, and
       //   changes across witnesses are not within a single instance
       val gs = witnessData.tokens.map(_.g)
-      assert(gs == Range(gs.head, gs.last + 1), s"g must be strictly increasing for witness ${witnessData.siglum.value}")
+      assert(
+        gs == Range(gs.head, gs.last + 1),
+        s"g must be strictly increasing for witness ${witnessData.siglum.value}"
+      )
     }
   }
 
@@ -245,7 +246,7 @@ class WitnessDataTest extends AnyFunSuite:
     )
   }
 
-  // Helpers for JSON manifest tests with and without root font
+  // TODO: Golden result, currently unused; use in integration or end-to-end tests or remove
   /** expectedForJson()
     *
     * Synopsis: Create expected output for JSON manifest tests
@@ -293,7 +294,8 @@ class WitnessDataTest extends AnyFunSuite:
     )
   }
 
-  /** checkJsonToWitnessData()
+  // Helpers for JSON manifest tests for fonts, colors, and tokens
+  /** checkJsonFonts()
     *
     * Run JSON manifest test with supplied manifest file and expected fonts
     *
@@ -307,34 +309,62 @@ class WitnessDataTest extends AnyFunSuite:
     * @return
     *   No return; runs test using `assert()`
     */
-  private def checkJsonToWitnessData(
+  private def checkJsonFonts(
       manifestFilename: String,
-      expectedFonts: (Option[String], Option[String], Option[String])
+      expectedFonts: List[Option[String]]
   ): Unit = {
-    val manifestPath = os.pwd / "src" / "test" / "resources" / "manifests" / manifestFilename
+    // Load from classpath, which is more robust against changes in working directory
+    // than loading from project-relative path like os.pwd / "src" / ...
+    val manifestUrlOpt = Option(getClass.getResource(s"/manifests/$manifestFilename"))
+      .getOrElse(fail(s"Fixture not found on classpath: $manifestFilename"))
+    val manifestPath = os.Path(manifestUrlOpt.toURI)
     val manifestSource = ManifestSource.Local(manifestPath)
-    val json = retrieveManifestJson(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
-    val expected = Right(expectedForJson(expectedFonts))
-    val result = jsonToWitnessData(json, cfg)
-    assert(result == expected)
+    val manifest = retrieveManifestJson(manifestSource).getOrElse(fail(s"Could not load $manifestFilename"))
+    val Right(results) = jsonToWitnessData(manifest, cfg): @unchecked
+    // protect against accidental reordering
+    assert(results.map(_.siglum.value).toList == List("A", "B", "C"))
+    // keep fonts and colors orthogonal
+    assert(results.map(_.font) == expectedFonts)
+    assert(results.forall(_.color.isEmpty))
   }
 
   // JSON manifest tests with and without root font
-  test("jsonToWitnessData basics with root font") {
-    checkJsonToWitnessData(
+  test("jsonToWitnessData fonts: root font, some local") {
+    checkJsonFonts(
       manifestFilename = "jsonWithRootFont.json",
-      expectedFonts = (Some("RootFont"), Some("WitnessBFont"), Some("RootFont"))
+      expectedFonts = List(Some("RootFont"), Some("WitnessBFont"), Some("RootFont"))
     )
   }
 
-  test("jsonToWitnessData basics with no root font") {
-    checkJsonToWitnessData(
+  test("jsonToWitnessData fonts: no root, some witness fonts") {
+    checkJsonFonts(
       manifestFilename = "jsonWithoutRootFont.json",
-      expectedFonts = (None, Some("WitnessBFont"), None)
+      expectedFonts = List(None, Some("WitnessBFont"), None)
     )
   }
 
-  test("jsonToWitnessData basics with colors") {
+  test("jsonToWitnessData fonts: no root, no witness fonts") {
+    checkJsonFonts(
+      manifestFilename = "jsonNoRootNoFonts.json",
+      expectedFonts = List(None, None, None)
+    )
+  }
+
+  test("jsonToWitnessData fonts: root only, all inherit root") {
+    checkJsonFonts(
+      manifestFilename = "jsonRootFontOnly.json",
+      expectedFonts = List(Some("RootFont"), Some("RootFont"), Some("RootFont"))
+    )
+  }
+
+  test("jsonToWitnessData fonts: all locals + root (locals win everywhere)") {
+    checkJsonFonts(
+      manifestFilename = "jsonAllLocalFonts.json",
+      expectedFonts = List(Some("WitnessAFont"), Some("WitnessBFont"), Some("WitnessCFont"))
+    )
+  }
+
+  test("jsonToWitnessData colors: all present are preserved (fonts None)") {
     val manifestFilename = "jsonWithColors.json"
     val manifestPath = os.pwd / "src" / "test" / "resources" / "manifests" / manifestFilename
     val manifestSource = ManifestSource.Local(manifestPath)
@@ -377,6 +407,11 @@ class WitnessDataTest extends AnyFunSuite:
     assert(result == expected)
   }
 
+  ignore("jsonToWitnessData colors: none specified -> WitnessData.color = None") { ??? }
+
+  ignore("jsonToWitnessData tokens: per-witness tokenization and normalization") { ??? }
+
+  // JSON integration tests (build())
   test("build() with json manifest using Seq[WitnessData]") {
     val manifestFilename = "jsonWithColors.json"
     val manifestPath = os.pwd / "src" / "test" / "resources" / "manifests" / manifestFilename
@@ -406,6 +441,7 @@ class WitnessDataTest extends AnyFunSuite:
     assert(result == expected)
   }
 
+  // Miscellaneous
   /* Verify that normalizeToken() correctly removes trailing newline */
   test("Normalize token test") {
     val cfg = GtaBuilder.BuildConfig(Int.MaxValue, raw"(\w+|[^\w\s])\s*".r)
