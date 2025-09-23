@@ -3,7 +3,7 @@ package net.collatex.reptilian
 import net.collatex.reptilian.GtaBuilder.*
 import net.collatex.reptilian.TokenEnum.{Token, TokenSep}
 import org.scalatest.funsuite.AnyFunSuite
-import ujson.{Num, Value}
+import ujson.Value
 
 import scala.io.Source
 import scala.util.Using
@@ -414,25 +414,27 @@ class WitnessDataTest extends AnyFunSuite:
     val manifestFilename = "xmlNoRootNoFonts.xml"
     val wds = createWitnessDataFromXml(manifestFilename)
     wds.foreach { wd =>
-      val gs = wd.tokens.collect { case t: TokenEnum.Token => t.g }
-      withClue(s"witness ${wd.siglum.value}: ") {
-        assert(gs.nonEmpty, "no tokens found")
-        // strictly increasing: equal to sorted and also no duplicates
-        assert(gs == gs.sorted, s"g not nondecreasing: $gs")
-        assert(gs.distinct.size == gs.size, s"g has duplicates: $gs")
+      val gs = wd.tokens.map(_.g)
+      assert(gs.nonEmpty, "no tokens found")
+      // sliding pairs, j is offset of pair (for reporting purposes)
+      gs.zip(gs.tail).zipWithIndex.foreach { case ((a, b), j) =>
+        withClue(s"${wd.siglum.value} pair#$j (g=$a → $b): ") {
+          assert(b - a == 1)
+        }
       }
     }
   }
   test("json: g is strictly increasing within each witness") {
     val manifestFilename: String = "jsonNoRootNoFonts.json"
     val wds = createWitnessDataFromJson(manifestFilename)
-    wds.zipWithIndex.foreach { case (wd, wi) =>
-      val toks = wd.tokens
-      withClue(s"witness ${wd.siglum.value} (index $wi): ") {
-        assert(toks.nonEmpty, "no tokens found")
-        val distinctW = toks.map(_.w).distinct
-        assert(distinctW == List(wi), s"expected all w == $wi, got distinct = $distinctW")
-        assert(toks.forall(_.w == wi), s"some tokens have w != $wi")
+    wds.foreach { wd =>
+      val gs = wd.tokens.map(_.g)
+      assert(gs.nonEmpty, "no tokens found")
+      // sliding pairs, j is offset of pair (for reporting purposes)
+      gs.zip(gs.tail).zipWithIndex.foreach { case ((a, b), j) =>
+        withClue(s"${wd.siglum.value} pair#$j (g=$a → $b): ") {
+          assert(b - a == 1)
+        }
       }
     }
   }
