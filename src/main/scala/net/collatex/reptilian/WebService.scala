@@ -21,16 +21,16 @@ object WebService extends IOApp.Simple {
   // Define routes relative to web service
   // E.g., URL/api/hello/name regards URL/api as Root (see myRoutes, below)
   private val helloWorldService = HttpRoutes.of[IO] { case req @ GET -> Root / "hello" / name =>
-    logger.info(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}") *>
+    logger.debug(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}") *>
       Ok(s"Hello, $name.")
   }
   private val goodbyeWorldService = HttpRoutes.of[IO] { case req @ GET -> Root / "goodbye" / name =>
-    logger.info(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}") *>
+    logger.debug(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}") *>
       Ok(s"Goodbye, $name.")
   }
 
   private def defaultRoute(): HttpRoutes[IO] = HttpRoutes.of[IO] { request =>
-    logger.error(s"404: ${request.method} ${request.uri} from ${request.remoteAddr.getOrElse("unknown")}") *>
+    logger.debug(s"404: ${request.method} ${request.uri} from ${request.remoteAddr.getOrElse("unknown")}") *>
       Response[IO](
         status = Status.NotFound,
         entity = Entity.stream(
@@ -60,7 +60,6 @@ object WebService extends IOApp.Simple {
     .build // at this point creates `Resource[IO, Server], which is used immediately
     .use { server =>
       logger.info(s"Server started at http://${server.address}") *>
-        logger.debug("Debugging server routes") *>
         IO.never // Keeps the server running indefinitely by suspending IO
     }
 }
