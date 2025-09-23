@@ -438,8 +438,39 @@ class WitnessDataTest extends AnyFunSuite:
       }
     }
   }
+  test("xml: start g values skip to allow for eventual separators") {
+    val manifestFilename = "xmlNoRootNoFonts.xml"
+    val wds = createWitnessDataFromXml(manifestFilename)
+    wds.sliding(2).foreach { case Seq(prev, next) =>
+      val prevLast = prev.tokens.last.g
+      val nextFirst = next.tokens.head.g
+      withClue(s"${prev.siglum.value} → ${next.siglum.value}: ") {
+        // +2 because build() will later occupy the gap with a TokenSep
+        assert(nextFirst == prevLast + 2, s"expected ${prevLast + 2}, got $nextFirst")
+      }
+    }
+    withClue(s"${wds.head.siglum.value}: ") {
+      assert(wds.head.tokens.head.g == 0, s"first witness should start at g=0")
+    }
 
-  // JSON integration tests (build())
+  }
+  test("json: start g values skip to allow for eventual separators") {
+    val manifestFilename = "jsonNoRootNoFonts.json"
+    val wds = createWitnessDataFromJson(manifestFilename)
+    wds.sliding(2).foreach { case Seq(prev, next) =>
+      val prevLast = prev.tokens.last.g
+      val nextFirst = next.tokens.head.g
+      withClue(s"${prev.siglum.value} → ${next.siglum.value}: ") {
+        // +2 because build() will later occupy the gap with a TokenSep
+        assert(nextFirst == prevLast + 2, s"expected ${prevLast + 2}, got $nextFirst")
+      }
+    }
+    withClue(s"${wds.head.siglum.value}: ") {
+      assert(wds.head.tokens.head.g == 0, s"first witness should start at g=0")
+    }
+  }
+
+  // XML and JSON integration tests (build())
   // Confirm that all properties of all witnesses match golden
   test("build() with json manifest using Seq[WitnessData]") {
     val manifestFilename = "jsonIntegration.json"
