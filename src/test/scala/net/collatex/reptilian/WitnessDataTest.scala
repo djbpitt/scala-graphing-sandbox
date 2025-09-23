@@ -470,6 +470,10 @@ class WitnessDataTest extends AnyFunSuite:
     }
   }
 
+  // Pre-build() unit tests on `buildFromWitnessData()`
+  // Test gTa, sigla, colors, fonts
+
+
   // XML and JSON integration tests (build())
   // Confirm that all properties of all witnesses match golden
   test("build() with json manifest using Seq[WitnessData]") {
