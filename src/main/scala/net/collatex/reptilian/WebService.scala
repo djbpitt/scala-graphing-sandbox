@@ -3,6 +3,9 @@ package net.collatex.reptilian
 import cats.effect.{IO, IOApp}
 import cats.syntax.all.catsSyntaxApplicativeId
 import com.comcast.ip4s.{ipv4, port}
+import org.http4s.headers.`Content-Type`
+import org.http4s.{DecodeResult, EntityDecoder, InvalidMessageBodyFailure, MediaType}
+// import org.http4s.FormDataDecoder.formEntityDecoder
 import org.http4s.{Entity, HttpApp, HttpRoutes, Response, Status}
 import org.http4s.dsl.io.*
 import org.http4s.ember.server.EmberServerBuilder
@@ -18,15 +21,41 @@ object WebService extends IOApp.Simple {
   given loggerFactory: LoggerFactory[IO] = Slf4jFactory.create[IO]
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
+  // Custom decoder for ujson.Value
+  implicit val jsonDecoder: EntityDecoder[IO, ujson.Value] = EntityDecoder[IO, String].flatMapR { str =>
+    try {
+      DecodeResult.success(IO.pure(ujson.read(str)))
+    } catch {
+      case e: Exception => DecodeResult.failure(IO.pure(InvalidMessageBodyFailure("Invalid JSON", Some(e))))
+    }
+  }
+
   // Define routes relative to web service
   // E.g., URL/api/hello/name regards URL/api as Root (see myRoutes, below)
   private val helloWorldService = HttpRoutes.of[IO] { case req @ GET -> Root / "hello" / name =>
     logger.debug(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}") *>
       Ok(s"Hello, $name.")
   }
-  private val goodbyeWorldService = HttpRoutes.of[IO] { case req @ GET -> Root / "goodbye" / name =>
-    logger.debug(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}") *>
-      Ok(s"Goodbye, $name.")
+
+  // TODO: Currently just echoes JSON input
+  private val reptilianService = HttpRoutes.of[IO] { case req @ POST -> Root =>
+    // Process the request and get the response
+    val responseIO: IO[Response[IO]] = req
+      .as[ujson.Value]
+      .flatMap { json =>
+        val readableJson = json.render(indent = 2)
+        Ok(readableJson).map(_.withContentType(`Content-Type`(MediaType.application.json)))
+      }
+      .handleErrorWith { _ =>
+        BadRequest("Invalid or missing JSON in request body")
+      }
+
+    // Log the status after computing the response
+    responseIO.flatMap { response =>
+      logger.debug(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}") *>
+      logger.debug(s"Response status: ${response.status.code} ${response.status.reason}") *>
+      IO.pure(response)
+    }
   }
 
   private def defaultRoute(): HttpRoutes[IO] = HttpRoutes.of[IO] { request =>
@@ -40,10 +69,8 @@ object WebService extends IOApp.Simple {
   }
 
   private val myRoutes = Router.define(
-    "/" -> helloWorldService,
-    "/api" -> helloWorldService,
-    "/" -> goodbyeWorldService,
-    "/api" -> goodbyeWorldService
+    "/" -> reptilianService,
+    "/" -> helloWorldService
   )(defaultRoute())
 
   // Combine routes
