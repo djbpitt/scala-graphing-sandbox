@@ -22,7 +22,10 @@ object WebService extends IOApp.Simple {
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   // Custom decoder for ujson.Value
-  implicit val jsonDecoder: EntityDecoder[IO, ujson.Value] = EntityDecoder[IO, String].flatMapR { str =>
+  // Explicit `using` clause not needed because http4s `as` method is
+  // defined as `def as[T](implicit ev: EntityDecoder[F, T]): F[T]`, which
+  // subsumes `using` behavior
+  given jsonDecoder: EntityDecoder[IO, ujson.Value] = EntityDecoder[IO, String].flatMapR { str =>
     try {
       DecodeResult.success(IO.pure(ujson.read(str)))
     } catch {
@@ -53,8 +56,8 @@ object WebService extends IOApp.Simple {
     // Log the status after computing the response
     responseIO.flatMap { response =>
       logger.debug(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}") *>
-      logger.debug(s"Response status: ${response.status.code} ${response.status.reason}") *>
-      IO.pure(response)
+        logger.debug(s"Response status: ${response.status.code} ${response.status.reason}") *>
+        IO.pure(response)
     }
   }
 
