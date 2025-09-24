@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8"/>
+    <title>JSON Submission Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .error {
+            color: red;
+            display: none;
+            margin-bottom: 10px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 10px;
+        }
+        input[type="file"] {
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Submit JSON Payload</h1>
+    <form id="jsonForm" action="http://localhost:8082" method="post" enctype="multipart/form-data">
+        <div>
+            <label for="jsonText">Paste JSON:</label>
+            <textarea id="jsonText" name="jsonText"></textarea>
+        </div>
+        <div>
+            <label for="jsonFile">Upload JSON File:</label>
+            <input type="file" id="jsonFile" name="jsonFile" accept=".json"/>
+        </div>
+        <div id="errorMessage" class="error">Please provide JSON either by pasting or uploading a file, but not both.</div>
+        <button type="submit">Submit</button>
+        <div><pre id="output"></pre></div>
+    </form>
+    <script>
+      //<![CDATA[
+        const form = document.getElementById("jsonForm");
+        const jsonText = document.getElementById("jsonText");
+        const jsonFile = document.getElementById("jsonFile");
+        const errorMessage = document.getElementById("errorMessage");
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            // Check if both or neither input is provided
+            const hasText = jsonText.value.trim() !== "";
+            const hasFile = jsonFile.files.length > 0;
+
+            if ((hasText && hasFile) || (!hasText && !hasFile)) {
+                errorMessage.style.display = "block";
+                return;
+            } else {
+                errorMessage.style.display = "none";
+            }
+
+            try {
+                let jsonData;
+                if (hasText) {
+                    // Validate JSON from textarea
+                    jsonData = JSON.parse(jsonText.value);
+                } else {
+                    // Read file content
+                    const file = jsonFile.files[0];
+                    const text = await file.text();
+                    jsonData = JSON.parse(text);
+                }
+
+                // Send POST request
+                const response = await fetch("http://localhost:8082", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(jsonData)
+                });
+
+                if (response.ok) {
+                    const responseData = await response.text()
+                    alert("JSON submitted successfully!");
+                    console.log("Response:", responseData);
+                    document.getElementById("output").textContent = responseData;
+                    form.reset();
+                } else {
+                    alert(`Error: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        });
+      //]]>
+    </script>
+</body>
+</html>

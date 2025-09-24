@@ -1,32 +1,26 @@
 package net.collatex.reptilian
 
-import cats.effect.{ExitCode, IO, IOApp}
+import cats.effect.{ExitCode, IO, IOApp, Resource}
 import cats.implicits.catsSyntaxEither
 import cats.syntax.all.catsSyntaxApplicativeId
 import com.comcast.ip4s.{Port, ipv4}
 import org.http4s.headers.`Content-Type`
 import org.http4s.{DecodeResult, EntityDecoder, InvalidMessageBodyFailure, MediaType}
-// import org.http4s.FormDataDecoder.formEntityDecoder
 import org.http4s.{Entity, HttpApp, HttpRoutes, Response, Status}
 import org.http4s.dsl.io.*
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Router
+import org.http4s.server.middleware.CORS
+import org.http4s.server.staticcontent.resourceServiceBuilder
 import org.typelevel.log4cats.{Logger, LoggerFactory}
 import org.typelevel.log4cats.slf4j.{Slf4jFactory, Slf4jLogger}
 
 //noinspection IllegalOptionGet
-// `extends IOApp` creates a Cats Effect runtime (don't use `@main`); we use
-//   `IOApp` instead of `IOApp` simple because we need command-line arguments
-// Because IOApp automatically calls its run method (`run: IO[Unit]`)
-//   we define the method without having to call it explicitly
 object WebService extends IOApp {
   given loggerFactory: LoggerFactory[IO] = Slf4jFactory.create[IO]
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
-  // Custom decoder for ujson.Value
-  // Explicit `using` clause not needed because http4s `as` method is
-  // defined as `def as[T](implicit ev: EntityDecoder[F, T]): F[T]`, which
-  // subsumes `using` behavior
+  // Custom decoder for ujson.Value (UNCHANGED)
   given jsonDecoder: EntityDecoder[IO, ujson.Value] = EntityDecoder[IO, String].flatMapR { str =>
     try {
       DecodeResult.success(IO.pure(ujson.read(str)))
@@ -35,16 +29,14 @@ object WebService extends IOApp {
     }
   }
 
-  // Define routes relative to web service
-  // E.g., URL/api/hello/name regards URL/api as Root (see myRoutes, below)
+  // Define routes relative to web service (UNCHANGED)
   private val helloWorldService = HttpRoutes.of[IO] { case req @ GET -> Root / "hello" / name =>
     logger.debug(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}") *>
       Ok(s"Hello, $name.")
   }
 
-  // TODO: Currently just echoes JSON input
+  // TODO: Currently just echoes JSON input (UNCHANGED)
   private val reptilianService = HttpRoutes.of[IO] { case req @ POST -> Root =>
-    // Process the request and get the response
     val responseIO: IO[Response[IO]] = req
       .as[ujson.Value]
       .flatMap { json =>
@@ -55,7 +47,6 @@ object WebService extends IOApp {
         BadRequest("Invalid or missing JSON in request body")
       }
 
-    // Log the status after computing the response
     responseIO.flatMap { response =>
       logger.debug(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}") *>
         logger.debug(s"Response status: ${response.status.code} ${response.status.reason}") *>
@@ -63,6 +54,7 @@ object WebService extends IOApp {
     }
   }
 
+  // Default route for 404 (UNCHANGED)
   private def defaultRoute(): HttpRoutes[IO] = HttpRoutes.of[IO] { request =>
     logger.debug(s"404: ${request.method} ${request.uri} from ${request.remoteAddr.getOrElse("unknown")}") *>
       Response[IO](
@@ -73,21 +65,28 @@ object WebService extends IOApp {
       ).pure[IO]
   }
 
-  private val myRoutes = Router.define(
-    "/" -> reptilianService,
-    "/" -> helloWorldService
-  )(defaultRoute())
+  // MODIFIED: Wrap resourceServiceBuilder in Resource.eval to get Resource[IO, HttpRoutes[IO]]
+  private val staticService: Resource[IO, HttpRoutes[IO]] =
+    Resource.eval(resourceServiceBuilder[IO]("/static").toRoutes)
 
-  // Parse port from args or environment, default to 8082
+  // Define myRoutes as Resource[IO, HttpRoutes[IO]] (UNCHANGED)
+  private val myRoutes: Resource[IO, HttpRoutes[IO]] = staticService.map { static =>
+    Router.define(
+      "/" -> reptilianService,
+      "/" -> helloWorldService,
+      "/static" -> static
+    )(defaultRoute())
+  }
+
+  // Parse port from args or environment, default to 8082 (UNCHANGED)
   private def getPort(args: List[String], defaultPort: Int): IO[(Int, String)] = IO {
-    // Check command-line args first (e.g., "--port 8083")
     val portFromArgs = args
       .sliding(2)
       .collectFirst { case List("--port", portStr) =>
         portStr.toIntOption
       }
       .flatten
-      .filter(p => p >= 0 && p <= 65535) // Validate port range
+      .filter(p => p >= 0 && p <= 65535)
 
     portFromArgs match {
       case Some(port) => (port, "command line")
@@ -99,32 +98,40 @@ object WebService extends IOApp {
     }
   }.handleErrorWith { e =>
     logger.error(s"Failed to parse port, using default $defaultPort from config.yaml: ${e.getMessage}") *>
-      IO.pure((defaultPort, "config.yaml")) // Fallback to defaultPort with source
+      IO.pure((defaultPort, "config.yaml"))
   }
 
-  // Combine routes
-  private val httpApp: HttpApp[IO] = HttpApp[IO]({ request =>
-    myRoutes.run(request).value.map(_.get)
-  })
-
-  // Server setup
+  // Construct serverResource correctly to produce HttpApp[IO] (UNCHANGED)
   def run(args: List[String]): IO[ExitCode] = {
-    for {
-      ResolvedConfig(tokensPerWitnessLimit, tokenPattern, defaultColors, defaultPort) <- IO.fromEither(
-        loadResolvedConfig().leftMap(e => new RuntimeException(e))
+    val serverResource: Resource[IO, ExitCode] = for {
+      config <- Resource.eval(
+        IO.fromEither(loadResolvedConfig().leftMap(e => new RuntimeException(e)))
       )
-      (port, portSource) <- getPort(args, defaultPort)
+      ResolvedConfig(tokensPerWitnessLimit, tokenPattern, defaultColors, defaultPort) = config
+      portAndSource <- Resource.eval(getPort(args, defaultPort))
+      (port, portSource) = portAndSource
+      httpApp <- myRoutes.flatMap { routes =>
+        Resource.eval(
+          CORS.policy.withAllowOriginAll.withAllowMethodsAll.withAllowHeadersAll
+            .httpRoutes(routes)
+            .map(_.orNotFound)
+        )
+      }
       server <- EmberServerBuilder
         .default[IO]
-        .withHost(ipv4"0.0.0.0") // listens on *all* network addresses (EmberServerBuilder)
-        .withPort(Port.fromInt(port).get) // Safe because port is validated above
+        .withHost(ipv4"0.0.0.0")
+        .withPort(Port.fromInt(port).get)
         .withHttpApp(httpApp)
         .build
-        .use { server =>
-          logger.info(
-            s"Server started at http://${server.address} using port from $portSource"
-          ) *> IO.never // Keeps the server running indefinitely
+        .evalMap { server =>
+          logger
+            .info(
+              s"Server started at http://${server.address} using port from $portSource"
+            )
+            .as(ExitCode.Success)
         }
     } yield ExitCode.Success
+
+    serverResource.use(_ => IO.never)
   }
 }
