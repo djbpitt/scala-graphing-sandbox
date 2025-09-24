@@ -90,10 +90,10 @@ object WebService extends IOApp {
       .filter(p => p >= 0 && p <= 65535) // Validate port range
 
     portFromArgs match {
-      case Some(port) => (port, "command-line")
+      case Some(port) => (port, "command line")
       case None =>
         sys.env.get("REPTILIAN_PORT").flatMap(_.toIntOption) match {
-          case Some(port) => (port, "environment")
+          case Some(port) => (port, "environment (REPTILIAN_PORT)")
           case None       => (defaultPort, "config.yaml")
         }
     }
