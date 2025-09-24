@@ -1,8 +1,8 @@
 package net.collatex.reptilian
 
-import cats.effect.{IO, IOApp}
+import cats.effect.{ExitCode, IO, IOApp}
 import cats.syntax.all.catsSyntaxApplicativeId
-import com.comcast.ip4s.{ipv4, port}
+import com.comcast.ip4s.{Port, ipv4, port}
 import org.http4s.headers.`Content-Type`
 import org.http4s.{DecodeResult, EntityDecoder, InvalidMessageBodyFailure, MediaType}
 // import org.http4s.FormDataDecoder.formEntityDecoder
@@ -14,12 +14,16 @@ import org.typelevel.log4cats.{Logger, LoggerFactory}
 import org.typelevel.log4cats.slf4j.{Slf4jFactory, Slf4jLogger}
 
 //noinspection IllegalOptionGet
-// `extends IOApp.Simple` creates a Cats Effect runtime (don't use `@main`)
-// Because IOApp.Simple automatically calls its run method (`run: IO[Unit]`)
-// we define the method without having to call it explicitly
-object WebService extends IOApp.Simple {
+// `extends IOApp` creates a Cats Effect runtime (don't use `@main`); we use
+//   `IOApp` instead of `IOApp` simple because we need command-line arguments
+// Because IOApp automatically calls its run method (`run: IO[Unit]`)
+//   we define the method without having to call it explicitly
+object WebService extends IOApp {
   given loggerFactory: LoggerFactory[IO] = Slf4jFactory.create[IO]
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
+
+  // Define default port as a constant
+  private val DefaultPort = 8082
 
   // Custom decoder for ujson.Value
   // Explicit `using` clause not needed because http4s `as` method is
@@ -76,20 +80,41 @@ object WebService extends IOApp.Simple {
     "/" -> helloWorldService
   )(defaultRoute())
 
+  // Parse port from args or environment, default to 8082
+  private def getPort(args: List[String]): IO[Int] = IO {
+    // Check command-line args first (e.g., "--port 8083")
+    // collectFirst stops after first match
+    val portFromArgs = args
+      .sliding(2)
+      .collectFirst { case List("--port", portStr) =>
+        portStr.toIntOption
+      }
+      .flatten
+      .filter(p => p >= 0 && p <= 65535) // Validate port range
+    // Check environment variable "REPTILIAN_PORT" if args don't provide a valid port
+    portFromArgs.orElse(sys.env.get("REPTILIAN_PORT").flatMap(_.toIntOption)).getOrElse(DefaultPort)
+  }.handleErrorWith { e =>
+    logger.error(s"Failed to parse port, using default 8082: ${e.getMessage}")
+    IO.pure(DefaultPort)
+  }
+
   // Combine routes
   private val httpApp: HttpApp[IO] = HttpApp[IO]({ request =>
     myRoutes.run(request).value.map(_.get)
   })
 
   // Server setup
-  val run: IO[Unit] = EmberServerBuilder
-    .default[IO]
-    .withHost(ipv4"0.0.0.0")
-    .withPort(port"8082")
-    .withHttpApp(httpApp)
-    .build // at this point creates `Resource[IO, Server], which is used immediately
-    .use { server =>
-      logger.info(s"Server started at http://${server.address}") *>
-        IO.never // Keeps the server running indefinitely by suspending IO
-    }
+  def run(args: List[String]): IO[ExitCode] = for {
+    port <- getPort(args)
+    server <- EmberServerBuilder
+      .default[IO]
+      .withHost(ipv4"0.0.0.0")
+      .withPort(Port.fromInt(port).get) // Safe because port is validated above
+      .withHttpApp(httpApp)
+      .build
+      .use { server =>
+        logger.info(s"Server started at http://${server.address}") *>
+          IO.never // Keeps the server running indefinitely
+      }
+  } yield ExitCode.Success
 }
