@@ -6,7 +6,7 @@ import cats.syntax.all.catsSyntaxApplicativeId
 import com.comcast.ip4s.{Port, ipv4}
 import org.http4s.headers.`Content-Type`
 import org.http4s.{DecodeResult, EntityDecoder, InvalidMessageBodyFailure, MediaType}
-import org.http4s.{Entity, HttpApp, HttpRoutes, Response, Status}
+import org.http4s.{Entity, HttpRoutes, Response, Status}
 import org.http4s.dsl.io.*
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Router
@@ -15,12 +15,11 @@ import org.http4s.server.staticcontent.resourceServiceBuilder
 import org.typelevel.log4cats.{Logger, LoggerFactory}
 import org.typelevel.log4cats.slf4j.{Slf4jFactory, Slf4jLogger}
 
-//noinspection IllegalOptionGet
 object WebService extends IOApp {
   given loggerFactory: LoggerFactory[IO] = Slf4jFactory.create[IO]
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
-  // Custom decoder for ujson.Value (UNCHANGED)
+  // Custom decoder for ujson.Value
   given jsonDecoder: EntityDecoder[IO, ujson.Value] = EntityDecoder[IO, String].flatMapR { str =>
     try {
       DecodeResult.success(IO.pure(ujson.read(str)))
@@ -29,13 +28,13 @@ object WebService extends IOApp {
     }
   }
 
-  // Define routes relative to web service (UNCHANGED)
+  // Define routes relative to web service
   private val helloWorldService = HttpRoutes.of[IO] { case req @ GET -> Root / "hello" / name =>
     logger.debug(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}") *>
       Ok(s"Hello, $name.")
   }
 
-  // TODO: Currently just echoes JSON input (UNCHANGED)
+  // TODO: Currently just echoes JSON input
   private val reptilianService = HttpRoutes.of[IO] { case req @ POST -> Root =>
     val responseIO: IO[Response[IO]] = req
       .as[ujson.Value]
@@ -54,7 +53,7 @@ object WebService extends IOApp {
     }
   }
 
-  // Default route for 404 (UNCHANGED)
+  // Default route for 404
   private def defaultRoute(): HttpRoutes[IO] = HttpRoutes.of[IO] { request =>
     logger.debug(s"404: ${request.method} ${request.uri} from ${request.remoteAddr.getOrElse("unknown")}") *>
       Response[IO](
@@ -65,11 +64,12 @@ object WebService extends IOApp {
       ).pure[IO]
   }
 
-  // MODIFIED: Wrap resourceServiceBuilder in Resource.eval to get Resource[IO, HttpRoutes[IO]]
+  // Wrap resourceServiceBuilder in Resource.eval to get Resource[IO, HttpRoutes[IO]]
+  // Contains index.xhtml main page
   private val staticService: Resource[IO, HttpRoutes[IO]] =
     Resource.eval(resourceServiceBuilder[IO]("/static").toRoutes)
 
-  // Define myRoutes as Resource[IO, HttpRoutes[IO]] (UNCHANGED)
+  // Define myRoutes as Resource[IO, HttpRoutes[IO]]
   private val myRoutes: Resource[IO, HttpRoutes[IO]] = staticService.map { static =>
     Router.define(
       "/" -> reptilianService,
@@ -78,15 +78,16 @@ object WebService extends IOApp {
     )(defaultRoute())
   }
 
-  // Parse port from args or environment, default to 8082 (UNCHANGED)
+  // Parse port from args or environment, default to 8082 from config.yaml
+  // Include source of final port (command line, environment, config.yaml) to aid in debugging
   private def getPort(args: List[String], defaultPort: Int): IO[(Int, String)] = IO {
     val portFromArgs = args
       .sliding(2)
-      .collectFirst { case List("--port", portStr) =>
+      .collectFirst { case List("--port", portStr) => // collectFirst stops after first hit
         portStr.toIntOption
       }
       .flatten
-      .filter(p => p >= 0 && p <= 65535)
+      .filter(p => p >= 0 && p <= 65535) // Valid port numbers
 
     portFromArgs match {
       case Some(port) => (port, "command line")
@@ -101,7 +102,7 @@ object WebService extends IOApp {
       IO.pure((defaultPort, "config.yaml"))
   }
 
-  // Construct serverResource correctly to produce HttpApp[IO] (UNCHANGED)
+  // Construct serverResource to produce HttpApp[IO]
   def run(args: List[String]): IO[ExitCode] = {
     val serverResource: Resource[IO, ExitCode] = for {
       config <- Resource.eval(
