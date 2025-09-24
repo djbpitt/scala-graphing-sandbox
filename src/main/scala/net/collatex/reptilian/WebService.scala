@@ -108,7 +108,7 @@ object WebService extends IOApp {
     port <- getPort(args)
     server <- EmberServerBuilder
       .default[IO]
-      .withHost(ipv4"0.0.0.0")
+      .withHost(ipv4"0.0.0.0") // listens on *all* network addresses (EmberServerBuilder)
       .withPort(Port.fromInt(port).get) // Safe because port is validated above
       .withHttpApp(httpApp)
       .build
