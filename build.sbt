@@ -6,8 +6,10 @@ lazy val root = (project in file("."))
     version := "0.1.0-SNAPSHOT",
     scalaVersion := "3.7.1",
     assemblyJarName := s"collatex-reptilian-0.1.0-SNAPSHOT.jar",
-    // Compile / mainClass := Some("net.collatex.reptilian.manifest"),
-    // Exclude from IntelliJ inspection
+    fork := true, // Enable forking for all run tasks
+    Compile / run / fork := true, // Ensure forking for run
+    Compile / run / javaOptions += "-Dcats.effect.warnOnNonMainThreadDetected=false", // Suppress IOApp warning
+    Global / excludeLintKeys += (Compile / runMain / fork), // Suppress unused key warning
     Compile / resourceDirectories -= baseDirectory.value / "src" / "main" / "outputs",
     Compile / resourceDirectories -= baseDirectory.value / "src" / "main" / "mockups",
     Compile / resourceDirectories -= baseDirectory.value / "src" / "main" / "docs" / "refs",
@@ -43,6 +45,7 @@ lazy val root = (project in file("."))
       "org.http4s" %% "http4s-dsl" % http4sVersion,
       "org.http4s" %% "http4s-ember-server" % http4sVersion,
       "org.http4s" %% "http4s-ember-client" % http4sVersion,
+      "org.http4s" %% "http4s-server" % http4sVersion,
       "org.typelevel" %% "log4cats-slf4j" % log4catsVersion,
       "ch.qos.logback" % "logback-classic" % "1.5.18"
     ),
