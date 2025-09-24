@@ -1,8 +1,9 @@
 package net.collatex.reptilian
 
 import cats.effect.{ExitCode, IO, IOApp}
+import cats.implicits.catsSyntaxEither
 import cats.syntax.all.catsSyntaxApplicativeId
-import com.comcast.ip4s.{Port, ipv4, port}
+import com.comcast.ip4s.{Port, ipv4}
 import org.http4s.headers.`Content-Type`
 import org.http4s.{DecodeResult, EntityDecoder, InvalidMessageBodyFailure, MediaType}
 // import org.http4s.FormDataDecoder.formEntityDecoder
@@ -21,9 +22,6 @@ import org.typelevel.log4cats.slf4j.{Slf4jFactory, Slf4jLogger}
 object WebService extends IOApp {
   given loggerFactory: LoggerFactory[IO] = Slf4jFactory.create[IO]
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
-
-  // Define default port as a constant
-  private val DefaultPort = 8082
 
   // Custom decoder for ujson.Value
   // Explicit `using` clause not needed because http4s `as` method is
@@ -81,9 +79,8 @@ object WebService extends IOApp {
   )(defaultRoute())
 
   // Parse port from args or environment, default to 8082
-  private def getPort(args: List[String]): IO[Int] = IO {
+  private def getPort(args: List[String], defaultPort: Int): IO[(Int, String)] = IO {
     // Check command-line args first (e.g., "--port 8083")
-    // collectFirst stops after first match
     val portFromArgs = args
       .sliding(2)
       .collectFirst { case List("--port", portStr) =>
@@ -91,11 +88,18 @@ object WebService extends IOApp {
       }
       .flatten
       .filter(p => p >= 0 && p <= 65535) // Validate port range
-    // Check environment variable "REPTILIAN_PORT" if args don't provide a valid port
-    portFromArgs.orElse(sys.env.get("REPTILIAN_PORT").flatMap(_.toIntOption)).getOrElse(DefaultPort)
+
+    portFromArgs match {
+      case Some(port) => (port, "command-line")
+      case None =>
+        sys.env.get("REPTILIAN_PORT").flatMap(_.toIntOption) match {
+          case Some(port) => (port, "environment")
+          case None       => (defaultPort, "config.yaml")
+        }
+    }
   }.handleErrorWith { e =>
-    logger.error(s"Failed to parse port, using default 8082: ${e.getMessage}")
-    IO.pure(DefaultPort)
+    logger.error(s"Failed to parse port, using default $defaultPort from config.yaml: ${e.getMessage}") *>
+      IO.pure((defaultPort, "config.yaml")) // Fallback to defaultPort with source
   }
 
   // Combine routes
@@ -104,17 +108,23 @@ object WebService extends IOApp {
   })
 
   // Server setup
-  def run(args: List[String]): IO[ExitCode] = for {
-    port <- getPort(args)
-    server <- EmberServerBuilder
-      .default[IO]
-      .withHost(ipv4"0.0.0.0") // listens on *all* network addresses (EmberServerBuilder)
-      .withPort(Port.fromInt(port).get) // Safe because port is validated above
-      .withHttpApp(httpApp)
-      .build
-      .use { server =>
-        logger.info(s"Server started at http://${server.address}") *>
-          IO.never // Keeps the server running indefinitely
-      }
-  } yield ExitCode.Success
+  def run(args: List[String]): IO[ExitCode] = {
+    for {
+      ResolvedConfig(tokensPerWitnessLimit, tokenPattern, defaultColors, defaultPort) <- IO.fromEither(
+        loadResolvedConfig().leftMap(e => new RuntimeException(e))
+      )
+      (port, portSource) <- getPort(args, defaultPort)
+      server <- EmberServerBuilder
+        .default[IO]
+        .withHost(ipv4"0.0.0.0") // listens on *all* network addresses (EmberServerBuilder)
+        .withPort(Port.fromInt(port).get) // Safe because port is validated above
+        .withHttpApp(httpApp)
+        .build
+        .use { server =>
+          logger.info(
+            s"Server started at http://${server.address} using port from $portSource"
+          ) *> IO.never // Keeps the server running indefinitely
+        }
+    } yield ExitCode.Success
+  }
 }

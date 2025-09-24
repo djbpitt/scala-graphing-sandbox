@@ -47,7 +47,7 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
   val parsedValidated
       : Either[String, (AlignmentRibbon, Vector[TokenEnum], List[Siglum], List[String], Map[String, Set[String]])] =
     for {
-      ResolvedConfig(tokensPerWitnessLimit, tokenPattern, defaultColors) <- loadResolvedConfig()
+      ResolvedConfig(tokensPerWitnessLimit, tokenPattern, defaultColors, defaultPort) <- loadResolvedConfig()
       // Parse args (two-step unpacking because Scala chokes on one-step version)
       result <- parseArgs(args)
       (manifestPathString, argMap) = result
