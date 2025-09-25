@@ -410,7 +410,7 @@ class WitnessDataTest extends AnyFunSuite:
       }
     }
   }
-  test("xml: g is strictly increasing within each witness") {
+  test("xml: g is strictly increasing by 1 within each witness") {
     val manifestFilename = "xmlNoRootNoFonts.xml"
     val wds = createWitnessDataFromXml(manifestFilename)
     wds.foreach { wd =>
@@ -424,7 +424,7 @@ class WitnessDataTest extends AnyFunSuite:
       }
     }
   }
-  test("json: g is strictly increasing within each witness") {
+  test("json: g is strictly increasing by 1 within each witness") {
     val manifestFilename: String = "jsonNoRootNoFonts.json"
     val wds = createWitnessDataFromJson(manifestFilename)
     wds.foreach { wd =>
@@ -472,7 +472,35 @@ class WitnessDataTest extends AnyFunSuite:
 
   // Pre-build() unit tests on `buildFromWitnessData()`
   // Test gTa, sigla, colors, fonts
-
+  ignore("build() creates correct gTa") {
+    assert(1 == 1, "TokenSep inserted incorrectly before first witness")
+    assert(1 == 1, "Wrong number of TokenSep instances")
+    assert(1 == 1, "Single-witness input has no TokenSep instances")
+    // Each TokenSep.g == prev.g + 1 and next start g == sep.g + 1
+    assert(1 == 1, "TokenSep `g` value fails to equal previous.g + 1")
+    assert(1 == 1, "TokenSep `g` value fails to equal next.g - 1")
+    // For each witness chunk
+    assert(1 == 1, "`w` values not consistent within witness")
+    assert(1 == 1, "First token of witness `w` value fails to match witness offset")
+    assert(1 == 1, "`t` and `n` values are not preserved correctly")
+    assert(1 == 1, "`other` value is not preserved correctly")
+    assert(1 == 1, "g values fail to increase by 1, starting at 0, across entire gTa")
+  }
+  ignore("build() creates correct sigla") {
+    // List("A", "B", "C") via .value()
+    val md: Seq[WitnessData] = Seq.empty
+    val (gTa, sigla, colors, fonts) =
+      GtaBuilder.buildFromWitnessData(md, defaultColors).getOrElse(fail("Failed to build from Seq[WitnessData]"))
+    assert(sigla.map(_.value) == List("A", "B", "C"), "Siglum order is not preserved")
+  }
+  ignore("build() creates correct colors") {
+    // WitnessData color values must all be either Some or None, so no test for mixed
+    assert(1 == 1, "Colors not preserved correctly when all specified in WitnessData")
+    assert(1 == 1, "Colors not supplied correctly from default when none specified in WitnessData")
+  }
+  ignore("build() creates correct fonts") {
+    assert(1 == 1, "Font values (Option[String]) not preserved correctly")
+  }
 
   // XML and JSON integration tests (build())
   // Confirm that all properties of all witnesses match golden

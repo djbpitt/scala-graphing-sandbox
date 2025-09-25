@@ -80,10 +80,11 @@ object GtaBuilder:
           out <- buildFromWitnessData(witnesses, defaultColors)
         yield out
 
-  private def buildFromWitnessData(
+  /** internal: Used by tests; not part of public API. */
+  private[reptilian] def buildFromWitnessData(
       wits: Seq[WitnessData],
       defaultColors: List[String]
-  ): Either[String, (Vector[TokenEnum], List[Siglum], List[String], List[Option[String]])] =
+  ) =
     final case class Acc(
         gta: Vector[TokenEnum],
         sigla: List[Siglum],
@@ -91,7 +92,7 @@ object GtaBuilder:
         fonts: List[Option[String]]
     )
     val init = Acc(Vector.empty, Nil, Nil, Nil)
-    val out: Acc = wits.zipWithIndex.foldLeft(init) { case (acc0, (witData, witIndex)) =>
+    val out = wits.zipWithIndex.foldLeft(init) { case (acc0, (witData, witIndex)) =>
       // 1) Insert TokenSep BETWEEN witnesses (not before first)
       val acc1 =
         if witIndex == 0 then acc0
@@ -107,9 +108,9 @@ object GtaBuilder:
           acc0.copy(gta = acc0.gta :+ sep)
         }
       // 2) Siglum + color + font (color is witness.color or palette default)
-      val siglum: Siglum = witData.siglum
-      val color: String = witData.color.getOrElse(defaultColors(witIndex % defaultColors.length))
-      val font: Option[String] = witData.font
+      val siglum = witData.siglum
+      val color = witData.color.getOrElse(defaultColors(witIndex % defaultColors.length))
+      val font = witData.font
       val acc2 = acc1.copy(sigla = acc1.sigla :+ siglum, colors = acc1.colors :+ color, fonts = acc1.fonts :+ font)
       // 3) Emit tokens with w/g
       acc2.copy(gta = acc2.gta ++ witData.tokens)
