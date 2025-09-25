@@ -4,6 +4,8 @@ import cats.effect.{ExitCode, IO, IOApp, Resource}
 import cats.implicits.catsSyntaxEither
 import cats.syntax.all.catsSyntaxApplicativeId
 import com.comcast.ip4s.{Port, ipv4}
+import net.collatex.reptilian.GtaBuilder.{buildFromWitnessData, jsonToWitnessData}
+import net.collatex.reptilian.display.DisplayFunctions.displayDispatch
 import org.http4s.headers.`Content-Type`
 import org.http4s.{DecodeResult, EntityDecoder, InvalidMessageBodyFailure, MediaType}
 import org.http4s.{Entity, HttpRoutes, Response, Status}
@@ -40,7 +42,15 @@ object WebService extends IOApp {
       .as[ujson.Value]
       .flatMap { json =>
         val readableJson = json.render(indent = 2)
-        Ok(readableJson).map(_.withContentType(`Content-Type`(MediaType.application.json)))
+        val jsonString = json.toString
+        val cfg = GtaBuilder.BuildConfig.Default
+        val witnessData = jsonToWitnessData(jsonString, cfg).getOrElse(throw new RuntimeException("Oops"))
+        val defaultColors = List("peru", "orange", "yellow", "green", "blue", "violet")
+        val (gTa: Vector[TokenEnum], displaySigla: List[Siglum], colors: List[String], fonts: List[Option[String]]) =
+          buildFromWitnessData(witnessData, cfg, defaultColors).getOrElse(throw new RuntimeException("Oops!"))
+        val root = createAlignmentRibbon(gTa)
+        val table = displayDispatch(root, gTa, displaySigla, colors, Map())
+        Ok(table.toString).map(_.withContentType(`Content-Type`(MediaType.application.json)))
       }
       .handleErrorWith { _ =>
         BadRequest("Invalid or missing JSON in request body")
@@ -132,7 +142,6 @@ object WebService extends IOApp {
             .as(ExitCode.Success)
         }
     } yield ExitCode.Success
-
     serverResource.use(_ => IO.never)
   }
 }
