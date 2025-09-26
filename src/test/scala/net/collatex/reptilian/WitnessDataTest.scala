@@ -136,7 +136,7 @@ class WitnessDataTest extends AnyFunSuite:
   }
 
   // XML manifest unit tests for fonts and colors
-  test("xmlToWitnessData fonts: root font , some local") {
+  test("xmlToWitnessData fonts: root font, some local") {
     // Font specified only on WitnessB, with root font
     // Root inherited, but overridden if local present
     checkXmlFonts(
@@ -144,7 +144,7 @@ class WitnessDataTest extends AnyFunSuite:
       expectedFonts = List(Some("RootFont"), Some("WitnessBFont"), Some("RootFont"))
     )
   }
-  test("xmlToWitnessData fonts: no root, some witness fonts") {
+  test("xmlToWitnessData fonts: no root, some local") {
     // Font specified only on WitnessB, no root font
     // Only local emerges; others have None
     checkXmlFonts(
@@ -152,7 +152,7 @@ class WitnessDataTest extends AnyFunSuite:
       expectedFonts = List(None, Some("WitnessBFont"), None)
     )
   }
-  test("xmlToWitnessData fonts: no root, no witness fonts") {
+  test("xmlToWitnessData fonts: no root, no local") {
     checkXmlFonts(
       manifestFilename = "xmlNoRootNoFonts.xml",
       expectedFonts = List(None, None, None)
@@ -164,7 +164,7 @@ class WitnessDataTest extends AnyFunSuite:
       expectedFonts = List(Some("RootFont"), Some("RootFont"), Some("RootFont"))
     )
   }
-  test("xmlToWitnessData fonts: all locals + root (locals win everywhere)") {
+  test("xmlToWitnessData fonts: all local + root (locals win everywhere)") {
     checkXmlFonts(
       manifestFilename = "xmlAllLocalFonts.xml",
       expectedFonts = List(Some("AF"), Some("BF"), Some("CF"))
@@ -295,13 +295,13 @@ class WitnessDataTest extends AnyFunSuite:
       expectedFonts = List(Some("RootFont"), Some("WitnessBFont"), Some("RootFont"))
     )
   }
-  test("jsonToWitnessData fonts: no root, some witness fonts") {
+  test("jsonToWitnessData fonts: no root, some local") {
     checkJsonFonts(
       manifestFilename = "jsonWithoutRootFont.json",
       expectedFonts = List(None, Some("WitnessBFont"), None)
     )
   }
-  test("jsonToWitnessData fonts: no root, no witness fonts") {
+  test("jsonToWitnessData fonts: no root, no local") {
     checkJsonFonts(
       manifestFilename = "jsonNoRootNoFonts.json",
       expectedFonts = List(None, None, None)
@@ -313,7 +313,7 @@ class WitnessDataTest extends AnyFunSuite:
       expectedFonts = List(Some("RootFont"), Some("RootFont"), Some("RootFont"))
     )
   }
-  test("jsonToWitnessData fonts: all locals + root (locals win everywhere)") {
+  test("jsonToWitnessData fonts: all local + root (locals win everywhere)") {
     checkJsonFonts(
       manifestFilename = "jsonAllLocalFonts.json",
       expectedFonts = List(Some("WitnessAFont"), Some("WitnessBFont"), Some("WitnessCFont"))
@@ -470,41 +470,195 @@ class WitnessDataTest extends AnyFunSuite:
     }
   }
 
+  // Helpers for buildFromWitnessData() tests
+  // Create input Seq[WitnessData] inputs for tests with populated `other`
+  private def mkWDs(
+      specs: List[
+        (
+            String, // siglum, e.g. "A"
+            Option[String], // color
+            Option[String], // font
+            List[(String, String, Map[String, ujson.Value])] // tokens as (t, n, other)
+        )
+      ]
+  ): Vector[WitnessData] = {
+    val tokenCounts = specs.map(_._4.size)
+    val prefixTokenCounts = tokenCounts.scanLeft(0)(_ + _).dropRight(1) // size per prior witnesses
+    specs.zipWithIndex.map { case ((sig, color, font, toks), i) =>
+      val startG = prefixTokenCounts(i) + i // reserve 1 g-slot per prior boundary
+      val tokens: Seq[TokenEnum.Token] = toks.zipWithIndex.map { case ((t, n, other), j) =>
+        TokenEnum.Token(t, n, /* w = */ i, /* g = */ startG + j, other)
+      }
+      WitnessData(Siglum(sig), color, font, tokens)
+    }.toVector
+  }
+  // Create input Seq[WitnessData] with empty `other`
+  private def mkWDsSimple(
+      specs: List[(String, Option[String], Option[String], List[(String, String)])]
+  ): Vector[WitnessData] =
+    mkWDs(specs.map { case (sig, col, font, pairs) =>
+      (sig, col, font, pairs.map { case (t, n) => (t, n, Map.empty[String, ujson.Value]) })
+    })
+
+  // Inputs to create Seq[WitnessData] for testing buildFromWitnessData()
+  // Pass into mkWDs() and mkWDsSimple()
+  private val wdsMultiAllColors: Vector[WitnessData] =
+    mkWDsSimple(
+      List(
+        ("A", Some("red"), None, List(("Some ", "some"), ("content ", "content"), ("A", "a"))),
+        ("B", Some("blue"), Some("BFont"), List(("Some ", "some"), ("content ", "content"), ("B", "b"))),
+        ("C", Some("green"), None, List(("Some ", "some"), ("content ", "content"), ("C", "c")))
+      )
+    )
+  private val wdsMultiNoColors: Vector[WitnessData] =
+    mkWDsSimple(
+      List(
+        ("A", None, None, List(("Some ", "some"), ("content ", "content"), ("A", "a"))),
+        ("B", None, Some("BFont"), List(("Some ", "some"), ("content ", "content"), ("B", "b")))
+      )
+    )
+  private val wdsSingle: Vector[WitnessData] =
+    mkWDsSimple(
+      List(
+        ("A", None, None, List(("Some ", "some"), ("A", "a")))
+      )
+    )
+
+  // Helper to extract witness-specific chunks from gTa and compare to Seq[WitnessData] input
+  private def assertGtaChunksPreserve(
+      gTa: Vector[TokenEnum],
+      wds: Seq[WitnessData]
+  ): Unit = {
+    // 1) Split gTa into witness chunks (Tokens only), using TokenSep as boundaries
+    val chunks: Vector[Vector[Token]] = // One inner Vector per witness
+      gTa
+        .foldLeft(Vector(Vector.empty[Token])) { (acc, te) =>
+          te match
+            case _: TokenSep => acc :+ Vector.empty[Token] // Create empty bucket for new witness
+            case t: Token    => acc.updated(acc.size - 1, acc.last :+ t) // Append to last bucket
+        }
+    // 2) Sanity: chunk count must match witness count
+    assume(
+      chunks.size == wds.size,
+      s"test setup/assembly bug: chunks=${chunks.size}, witnesses=${wds.size}"
+    )
+    // 3) For each chunk, assert preservation of t, n, and other from source WitnessData
+    chunks.zip(wds).zipWithIndex.foreach { case ((chunk, wd), wi) =>
+      withClue(s"witness ${wd.siglum.value} (index $wi): ") {
+        // Non-empty
+        assert(chunk.nonEmpty, "chunk has no tokens")
+
+        // 3a) w uniform within chunk and equals witness offset
+        val distinctW = chunk.map(_.w).distinct
+        assert(distinctW == List(wi), s"expected all w == $wi, got distinct = $distinctW")
+
+        // 3b) (t, n) preserved per token
+        val gotTN = chunk.map(t => (t.t, t.n))
+        val expectedTN = wd.tokens.map(t => (t.t, t.n))
+        assert(gotTN == expectedTN, s"(t,n) differ: got=$gotTN expected=$expectedTN")
+
+        // 3c) other preserved per token
+        val gotOther = chunk.map(_.other)
+        val expectedOther = wd.tokens.map(_.other)
+        assert(gotOther == expectedOther, s"'other' maps differ: got=$gotOther expected=$expectedOther")
+
+        // (Optional) 3d) g +1 within chunk (local continuity)
+        val gs = chunk.map(_.g)
+        val diffs = gs.zip(gs.tail).map { case (a, b) => b - a }
+        assert(diffs.forall(_ == 1), s"g must increase by +1 within witness; diffs=$diffs")
+
+      }
+    }
+  }
+
   // Pre-build() unit tests on `buildFromWitnessData()`
   // Test gTa, sigla, colors, fonts
-  ignore("build() creates correct gTa") {
-    assert(1 == 1, "TokenSep inserted incorrectly before first witness")
-    assert(1 == 1, "Wrong number of TokenSep instances")
-    assert(1 == 1, "Single-witness input has no TokenSep instances")
-    // Each TokenSep.g == prev.g + 1 and next start g == sep.g + 1
-    assert(1 == 1, "TokenSep `g` value fails to equal previous.g + 1")
-    assert(1 == 1, "TokenSep `g` value fails to equal next.g - 1")
-    // For each witness chunk
-    assert(1 == 1, "`w` values not consistent within witness")
-    assert(1 == 1, "First token of witness `w` value fails to match witness offset")
-    assert(1 == 1, "`t` and `n` values are not preserved correctly")
-    assert(1 == 1, "`other` value is not preserved correctly")
-    assert(1 == 1, "g values fail to increase by 1, starting at 0, across entire gTa")
+  test("buildFromWitnessData() creates correct gTa") {
+    // Fixtures
+    val inputWd: Seq[WitnessData] = wdsMultiNoColors
+    val (gTa, sigla, colors, fonts) = GtaBuilder
+      .buildFromWitnessData(inputWd, defaultColors)
+      .getOrElse(fail("Unable to build gTa, sigla, colors, fonts for test"))
+    val seps = gTa.collect { case sep: TokenEnum.TokenSep => sep }
+    val neighbors: Vector[((Token, TokenSep, Token), Int)] =
+      gTa.zipWithIndex
+        .sliding(3)
+        .collect { case Vector((left: Token, _), (sep: TokenSep, midIdx), (right: Token, _)) =>
+          ((left, sep, right), midIdx)
+        }
+        .toVector
+    // Sanity check for neighbors
+    assume(
+      neighbors.size == gTa.count { case _: TokenSep => true; case _ => false },
+      s"test setup/assembly bug: found ${neighbors.size} (Token,Sep,Token) triplets but ${seps.count} TokenSep elements"
+    )
+    // Assertions
+    assert(
+      gTa.head match { case _: TokenEnum.Token => true; case _ => false },
+      "TokenSep inserted incorrectly before first witness"
+    )
+    assert(seps.size == 1, "Wrong number of TokenSep instances")
+    // Each TokenSep.g == prev.g + 1 and next.g - 1
+    neighbors.zipWithIndex.foreach { case (((left, sep, right), midIdx), k) =>
+      withClue(s"sep #$k at gTa[$midIdx] (left.g=${left.g}, sep.g=${sep.g}, right.g=${right.g}): ") {
+        assert(left.g == sep.g - 1, "left token g must be sep.g - 1")
+        assert(right.g == sep.g + 1, "right token g must be sep.g + 1")
+      }
+    }
+    assertGtaChunksPreserve(gTa, inputWd)
+    gTa.sliding(2).zipWithIndex.foreach { case (pair, idx) =>
+      assert(pair.last.g == pair.head.g + 1, "g values are not sequential across entire witness set")
+    }
   }
-  ignore("build() creates correct sigla") {
+  test("buildFrom WitnessData() creates correct sigla") {
     // List("A", "B", "C") via .value()
-    val md: Seq[WitnessData] = Seq.empty
-    val (gTa, sigla, colors, fonts) =
-      GtaBuilder.buildFromWitnessData(md, defaultColors).getOrElse(fail("Failed to build from Seq[WitnessData]"))
-    assert(sigla.map(_.value) == List("A", "B", "C"), "Siglum order is not preserved")
+    val (_, sigla, _, _) =
+      GtaBuilder
+        .buildFromWitnessData(wdsMultiAllColors, defaultColors)
+        .getOrElse(fail("Failed to build from Seq[WitnessData]"))
+    assert(sigla.map(_.value) == List("A", "B", "C"), "Sigla are not preserved")
   }
-  ignore("build() creates correct colors") {
+  test("buildFromWitnessData() creates correct colors") {
     // WitnessData color values must all be either Some or None, so no test for mixed
-    assert(1 == 1, "Colors not preserved correctly when all specified in WitnessData")
-    assert(1 == 1, "Colors not supplied correctly from default when none specified in WitnessData")
+    val (_, _, allColors, _) =
+      GtaBuilder
+        .buildFromWitnessData(wdsMultiAllColors, defaultColors)
+        .getOrElse(fail("Failed to build from Seq[WitnessData]"))
+    val (_, _, noColors, _) =
+      GtaBuilder
+        .buildFromWitnessData(wdsMultiNoColors, defaultColors)
+        .getOrElse(fail("Failed to build from Seq[WitnessData]"))
+    assert(
+      allColors == List("red", "blue", "green"),
+      "Colors not preserved correctly when all specified in WitnessData"
+    )
+    assert(
+      noColors == List("#ff7d94", "#52fece"),
+      "Colors not supplied correctly from default when none specified in WitnessData"
+    )
   }
-  ignore("build() creates correct fonts") {
-    assert(1 == 1, "Font values (Option[String]) not preserved correctly")
+  test("buildFromWitnessData() creates correct fonts") {
+    val (_, _, _, fonts: List[Option[String]]) =
+      GtaBuilder
+        .buildFromWitnessData(wdsMultiAllColors, defaultColors)
+        .getOrElse(fail("Failed to build from Seq[WitnessData]"))
+    val expected = List(None, Some("BFont"), None)
+    assert(fonts == expected, "Font values (Option[String]) not preserved correctly")
+  }
+  test("single-witness Seq[WitnessData] has no TokenSep") {
+    val (gTa, _, _, _) = GtaBuilder
+      .buildFromWitnessData(wdsSingle, defaultColors)
+      .getOrElse(fail("Unable to construct Seq[WitnessData] for test"))
+    val seps = gTa.collect { case sep: TokenEnum.TokenSep => sep }
+    assert(
+      seps.isEmpty,
+      "Single-witness sequence should have no TokenSep instances"
+    )
   }
 
   // XML and JSON integration tests (build())
   // Confirm that all properties of all witnesses match golden
-  test("build() with json manifest using Seq[WitnessData]") {
+  test("build() with json manifest using Seq[WitnessData] matches golden") {
     val manifestFilename = "jsonIntegration.json"
     val manifestPath = os.pwd / "src" / "test" / "resources" / "manifests" / manifestFilename
     val manifestSource = ManifestSource.Local(manifestPath)
