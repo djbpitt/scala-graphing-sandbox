@@ -47,6 +47,7 @@ object DisplayFunctions {
       gTa: Vector[TokenEnum],
       displaySigla: List[Siglum],
       displayColors: List[String],
+      fonts: List[Option[String]],
       argMap: Map[String, Set[String]]
   ): Unit =
     // Default colors are used only when colors are not specified in the XML or JSON manifest
