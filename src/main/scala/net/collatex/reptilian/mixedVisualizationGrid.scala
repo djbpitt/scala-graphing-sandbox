@@ -286,16 +286,22 @@ def createHorizontalRibbons(
       top: Double,
       font: Option[String],
       hngm: (HorizNodeGroupMember, Int)
-  ) = {
-    <foreignObject x="1"
-       y={(vOffset * ribbonWidth + top - 2).toString}
-       width={node.alignmentWidth.toString}
-       height={ribbonWidth.toString}>
-      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">{
-      s"${formatSiglum(hngm._1.witId)}: "
-    }</span> <span>{hngm._1.reading}</span></div>
-    </foreignObject>
-  }
+  ) =
+    val cls: String = font.map(f => s""" class="$f"""").getOrElse("") // class is a reserved word
+    val readingSpan: Elem =
+      font match
+        case Some(f) => <span class={s"$f"}>{hngm._1.reading}</span>
+        case None    => <span>{hngm._1.reading}</span>
+    val result =
+      <foreignObject x="1"
+         y={(vOffset * ribbonWidth + top - 2).toString}
+         width={node.alignmentWidth.toString}
+         height={ribbonWidth.toString}>
+        <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">{
+        s"${formatSiglum(hngm._1.witId)}: "
+      }</span> {readingSpan}</div>
+      </foreignObject>
+    result
 
   /** plotOneAlignmentPoint()
     *
@@ -487,9 +493,10 @@ def createHorizontalRibbons(
     wrapGroups(node.groups)
 
   val contents = plotAllAlignmentPointsAndRibbons(horizNodes)
+  /* Create css classes for distinct font values */
   val fontClasses: String = fonts.flatten.distinct
     .map { font =>
-      s".$font: {font-family: '$font'}"
+      s".$font {font-family: '$font';}"
     }
     .mkString("\n")
 
