@@ -60,7 +60,7 @@ object DisplayFunctions {
       case "table-html-h"      => emitTableHorizontalHTML(root, displaySigla, gTa, outputBaseFilename, htmlExtension)
       case "table-html-v"      => emitTableVerticalHTML(root, displaySigla, gTa, outputBaseFilename, htmlExtension)
       case "ribbon" =>
-        emitAlignmentRibbon(root, displaySigla, displayColors, gTa, outputBaseFilename, htmlExtension)
+        emitAlignmentRibbon(root, displaySigla, displayColors, fonts, gTa, outputBaseFilename, htmlExtension)
       // Both Rhine delta formats use same output function with different values of Boolean 'rich' parameter
       case "svg"      => emitSvgGraph(root, displaySigla, outputBaseFilename)
       case "svg-rich" => emitSvgGraph(root, displaySigla, outputBaseFilename, true)
@@ -441,12 +441,13 @@ object DisplayFunctions {
       alignment: AlignmentRibbon,
       displaySigla: List[Siglum],
       displayColors: List[String],
+      fonts: List[Option[String]],
       gTa: Vector[TokenEnum],
       outputBaseFilename: Set[String], // either empty or single string (validated in parsArgs())
       htmlExtension: Set[String]
   ): Unit =
     val doctypeHtml: DocType = DocType("html")
-    val horizontalRibbons = createHorizontalRibbons(alignment, displaySigla, displayColors, gTa)
+    val horizontalRibbons = createHorizontalRibbons(alignment, displaySigla, displayColors, fonts, gTa)
     if outputBaseFilename.isEmpty then // Write to stdout
       Using.resource(new PrintWriter(Console.out)) { writer =>
         XML.write(writer, horizontalRibbons, "UTF-8", xmlDecl = true, doctype = doctypeHtml)

@@ -204,9 +204,11 @@ def createHorizontalRibbons(
     root: AlignmentRibbon,
     displaySigla: List[Siglum],
     displayColors: List[String],
+    fonts: List[Option[String]],
     gTa: Vector[TokenEnum]
 ): scala.xml.Node =
   val gTaSigla = displaySigla.indices.toList
+
   /** Constants */
   val ribbonWidth = 18
   // val missingTop = allSigla.size * ribbonWidth * 2 + ribbonWidth / 2
@@ -278,16 +280,22 @@ def createHorizontalRibbons(
        height={ribbonWidth.toString}
        fill={fillColor}
     />
-  def plotReading(vOffset: Int, node: HorizNodeData, top: Double, hngm: (HorizNodeGroupMember, Int)) =
+  def plotReading(
+      vOffset: Int,
+      node: HorizNodeData,
+      top: Double,
+      font: Option[String],
+      hngm: (HorizNodeGroupMember, Int)
+  ) = {
     <foreignObject x="1"
-                   y={(vOffset * ribbonWidth + top - 2).toString}
-                   width={node.alignmentWidth.toString}
-                   height={ribbonWidth.toString}>
+       y={(vOffset * ribbonWidth + top - 2).toString}
+       width={node.alignmentWidth.toString}
+       height={ribbonWidth.toString}>
       <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">{
       s"${formatSiglum(hngm._1.witId)}: "
-    }</span>
-        {hngm._1.reading}</div>
+    }</span> <span>{hngm._1.reading}</span></div>
     </foreignObject>
+  }
 
   /** plotOneAlignmentPoint()
     *
@@ -310,10 +318,11 @@ def createHorizontalRibbons(
             <g>{
               for e <- groups.head.members.zipWithIndex yield
                 val fillColor = displayColors(e._1.witId)
+                val font = fonts(e._1.witId)
                 val vOffset = e._2
                 Seq(
                   plotRect(vOffset, node, fillColor, top),
-                  plotReading(vOffset, node, top, e)
+                  plotReading(vOffset, node, top, font, e)
                 )
             }</g>
           nextGroup(groups.tail, top + groupHeight, acc :+ newG)
@@ -478,6 +487,12 @@ def createHorizontalRibbons(
     wrapGroups(node.groups)
 
   val contents = plotAllAlignmentPointsAndRibbons(horizNodes)
+  val fontClasses: String = fonts.flatten.distinct
+    .map { font =>
+      s".$font: {font-family: '$font'}"
+    }
+    .mkString("\n")
+
   /* Create gradient stops for each color, using colorname + "Gradient" as @id of <linearGradient> wrapper */
   val gradients =
     <defs>{
@@ -541,7 +556,8 @@ def createHorizontalRibbons(
                |  font-size: 16px; /* needed by Safari */
                |  padding: .1em .1em 0 .1em;
                |  line-height: ${ribbonWidth - 1}px;
-               |}""".stripMargin
+               |}
+               |$fontClasses""".stripMargin
   val js = """<![CDATA["use strict";
              |document.addEventListener("DOMContentLoaded", function () {
              |  const groups = document.getElementsByClassName("group");
