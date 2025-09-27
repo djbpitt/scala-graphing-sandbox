@@ -47,9 +47,10 @@ object WebService extends IOApp {
    */
 
   private val multiPartService = HttpRoutes.of[IO] { case req @ POST -> Root / "multipart" =>
-    for {
-      m <- req.as[Multipart[IO]] // needs org.http4s.multipart._ in scope
-      lines <- m.parts.traverse { p => p.bodyText.compile.string.map(b => s"${p.name}: $b") }
+    for { // Needs Logger[IO].debug rather than logger.debug
+      _ <- Logger[IO].debug(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}")
+      m <- req.as[Multipart[IO]]
+      lines <- m.parts.traverse { p => p.bodyText.compile.string.map(b => s"${p.name.getOrElse("<unnamed>")}: $b") }
       resp <- Ok(lines.mkString("\n"))
     } yield resp
   }
