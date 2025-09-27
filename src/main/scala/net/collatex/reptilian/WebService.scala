@@ -3,6 +3,7 @@ package net.collatex.reptilian
 import cats.effect.{ExitCode, IO, IOApp, Resource}
 import cats.implicits.catsSyntaxEither
 import cats.syntax.all.catsSyntaxApplicativeId
+import cats.syntax.traverse.toTraverseOps
 import com.comcast.ip4s.{Port, ipv4}
 import net.collatex.reptilian.GtaBuilder.{buildFromWitnessData, jsonToWitnessData}
 import net.collatex.reptilian.display.DisplayFunctions.displayDispatch
@@ -11,6 +12,7 @@ import org.http4s.{DecodeResult, EntityDecoder, InvalidMessageBodyFailure, Media
 import org.http4s.{Entity, HttpRoutes, Response, Status}
 import org.http4s.dsl.io.*
 import org.http4s.ember.server.EmberServerBuilder
+import org.http4s.multipart.*
 import org.http4s.server.Router
 import org.http4s.server.middleware.CORS
 import org.http4s.server.staticcontent.resourceServiceBuilder
@@ -36,9 +38,20 @@ object WebService extends IOApp {
       Ok(s"Hello, $name.")
   }
 
+  /*Responds to:
+   * curl -X POST http://localhost:8082/multipart \
+   *   -F 'formats=ribbon,svg' \
+   *   -F 'manifest=@validManifest.json;type=application/json'
+   *
+   * Note that the manifest requires a name
+   */
+
   private val multiPartService = HttpRoutes.of[IO] { case req @ POST -> Root / "multipart" =>
-    logger.debug(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}") *>
-      Ok(s"Received multipart request: $req")
+    for {
+      m <- req.as[Multipart[IO]] // needs org.http4s.multipart._ in scope
+      lines <- m.parts.traverse { p => p.bodyText.compile.string.map(b => s"${p.name}: $b") }
+      resp <- Ok(lines.mkString("\n"))
+    } yield resp
   }
 
   // TODO: Currently just echoes JSON input
