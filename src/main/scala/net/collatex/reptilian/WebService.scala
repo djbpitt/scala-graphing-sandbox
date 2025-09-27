@@ -36,12 +36,17 @@ object WebService extends IOApp {
       Ok(s"Hello, $name.")
   }
 
+  private val multiPartService = HttpRoutes.of[IO] { case req @ POST -> Root / "multipart" =>
+    logger.debug(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}") *>
+      Ok(s"Received multipart request: $req")
+  }
+
   // TODO: Currently just echoes JSON input
   private val reptilianService = HttpRoutes.of[IO] { case req @ POST -> Root =>
     val responseIO: IO[Response[IO]] = req
       .as[ujson.Value]
       .flatMap { json =>
-        val readableJson = json.render(indent = 2)
+        // val readableJson = json.render(indent = 2)
         val jsonString = json.toString
         val cfg = GtaBuilder.BuildConfig.Default
         val witnessData = jsonToWitnessData(jsonString, cfg).getOrElse(throw new RuntimeException("Oops"))
@@ -49,7 +54,7 @@ object WebService extends IOApp {
         val (gTa: Vector[TokenEnum], displaySigla: List[Siglum], colors: List[String], fonts: List[Option[String]]) =
           buildFromWitnessData(witnessData, cfg, defaultColors).getOrElse(throw new RuntimeException("Oops!"))
         val root = createAlignmentRibbon(gTa)
-        val table = displayDispatch(root, gTa, displaySigla, colors, Map())
+        val table: Unit = displayDispatch(root, gTa, displaySigla, colors, Map.empty)
         Ok(table.toString).map(_.withContentType(`Content-Type`(MediaType.application.json)))
       }
       .handleErrorWith { _ =>
@@ -84,6 +89,7 @@ object WebService extends IOApp {
     Router.define(
       "/" -> reptilianService,
       "/" -> helloWorldService,
+      "/" -> multiPartService,
       "/static" -> static
     )(defaultRoute())
   }
@@ -131,7 +137,7 @@ object WebService extends IOApp {
       server <- EmberServerBuilder
         .default[IO]
         .withHost(ipv4"0.0.0.0")
-        .withPort(Port.fromInt(port).get)
+        .withPort(Port.fromInt(port).getOrElse(throw new RuntimeException("Oops!")))
         .withHttpApp(httpApp)
         .build
         .evalMap { server =>
