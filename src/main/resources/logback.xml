@@ -9,6 +9,11 @@
           INFO: Startup
           DEBUG: Requests
 
+        Hierarchy: ALL < TRACE < DEBUG < INFO < WARN < ERROR < OFF
+        Logs everything more severe than specified value, so DEBUG also logs INFO
+
+        To quiet external libraries: <logger name="smile.util" level="WARN"/>
+
         NB: Shutdown is not logged if service is killed with Ctrl-C
     -->
     <!-- File Appender for DEBUG and above (includes INFO) -->
@@ -16,7 +21,7 @@
         <file>logs/reptilian.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- Daily rotation with date in filename -->
-            <fileNamePattern>logs/myapp.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>logs/reptilian.%d{yyyy-MM-dd}.log</fileNamePattern>
             <!-- Keep 30 days of history -->
             <maxHistory>30</maxHistory>
             <!-- Optional: Limit total size of archived logs to 3GB -->

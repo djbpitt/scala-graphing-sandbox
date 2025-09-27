@@ -19,9 +19,10 @@ import org.http4s.server.staticcontent.resourceServiceBuilder
 import org.typelevel.log4cats.{Logger, LoggerFactory}
 import org.typelevel.log4cats.slf4j.{Slf4jFactory, Slf4jLogger}
 
+
 object WebService extends IOApp {
-  given loggerFactory: LoggerFactory[IO] = Slf4jFactory.create[IO]
-  given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
+  given LoggerFactory[IO] = Slf4jFactory.create[IO]
+  given Logger[IO] = Slf4jLogger.getLoggerFromName[IO]("reptilian")
 
   // Custom decoder for ujson.Value
   given jsonDecoder: EntityDecoder[IO, ujson.Value] = EntityDecoder[IO, String].flatMapR { str =>
@@ -34,8 +35,10 @@ object WebService extends IOApp {
 
   // Define routes relative to web service
   private val helloWorldService = HttpRoutes.of[IO] { case req @ GET -> Root / "hello" / name =>
-    logger.debug(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}") *>
-      Ok(s"Hello, $name.")
+    for {
+      _ <- Logger[IO].debug(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}")
+      resp <- Ok(s"Hello, $name.")
+    } yield resp
   }
 
   /*Responds to:
@@ -76,21 +79,25 @@ object WebService extends IOApp {
       }
 
     responseIO.flatMap { response =>
-      logger.debug(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}") *>
-        logger.debug(s"Response status: ${response.status.code} ${response.status.reason}") *>
-        IO.pure(response)
+      for {
+        _ <- Logger[IO].debug(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}")
+        _ <- Logger[IO].debug(s"Response status: ${response.status.code} ${response.status.reason}")
+        resp <- IO.pure(response)
+      } yield resp
     }
   }
 
   // Default route for 404
   private def defaultRoute(): HttpRoutes[IO] = HttpRoutes.of[IO] { request =>
-    logger.debug(s"404: ${request.method} ${request.uri} from ${request.remoteAddr.getOrElse("unknown")}") *>
-      Response[IO](
+    for {
+      _ <- Logger[IO].debug(s"404: ${request.method} ${request.uri} from ${request.remoteAddr.getOrElse("unknown")}")
+      resp <- Response[IO](
         status = Status.NotFound,
         entity = Entity.stream(
           fs2.Stream.emits(s"404: The requested resource (${request.uri}) was not found!".getBytes).covary[IO]
         )
       ).pure[IO]
+    } yield resp
   }
 
   // Wrap resourceServiceBuilder in Resource.eval to get Resource[IO, HttpRoutes[IO]]
@@ -128,8 +135,11 @@ object WebService extends IOApp {
         }
     }
   }.handleErrorWith { e =>
-    logger.error(s"Failed to parse port, using default $defaultPort from config.yaml: ${e.getMessage}") *>
-      IO.pure((defaultPort, "config.yaml"))
+    for {
+      _ <- Logger[IO].error(s"Failed to parse port, using default $defaultPort from config.yaml: ${e.getMessage}")
+      resp <- IO.pure((defaultPort, "config.yaml"))
+    } yield resp
+
   }
 
   // Construct serverResource to produce HttpApp[IO]
@@ -155,7 +165,7 @@ object WebService extends IOApp {
         .withHttpApp(httpApp)
         .build
         .evalMap { server =>
-          logger
+          Logger[IO]
             .info(
               s"Server started at http://${server.address} using port from $portSource"
             )
