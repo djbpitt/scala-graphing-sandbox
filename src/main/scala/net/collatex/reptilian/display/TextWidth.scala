@@ -130,6 +130,52 @@ object TextWidth:
 
       Measurer(measure)
 
+    // test-only factory with feature toggles
+    def forFontWithFeatures(
+        font: java.awt.Font,
+        antialiased: Boolean = true,
+        fractionalMetrics: Boolean = true,
+        maxCacheSize: Int = 80_000,
+        enableKerning: Boolean = true,
+        enableLigatures: Boolean = true
+    ): Measurer = {
+      // Headless-friendly FRC. Keep flags aligned with your output renderer.
+      val frc = new java.awt.font.FontRenderContext(new java.awt.geom.AffineTransform(), antialiased, fractionalMetrics)
+
+      // Small, fast LRU (access-order) for word → width
+      final class Lru[K, V](max: Int)
+          extends java.util.LinkedHashMap[K, V](Math.max(16, max * 4 / 3), 0.75f, /*accessOrder*/ true) {
+        override def removeEldestEntry(e: java.util.Map.Entry[K, V]): Boolean = size() > max
+      }
+      val cache = new Lru[String, java.lang.Float](maxCacheSize)
+
+      // Measure whole string with the chosen feature toggles
+      def shapeWidth(text: String): Float = {
+        val as = new java.text.AttributedString(text)
+        as.addAttribute(java.awt.font.TextAttribute.FONT, font)
+        if (enableKerning) as.addAttribute(java.awt.font.TextAttribute.KERNING, java.awt.font.TextAttribute.KERNING_ON)
+        if (enableLigatures)
+          as.addAttribute(java.awt.font.TextAttribute.LIGATURES, java.awt.font.TextAttribute.LIGATURES_ON)
+        new java.awt.font.TextLayout(as.getIterator, frc).getAdvance
+      }
+
+      def measure(word: String): Float = {
+        val nfc = java.text.Normalizer.normalize(word, java.text.Normalizer.Form.NFC)
+
+        Option(cache.get(nfc)) match {
+          case Some(boxed) =>
+            boxed.floatValue() // cache hit
+
+          case None =>
+            val w = shapeWidth(nfc) // miss → compute
+            cache.put(nfc, java.lang.Float.valueOf(w))
+            w
+        }
+      }
+
+      new Measurer(measure)
+    }
+
   // --------------------------------------------
   // 3) Pool: one measurer per exact family (size/style fixed here)
   // --------------------------------------------

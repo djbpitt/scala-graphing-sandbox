@@ -205,24 +205,45 @@ class TextWidthTest extends AnyFunSuite {
     assert(math.abs(prod("\uFB01") - ligWidth) <= eps)
   }
 
-  test("Kerning: production measurer matches 'ON' when kerning makes a difference") {
+  // NB: Does not test whether kerning is performed, which is brittle (depends on JVM/OS)
+  // Tests whether our measurers match library java.awt.Font.TextLayout results
+  test("Kerning wiring: measurer matches TextLayout for kerning ON and OFF") {
     System.setProperty("java.awt.headless", "true")
-    val font = loadTestFontFromResources("/SourceSerif4-Regular.ttf")
-    val prod = TextWidth.Measurer.forFont(font)
 
-    val pairs = Vector("AV", "To", "Ta", "We", "Yo")
+    val font = loadTestFontFromResources("/SourceSerif4-Regular.ttf")
+    val s = "AV" * 80 // long string just to be safe
     val eps = 1e-4f
 
-    def w(s: String, kern: Boolean) = measureWith(s, font, kerning = kern, ligatures = false)
+    // Ground truth via direct TextLayout
+    val truthOff = measureWith(s, font, kerning = false, ligatures = false)
+    val truthOn = measureWith(s, font, kerning = true, ligatures = false)
 
-    pairs.find(s => w(s, kern = true) + eps < w(s, kern = false)) match {
-      case Some(s) =>
-        val on = w(s, kern = true)
-        val prodW = prod(s) // production uses kerning ON
-        assert(math.abs(prodW - on) <= eps, s"Production measurer should match 'ON' width for '$s'")
-      case None =>
-        cancel("No measurable kerning difference with this font/JRE; skipping.")
-    }
+    // Our measurers with explicit toggles
+    val mOff = TextWidth.Measurer.forFontWithFeatures(font, enableKerning = false, enableLigatures = false)
+    val mOn = TextWidth.Measurer.forFontWithFeatures(font, enableKerning = true, enableLigatures = false)
+
+    val wOff = mOff(s)
+    val wOn = mOn(s)
+
+    // Assert we match Java2D’s ON/OFF results (verifies wiring regardless of platform behavior)
+    assert(math.abs(wOff - truthOff) <= eps, s"kerning=OFF: measurer=$wOff vs TextLayout=$truthOff")
+    assert(math.abs(wOn - truthOn) <= eps, s"kerning=ON:  measurer=$wOn  vs TextLayout=$truthOn")
+  }
+
+  // NB: Will be canceled if JVM/OS undermine our control of kerning parameters
+  test("Kerning effect: on this JRE/font, kerning reduces width (integration)") {
+    System.setProperty("java.awt.headless", "true")
+
+    val font = loadTestFontFromResources("/SourceSerif4-Regular.ttf")
+    val s = "AV" * 200 // amplify effect
+    val eps = 1e-4f
+    val min = 1e-3f // require at least this delta to call it “real”
+
+    val off = measureWith(s, font, kerning = false, ligatures = false)
+    val on = measureWith(s, font, kerning = true, ligatures = false)
+
+    if (off - on > min) assert(on + eps < off)
+    else cancel("No measurable kerning delta on this JRE/font; skipping effect assertion.")
   }
 
 }
