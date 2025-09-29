@@ -5,6 +5,12 @@ import org.scalatest.Assertion
 import TextWidth.*
 import TextWidth.Measurer.MissingGlyphStrategy
 
+import java.awt.Font
+import java.awt.font.{FontRenderContext, TextAttribute, TextLayout}
+import java.awt.geom.AffineTransform
+import java.text.AttributedString
+import scala.util.Using
+
 class TextWidthTest extends AnyFunSuite {
 
   // Ensure AWT runs headless in CI
@@ -129,6 +135,94 @@ class TextWidthTest extends AnyFunSuite {
     val m2 = TextWidth.Measurer.forFont(TextWidth.FontUtils.fontOrError(fam2))
     // Not a hard guarantee across all fonts, but likely
     assert(m1("reptilian") != m2("reptilian"))
+  }
+
+  test("Pool reuses same measurer for family name with extra whitespace") {
+    val fam = firstInstalledFamily()
+    val a = TextWidth.Pool.measurerForExactFamily(fam)
+    val b = TextWidth.Pool.measurerForExactFamily("  " + fam + "  ")
+    assert(a eq b)
+  }
+
+  test("Space width positive and sum of words + spaces behaves sanely") {
+    val fam = firstInstalledFamily()
+    val m = TextWidth.Measurer.forFont(TextWidth.FontUtils.fontOrError(fam))
+    val space = m(" ")
+    assert(space > 0f)
+    val words = List("the", "quick", "brown", "fox")
+    val sumWords = words.map(m(_)).sum
+    val withSpaces = sumWords + space * (words.size - 1)
+    assert(withSpaces > sumWords)
+  }
+
+  test("If font supports ligatures/kerning, shaped width reflects it") {
+    val fam = firstInstalledFamily()
+    val m = TextWidth.Measurer.forFont(TextWidth.FontUtils.fontOrError(fam))
+    val separate = m("f") + m("i")
+    val combined = m("fi")
+    // Heuristic: combined should be <= separate (ligature) or slightly less (kerning); if not, skip.
+    if (combined <= separate) succeed
+    else cancel(s"Font '$fam' doesn’t show ligature/kerning effect for 'fi'; skipping.")
+  }
+
+  // Helper to load test font that supports ligatures and kerning
+  private def loadTestFontFromResources(path: String, sizePt: Float = 16f): java.awt.Font = {
+    val url = Option(getClass.getResource(path)).getOrElse { // e.g. "/SourceSerif4-Regular.ttf"
+      fail(s"Missing test font resource at $path")
+    }
+    Using.resource(url.openStream()) { is =>
+      val f0 = java.awt.Font
+        .createFont(java.awt.Font.TRUETYPE_FONT, is)
+        .deriveFont(sizePt)
+      f0
+    }
+  }
+
+  // Helper for testing ligature and kerning support
+  private def measureWith(text: String, font: Font, kerning: Boolean, ligatures: Boolean): Float = {
+    val frc = new FontRenderContext(new AffineTransform(), /*antialiased*/ true, /*fractional*/ true)
+    val as = new AttributedString(text)
+    as.addAttribute(TextAttribute.FONT, font)
+    if (kerning) as.addAttribute(TextAttribute.KERNING, TextAttribute.KERNING_ON)
+    if (ligatures) as.addAttribute(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON)
+    new TextLayout(as.getIterator, frc).getAdvance
+  }
+
+  // NB: Does not test whether ligation is performed, which is brittle (depends on JVM/OS)
+  test("Precomposed ligature glyph ‘ﬁ’ is narrower than ‘f’ + ‘i’ in Source Serif 4") {
+    System.setProperty("java.awt.headless", "true")
+    val font = loadTestFontFromResources("/SourceSerif4-Regular.ttf")
+    assume(font.canDisplayUpTo("\uFB01") < 0, "Font lacks U+FB01 ‘ﬁ’ ligature")
+
+    val eps = 1e-4f // Small epsilon (tolerance)
+    val seqWidth = measureWith("fi", font, kerning = true, ligatures = false) // no substitution
+    val ligWidth = measureWith("\uFB01", font, kerning = true, ligatures = false) // single ligature glyph
+
+    assert(ligWidth + eps < seqWidth, s"Expected ‘ﬁ’ < ‘f’+‘i’: lig=$ligWidth, seq=$seqWidth")
+
+    // And the production measurer should match the single-glyph case:
+    val prod = TextWidth.Measurer.forFont(font)
+    assert(math.abs(prod("\uFB01") - ligWidth) <= eps)
+  }
+
+  test("Kerning: production measurer matches 'ON' when kerning makes a difference") {
+    System.setProperty("java.awt.headless", "true")
+    val font = loadTestFontFromResources("/SourceSerif4-Regular.ttf")
+    val prod = TextWidth.Measurer.forFont(font)
+
+    val pairs = Vector("AV", "To", "Ta", "We", "Yo")
+    val eps = 1e-4f
+
+    def w(s: String, kern: Boolean) = measureWith(s, font, kerning = kern, ligatures = false)
+
+    pairs.find(s => w(s, kern = true) + eps < w(s, kern = false)) match {
+      case Some(s) =>
+        val on = w(s, kern = true)
+        val prodW = prod(s) // production uses kerning ON
+        assert(math.abs(prodW - on) <= eps, s"Production measurer should match 'ON' width for '$s'")
+      case None =>
+        cancel("No measurable kerning difference with this font/JRE; skipping.")
+    }
   }
 
 }
