@@ -45,6 +45,9 @@
         </filter>
     </appender>
 
+    <!-- Silence routine smile.util log reports-->
+    <logger name="smile.util" level="WARN"/>
+
     <!-- Root logger configuration -->
     <root level="DEBUG">
         <appender-ref ref="FILE" />
