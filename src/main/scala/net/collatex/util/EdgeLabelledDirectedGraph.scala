@@ -1,10 +1,11 @@
 package net.collatex.util
 
 
- import cats.implicits.catsSyntaxSemigroup
+import cats.implicits.catsSyntaxSemigroup
+import net.collatex.util.EdgeLabelledDirectedGraph.{DirectedGraph, EmptyGraph, SingleNodeGraph}
 
- import scala.annotation.targetName
- import scala.collection.immutable.Set
+import scala.annotation.targetName
+import scala.collection.immutable.Set
 
 // @author: Ronald Haentjens Dekker
 // This class represents an Edge Labelled Directed Acyclic Graph.
@@ -12,7 +13,6 @@ package net.collatex.util
 // The implementation is based on adjacency maps.
 // The N generic is the node
 // The E generic is the weight or label of an edge
-
 
 
 // constructor
@@ -52,9 +52,8 @@ enum EdgeLabelledDirectedGraph[N, E]:
         EdgeLabelledDirectedGraph.empty[N, E]
 
 
-  
   @targetName("end arrow operator")
-  def -->:(label: E): (EdgeLabelledDirectedGraph[N, E], E) =  (this, label)
+  def -->:(weight: E): (EdgeLabelledDirectedGraph[N, E], E) = (this, weight)
 
   def toMap: Map[N, (Set[(N, E)], Set[(N, E)])] =
     this match
@@ -79,15 +78,15 @@ enum EdgeLabelledDirectedGraph[N, E]:
     (this, node) match
       case (_: EmptyGraph[N, E], _) => Set.empty
       case (_: SingleNodeGraph[N, E], _) => Set.empty
-      case (g: DirectedGraph[N, E], target) => 
+      case (g: DirectedGraph[N, E], target) =>
         g.adjacencyMap(target)._1
           .map((source, edge) => (source, edge, target))
-
+  
   def outgoingEdges(node: N): Set[(N, E, N)] =
     (this, node) match
       case (_: EmptyGraph[N, E], _) => Set.empty
       case (_: SingleNodeGraph[N, E], _) => Set.empty
-      case (g: DirectedGraph[N, E], source) => 
+      case (g: DirectedGraph[N, E], source) =>
         g.adjacencyMap(source)._2
           .map((target, edge) => (source, edge, target))
 
