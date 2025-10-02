@@ -52,12 +52,12 @@ def visualizeTraversalGraph(
                              alignmentNodes: Set[Int]
                            ): Unit =
   val traversalGraphAsDot = traversalGraphToDot(graph, blockTexts, alignmentNodes)
-  val graphOutputPath = os.pwd / "src" / "main" / "output" / "traversal.dot"
+  val graphOutputPath = os.pwd / "src" / "main" / "outputs" / "traversal.dot"
   System.err.println("Writing to "+graphOutputPath)
   os.write.over(graphOutputPath, traversalGraphAsDot) // Create SVG output and write to specified path
   import sys.process._
   val pathAsString = graphOutputPath.toString
-  val svgOutputPath = os.pwd / "src" / "main" / "output" / "traversal.svg"
+  val svgOutputPath = os.pwd / "src" / "main" / "outputs" / "traversal.svg"
   val svgPathAsString = svgOutputPath.toString
   val pb = Process("dot -Tsvg "+pathAsString+" -o"+svgPathAsString)
   System.err.println("Writing to " + svgOutputPath)
