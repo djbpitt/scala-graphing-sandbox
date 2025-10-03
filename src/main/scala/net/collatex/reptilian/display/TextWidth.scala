@@ -291,3 +291,15 @@ object TextWidth:
     // Scale from points (72 dpi) to CSS px (96 dpi) when requested
     if units == Units.CssPx then tx.scale(96.0 / 72.0, 96.0 / 72.0)
     new java.awt.font.FontRenderContext(tx, antialiased, fractional)
+
+  /* Default font is wide serif 16pt */
+  val defaultFontStack = "Georgia, Palatino, 'Palatino Linotype', serif"
+  val fontSize = 16f
+  val defaultFamily: String =
+    TextWidth.FontStack.firstInstalledFamily(defaultFontStack)
+  // 2) As a Measurer (recommended for your rendering path)
+  val defaultMeasurer: TextWidth.Measurer =
+    TextWidth.FontStack.measurerFromStack(defaultFontStack)
+  // 3) Or as an AWT Font (if you need metrics like ascent/descent)
+  val defaultFont: java.awt.Font =
+    TextWidth.FontStack.fontFromStack(defaultFontStack, sizePt = fontSize)

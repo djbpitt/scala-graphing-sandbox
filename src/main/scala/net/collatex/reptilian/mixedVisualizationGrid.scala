@@ -209,19 +209,10 @@ def createHorizontalRibbons(
     gTa: Vector[TokenEnum]
 ): scala.xml.Node =
   val gTaSigla = displaySigla.indices.toList
-  /* Default font is wide serif 16pt */
-  val defaultFamily: String =
-    TextWidth.FontStack.firstInstalledFamily("Georgia, Palatino, 'Palatino Linotype', serif")
-
-  // 2) As a Measurer (recommended for your rendering path)
-  val defaultMeasurer: TextWidth.Measurer =
-    TextWidth.FontStack.measurerFromStack("Georgia, Palatino, 'Palatino Linotype', serif")
-
-  // 3) Or as an AWT Font (if you need metrics like ascent/descent)
-  val defaultFont: java.awt.Font =
-    TextWidth.FontStack.fontFromStack("Georgia, Palatino, 'Palatino Linotype', serif", sizePt = 16f)
-
   /** Constants */
+  val defaultFamily = TextWidth.defaultFamily
+  val defaultFont = TextWidth.defaultFont
+  val defaultMeasurer = TextWidth.defaultMeasurer
   val ribbonWidth = 18
   // val missingTop = allSigla.size * ribbonWidth * 2 + ribbonWidth / 2
   val missingTop = gTaSigla.size * ribbonWidth * 2 + ribbonWidth / 2
