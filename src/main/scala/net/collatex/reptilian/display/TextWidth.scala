@@ -5,6 +5,7 @@ import java.awt.font.{FontRenderContext, TextAttribute, TextLayout}
 import java.awt.geom.AffineTransform
 import java.text.{AttributedString, Normalizer}
 import java.util
+import java.util.Locale
 import scala.collection.concurrent.TrieMap
 import scala.util.chaining.scalaUtilChainingOps
 
@@ -14,20 +15,30 @@ object TextWidth:
   // -----------------------------
   // 1) Font utilities (exact match)
   // -----------------------------
-  object FontUtils:
-    /** Return a Font if the exact family is installed; else throw with a helpful list. */
-    def fontOrError(familyExact: String, sizePt: Float = 16f, style: Int = Font.PLAIN): Font =
-      val installed = GraphicsEnvironment.getLocalGraphicsEnvironment.getAvailableFontFamilyNames.toVector.sorted
-      if !installed.contains(familyExact) then
+  /** Return a Font if the exact family is installed; else throw with a helpful list. */
+  object FontUtils {
+    def fontOrError(familyExact: String, sizePt: Float = 16f, style: Int = java.awt.Font.PLAIN): java.awt.Font = {
+      val installed = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment
+        .getAvailableFontFamilyNames(java.util.Locale.ROOT)
+        .toVector
+        .sorted
+
+      val key = familyExact.trim // <— NEW: tolerate incidental whitespace
+
+      if (!installed.contains(key)) {
         val preview = installed.mkString("\n  - ")
         val msg =
           s"""Font family not installed: "$familyExact"
+             |(After trimming: "$key")
              |Installed font families include:
              |  - $preview
              |""".stripMargin
         throw new IllegalArgumentException(msg)
-      // AWT Font(size) takes points; deriveFont keeps the float size.
-      new Font(familyExact, style, sizePt.toInt).deriveFont(sizePt)
+      }
+
+      new java.awt.Font(key, style, sizePt.toInt).deriveFont(sizePt)
+    }
+  }
 
   // --------------------------------------------
   // 2) Measurer: pure-looking façade (String => Float)
@@ -56,9 +67,10 @@ object TextWidth:
         antialiased: Boolean = true,
         fractionalMetrics: Boolean = true,
         maxCacheSize: Int = 80_000,
-        missingGlyph: MissingGlyphStrategy = MissingGlyphStrategy.UseFontMissingGlyph
+        missingGlyph: MissingGlyphStrategy = MissingGlyphStrategy.UseFontMissingGlyph,
+        units: TextWidth.Units = TextWidth.Units.Points
     ): Measurer =
-      val frc = new FontRenderContext(new AffineTransform(), antialiased, fractionalMetrics)
+      val frc = TextWidth.frcFor(antialiased, fractionalMetrics, units)
 
       final class Lru[K, V](max: Int) extends util.LinkedHashMap[K, V](math.max(16, max * 4 / 3), 0.75f, true):
         override def removeEldestEntry(e: util.Map.Entry[K, V]): Boolean = size() > max
@@ -137,10 +149,10 @@ object TextWidth:
         fractionalMetrics: Boolean = true,
         maxCacheSize: Int = 80_000,
         enableKerning: Boolean = true,
-        enableLigatures: Boolean = true
+        enableLigatures: Boolean = true,
+        units: TextWidth.Units = TextWidth.Units.Points
     ): Measurer = {
-      // Headless-friendly FRC. Keep flags aligned with your output renderer.
-      val frc = new java.awt.font.FontRenderContext(new java.awt.geom.AffineTransform(), antialiased, fractionalMetrics)
+      val frc = TextWidth.frcFor(antialiased, fractionalMetrics, units)
 
       // Small, fast LRU (access-order) for word → width
       final class Lru[K, V](max: Int)
@@ -180,19 +192,15 @@ object TextWidth:
   // 3) Pool: one measurer per exact family (size/style fixed here)
   // --------------------------------------------
   object Pool:
-    private val DefaultPt: Float = 16f
-    private val DefaultStyle: Int = Font.PLAIN
-    private val pool: TrieMap[String, Measurer] = TrieMap.empty
+    private val pool = scala.collection.concurrent.TrieMap.empty[String, Measurer]
 
-    // Avoid accidental divergence if different given names resolve to the same font
     private def normalizeFamily(f: String): String = f.trim
 
     def measurerForExactFamily(familyExact: String): Measurer =
-      val key = normalizeFamily(familyExact)
       pool.getOrElseUpdate(
-        key, {
-          val font = FontUtils.fontOrError(key, sizePt = DefaultPt, style = DefaultStyle)
-          Measurer.forFont(font)
+        normalizeFamily(familyExact), {
+          val font = FontUtils.fontOrError(normalizeFamily(familyExact), sizePt = 16f)
+          Measurer.forFont(font, units = Units.CssPx)
         }
       )
 
@@ -201,3 +209,85 @@ object TextWidth:
   // --------------------------------------------
   object syntax:
     extension (s: String) def width(using m: Measurer): Float = m(s)
+
+  // --------------------------------------------
+  // 5) Support for font stack (for default font)
+  // Application specifies wide serif stack: Georgia, Palatino, Palatino Linotype,serif
+  // --------------------------------------------
+
+  object FontStack {
+
+    // Cache installed family names (non-localized) once
+    private val installed: Set[String] =
+      GraphicsEnvironment.getLocalGraphicsEnvironment
+        .getAvailableFontFamilyNames(Locale.ROOT)
+        .toSet
+
+    // CSS logical → AWT logical
+    private val logical: Map[String, String] = Map(
+      "serif" -> "Serif",
+      "sans-serif" -> "SansSerif",
+      "monospace" -> "Monospaced"
+    )
+
+    private def stripQuotes(s: String): String =
+      s.trim match {
+        case t if t.startsWith("'") && t.endsWith("'") && t.length >= 2   => t.substring(1, t.length - 1)
+        case t if t.startsWith("\"") && t.endsWith("\"") && t.length >= 2 => t.substring(1, t.length - 1)
+        case t                                                            => t
+      }
+
+    /** Return the first installed family from a comma-separated CSS-style stack. Accepts exact family names and the CSS
+      * logicals (serif/sans-serif/monospace). Throws with a helpful message if none are available.
+      */
+    def firstInstalledFamily(cssStack: String): String = {
+      val tokens = cssStack
+        .split(",")
+        .iterator
+        .map(stripQuotes)
+        .map(_.trim)
+        .filter(_.nonEmpty)
+
+      val tried = scala.collection.mutable.ArrayBuffer.empty[String]
+
+      tokens
+        .map { t =>
+          val mapped = logical.getOrElse(t.toLowerCase(Locale.ROOT), t)
+          tried += t
+          mapped
+        }
+        .find(fam => installed.contains(fam) || logical.values.exists(_ == fam)) // logicals are always present
+        .getOrElse {
+          val preview = installed.toVector.sorted.mkString(", ")
+          throw new IllegalArgumentException(s"""No installed font found in stack: $cssStack
+               |Tried (in order): ${tried.mkString(", ")}
+               |Installed families include: $preview
+               |""".stripMargin)
+        }
+    }
+
+    /** Convenience: build a Font (points) from a stack. */
+    def fontFromStack(cssStack: String, sizePt: Float = 16f, style: Int = Font.PLAIN): Font =
+      TextWidth.FontUtils.fontOrError(firstInstalledFamily(cssStack), sizePt, style)
+
+    /** Convenience: get a Measurer from a stack via the pool (uses your standard size). */
+    def measurerFromStack(cssStack: String): TextWidth.Measurer =
+      TextWidth.Pool.measurerForExactFamily(firstInstalledFamily(cssStack))
+  }
+
+  // --------------------------------------------
+  // 6) Specify font in pt and get width returned in SVG px
+  // --------------------------------------------
+
+  enum Units:
+    case Points, CssPx
+
+  private[display] def frcFor(
+      antialiased: Boolean,
+      fractional: Boolean,
+      units: Units
+  ): java.awt.font.FontRenderContext =
+    val tx = new java.awt.geom.AffineTransform()
+    // Scale from points (72 dpi) to CSS px (96 dpi) when requested
+    if units == Units.CssPx then tx.scale(96.0 / 72.0, 96.0 / 72.0)
+    new java.awt.font.FontRenderContext(tx, antialiased, fractional)

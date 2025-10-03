@@ -11,7 +11,7 @@ import java.awt.geom.AffineTransform
 import java.text.AttributedString
 import scala.util.Using
 
-class TextWidthTest extends AnyFunSuite {
+class TextWidthTest extends AnyFunSuite with TestFontHelpers {
 
   // Ensure AWT runs headless in CI
   System.setProperty("java.awt.headless", "true")

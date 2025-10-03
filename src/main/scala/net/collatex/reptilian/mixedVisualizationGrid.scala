@@ -3,6 +3,7 @@ package net.collatex.reptilian
 import scala.annotation.{tailrec, unused}
 import scala.xml.{Elem, NodeSeq, Unparsed}
 import math.Ordered.orderingToOrdered
+import net.collatex.reptilian.display.TextWidth
 
 /* ====================================================================== */
 /* Horizontal ribbons                                                     */
@@ -208,6 +209,17 @@ def createHorizontalRibbons(
     gTa: Vector[TokenEnum]
 ): scala.xml.Node =
   val gTaSigla = displaySigla.indices.toList
+  /* Default font is wide serif 16pt */
+  val defaultFamily: String =
+    TextWidth.FontStack.firstInstalledFamily("Georgia, Palatino, 'Palatino Linotype', serif")
+
+  // 2) As a Measurer (recommended for your rendering path)
+  val defaultMeasurer: TextWidth.Measurer =
+    TextWidth.FontStack.measurerFromStack("Georgia, Palatino, 'Palatino Linotype', serif")
+
+  // 3) Or as an AWT Font (if you need metrics like ascent/descent)
+  val defaultFont: java.awt.Font =
+    TextWidth.FontStack.fontFromStack("Georgia, Palatino, 'Palatino Linotype', serif", sizePt = 16f)
 
   /** Constants */
   val ribbonWidth = 18
