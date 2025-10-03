@@ -5,27 +5,40 @@ import org.scalatest.Assertion
 import TextWidth.*
 import TextWidth.Measurer.MissingGlyphStrategy
 
-import java.awt.Font
+import java.awt.{Font, GraphicsEnvironment}
 import java.awt.font.{FontRenderContext, TextAttribute, TextLayout}
 import java.awt.geom.AffineTransform
 import java.text.AttributedString
+import java.util.Locale
 import scala.util.Using
 
-class TextWidthTest extends AnyFunSuite with TestFontHelpers {
+class TextWidthTest extends AnyFunSuite {
 
   // Ensure AWT runs headless in CI
   System.setProperty("java.awt.headless", "true")
 
-  private def firstInstalledFamily(): String = {
-    val names = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment.getAvailableFontFamilyNames
-    assert(names.nonEmpty, "No installed fonts found on this system")
-    names.head
+  private def installedFamilies: Vector[String] =
+    GraphicsEnvironment.getLocalGraphicsEnvironment
+      .getAvailableFontFamilyNames(Locale.ROOT)
+      .iterator
+      .map(_.trim)
+      .toVector
+
+  /** Pick a safe default family for tests:
+    *   - trims whitespace,
+    *   - skips dot-prefixed system names (e.g. ".AppleSystemUIFont") by default,
+    *   - asserts the result is trimmed (guard against regressions)
+    */
+  private def firstInstalledFamily(skipDotPrefixed: Boolean = true): String = {
+    val all = installedFamilies
+    assert(all.nonEmpty, "No installed fonts found on this system")
+    val fam = all.find(n => !skipDotPrefixed || !n.startsWith(".")).getOrElse(all.head)
+    assert(fam == fam.trim, s"Installed family appears padded: '$fam'")
+    fam
   }
 
-  private def secondInstalledFamilyDifferentFrom(f: String): Option[String] = {
-    val names = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment.getAvailableFontFamilyNames.toVector
-    names.find(_ != f)
-  }
+  private def secondInstalledFamilyDifferentFrom(avoid: String, skipDotPrefixed: Boolean = true): Option[String] =
+    installedFamilies.find(n => n != avoid && (!skipDotPrefixed || !n.startsWith(".")))
 
   test("FontUtils.fontOrError succeeds for an installed font") {
     val fam = firstInstalledFamily()
