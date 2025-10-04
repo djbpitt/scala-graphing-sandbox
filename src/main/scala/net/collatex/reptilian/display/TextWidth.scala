@@ -204,6 +204,8 @@ object TextWidth:
         }
       )
 
+    def clear(): Unit = pool.clear()
+
   // --------------------------------------------
   // 4) Optional syntax: scoped, terse usage inside a render block
   // --------------------------------------------
@@ -282,14 +284,14 @@ object TextWidth:
   enum Units:
     case Points, CssPx
 
-  private[display] def frcFor(
+  def frcFor(
       antialiased: Boolean,
       fractional: Boolean,
       units: Units
   ): java.awt.font.FontRenderContext =
     val tx = new java.awt.geom.AffineTransform()
     // Scale from points (72 dpi) to CSS px (96 dpi) when requested
-    if units == Units.CssPx then tx.scale(96.0 / 72.0, 96.0 / 72.0)
+    if units == Units.CssPx then tx.scale(96.0 / 72.0, 96.0 / 72.0) // pt to px
     new java.awt.font.FontRenderContext(tx, antialiased, fractional)
 
   /* Default font is wide serif 16pt */

@@ -2,12 +2,17 @@ package net.collatex.reptilian.display
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.BeforeAndAfterAll
-import java.awt.{Font, GraphicsEnvironment}
+
 import scala.util.Using
+import java.awt.{Font, GraphicsEnvironment}
+import java.awt.font.{FontRenderContext, TextAttribute, TextLayout}
+import java.awt.geom.AffineTransform
+import java.text.AttributedString
+import scala.compiletime.uninitialized
 
 class FontInfraTest extends AnyFunSuite with BeforeAndAfterAll {
 
-  private var sourceSerif4: Font = _ // Bring into scope for all tests
+  private var sourceSerif4: Font = uninitialized // Bring into scope for all tests
 
   override def beforeAll(): Unit = {
     System.setProperty("java.awt.headless", "true")
@@ -69,4 +74,38 @@ class FontInfraTest extends AnyFunSuite with BeforeAndAfterAll {
     val b = TextWidth.Pool.measurerForExactFamily(fam)
     assert(a eq b)
   }
+
+  // If it passes we're working with px, which is what we want
+  // If it fails, we're working with pts, which is wrong
+  test("Pool measurer matches kerning+ligatures ON with CSS-px-scaled FRC") {
+    System.setProperty("java.awt.headless", "true")
+    TextWidth.Pool.clear() // Start from a clean reset
+
+    val fam = TextWidth.defaultFamily
+    val font = TextWidth.FontUtils.fontOrError(fam, sizePt = 16f)
+    val s = "HamburgefontsIV 123 fi AV" // Includes kerning and ligation
+
+    // Build a CSS-px FRC (pt → px via 96/72 scale)
+    val tx = new AffineTransform()
+    tx.scale(96.0 / 72.0, 96.0 / 72.0)
+    val frcPx = new FontRenderContext(tx, /*AA*/ true, /*fractional*/ true)
+
+    // Ground truth: kerning + ligatures ON
+    val as = new AttributedString(s)
+    as.addAttribute(TextAttribute.FONT, font)
+    as.addAttribute(TextAttribute.KERNING, TextAttribute.KERNING_ON)
+    as.addAttribute(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON)
+    val truthPx = new TextLayout(as.getIterator, frcPx).getAdvance
+
+    val mPool = TextWidth.Pool.measurerForExactFamily(fam) // Pool calls forFont(..., units = CssPx)
+    val wPool = mPool(s)
+
+    val eps = 1e-4f
+    val diff = math.abs(wPool - truthPx)
+    // Print info message only on failure
+    withClue(f"pool vs truth(px): wPool=$wPool%.4f  truthPx=$truthPx%.4f  diff=$diff%.5f  ") {
+      assert(diff <= eps, "Pool should match kerning+ligatures ON at CSS px scale")
+    }
+  }
+
 }
