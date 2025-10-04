@@ -1,6 +1,6 @@
 # Constants
 # tokensPerWitnessLimit will default to Int.MaxValue unless we specify an integer here
-# tokensPerWitnessLimit: 100
+tokensPerWitnessLimit: 1500
 tokenPattern: '(?:\w+|[^\w\s])\s*' # must be valid as regex, use non-capturing group for clarity
 defaultColors: # must be non-empty list of strings
   - '#ff7d94'

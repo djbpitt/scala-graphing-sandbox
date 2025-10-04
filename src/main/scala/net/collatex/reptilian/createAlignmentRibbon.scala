@@ -4,6 +4,8 @@ import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import net.collatex.reptilian.TokenEnum.Token
+import scalax.collection.edge.WDiEdge
+import scalax.collection.mutable.Graph
 
 // This method transform an alignment on the global level of the fullest depth blocks
 // into an alignment tree by splitting
@@ -96,6 +98,10 @@ def getAlignmentPointsByTraversingNavigationGraph(
   val blocksGTa =
     longestFullDepthNonRepeatingBlocks.map(e => FullDepthBlock(e.instances.map(f => lTa(f).g), e.length))
   val graph = createTraversalGraph(blocksGTa)
+  //debug
+  // System.err.println("About to visualize traversal graph—in our dreams!")
+  visualizeTraversalGraph(graph, Map.empty, Set.empty)
+  throw RuntimeException("Stopped to debug")
   // Int identifiers of full-depth blocks
   val alignment: List[Int] = findOptimalAlignment(graph)
   // We lose the sorting here

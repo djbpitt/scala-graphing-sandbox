@@ -229,6 +229,86 @@ def createOutgoingEdgesForBlock(
   val allEdges = neighborEdges ++ skipEdges
   allEdges
 
+/** Determine whether we can move from source to target without going backward in any witness
+  *
+  * Used by createOutgoingEdgesForBlock()
+  *
+  * endNode has artificial high value for all witnesses, and is therefore always viable without special treatment
+  *
+  * @param source
+  *   Current FullDepthBlock
+  * @param target
+  *   Possible target FullDepthBlock
+  * @return
+  *   True if target is viable
+  */
+def isViableTarget(
+    source: FullDepthBlock,
+    target: FullDepthBlock
+): Boolean = // True if viable target (no backward movement)
+  target.instances // also gTa positions
+    .zip(source.instances)
+    .map((e, f) => e - f)
+    .map(_.sign)
+    .forall(_ == 1)
+
+def closestTargetForWitness(source: FullDepthBlock, followingBlocks: Vector[FullDepthBlock]): FullDepthBlock =
+  followingBlocks.find({ target => isViableTarget(source, target) }) match {
+    case Some(e) => e
+    case None    => throw RuntimeException("Oops") // Shouldn't happen
+  }
+
+/** Find closest edges for traversal graph (search)
+  *
+  * For each block -> for each witnesses in current block -> find closest block for that witness, where all witnesses
+  * move forward
+  *
+  * Weighted directed edge is WDiEdge(source: Int, target: Int)(weight: Double)
+  *
+  * Potential weight factors:
+  *   - Reward: aligned tokens
+  *   - Penalize: skipped tokens
+  *
+  * We use target block length as surrogate for aligned tokens, assuming that skipped tokens are ultimately a function
+  * of aligned tokens and a non-greedy search will find an optimal path based on only one of these types of information.
+  * Block length is easier to compute than skipped tokens.
+  *
+  * Complexity: Worst case has to move forward to End node for all witnesses to avoid backward jump, so wc * bc, where
+  * wc = witness count and bc = block count
+  *
+  * Current (source) block has positions in sequence of blocks for each witness (`blockOffsets` parameter), as does
+  * target block. If target < source for any witness, there's a backward jump, which we exclude.
+  *
+  * NB: Graph library does not deduplicate, so we have to do it ourselves before adding edges to graph
+  *
+  * TODO: Can we avoid passing in blockOrderForWitnesses and blockOffsets explicitly, since those values are the same
+  * for all blocks?
+  *
+  * @param block
+  *   Current full-depth block
+  * @param blockOrderForWitnesses
+  *   Inner vector is all blocks ordered for that witness, used to distinguish forward from backward by witness
+  * @param blockOffsets
+  *   Array of offsets for each block in each witness (where a witness is an ordered sequence of blocks) where it occurs
+  * @return
+  */
+def createOutgoingEdgesForBlockNew(
+    block: FullDepthBlock,
+    blockOrderForWitnesses: Vector[Vector[FullDepthBlock]],
+    blockOffsets: Map[Int, ArrayBuffer[Int]] // block number -> array buffer of offsets of key block for each witness
+): Vector[WDiEdge[Int]] =
+  val currentPositionsPerWitness: Vector[Int] = block.instances // gTa positions
+  val targetsByWitness: Vector[FullDepthBlock] = blockOrderForWitnesses.indices
+    .map(i =>
+      val targetCandidates =
+        blockOrderForWitnesses(i).drop(blockOffsets(block.id)(i)) // TODO: Check for off-by-one
+      val result: FullDepthBlock = closestTargetForWitness(block, targetCandidates)
+      result
+    )
+    .toVector
+    .distinct // deduplicate
+  targetsByWitness.map(target => WDiEdge(block.id, target.instances(0))(target.length))
+
 /** createOutgoingEdges
   *
   * @param blocks
@@ -247,7 +327,8 @@ def createOutgoingEdges(
     blockOffsets: Map[Int, ArrayBuffer[Int]]
 ) =
   val edges = blocks.tail // End node is first block in vector and has no outgoing edges, so exclude
-    .flatMap(e => createOutgoingEdgesForBlock(e, blockOrderForWitnesses, blockOffsets))
+    .flatMap(e => createOutgoingEdgesForBlockNew(e, blockOrderForWitnesses, blockOffsets))
+  // edges.foreach(System.err.println)
   edges
 
 def createTraversalGraph(blocks: Iterable[FullDepthBlock]) =
@@ -303,7 +384,7 @@ def findOptimalAlignment(graph: Graph[Int, WDiEdge]): List[Int] = // specify ret
   // debug
   // println("RESULT:" +result)
   result
-  
+
 /** Use Int representation from alignment to create iterable of full-depth blocks
   *
   * Convert alignment from list to set for speedier filtering Filter all full-depth blocks to keep only those in optimal
