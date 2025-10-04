@@ -5,6 +5,21 @@ import scala.xml.{Elem, NodeSeq, Unparsed}
 import math.Ordered.orderingToOrdered
 import net.collatex.reptilian.display.TextWidth
 
+// Helper to manage actual font-specific text-width measurers
+def buildWitnessMeasurers(fonts: List[Option[String]]): Vector[TextWidth.Measurer] = {
+  // Resolve Option[String] (possibly a CSS stack) → concrete installed family
+  val families: Vector[String] =
+    fonts.iterator
+      .map(_.fold(TextWidth.defaultFamily)(stack => TextWidth.FontStack.firstInstalledFamily(stack)))
+      .toVector
+
+  // Prime the pool once per distinct family (cheap; ensures nice errors early)
+  families.distinct.foreach(TextWidth.Pool.measurerForExactFamily)
+
+  // Return one measurer per witness, aligned with input
+  families.map(TextWidth.Pool.measurerForExactFamily)
+}
+
 /* ====================================================================== */
 /* Horizontal ribbons                                                     */
 /* ====================================================================== */
@@ -13,6 +28,7 @@ import net.collatex.reptilian.display.TextWidth
 val flowLength = 80d
 
 /* Constants for computeTokenTextLength() */
+// FIXME: Remove this once we're processing user-specified and default fonts
 val tnr16Metrics = scala.xml.XML.load(getClass.getResourceAsStream("/tnr_16_metrics.xml"))
 val tnrCharLengths = ((tnr16Metrics \ "character")
   .map(e => ((e \ "@str").text.head, (e \ "@width").toString.toDouble))
@@ -209,6 +225,7 @@ def createHorizontalRibbons(
     gTa: Vector[TokenEnum]
 ): scala.xml.Node =
   val gTaSigla = displaySigla.indices.toList
+
   /** Constants */
   val defaultFamily = TextWidth.defaultFamily
   val defaultFont = TextWidth.defaultFont
