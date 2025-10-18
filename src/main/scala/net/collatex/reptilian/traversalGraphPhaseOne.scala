@@ -328,7 +328,6 @@ def createOutgoingEdges(
 ) =
   val edges = blocks.tail // End node is first block in vector and has no outgoing edges, so exclude
     .flatMap(e => createOutgoingEdgesForBlockNew(e, blockOrderForWitnesses, blockOffsets))
-  // edges.foreach(System.err.println)
   edges
 
 def createTraversalGraph(blocks: Iterable[FullDepthBlock]) =
