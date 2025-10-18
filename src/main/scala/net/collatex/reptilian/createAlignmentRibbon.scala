@@ -100,14 +100,14 @@ def getAlignmentPointsByTraversingNavigationGraph(
   val graph = createTraversalGraph(blocksGTa)
   //debug
   // System.err.println("About to visualize traversal graph—in our dreams!")
-  visualizeTraversalGraph(graph, Map.empty, Set.empty)
-  throw RuntimeException("Stopped to debug")
+  // visualizeTraversalGraph(graph, Map.empty, Set.empty)
+  // throw RuntimeException("Stopped to debug")
   // Int identifiers of full-depth blocks
   val alignment: List[Int] = findOptimalAlignment(graph)
   // We lose the sorting here
   val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment)
   // debug
-  // visualizeTraversalGraph(graph, Map.empty, alignmentBlocksSet)
+  visualizeTraversalGraph(graph, Map.empty, alignmentBlocksSet)
   // throw RuntimeException("end of beam search")
 
   val alignmentBlocks: Iterable[FullDepthBlock] =

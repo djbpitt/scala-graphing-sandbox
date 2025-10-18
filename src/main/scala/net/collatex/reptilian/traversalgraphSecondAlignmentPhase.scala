@@ -67,9 +67,9 @@ def traversalGraphPhase2(
 
   @tailrec
   def step(
-            nodesToProcess: Set[DecisionGraphStepPhase2],
-            graph: Graph[DecisionGraphStepPhase2]
-          ): Graph[DecisionGraphStepPhase2] =
+      nodesToProcess: Set[DecisionGraphStepPhase2],
+      graph: Graph[DecisionGraphStepPhase2]
+  ): Graph[DecisionGraphStepPhase2] =
     if nodesToProcess.isEmpty
     then graph
     else
@@ -99,8 +99,7 @@ def traversalGraphPhase2(
       val newNodesToProcess: Set[DecisionGraphStepPhase2] =
         nodesToProcess.tail ++ newNodesNotAtEnd
       val nodesToConnectToEnd =
-        if validDecisions.nonEmpty then
-          validDecisions -- newNodesNotAtEnd
+        if validDecisions.nonEmpty then validDecisions -- newNodesNotAtEnd
         else Set(currentNode)
       val newEdgesToEnd: Graph[DecisionGraphStepPhase2] =
         nodesToConnectToEnd
@@ -173,7 +172,7 @@ def greedy(
   val startNode: DecisionGraphStepPhase2 = dgSorted.head
   val endNode: DecisionGraphStepPhase2 = dgSorted.last
   // println(endNode)
-  //println(s"ml: $ml")
+  // println(s"ml: $ml")
 
   /** score()
     *
@@ -182,7 +181,7 @@ def greedy(
     * @return
     */
   def score(dgCurrent: DecisionGraphStepPhase2): Double =
-    //println(s"dgNode: $dgCurrent")
+    // println(s"dgNode: $dgCurrent")
     val result: Int = dgCurrent.nodeType match
       case Skip => 0
       case _ =>

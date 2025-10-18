@@ -6,6 +6,13 @@ import scalax.collection.io.dot.*
 import scalax.collection.io.dot.implicits.toId
 import scalax.collection.io.dot.implicits.toNodeId
 
+// create timestamp for debug
+
+import java.time.Instant
+
+def isoTimestamp: String = Instant.now().toString
+// e.g., "2025-10-18T20:23:15.478Z"
+
 def traversalGraphToDot(g: Graph[Int, WDiEdge], b: Map[Int, String], pathNodes: Set[Int] = Set.empty[Int]) =
   val root = DotRootGraph(
     directed = true,
@@ -62,12 +69,15 @@ def visualizeTraversalGraph(
     alignmentNodes: Set[Int]
 ): Unit =
   val traversalGraphAsDot = traversalGraphToDot(graph, blockTexts, alignmentNodes)
-  val graphOutputPath = os.pwd / "src" / "main" / "outputs" / "traversal.dot"
+  // debug to visualize all phase one stages
+  val uniqueName = isoTimestamp
+  System.err.println(s"uniqueName: $uniqueName")
+  val graphOutputPath = os.pwd / "src" / "main" / "outputs" / s"$uniqueName-traversal.dot"
   // System.err.println("Writing to " + graphOutputPath)
   os.write.over(graphOutputPath, traversalGraphAsDot) // Create SVG output and write to specified path
   import sys.process._
   val pathAsString = graphOutputPath.toString
-  val svgOutputPath = os.pwd / "src" / "main" / "outputs" / "traversal.svg"
+  val svgOutputPath = os.pwd / "src" / "main" / "outputs" / s"$uniqueName-traversal.svg"
   val svgPathAsString = svgOutputPath.toString
   val pb = Process("dot -Tsvg " + pathAsString + " -o" + svgPathAsString)
   // System.err.println("Writing to " + svgOutputPath)
