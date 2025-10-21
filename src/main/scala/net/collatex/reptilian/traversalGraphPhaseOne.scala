@@ -307,7 +307,7 @@ def createOutgoingEdgesForBlockNew(
     )
     .toVector
     .distinct // deduplicate
-  targetsByWitness.map(target => WDiEdge(block.id, target.instances(0))(target.length))
+  targetsByWitness.map(target => WDiEdge(block.id, target.instances(0))(target.length)) // length of target block is weight
 
 /** createOutgoingEdges
   *

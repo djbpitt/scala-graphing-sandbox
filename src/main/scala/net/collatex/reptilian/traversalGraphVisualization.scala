@@ -36,8 +36,7 @@ def traversalGraphToDot(g: Graph[Int, WDiEdge], b: Map[Int, String], pathNodes: 
                   target.toString,
                   List(
                     DotAttr("label", weight.toInt.toString),
-                    if weight == 2 then DotAttr("color", "red")
-                    else DotAttr("color", "black")
+                    DotAttr("color", "black")
                   )
                 )
               )
@@ -71,7 +70,7 @@ def visualizeTraversalGraph(
   val traversalGraphAsDot = traversalGraphToDot(graph, blockTexts, alignmentNodes)
   // debug to visualize all phase one stages
   val uniqueName = isoTimestamp
-  System.err.println(s"uniqueName: $uniqueName")
+  // System.err.println(s"uniqueName: $uniqueName")
   val graphOutputPath = os.pwd / "src" / "main" / "outputs" / s"$uniqueName-traversal.dot"
   // System.err.println("Writing to " + graphOutputPath)
   os.write.over(graphOutputPath, traversalGraphAsDot) // Create SVG output and write to specified path

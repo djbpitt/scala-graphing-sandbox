@@ -98,16 +98,26 @@ def getAlignmentPointsByTraversingNavigationGraph(
   val blocksGTa =
     longestFullDepthNonRepeatingBlocks.map(e => FullDepthBlock(e.instances.map(f => lTa(f).g), e.length))
   val graph = createTraversalGraph(blocksGTa)
-  //debug
-  // System.err.println("About to visualize traversal graph—in our dreams!")
-  // visualizeTraversalGraph(graph, Map.empty, Set.empty)
-  // throw RuntimeException("Stopped to debug")
-  // Int identifiers of full-depth blocks
   val alignment: List[Int] = findOptimalAlignment(graph)
   // We lose the sorting here
   val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment)
-  // debug
-  visualizeTraversalGraph(graph, Map.empty, alignmentBlocksSet)
+  val blockTexts: Map[Int, String] = blocksGTa
+    .map { e =>
+      val start = e.instances.head
+      start ->
+        TokenRange(start, start + e.length, gTa).tString
+    }
+    .toMap
+  // start debug
+  if lTa.size > 10_000 then // Output results only for first phase-one pass
+    blocksGTa
+      .sortBy(_.instances.head)
+      .foreach {e =>
+        val start = e.instances.head
+        System.err.println(s"$start (${e.instances.mkString(", ")}): ${blockTexts(start)}")
+      }
+  // end debug
+  visualizeTraversalGraph(graph, blockTexts, alignmentBlocksSet)
   // throw RuntimeException("end of beam search")
 
   val alignmentBlocks: Iterable[FullDepthBlock] =
