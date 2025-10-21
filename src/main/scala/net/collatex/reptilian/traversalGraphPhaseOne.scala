@@ -307,7 +307,9 @@ def createOutgoingEdgesForBlockNew(
     )
     .toVector
     .distinct // deduplicate
-  targetsByWitness.map(target => WDiEdge(block.id, target.instances(0))(target.length)) // length of target block is weight
+  targetsByWitness.map(target =>
+    WDiEdge(block.id, target.instances(0))(target.length)
+  ) // length of target block is weight
 
 /** createOutgoingEdges
   *
@@ -368,17 +370,29 @@ def findOptimalAlignment(graph: Graph[Int, WDiEdge]): List[Int] = // specify ret
   //
   // Return single BeamOption, representing (one) best alignment
   // TODO: Restore temporarily disabled unit tests
-  val beamMax = 35 // TODO: could be adaptable, e.g., x% of possible options
+  val beamMax = 350 // TODO: could be adaptable, e.g., x% of possible options
   val start = BeamOption(path = List(-1), score = 0)
   var beam: Vector[BeamOption] = Vector(start) // initialize beam to hold just start node (zero tokens)
 
   while !beam.map(_.path.head).forall(_ == endNodeId) do
     // debug
     // println("Beam is now: "+beam)
-    val newOptions = beam.flatMap(e => scoreAllOptions(graph = graph, current = e))
-    if newOptions.size <= beamMax then beam = newOptions
-    else beam = newOptions.sortBy(_.score * -1).slice(from = 0, until = beamMax)
+    val newOptionsTmp = beam.map(e => scoreAllOptions(graph = graph, current = e))
+    val newOptions = newOptionsTmp.flatten
+//    if graph.size > 700 then
+//      System.err.println(s"graph.size: ${graph.size}")
+//      System.err.println(s"newOptionsTmp: $newOptionsTmp")
+//      System.err.println(s"newOptions: $newOptions")
 
+    beam =
+      if newOptions.size <= beamMax
+      then newOptions
+      else newOptions.sortBy(_.score * -1).slice(from = 0, until = beamMax)
+    // start debug
+    if graph.size > 700 then {
+      System.err.print(s"${beam.size} ")
+    }
+  // end debug
   val result = beam.minBy(_.score * -1).path.reverse // Exit once all options on the beam until at the until node
   // debug
   // println("RESULT:" +result)
