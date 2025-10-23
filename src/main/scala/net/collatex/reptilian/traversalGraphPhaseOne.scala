@@ -84,6 +84,13 @@ protected def computeBlockOrderForWitnesses(blocks: Vector[FullDepthBlock]): Vec
       .map(e => blocks.sortBy(_.instances(e)))
   blockOrderByWitness.toVector
 
+protected def computeBlockOrderForWitnessesReversed(blocks: Vector[FullDepthBlock]): Vector[Vector[FullDepthBlock]] =
+  val witnessCount = blocks(0).instances.length
+  val blockOrderByWitness =
+    Range(0, witnessCount)
+      .map(e => blocks.sortBy(_.instances(e)))
+  blockOrderByWitness.toVector
+
 /** Create map from block id (offset in witness 0) to array buffer of offsets in all witnesses
   *
   * @param blockOrders
@@ -95,7 +102,7 @@ protected def computeBlockOffsetsInAllWitnesses(blockOrders: Vector[Vector[FullD
   // Traverse each inner vector and add value to Map[Int, ArrayBuffer]
   // Key is token offset in witness 0
   // Value is Vector of positions of block by witness
-  val blockOffsets = blockOrders.head
+  val blockOffsets: Map[Int, ArrayBuffer[Int]] = blockOrders.head
     .map(_.instances.head)
     .zipWithIndex
     .map((k, v) => k -> ArrayBuffer(v))
@@ -255,8 +262,17 @@ def isViableTarget(
 def closestTargetForWitness(source: FullDepthBlock, followingBlocks: Vector[FullDepthBlock]): FullDepthBlock =
   followingBlocks.find({ target => isViableTarget(source, target) }) match {
     case Some(e) => e
-    case None    => throw RuntimeException("Oops") // Shouldn't happen
+    case None => throw RuntimeException("Following block values must be greater than current block") // Shouldn't happen
   }
+
+def closestTargetForWitnessReversed(source: FullDepthBlock, precedingBlocks: Vector[FullDepthBlock]): FullDepthBlock = {
+  System.err.println(source)
+  System.err.println(precedingBlocks.reverse)
+  precedingBlocks.findLast({ target => !isViableTarget(source, target) }) match {
+    case Some(e) => e
+    case None => throw RuntimeException("Preceding block values must be less than current block") // Shouldn't happen
+  }
+}
 
 /** Find closest edges for traversal graph (search)
   *
@@ -311,6 +327,26 @@ def createOutgoingEdgesForBlockNew(
     WDiEdge(block.id, target.instances(0))(target.length)
   ) // length of target block is weight
 
+def createReversedEdgesForBlockNew(
+    block: FullDepthBlock,
+    blockOrderForWitnesses: Vector[Vector[FullDepthBlock]],
+    blockOffsets: Map[Int, ArrayBuffer[Int]] // block number -> array buffer of offsets of key block for each witness
+): Vector[WDiEdge[Int]] =
+  val currentPositionsPerWitness: Vector[Int] = block.instances // gTa positions
+  val targetsByWitness: Vector[FullDepthBlock] = blockOrderForWitnesses.indices
+    .map(i =>
+      val targetCandidates =
+        blockOrderForWitnesses(i).take(blockOffsets(block.id)(i) - 1)
+      val result: FullDepthBlock =
+        closestTargetForWitnessReversed(block, targetCandidates)
+      result
+    )
+    .toVector
+    .distinct // deduplicate
+  targetsByWitness.map(target =>
+    WDiEdge(block.id, target.instances(0))(target.length)
+  ) // length of target block is weight
+
 /** createOutgoingEdges
   *
   * @param blocks
@@ -332,6 +368,15 @@ def createOutgoingEdges(
     .flatMap(e => createOutgoingEdgesForBlockNew(e, blockOrderForWitnesses, blockOffsets))
   edges
 
+def createReversedEdges(
+    blocks: Vector[FullDepthBlock],
+    blockOrderForWitnesses: Vector[Vector[FullDepthBlock]],
+    blockOffsets: Map[Int, ArrayBuffer[Int]]
+) =
+  val edges = blocks // Start node is last block in vector and has no incoming edges, so exclude
+    .flatMap(e => createReversedEdgesForBlockNew(e, blockOrderForWitnesses, blockOffsets))
+  edges
+
 def createTraversalGraph(blocks: Iterable[FullDepthBlock]) =
   //  println(blocks)
   val localBlocks = blocks.toVector
@@ -339,11 +384,15 @@ def createTraversalGraph(blocks: Iterable[FullDepthBlock]) =
   val startBlock = FullDepthBlock(instances = Vector.fill(witnessCount)(-1), length = 1) // fake first (start) block
   val endBlock = FullDepthBlock(instances = Vector.fill(witnessCount)(endNodeId), length = 1)
   // until node first to we can use blocks.tail to compute outgoing edges
-  val blocksForGraph = Vector(endBlock) ++ localBlocks ++ Vector(startBlock)
+  val blocksForGraph = Vector(endBlock) ++ localBlocks ++ Vector(startBlock) // don't care about order
   val g = computeNodesForGraph(blocksForGraph)
   val blockOrderForWitnesses = computeBlockOrderForWitnesses(blocksForGraph)
-  val blockOffsets = computeBlockOffsetsInAllWitnesses(blockOrderForWitnesses)
+  val blockOffsets: Map[Int, ArrayBuffer[Int]] = computeBlockOffsetsInAllWitnesses(blockOrderForWitnesses)
   val edges = createOutgoingEdges(blocksForGraph, blockOrderForWitnesses, blockOffsets)
+  // Create edges based on end-to-start traversal to pick up orphaned nodes
+  val edgesReversed = createReversedEdges(blocksForGraph, blockOrderForWitnesses, blockOffsets)
+  // End of edges based on end-to-start traversal
+  System.err.println(edgesReversed)
   val graphWithEdges = g ++ edges
   graphWithEdges
 
