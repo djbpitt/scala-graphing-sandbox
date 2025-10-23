@@ -1,7 +1,7 @@
 package net.collatex.reptilian
 
 import scalax.collection.mutable.Graph
-import scalax.collection.edge.WDiEdge
+import scalax.collection.edge.WLDiEdge
 import scalax.collection.io.dot.*
 import scalax.collection.io.dot.implicits.toId
 import scalax.collection.io.dot.implicits.toNodeId
@@ -13,7 +13,7 @@ import java.time.Instant
 def isoTimestamp: String = Instant.now().toString
 // e.g., "2025-10-18T20:23:15.478Z"
 
-def traversalGraphToDot(g: Graph[Int, WDiEdge], b: Map[Int, String], pathNodes: Set[Int] = Set.empty[Int]) =
+def traversalGraphToDot(g: Graph[Int, WLDiEdge], b: Map[Int, String], pathNodes: Set[Int] = Set.empty[Int]) =
   val root = DotRootGraph(
     directed = true,
     id = Some("MyDot"),
@@ -21,9 +21,9 @@ def traversalGraphToDot(g: Graph[Int, WDiEdge], b: Map[Int, String], pathNodes: 
     attrList = List(DotAttr("attr_1", """"one""""), DotAttr("attr_2", "<two>"))
   )
 
-  def edgeTransformer(innerEdge: scalax.collection.Graph[Int, WDiEdge]#EdgeT): Option[(DotGraph, DotEdgeStmt)] =
+  def edgeTransformer(innerEdge: scalax.collection.Graph[Int, WLDiEdge]#EdgeT): Option[(DotGraph, DotEdgeStmt)] =
     innerEdge.edge match {
-      case WDiEdge(source, target, weight) =>
+      case WLDiEdge(source, target, weight, label) =>
         // Checks for backwards edges only with respect to witness 0
         // if target.value < source.value then System.err.println(s"Error: $source, $target")
         weight match {
@@ -44,7 +44,7 @@ def traversalGraphToDot(g: Graph[Int, WDiEdge], b: Map[Int, String], pathNodes: 
         }
     }
 
-  def nodeTransformer(innerNode: scalax.collection.Graph[Int, WDiEdge]#NodeT): Option[(DotGraph, DotNodeStmt)] =
+  def nodeTransformer(innerNode: scalax.collection.Graph[Int, WLDiEdge]#NodeT): Option[(DotGraph, DotNodeStmt)] =
     // Remove (for now) double quotes because dot-to-svg uses them as string delimiters
     Some(
       root,
@@ -63,7 +63,7 @@ def traversalGraphToDot(g: Graph[Int, WDiEdge], b: Map[Int, String], pathNodes: 
 
 // Diagnostic: visualize traversal graph
 def visualizeTraversalGraph(
-    graph: Graph[Int, WDiEdge],
+    graph: Graph[Int, WLDiEdge],
     blockTexts: Map[Int, String],
     alignmentNodes: Set[Int]
 ): Unit =
