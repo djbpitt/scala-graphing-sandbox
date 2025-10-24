@@ -259,6 +259,17 @@ def isViableTarget(
     .map(_.sign)
     .forall(_ == 1)
 
+/* NB: Cannot just negate isViableTarget(), above, because need to verify all values, which forall() masks */
+def isViableTargetReversed(
+    source: FullDepthBlock,
+    target: FullDepthBlock
+): Boolean = // True if viable target (no backward movement)
+  target.instances // also gTa positions
+    .zip(source.instances)
+    .map((e, f) => e - f)
+    .map(_.sign)
+    .forall(_ == -1) // Backwards edges, so *all* values must be negative
+
 def closestTargetForWitness(source: FullDepthBlock, followingBlocks: Vector[FullDepthBlock]): FullDepthBlock =
   followingBlocks.find({ target => isViableTarget(source, target) }) match {
     case Some(e) => e
@@ -266,11 +277,9 @@ def closestTargetForWitness(source: FullDepthBlock, followingBlocks: Vector[Full
   }
 
 def closestTargetForWitnessReversed(source: FullDepthBlock, precedingBlocks: Vector[FullDepthBlock]): FullDepthBlock = {
-  System.err.println(source)
-  System.err.println(precedingBlocks.reverse)
-  precedingBlocks.findLast({ target => !isViableTarget(source, target) }) match {
+  precedingBlocks.findLast({ target => isViableTargetReversed(source, target) }) match {
     case Some(e) => e
-    case None => throw RuntimeException("Preceding block values must be less than current block") // Shouldn't happen
+    case None    => throw RuntimeException("Preceding block values must be less than current block") // Shouldn't happen
   }
 }
 
@@ -313,7 +322,7 @@ def createOutgoingEdgesForBlockNew(
     blockOrderForWitnesses: Vector[Vector[FullDepthBlock]],
     blockOffsets: Map[Int, ArrayBuffer[Int]] // block number -> array buffer of offsets of key block for each witness
 ): Vector[WDiEdge[Int]] =
-  val currentPositionsPerWitness: Vector[Int] = block.instances // gTa positions
+  // val currentPositionsPerWitness: Vector[Int] = block.instances // gTa positions
   val targetsByWitness: Vector[FullDepthBlock] = blockOrderForWitnesses.indices
     .map(i =>
       val targetCandidates =
@@ -332,7 +341,7 @@ def createReversedEdgesForBlockNew(
     blockOrderForWitnesses: Vector[Vector[FullDepthBlock]],
     blockOffsets: Map[Int, ArrayBuffer[Int]] // block number -> array buffer of offsets of key block for each witness
 ): Vector[WDiEdge[Int]] =
-  val currentPositionsPerWitness: Vector[Int] = block.instances // gTa positions
+  // val currentPositionsPerWitness: Vector[Int] = block.instances // gTa positions
   val sourcesByWitness: Vector[FullDepthBlock] = blockOrderForWitnesses.indices
     .map(i =>
       val sourceCandidates =
@@ -373,7 +382,8 @@ def createReversedEdges(
     blockOrderForWitnesses: Vector[Vector[FullDepthBlock]],
     blockOffsets: Map[Int, ArrayBuffer[Int]]
 ) =
-  val edges = blocks.dropRight(1) // Start node is last block in vector and has no incoming edges, so exclude
+  val edges = blocks
+    .dropRight(1) // Start node is last block in vector and has no incoming edges, so exclude
     .flatMap(e => createReversedEdgesForBlockNew(e, blockOrderForWitnesses, blockOffsets))
   edges
 
@@ -392,8 +402,7 @@ def createTraversalGraph(blocks: Iterable[FullDepthBlock]) =
   // Create edges based on end-to-start traversal to pick up orphaned nodes
   val edgesReversed = createReversedEdges(blocksForGraph, blockOrderForWitnesses, blockOffsets)
   // End of edges based on end-to-start traversal
-  System.err.println(edgesReversed)
-  val graphWithEdges = g ++ edges
+  val graphWithEdges = g ++ edges ++ edgesReversed
   graphWithEdges
 
 /** Take path step for all edges on BeamOption and return all potential new BeamOption objects graph : Needed to get out
@@ -424,27 +433,14 @@ def findOptimalAlignment(graph: Graph[Int, WDiEdge]): List[Int] = // specify ret
   var beam: Vector[BeamOption] = Vector(start) // initialize beam to hold just start node (zero tokens)
 
   while !beam.map(_.path.head).forall(_ == endNodeId) do
-    // debug
-    // println("Beam is now: "+beam)
     val newOptionsTmp = beam.map(e => scoreAllOptions(graph = graph, current = e))
     val newOptions = newOptionsTmp.flatten
-//    if graph.size > 700 then
-//      System.err.println(s"graph.size: ${graph.size}")
-//      System.err.println(s"newOptionsTmp: $newOptionsTmp")
-//      System.err.println(s"newOptions: $newOptions")
 
     beam =
       if newOptions.size <= beamMax
       then newOptions
       else newOptions.sortBy(_.score * -1).slice(from = 0, until = beamMax)
-    // start debug
-    if graph.size > 700 then {
-      System.err.print(s"${beam.size} ")
-    }
-  // end debug
   val result = beam.minBy(_.score * -1).path.reverse // Exit once all options on the beam until at the until node
-  // debug
-  // println("RESULT:" +result)
   result
 
 /** Use Int representation from alignment to create iterable of full-depth blocks

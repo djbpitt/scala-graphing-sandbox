@@ -98,9 +98,6 @@ def getAlignmentPointsByTraversingNavigationGraph(
   val blocksGTa =
     longestFullDepthNonRepeatingBlocks.map(e => FullDepthBlock(e.instances.map(f => lTa(f).g), e.length))
   val graph = createTraversalGraph(blocksGTa)
-  val alignment: List[Int] = findOptimalAlignment(graph)
-  // We lose the sorting here
-  val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment)
   val blockTexts: Map[Int, String] = blocksGTa
     .map { e =>
       val start = e.instances.head
@@ -108,6 +105,11 @@ def getAlignmentPointsByTraversingNavigationGraph(
         TokenRange(start, start + e.length, gTa).tString
     }
     .toMap
+  // Debug: visualize before traversal because traversal will crash on cycles
+  // visualizeTraversalGraph(graph, blockTexts, Set.empty)
+  val alignment: List[Int] = findOptimalAlignment(graph)
+  // We lose the sorting here
+  val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment)
   // start debug
   if lTa.size > 10_000 then // Output results only for first phase-one pass
     blocksGTa
