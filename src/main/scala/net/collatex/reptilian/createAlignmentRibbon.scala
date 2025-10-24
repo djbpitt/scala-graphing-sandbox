@@ -110,15 +110,6 @@ def getAlignmentPointsByTraversingNavigationGraph(
   val alignment: List[Int] = findOptimalAlignment(graph)
   // We lose the sorting here
   val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment)
-  // start debug
-  if lTa.size > 10_000 then // Output results only for first phase-one pass
-    blocksGTa
-      .sortBy(_.instances.head)
-      .foreach {e =>
-        val start = e.instances.head
-        System.err.println(s"$start (${e.instances.mkString(", ")}): ${blockTexts(start)}")
-      }
-  // end debug
   visualizeTraversalGraph(graph, blockTexts, alignmentBlocksSet)
   // throw RuntimeException("end of beam search")
 
