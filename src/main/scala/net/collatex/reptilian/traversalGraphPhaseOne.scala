@@ -278,6 +278,38 @@ def closestTargetForWitnessReversed(source: FullDepthBlock, precedingBlocks: Vec
   }
 }
 
+/** Compute set of blocks skipped on path
+  *
+  * Used to compute payloads during beam search, since we penalize path for skipped blocks (lost potential)
+  *
+  * Determine blocks skipped for each witness, deduplicate, return skipped blocks
+  *
+  * @param source
+  *   FullDepthBlock source for path step
+  * @param target
+  *   FullDepthBlock target for path step
+  * @param offsets
+  *   Map from block id (Int) to offsets in each witness (ArrayBuffer[Int])
+  * @param blockOrders
+  *   Vector of vectors of FullDepthBlocks, with one inner vector per witness
+  * @return
+  *   Deduplicated set of skipped blocks on path from source to target
+  */
+def identifySkippedBlocks(
+    source: FullDepthBlock,
+    target: FullDepthBlock,
+    offsets: Map[Int, ArrayBuffer[Int]], // key is block id, values are offsets of that block in each witness
+    blockOrders: Vector[Vector[FullDepthBlock]] // inner vectors are block orders by witness
+): Set[FullDepthBlock] =
+  val witIds: List[Int] = source.instances.indices.toList
+  witIds
+    .flatMap(w =>
+      val sourceOffset = offsets(source.id)(w)
+      val targetOffset = offsets(target.id)(w)
+      blockOrders(w).slice(sourceOffset + 1, targetOffset)
+    )
+    .toSet
+
 /** Find closest edges for traversal graph (search)
   *
   * For each block -> for each witnesses in current block -> find closest block for that witness, where all witnesses
@@ -329,7 +361,7 @@ def createOutgoingEdgesForBlockNew(
     .distinct // deduplicate
   targetsByWitness.map(target =>
     // TODO: Set.empty is just a place holder. Fill it with a Set of skipped blocks for target
-    WLDiEdge(block.id, target.instances(0))(target.length, Set.empty)
+    WLDiEdge(block.id, target.id)(target.length, Set.empty)
   ) // length of target block is weight
 
 def createReversedEdgesForBlockNew(
@@ -349,7 +381,7 @@ def createReversedEdgesForBlockNew(
     .toVector
     .distinct // deduplicate
   sourcesByWitness.map(source =>
-    WLDiEdge(source.instances(0), block.id)(block.length, Set.empty)
+    WLDiEdge(source.id, block.id)(block.length, Set.empty)
   ) // length of target block is weight
 
 /** createOutgoingEdges
