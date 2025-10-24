@@ -336,7 +336,7 @@ def createReversedEdgesForBlockNew(
   val targetsByWitness: Vector[FullDepthBlock] = blockOrderForWitnesses.indices
     .map(i =>
       val targetCandidates =
-        blockOrderForWitnesses(i).take(blockOffsets(block.id)(i) - 1)
+        blockOrderForWitnesses(i).take(blockOffsets(block.id)(i))
       val result: FullDepthBlock =
         closestTargetForWitnessReversed(block, targetCandidates)
       result
@@ -373,7 +373,7 @@ def createReversedEdges(
     blockOrderForWitnesses: Vector[Vector[FullDepthBlock]],
     blockOffsets: Map[Int, ArrayBuffer[Int]]
 ) =
-  val edges = blocks // Start node is last block in vector and has no incoming edges, so exclude
+  val edges = blocks.dropRight(1) // Start node is last block in vector and has no incoming edges, so exclude
     .flatMap(e => createReversedEdgesForBlockNew(e, blockOrderForWitnesses, blockOffsets))
   edges
 
