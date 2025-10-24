@@ -344,8 +344,8 @@ def createReversedEdgesForBlockNew(
     .toVector
     .distinct // deduplicate
   sourcesByWitness.map(source =>
-    WDiEdge(source.instances(0), block.id)(source.length)
-  ) // length of source block is weight
+    WDiEdge(source.instances(0), block.id)(block.length)
+  ) // length of target block is weight
 
 /** createOutgoingEdges
   *
