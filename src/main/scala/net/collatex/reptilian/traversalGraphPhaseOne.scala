@@ -333,19 +333,19 @@ def createReversedEdgesForBlockNew(
     blockOffsets: Map[Int, ArrayBuffer[Int]] // block number -> array buffer of offsets of key block for each witness
 ): Vector[WDiEdge[Int]] =
   val currentPositionsPerWitness: Vector[Int] = block.instances // gTa positions
-  val targetsByWitness: Vector[FullDepthBlock] = blockOrderForWitnesses.indices
+  val sourcesByWitness: Vector[FullDepthBlock] = blockOrderForWitnesses.indices
     .map(i =>
-      val targetCandidates =
+      val sourceCandidates =
         blockOrderForWitnesses(i).take(blockOffsets(block.id)(i))
       val result: FullDepthBlock =
-        closestTargetForWitnessReversed(block, targetCandidates)
+        closestTargetForWitnessReversed(block, sourceCandidates)
       result
     )
     .toVector
     .distinct // deduplicate
-  targetsByWitness.map(target =>
-    WDiEdge(block.id, target.instances(0))(target.length)
-  ) // length of target block is weight
+  sourcesByWitness.map(source =>
+    WDiEdge(source.instances(0), block.id)(source.length)
+  ) // length of source block is weight
 
 /** createOutgoingEdges
   *
