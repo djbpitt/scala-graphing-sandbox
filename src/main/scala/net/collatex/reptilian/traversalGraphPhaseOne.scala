@@ -336,7 +336,7 @@ def createReversedEdgesForBlockNew(
     block: FullDepthBlock,
     blockOrderForWitnesses: Vector[Vector[FullDepthBlock]],
     blockOffsets: Map[Int, ArrayBuffer[Int]] // block number -> array buffer of offsets of key block for each witness
-): Vector[WDiEdge[Int]] =
+): Vector[WLDiEdge[Int]] =
   // val currentPositionsPerWitness: Vector[Int] = block.instances // gTa positions
   val sourcesByWitness: Vector[FullDepthBlock] = blockOrderForWitnesses.indices
     .map(i =>
@@ -349,7 +349,7 @@ def createReversedEdgesForBlockNew(
     .toVector
     .distinct // deduplicate
   sourcesByWitness.map(source =>
-    WDiEdge(source.instances(0), block.id)(block.length)
+    WLDiEdge(source.instances(0), block.id)(block.length, Set.empty)
   ) // length of target block is weight
 
 /** createOutgoingEdges
@@ -383,7 +383,7 @@ def createReversedEdges(
     .flatMap(e => createReversedEdgesForBlockNew(e, blockOrderForWitnesses, blockOffsets))
   edges
 
-def createTraversalGraph(blocks: Iterable[FullDepthBlock]) =
+def createTraversalGraph(blocks: Iterable[FullDepthBlock]): Graph[Int, WLDiEdge] =
   //  println(blocks)
   val localBlocks = blocks.toVector
   val witnessCount = localBlocks(0).instances.length
