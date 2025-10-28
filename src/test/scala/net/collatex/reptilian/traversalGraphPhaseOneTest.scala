@@ -2,7 +2,6 @@ package net.collatex.reptilian
 
 import org.scalatest.*
 import org.scalatest.funsuite.AnyFunSuite
-
 import scala.collection.mutable.ArrayBuffer
 
 class traversalGraphPhaseOneTest extends AnyFunSuite:
@@ -43,5 +42,5 @@ class traversalGraphPhaseOneTest extends AnyFunSuite:
     )
     val expected = Set(FullDepthBlock(Vector(5, 205), 3), FullDepthBlock(Vector(50, 105), 3))
     val result = identifySkippedBlocks(source, target, offsets, blockOrders)
-    assert(result == result)
+    assert(result == expected)
   }
