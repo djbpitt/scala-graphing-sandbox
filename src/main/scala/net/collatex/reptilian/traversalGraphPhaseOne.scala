@@ -360,8 +360,8 @@ def createOutgoingEdgesForBlockNew(
     .toVector
     .distinct // deduplicate
   targetsByWitness.map(target =>
-    // TODO: Set.empty is just a place holder. Fill it with a Set of skipped blocks for target
-    WLDiEdge(block.id, target.id)(target.length, Set.empty)
+    val skippedBlocks: Set[FullDepthBlock] = identifySkippedBlocks(block, target, blockOffsets, blockOrderForWitnesses)
+    WLDiEdge(block.id, target.id)(target.length, skippedBlocks)
   ) // length of target block is weight
 
 def createReversedEdgesForBlockNew(
@@ -381,7 +381,8 @@ def createReversedEdgesForBlockNew(
     .toVector
     .distinct // deduplicate
   sourcesByWitness.map(source =>
-    WLDiEdge(source.id, block.id)(block.length, Set.empty)
+    val skippedBlocks: Set[FullDepthBlock] = identifySkippedBlocks(source, block, blockOffsets, blockOrderForWitnesses)
+    WLDiEdge(source.id, block.id)(block.length, skippedBlocks)
   ) // length of target block is weight
 
 /** createOutgoingEdges
