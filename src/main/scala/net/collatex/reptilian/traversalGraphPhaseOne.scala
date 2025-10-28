@@ -26,11 +26,11 @@ given CoreConfig = CoreConfig()
   */
 def counts[T](s: Seq[T]) = s.groupBy(identity).view.mapValues(_.length)
 
-/* Beam search maintains collection of BeamOption objects
+/* Beam search maintains collection of PathCandidate objects
  * path : list of nodes; prepend new values, so list is in reverse order at until
  * score : cumulative count of tokens placed by path
  * */
-case class BeamOption(path: List[Int], score: Double)
+case class PathCandidate(path: List[Int], score: Double, skippedBlocks: Set[FullDepthBlock] = Set.empty)
 
 /** Check whether all edges point forward
   *
@@ -434,24 +434,28 @@ def createTraversalGraph(blocks: Iterable[FullDepthBlock]): Graph[Int, WLDiEdge]
   val graphWithEdges = g ++ edges ++ edgesReversed
   graphWithEdges
 
-/** Take path step for all edges on BeamOption and return all potential new BeamOption objects graph : Needed to get out
-  * edges current : BeamOption to process
+/** Take path step for all edges on PathCandidate and return all potential new PathCandidate objects graph : Needed to get out
+  * edges current : PathCandidate to process
   *
   * If head of path is endNodeId, we're at the until, so return current value (which might ultimately be optimal)
-  * Otherwise check each out-edge, prepend to path, increment score, and return new BeamOption Returns all options; we
+  * Otherwise check each out-edge, prepend to path, increment score, and return new PathCandidate Returns all options; we
   * decide elsewhere which ones to keep on the beam for the next tier
   */
-def scoreAllOptions(graph: Graph[Int, WLDiEdge], current: BeamOption): Vector[BeamOption] =
+def scoreAllOptions(graph: Graph[Int, WLDiEdge], current: PathCandidate): Vector[PathCandidate] =
   // supply outer (our Int value) to retrieve complex inner
   val currentLast: Int = current.path.head
   if currentLast == Int.MaxValue then Vector(current)
   else {
-    // TODO: Penalize the skipped blocks in the score.
-    // NOTE: That we can calculate the aligned token score incrementally,
-    // NOTE: that's not the case for skipped blocks cause transposed blocks are encountered twice
-    // NOTE: Calculate the difference between the set of skipped blocks on the current and new.
+    // Penalize the skipped blocks in the score.
+    // That we can calculate the aligned token score incrementally,
+    //   that's not the case for skipped blocks cause transposed blocks are encountered twice
+    // Calculate the difference between the set of skipped blocks on the current and new.
     (graph get currentLast).outgoing.toVector
-      .map(e => BeamOption(path = e.to :: current.path, score = current.score + e.weight))
+      .map(e =>
+        val newSkippedBlocks = e.label.asInstanceOf[Set[FullDepthBlock]] diff current.skippedBlocks
+        val newSkippedBlocksScore = newSkippedBlocks.map(e => e.length).sum // Subtract 1 for skipped token
+        PathCandidate(path = e.to :: current.path, score = current.score + e.weight - newSkippedBlocksScore )
+      )
   }
 
 def findOptimalAlignment(graph: Graph[Int, WLDiEdge]): List[Int] = // specify return type?
@@ -460,11 +464,11 @@ def findOptimalAlignment(graph: Graph[Int, WLDiEdge]): List[Int] = // specify re
   // If number of new options is smaller than beam size, assign all options to new beam
   // Otherwise, sort and slice to construct (reassigned) beam for next tier
   //
-  // Return single BeamOption, representing (one) best alignment
+  // Return single PathCandidate, representing (one) best alignment
   // TODO: Restore temporarily disabled unit tests
   val beamMax = 350 // TODO: could be adaptable, e.g., x% of possible options
-  val start = BeamOption(path = List(-1), score = 0)
-  var beam: Vector[BeamOption] = Vector(start) // initialize beam to hold just start node (zero tokens)
+  val start = PathCandidate(path = List(-1), score = 0)
+  var beam: Vector[PathCandidate] = Vector(start) // initialize beam to hold just start node (zero tokens)
 
   while !beam.map(_.path.head).forall(_ == endNodeId) do
     val newOptionsTmp = beam.map(e => scoreAllOptions(graph = graph, current = e))

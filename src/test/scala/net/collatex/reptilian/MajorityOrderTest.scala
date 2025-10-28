@@ -134,17 +134,17 @@ class MajorityOrderTest extends AnyFunSuite:
 
   test("find potential next path steps") {
     val g = createTraversalGraph(blocks)
-    val b1 = BeamOption(path = List(38, 31, 4, -1), score = 10) // one option
+    val b1 = PathCandidate(path = List(38, 31, 4, -1), score = 10) // one option
     val result1 = scoreAllOptions(g, b1)
-    val expect1 = Vector(BeamOption(List(43, 38, 31, 4, -1), score = 11))
+    val expect1 = Vector(PathCandidate(List(43, 38, 31, 4, -1), score = 11))
     assert(result1 == expect1)
-//    val b2 = BeamOption(path = List(Int.MaxValue, -1), score = 20) // at until, no options
+//    val b2 = PathCandidate(path = List(Int.MaxValue, -1), score = 20) // at until, no options
 //    val result2 = scoreAllOptions(g, b2)
 //    val expect2 = Vector()
 //    assert(result2 == expect2)
-    val b3 = BeamOption(path = List(31, 4, -1), score = 20) // two options
+    val b3 = PathCandidate(path = List(31, 4, -1), score = 20) // two options
     val result3 = scoreAllOptions(g, b3)
-    val expect3 = Vector(BeamOption(List(39, 31, 4, -1), 26.0), BeamOption(List(38, 31, 4, -1), 26.0))
+    val expect3 = Vector(PathCandidate(List(39, 31, 4, -1), 26.0), PathCandidate(List(38, 31, 4, -1), 26.0))
     assert(result3 == expect3)
   }
 
