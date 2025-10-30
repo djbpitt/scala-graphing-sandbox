@@ -50,6 +50,10 @@ object ParseArgs {
         |      The parent directory must exist and be writable. The last path component is treated as the base filename;
         |      output extensions like '.svg' or '.txt' will be appended automatically.
         |
+        |  -d, --debug
+        |      Output traversal graph visualization in traversalGraphs subdirectory of output directory. Ignored if no
+        |      --output value is specified.
+        |
         |Notes:
         |  - All switches are optional. If present, each must be followed by the required number of values.
         |  - Defaults apply only when switches are omitted entirely, not when provided without values, which
@@ -62,7 +66,9 @@ object ParseArgs {
       "-h" -> "--html",
       "--html" -> "--html",
       "-o" -> "--output",
-      "--output" -> "--output"
+      "--output" -> "--output",
+      "-d" -> "--debug",
+      "--debug" -> "--debug"
     )
 
     args.toList match

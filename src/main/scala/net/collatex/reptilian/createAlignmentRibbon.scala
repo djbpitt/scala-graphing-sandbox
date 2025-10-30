@@ -4,8 +4,6 @@ import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import net.collatex.reptilian.TokenEnum.Token
-import scalax.collection.edge.WDiEdge
-import scalax.collection.mutable.Graph
 
 // This method transform an alignment on the global level of the fullest depth blocks
 // into an alignment tree by splitting
@@ -17,17 +15,24 @@ import scalax.collection.mutable.Graph
 
 def createAlignmentRibbon(
 //    gTaSigla: List[WitId],
-    gTa: Vector[TokenEnum]
+    gTa: Vector[TokenEnum],
+    outputBaseFilename: Set[String],
+    debug: Boolean
 ): AlignmentRibbon =
   val gTaSigla = Range(0, gTa.last.w + 1).toList
   val globalUnalignedZone: UnalignedZone = createGlobalUnalignedZone(gTa)
   // align, recursively full depth blocks in this unaligned zone
   // 2025-08-19 Temporarily bypass phase 1 to debug phase 2
-  val alignment = ListBuffer().appendAll(alignFullDepthBlocks(globalUnalignedZone, gTaSigla))
+  val alignment = ListBuffer().appendAll(alignFullDepthBlocks(globalUnalignedZone, gTaSigla, outputBaseFilename, debug))
   // val alignment = ListBuffer().appendAll(alignByClustering(globalUnalignedZone, gTa))
   AlignmentRibbon(alignment)
 
-def alignFullDepthBlocks(unalignedZone: UnalignedZone, gTaSigla: List[WitId]): List[AlignmentUnit] =
+def alignFullDepthBlocks(
+    unalignedZone: UnalignedZone,
+    gTaSigla: List[WitId],
+    outputBaseFilename: Set[String],
+    debug: Boolean
+): List[AlignmentUnit] =
   val gTa: Vector[TokenEnum] = unalignedZone.witnessReadings.values.head.ta
   // find the full depth blocks for the alignment
   // Ignore blocks and suffix array (first two return items); return list of sorted ReadingNodes
@@ -44,12 +49,21 @@ def alignFullDepthBlocks(unalignedZone: UnalignedZone, gTaSigla: List[WitId]): L
   } else {
     // There are full depth blocks, align by creating a navigation graph
     val fullDepthAlignmentPoints: List[AlignmentPoint] =
-      getAlignmentPointsByTraversingNavigationGraph(longestFullDepthNonRepeatingBlocks, lTa, gTa, gTaSigla)
+      getAlignmentPointsByTraversingNavigationGraph(
+        longestFullDepthNonRepeatingBlocks,
+        lTa,
+        gTa,
+        gTaSigla,
+        outputBaseFilename,
+        debug
+      )
     val alignment = recursiveBuildAlignment(
       ListBuffer(),
       unalignedZone,
       fullDepthAlignmentPoints,
-      gTaSigla
+      gTaSigla,
+      outputBaseFilename,
+      debug
     )
     alignment
   }
@@ -59,7 +73,9 @@ def recursiveBuildAlignment(
     result: ListBuffer[AlignmentUnit],
     unalignedZone: UnalignedZone,
     remainingAlignment: List[AlignmentPoint],
-    sigla: List[WitId]
+    sigla: List[WitId],
+    outputBaseFilename: Set[String],
+    debug: Boolean
 ): List[AlignmentUnit] =
 
   // On first run, unalignedZone contains full token ranges (globalUnalignedZone) and
@@ -73,45 +89,53 @@ def recursiveBuildAlignment(
   // Then add block to result
   // Then either recurse on post with next block or, in no more blocks, add post
 
-  if pre.witnessReadings.nonEmpty then result.appendAll(alignFullDepthBlocks(pre, sigla))
+  if pre.witnessReadings.nonEmpty then result.appendAll(alignFullDepthBlocks(pre, sigla, outputBaseFilename, debug))
 
   if remainingAlignment.tail.nonEmpty then
     recursiveBuildAlignment(
       result.append(firstRemainingAlignmentPoint),
       post,
       remainingAlignment.tail,
-      sigla
+      sigla,
+      outputBaseFilename,
+      debug
     )
   else
     result.append(firstRemainingAlignmentPoint)
-    if post.witnessReadings.nonEmpty then result.appendAll(alignFullDepthBlocks(post, sigla))
+    if post.witnessReadings.nonEmpty then result.appendAll(alignFullDepthBlocks(post, sigla, outputBaseFilename, debug))
     result.toList
 
 def getAlignmentPointsByTraversingNavigationGraph(
     longestFullDepthNonRepeatingBlocks: List[FullDepthBlock],
     lTa: Vector[TokenEnum],
     gTa: Vector[TokenEnum],
-    sigla: List[WitId]
+    sigla: List[WitId],
+    outputBaseFilename: Set[String],
+    debug: Boolean
 ) =
   // blocks come back with lTa; map to gTa
   // create navigation graph and filter out transposed nodes
   val blocksGTa =
     longestFullDepthNonRepeatingBlocks.map(e => FullDepthBlock(e.instances.map(f => lTa(f).g), e.length))
   val graph = createTraversalGraph(blocksGTa)
-  val blockTexts: Map[Int, String] = blocksGTa
-    .map { e =>
-      val start = e.instances.head
-      start ->
-        TokenRange(start, start + e.length, gTa).tString
-    }
-    .toMap
+  val blockTexts: Map[Int, String] = blocksGTa.map { e =>
+    val start = e.instances.head
+    start ->
+      TokenRange(start, start + e.length, gTa).tString
+  }.toMap
   // Debug: visualize before traversal because traversal will crash on cycles
   // visualizeTraversalGraph(graph, blockTexts, Set.empty)
   val alignment: List[Int] = findOptimalAlignment(graph)
   // We lose the sorting here
   val alignmentBlocksSet: Set[Int] = alignmentBlocksAsSet(alignment)
-  // visualizeTraversalGraph(graph, blockTexts, alignmentBlocksSet)
-  // throw RuntimeException("end of beam search")
+  // Assuming non cycles, visualize traversal graph after computing path
+  if outputBaseFilename.nonEmpty && debug then {
+    val outputDirectory = os.Path(outputBaseFilename.head, os.pwd) / os.up
+    if !os.exists(outputDirectory / "traversalGraphs")
+    then // Scala throws an error if it tries to create a directory that already exists
+      os.makeDir(outputDirectory / "traversalGraphs")
+    visualizeTraversalGraph(graph, blockTexts, alignmentBlocksSet, outputBaseFilename)
+  }
 
   val alignmentBlocks: Iterable[FullDepthBlock] =
     alignmentIntsToBlocks(alignmentBlocksSet, blocksGTa)
