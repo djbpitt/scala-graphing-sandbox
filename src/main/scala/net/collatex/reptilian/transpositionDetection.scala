@@ -1,8 +1,5 @@
 package net.collatex.reptilian
-import net.collatex.util.{Hypergraph, hypergraphToReadings}
-
-import net.collatex.reptilian.returnSampleData
-
+import net.collatex.util.Hypergraph
 import scala.math.Ordering
 
 /* Method
@@ -42,12 +39,11 @@ import scala.math.Ordering
 // TODO: We are building a traversal graph in secondAlignmentPhase traversalGraph2. That functionality should probably go here.
 def detectTransposition(
     matchesAsSet: Set[HyperedgeMatch],
-    matchesAsHg: Hypergraph[EdgeLabel, TokenRange],
-    debug: Boolean
+    matchesAsHg: Hypergraph[EdgeLabel, TokenRange]
 ): (Boolean, Seq[HyperedgeMatch], Seq[HyperedgeMatch]) =
   if matchesAsSet.size > 1 // more than one block means possible transposition
   then
-    val ranking: Map[NodeType, Int] = matchesAsHg.rank(debug)
+    val ranking: Map[NodeType, Int] = matchesAsHg.rank()
     val matchesSortedHead =
       matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.head.label)))
     val matchesSortedLast =
@@ -59,16 +55,3 @@ def detectTransposition(
       // println(matchesSortedLast.map(_.head.label))
     (transpositionBool, matchesSortedHead, matchesSortedLast)
   else (false, null, null)
-
-def realMainFunction(debug: Boolean): Unit =
-  val (_, hg1, hg2) = returnSampleData() // don’t use (global) names of hgs because real data isn’t global
-  val hgWithMergeResults: Hypergraph[EdgeLabel, TokenRange] = mergeHgHg(hg1, hg2, debug)
-  hypergraphToReadings(hgWithMergeResults)
-
-
-@main def runWithSampleData(): Unit = // no files saved to disk
-  realMainFunction(false)
-
-@main def runWithSampleDataDebug(): Unit = // dot and html saved to disk
-  realMainFunction(true)
-

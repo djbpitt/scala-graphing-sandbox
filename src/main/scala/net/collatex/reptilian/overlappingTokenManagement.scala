@@ -34,22 +34,23 @@ enum OverlapGroup:
   def size: Int
   def +(second: OverlapGroup): Seq[OverlapGroup] =
     (this, second) match // second always has a size of 1
-      case (first: Left, second: Left)   => Seq(Left(first.size + 1))
+      // 4 x 4 combinations
+      case (first: Left, _: Left)        => Seq(Left(first.size + 1))
       case (first: Left, second: Right)  => Seq(first, second)
       case (first: Left, second: Ambig)  => Seq(first, second)
-      case (first: Left, second: Both)   => Seq(Both(first.size + 1))
-      case (first: Right, second: Left)  => Seq(Ambig(first.size + 1))
-      case (first: Right, second: Right) => Seq(Right(first.size + 1))
-      case (first: Right, second: Ambig) => Seq(Ambig(first.size + 1))
-      case (first: Right, second: Both)  => Seq(Right(first.size + 1))
-      case (first: Both, second: Left)   => Seq(Left(first.size + 1))
-      case (first: Both, second: Right)  => Seq(Both(first.size + 1))
-      case (first: Both, second: Ambig)  => Seq(Left(first.size + 1))
-      case (first: Both, second: Both)   => Seq(Both(first.size + 1))
-      case (first: Ambig, second: Left)  => Seq(Ambig(first.size + 1))
+      case (first: Left, _: Both)        => Seq(Both(first.size + 1))
+      case (first: Right, _: Left)       => Seq(Ambig(first.size + 1))
+      case (first: Right, _: Right)      => Seq(Right(first.size + 1))
+      case (first: Right, _: Ambig)      => Seq(Ambig(first.size + 1))
+      case (first: Right, _: Both)       => Seq(Right(first.size + 1))
+      case (first: Both, _: Left)        => Seq(Left(first.size + 1))
+      case (first: Both, _: Right)       => Seq(Both(first.size + 1))
+      case (first: Both, _: Ambig)       => Seq(Left(first.size + 1))
+      case (first: Both, _: Both)        => Seq(Both(first.size + 1))
+      case (first: Ambig, _: Left)       => Seq(Ambig(first.size + 1))
       case (first: Ambig, second: Right) => Seq(first, second)
       case (first: Ambig, second: Ambig) => Seq(first, second) // don’t merge because we can split between them
-      case (first: Ambig, second: Both)  => Seq(Right(first.size + 1))
+      case (first: Ambig, _: Both)       => Seq(Right(first.size + 1))
 
 // Used by apply method
 val bindsLeft = Set(",", ".")

@@ -12,7 +12,7 @@ import math.Ordered.orderingToOrdered
 val flowLength = 80d
 
 /* Constants for computeTokenTextLength() */
-val tnr16Metrics = scala.xml.XML.load(getClass.getResourceAsStream("/tnr_16_metrics.xml"))
+val tnr16Metrics = scala.xml.XML.load(this.getClass.getResourceAsStream("/tnr_16_metrics.xml"))
 val tnrCharLengths = ((tnr16Metrics \ "character")
   .map(e => ((e \ "@str").text.head, (e \ "@width").toString.toDouble))
   ++ Seq(("\u000a".head, 0.0))).toMap
@@ -195,18 +195,20 @@ def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   *
   * @param root
   *   Expanded node root of entire alignment tree
-  * @param gTa
-  *   Global token array
+  * @param displaySigla
+  *   Sigla values used for output
+  * @param displayColors
+  *   Colors used in ribbon visualization
   * @return
   *   <html> element in HTML namespace, with embedded SVG
   */
 def createHorizontalRibbons(
     root: AlignmentRibbon,
     displaySigla: List[Siglum],
-    displayColors: List[String],
-    gTa: Vector[TokenEnum]
+    displayColors: List[String]
 ): scala.xml.Node =
   val gTaSigla = displaySigla.indices.toList
+
   /** Constants */
   val ribbonWidth = 18
   // val missingTop = allSigla.size * ribbonWidth * 2 + ribbonWidth / 2

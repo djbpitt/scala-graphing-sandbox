@@ -208,7 +208,7 @@ object ManifestValidator {
     // Load RNG schema (compact syntax) from a string
     val schemaInput = new InputSource(new StringReader(rncSchema))
     val schemaLoaded = driver.loadSchema(schemaInput)
-    if !schemaLoaded then Left("Failed to load RNC schema from string.")
+    if !schemaLoaded then return Left("Failed to load RNC schema from string.")
 
     // Validate the given XML element
     val xmlInput = new InputSource(new StringReader(xmlElem.toString))

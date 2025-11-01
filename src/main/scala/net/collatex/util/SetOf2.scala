@@ -34,6 +34,7 @@ class SetOf2[A](elem1: A, elem2: A) extends AbstractSet[A] with StrictOptimizedI
   override def foreach[U](f: A => U): Unit = {
     f(elem1)
     f(elem2)
+    ()
   }
 
   override def exists(p: A => Boolean): Boolean = {

@@ -59,11 +59,11 @@ object DisplayFunctions {
       case "table-html-h"      => emitTableHorizontalHTML(root, displaySigla, gTa, outputBaseFilename, htmlExtension)
       case "table-html-v"      => emitTableVerticalHTML(root, displaySigla, gTa, outputBaseFilename, htmlExtension)
       case "ribbon" =>
-        emitAlignmentRibbon(root, displaySigla, displayColors, gTa, outputBaseFilename, htmlExtension)
+        emitAlignmentRibbon(root, displaySigla, displayColors, outputBaseFilename, htmlExtension)
       // Both Rhine delta formats use same output function with different values of Boolean 'rich' parameter
       case "svg"      => emitSvgGraph(root, displaySigla, outputBaseFilename)
       case "svg-rich" => emitSvgGraph(root, displaySigla, outputBaseFilename, true)
-      case "json"     => emitJson(root, displaySigla, gTa, outputBaseFilename)
+      case "json"     => emitJson(root, displaySigla, outputBaseFilename)
       case "graphml"  => emitGraphMl(root, displaySigla, outputBaseFilename)
       case "tei"      => emitTeiXml(root, displaySigla, outputBaseFilename)
       case "xml"      => emitXml(root, displaySigla, outputBaseFilename)
@@ -424,8 +424,6 @@ object DisplayFunctions {
     *   List of Sigla in output order (List[Siglum])
     * @param displayColors
     *   List of colors is same order as 'displaySigla'
-    * @param gTa
-    *   Global token array (Vector[TokenEnum]); compute readings with tString method
     * @param outputBaseFilename
     *   Base filename for file-system output. If empty, output goes to stdout. If present, '.html' or '.xhtml' (taken
     *   from 'htmlExtension' parameter) is appended to construct the output filename, e.g., 'foo' becomes 'foo.html' or
@@ -440,12 +438,11 @@ object DisplayFunctions {
       alignment: AlignmentRibbon,
       displaySigla: List[Siglum],
       displayColors: List[String],
-      gTa: Vector[TokenEnum],
       outputBaseFilename: Set[String], // either empty or single string (validated in parsArgs())
       htmlExtension: Set[String]
   ): Unit =
     val doctypeHtml: DocType = DocType("html")
-    val horizontalRibbons = createHorizontalRibbons(alignment, displaySigla, displayColors, gTa)
+    val horizontalRibbons = createHorizontalRibbons(alignment, displaySigla, displayColors)
     if outputBaseFilename.isEmpty then // Write to stdout
       Using.resource(new PrintWriter(Console.out)) { writer =>
         XML.write(writer, horizontalRibbons, "UTF-8", xmlDecl = true, doctype = doctypeHtml)
@@ -682,8 +679,6 @@ A [shape="plain"; label=<
     *   AlignmentRibbon; children property is a ListBuffer of AlignmentPoint instances (but defined as AlignmentUnit)
     * @param displaySigla
     *   List of Sigla in output order (List[Siglum])
-    * @param gTa
-    *   Global token array (Vector[TokenEnum]); compute readings with tString method
     * @param outputBaseFilename
     *   Base filename for file-system output. If empty, output goes to stdout. If present, '-json' is appended to
     *   construct the output filename, e.g., 'foo' becomes 'foo.json'.
@@ -691,7 +686,6 @@ A [shape="plain"; label=<
   private[display] def emitJson(
       alignment: AlignmentRibbon,
       displaySigla: List[Siglum],
-      gTa: Vector[TokenEnum],
       outputBaseFilename: Set[String]
   ): Unit =
 

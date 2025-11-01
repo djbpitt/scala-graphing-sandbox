@@ -14,6 +14,7 @@ import scala.collection.immutable.Set
 // Labelled nodes are classes, not case classes
 // so that the label does not determine its identity
 // The identity is determined by the memory pointer
+// NB: Compiler warning on unused label because unfinished
 class LabelledNode(label: String)
 
 // constructor

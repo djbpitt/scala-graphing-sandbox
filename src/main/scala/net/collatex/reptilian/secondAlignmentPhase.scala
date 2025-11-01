@@ -33,12 +33,11 @@ def mergeSingletonSingleton(
 
 def mergeSingletonHG(
     singletonTokens: Vector[Token],
-    hg: Hypergraph[EdgeLabel, TokenRange],
-    debug: Boolean
+    hg: Hypergraph[EdgeLabel, TokenRange]
 ): Hypergraph[EdgeLabel, TokenRange] =
   val singletonAsTokenRange =
     TokenRange(start = singletonTokens.head.g, until = singletonTokens.last.g + 1, ta = hg.verticesIterator.next.ta)
-  mergeHgHg(hg, AlignmentHyperedge(Set(singletonAsTokenRange)), debug)
+  mergeHgHg(hg, AlignmentHyperedge(Set(singletonAsTokenRange)))
 
 def groupPatternsTogetherByHyperedge(
     patterns: List[AlignedPatternPhaseTwo]
@@ -56,8 +55,7 @@ def groupPatternsTogetherByHyperedge(
 
 def mergeHgHg(
     hg1: Hypergraph[EdgeLabel, TokenRange],
-    hg2: Hypergraph[EdgeLabel, TokenRange],
-    debug: Boolean
+    hg2: Hypergraph[EdgeLabel, TokenRange]
 ): Hypergraph[EdgeLabel, TokenRange] =
   // We do not group both hyperedges together now
   // We need to capture from which hypergraph each token is coming
@@ -86,7 +84,7 @@ def mergeHgHg(
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
     matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
   val (transpositionBool, matchesOrderedByHead, matchesOrderedByLast) =
-    detectTransposition(matchesAsSet, matchesAsHg, true)
+    detectTransposition(matchesAsSet, matchesAsHg)
   if transpositionBool
   then
     val decisionGraph: Graph[DecisionGraphStepPhase2] =
@@ -324,7 +322,7 @@ def isSpuriousMatch(candidate: HyperedgeMatch): Boolean =
 
 def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange]): Unit =
   val gTa = hg.verticesIterator.next.ta
-  val hgDg = hg.toDependencyGraph()
+  val hgDg = hg.toDependencyGraph
   val fullHgRanking = hg.rank() // FIXME: creates yet another dependency graph internally
   val edges = hgDg.toMap map ((k, v) => k -> v._2)
   val allWitnesses = Range(0, 6).toSet // FIXME: Look it up
@@ -389,10 +387,10 @@ def mergeClustersIntoHG(
           // prepare arguments, tokens for singleton and Hypergraph instance (!) for hypergraph
           val singletonTokens = darwinReadings(item1).toVector
           val hg = y(item2)
-          val hypergraph = mergeSingletonHG(singletonTokens, hg, false)
+          val hypergraph = mergeSingletonHG(singletonTokens, hg)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (HGHG(item1, item2, _), i: Int) =>
-          val hypergraph = mergeHgHg(y(item1), y(item2), false) // true creates xhtml table
+          val hypergraph = mergeHgHg(y(item1), y(item2))
           y + ((i + darwinReadings.size) -> hypergraph)
     })
 

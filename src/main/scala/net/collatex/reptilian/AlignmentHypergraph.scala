@@ -8,11 +8,11 @@ extension (hg: Hypergraph[EdgeLabel, TokenRange])
   def witnessSet: Set[Int] =
     hg.hyperedges.flatMap(_.witnesses)
 
-  def rank(debug: Boolean = false): Map[NodeType, Int] =
+  def rank(): Map[NodeType, Int] =
     // Returns length of longest path for each node in dg
     // NB: Not the path itself; keys are items, not types
     // TODO: Change name "NodeType" because it's a node, not a type
-    val dependencyGraph = hg.toDependencyGraph(debug)
+    val dependencyGraph = hg.toDependencyGraph
     val ranks = dependencyGraph.longestPath
     ranks
 
@@ -28,5 +28,5 @@ extension (hg: Hypergraph[EdgeLabel, TokenRange])
       hg.hyperedges.map(he => findTr(he)).find(_.isDefined).get.get
     result
 
-  def toDependencyGraph(debug: Boolean = false): Graph[NodeType] =
-    DependencyGraph(hg, debug)
+  def toDependencyGraph: Graph[NodeType] =
+    DependencyGraph(hg)

@@ -25,7 +25,7 @@ def traversalGraphToDot(g: Graph[Int, WLDiEdge], b: Map[Int, String], pathNodes:
 
   def edgeTransformer(innerEdge: scalax.collection.Graph[Int, WLDiEdge]#EdgeT): Option[(DotGraph, DotEdgeStmt)] =
     innerEdge.edge match {
-      case WLDiEdge(source, target, weight, label) =>
+      case WLDiEdge(source, target, weight, _) =>
         // Checks for backwards edges only with respect to witness 0
         // if target.value < source.value then System.err.println(s"Error: $source, $target")
         weight match {
@@ -81,3 +81,4 @@ def visualizeTraversalGraph(
   val svgPathAsString = svgOutputPath.toString
   val pb = Process("dot -Tsvg " + pathAsString + " -o" + svgPathAsString)
   pb.!!
+  ()
