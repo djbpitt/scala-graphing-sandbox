@@ -183,13 +183,13 @@ def greedy(
   def score(dgCurrent: DecisionGraphStepPhase2): Double =
     // println(s"dgNode: $dgCurrent")
     val result: Int = dgCurrent.nodeType match
-      case Skip => 0
+      case Skip => 0 // in phase 1 skips are negative, not zero
       case _ =>
         if dgCurrent == endNode then 0
         else
           val witnessCount: Int = matchOrder1(dgCurrent.pos1).map(e => e.verticesIterator.size).sum
           val witnessLength: Int = matchOrder1(dgCurrent.pos1).head.verticesIterator.next().length
-          witnessCount * witnessLength
+          witnessCount * witnessLength // total token count
     result
   def decisionGraphStepPhase2ToHyperedgeMatch(n: DecisionGraphStepPhase2): HyperedgeMatch =
     matchOrder1(n.pos1)
