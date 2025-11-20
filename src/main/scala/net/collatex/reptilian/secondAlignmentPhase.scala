@@ -53,6 +53,20 @@ def groupPatternsTogetherByHyperedge(
   if xx.exists((_, v) => v > 1) then throw RuntimeException("Two blocks conflict with each other!")
   result
 
+/* Notes for mergeHgHg 2025-11-20
+
+  Entry point in phase 2 is traversalGraphPhase2(), which 
+    Has: two input values (both of type List[HyperedgeMatch], returned from detectTransposition())
+    Returns: Graph[DecisionGraphStepPhase2]
+  DecisionGraphStepPhase2 has four properties:
+    pos1: OrderPosition, (Int)
+    pos2: OrderPosition, (Int)
+    nodeType: DGNodeType, (Alignment or Skip)
+    HEMatch: HyperedgeMatch (SetOf2[Hyperedge[EdgeLabel, TokenRange]])
+  Called from mergeHgHg to create Graph[DecisionGraphStepPhase2]
+
+ */
+
 def mergeHgHg(
     hg1: Hypergraph[EdgeLabel, TokenRange],
     hg2: Hypergraph[EdgeLabel, TokenRange]
@@ -89,17 +103,11 @@ def mergeHgHg(
   then
     val decisionGraph: Graph[DecisionGraphStepPhase2] =
       traversalGraphPhase2(matchesOrderedByHead.toList, matchesOrderedByLast.toList)
-    // TODO: Perform a* over newAlignment to resolve transposition (only if transposition previously detected)
     val matchLists = List(matchesOrderedByHead.toList, matchesOrderedByLast.toList)
     val greedyResult: Hypergraph[EdgeLabel, TokenRange] = greedy(decisionGraph, matchLists)
     // FIXME: Adding allSplitHyperedgeNew._1 to the greedyResult causes a cycle where it shouldn't be.
     // val result = allSplitHyperedgesNew._1 + greedyResult
     val result = greedyResult
-    // val tmp = result.hyperedges.toVector
-    //  .sortBy(e => e.verticesIterator.map(_.start).min)
-    //  .map(_.verticesIterator.next())
-    //  .map(_.tString)
-    // tmp.foreach(System.err.println)
     spuriousMatches.flatten.foldLeft(result)(_ + _)
   else
     val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
@@ -398,16 +406,6 @@ def mergeClustersIntoHG(
   val hg = hgMap(hgMap.keySet.max)
   hg
 
-//@main def secondAlignmentPhase(): Unit =
-//  val darwinReadings: List[List[Token]] = readJsonData
-//  val gTa: Vector[TokenEnum] = createGlobalTokenArray(darwinReadings)
-//  val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
-//  val hg: Hypergraph[EdgeLabel, TokenRange] =
-//    mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-//  createDependencyGraphEdgeLabels(hg)
-//  // Transform hypergraph to alignment ribbon and visualize
-//  createSecondAlignmentPhaseVisualization(hg)
-
 type HyperedgeMatch = SetOf2[Hyperedge[EdgeLabel, TokenRange]]
 
 object HyperedgeMatch:
@@ -415,30 +413,3 @@ object HyperedgeMatch:
     new HyperedgeMatch(set.head, set.last)
   def apply(he1: Hyperedge[EdgeLabel, TokenRange], he2: Hyperedge[EdgeLabel, TokenRange]) =
     new HyperedgeMatch(he1, he2)
-
-//@main def secondAlignmentPhaseExploration(): Unit =
-//  val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
-//  val unalignedZonesDir = os.pwd / "src" / "main" / "outputs" / "unalignedZones_2025-06-03"
-//  val JSONFiles = os.list(unalignedZonesDir).filter(e => os.isFile(e))
-//  for uzFilename <- JSONFiles do
-//    System.err.println(uzFilename)
-//    val darwinReadings: List[List[Token]] = readSpecifiedJsonData(uzFilename)
-//    val hg =
-//      if darwinReadings.size == 1 then // Don’t try to cluster if there’s only one witness
-//        Hyperedge(
-//          EdgeLabel(darwinReadings.head.head.w.toString),
-//          Set(TokenRange(darwinReadings.head.head.g, darwinReadings.head.last.g + 1, gTa))
-//        )
-//      else // Transform hypergraph to alignment ribbon and visualize
-//        val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
-//        mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-//    createSecondAlignmentPhaseVisualization(hg)
-
-//@main def explore1122(): Unit = // longest unaligned zone
-//  val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
-//  val filename = os.pwd / "src" / "main" / "outputs" / "unalignedZones_2025-06-03" / "1122.json"
-//  val darwinReadings: List[List[Token]] = readSpecifiedJsonData(filename)
-//  val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
-//  System.err.println(nodesToCluster)
-//  val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-//  createSecondAlignmentPhaseVisualization(hg)

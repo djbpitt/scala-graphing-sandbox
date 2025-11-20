@@ -17,26 +17,17 @@ import scala.math.Ordering
  * compared. To sort them we have to create a dependency graph and then topologically sort the
  * nodes in the graph.
  *
- * !. Calculate the matches between the two hypergraphs or get them as input into this transposition detection function
+ * 0. Calculate the matches between the two hypergraphs or get them as input into this transposition detection function
  * 1. Create a dependency graph (DAG) for each of the hyper-graphs.
  * 2. Rank the nodes in the two dependency graphs, this is done by a topological sort of each dependency graph
- * 3. Sort the matches first in the order of the first dependency graph, then sort the matches in the order in the second dependency graph
+ * 3. Sort the matches first in the order of the first dependency graph, then in the order of the second
  * 4. Create a traversal/decision graph for the traversal of the two sorted lists of matches
- * 5. Beam search or a-star search the traversal graph to create the alignment (resolving transpositions)
- *
- * Later optimization: We can determine the relative order of two blocks for a hyperedge that
- * appears in both blocks.
+ * 5. Beam search the traversal graph to create the alignment (resolving transpositions)
  * */
 
-// NOTE: This method is both incorrect and incomplete!
-// It is incorrect because the two hypergraphs are merged, which means that in a case of a
-//  transposition the ranking will fail because of a cycle.
-// TODO: Check or am I wrong about that? Would the dependency graph just split into two separate paths from the root?
-// Also this implementation assumes that a HyperedgeMatch head is always from the first hypergraph and last is always from
-// the second hypergraph. However I don't think SetOf2 has any such guarantee. But if point one is not a problem, then this concern
-// disappears.
-// The method is incomplete because no graph traversal is done!
-// TODO: We are building a traversal graph in secondAlignmentPhase traversalGraph2. That functionality should probably go here.
+// SetOf2 preserves insertion order, so head is necessarily Hg1 and last is necessarily Hg2
+// TODO: 2025-11-20 Transpositions are now (okay, will soon be) automatically avoided during traversal, so a separate
+//  detectTransposition() function is no longer needed
 def detectTransposition(
     matchesAsSet: Set[HyperedgeMatch],
     matchesAsHg: Hypergraph[EdgeLabel, TokenRange]
@@ -48,10 +39,7 @@ def detectTransposition(
       matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.head.label)))
     val matchesSortedLast =
       matchesAsSet.toSeq.sortBy(e => ranking(NodeType(e.last.label)))
-    val transpositionBool = matchesSortedHead != matchesSortedLast
-      // if transpositionBool then
-      // println("Found a transposition")
-      // println(matchesSortedHead.map(_.head.label))
-      // println(matchesSortedLast.map(_.head.label))
+    val transpositionBool =
+      matchesSortedHead != matchesSortedLast // Expensive, especially with no transposition (= most of the time)
     (transpositionBool, matchesSortedHead, matchesSortedLast)
-  else (false, null, null)
+  else (false, matchesAsSet.toList, matchesAsSet.toList) // Single item lists
