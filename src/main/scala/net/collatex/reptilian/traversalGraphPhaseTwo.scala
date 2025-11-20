@@ -159,7 +159,7 @@ def toNodeInfo(n: DecisionGraphStepPhase2) = {
   * @param dg:
   *   Graph[DecisionGraphStepPhase2]
   * @param ml:
-  *   List[List[HyperedgeMatch]] (same information ordered by original hypergraph; greedy traversal uses only one)
+  *   `List[List[HyperedgeMatch]]` (same information ordered by original hypergraph; greedy traversal uses only one)
   * @return
   *   Hypergraph[EdgeLabel, TokenRange] (hypergraph of alignments)
   */
@@ -228,15 +228,3 @@ def greedy(
   //  newMatches.toSeq.sortBy(e => ranking.getOrElse(NodeType(e.head.label), ranking(NodeType(e.last.label))))
   // println(s"new matches: ${matchesSortedHead.map(_.head.label)}")
   result
-
-/* TODO: Write and use
- * */
-//def beamSearch(dg: Graph[DecisionGraphStepPhase2]): Hypergraph[EdgeLabel, TokenRange] = ???
-
-/* TODO: Write and use
- * */
-//def astar(dg: Graph[DecisionGraphStepPhase2]): Hypergraph[EdgeLabel, TokenRange] =
-//  val aStarInputSorted = dg.topologicalSort
-//  val startNode = aStarInputSorted.head
-//  val endNode = aStarInputSorted.last
-//  Hypergraph.empty
