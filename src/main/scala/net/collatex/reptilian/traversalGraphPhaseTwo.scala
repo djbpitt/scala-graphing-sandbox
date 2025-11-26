@@ -53,7 +53,7 @@ def nodeAtEnd(node: DecisionGraphStepPhase2, max: Int): Boolean =
   * TODO: Revise HyperedgeMatch to retain consistent information about source hg, so that we don’t have to reconstruct
   * it.
   */
-def traversalGraphPhase2(
+def traversalGraphPhase2Old(
     order1: List[HyperedgeMatch],
     order2: List[HyperedgeMatch]
 ): Graph[DecisionGraphStepPhase2] =
@@ -228,3 +228,31 @@ def greedy(
   //  newMatches.toSeq.sortBy(e => ranking.getOrElse(NodeType(e.head.label), ranking(NodeType(e.last.label))))
   // println(s"new matches: ${matchesSortedHead.map(_.head.label)}")
   result
+
+/* 2025-11-26 Construct traversal graph for phase 2, based on phase 1 logic
+ * Replaces traversalGraphPhase2Old(), above, and obsoletes detectTransposition() */
+
+def traversalGraphPhase2(
+    hg: Hypergraph[EdgeLabel, TokenRange],
+    order1: List[HyperedgeMatch],
+    order2: List[HyperedgeMatch]
+): Unit = { // Graph[DecisionGraphStepPhase2]
+  val ranking = hg.rank()
+  def rankNode(node: HyperedgeMatch) = {
+    val ranks = node.toList.map(e => ranking(NodeType(e.label)))
+    ranks
+  }
+  // Debug
+  System.err.println("\n=== [ Input ] ===")
+  System.err.println(s"Ranking: $ranking")
+  System.err.println(s"order1:")
+  order1.foreach { e =>
+    val rank = rankNode(e)
+    System.err.println(s"$rank : $e")
+  }
+  System.err.println(s"order2:")
+  order2.foreach { e =>
+    val rank = rankNode(e)
+    System.err.println(s"$rank : $e")
+  }
+}

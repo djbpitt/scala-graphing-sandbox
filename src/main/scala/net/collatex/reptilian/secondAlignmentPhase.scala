@@ -55,7 +55,7 @@ def groupPatternsTogetherByHyperedge(
 
 /* Notes for mergeHgHg 2025-11-20
 
-  Entry point in phase 2 is traversalGraphPhase2(), which 
+  Entry point in phase 2 is traversalGraphPhase2Old(), which
     Has: two input values (both of type List[HyperedgeMatch], returned from detectTransposition())
     Returns: Graph[DecisionGraphStepPhase2]
   DecisionGraphStepPhase2 has four properties:
@@ -97,13 +97,28 @@ def mergeHgHg(
   if spuriousMatches.nonEmpty then System.err.println(s"Spurious matches: $spuriousMatches")
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
     matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
-  val (transpositionBool, matchesOrderedByHead, matchesOrderedByLast) =
+  // Sort by one value and subsort by the other
+  // TODO: Ick! Assign both orders at once in a single val
+  val matchesSortedHead = {
+    if matchesAsSet.size > 1 then
+      val ranking: Map[NodeType, Int] = matchesAsHg.rank()
+      matchesAsSet.toSeq.sortBy(e => (ranking(NodeType(e.head.label)), ranking(NodeType(e.last.label))))
+    else matchesAsSet
+  }
+  val matchesSortedLast = {
+    if matchesAsSet.size > 1 then
+      val ranking: Map[NodeType, Int] = matchesAsHg.rank()
+      matchesAsSet.toSeq.sortBy(e => (ranking(NodeType(e.last.label)), ranking(NodeType(e.head.label))))
+    else matchesAsSet
+  }
+  val (transpositionBool, _, _) =
     detectTransposition(matchesAsSet, matchesAsHg)
   if transpositionBool
   then
+    traversalGraphPhase2(matchesAsHg, matchesSortedHead.toList, matchesSortedLast.toList)
     val decisionGraph: Graph[DecisionGraphStepPhase2] =
-      traversalGraphPhase2(matchesOrderedByHead.toList, matchesOrderedByLast.toList)
-    val matchLists = List(matchesOrderedByHead.toList, matchesOrderedByLast.toList)
+      traversalGraphPhase2Old(matchesSortedHead.toList, matchesSortedLast.toList)
+    val matchLists = List(matchesSortedHead.toList, matchesSortedLast.toList)
     val greedyResult: Hypergraph[EdgeLabel, TokenRange] = greedy(decisionGraph, matchLists)
     // FIXME: Adding allSplitHyperedgeNew._1 to the greedyResult causes a cycle where it shouldn't be.
     // val result = allSplitHyperedgesNew._1 + greedyResult

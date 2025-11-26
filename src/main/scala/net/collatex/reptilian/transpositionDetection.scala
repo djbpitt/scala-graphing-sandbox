@@ -5,7 +5,7 @@ import scala.math.Ordering
 /* Method
  *
  * When aligning two hyper-graphs we have to detect transpositions between the two graphs.
- * To detect transpositions we need have order, as we do for creating a variant graph or an
+ * To detect transpositions we need order, similarly to creating a variant graph or an
  * alignment table.
  *
  * We run into the problem that the Token ranges, and thus the Hyperedges in an alignment
