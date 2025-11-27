@@ -1,7 +1,7 @@
 package net.collatex.reptilian
 
 import net.collatex.reptilian.DGNodeType.{Alignment, Skip}
-import net.collatex.util.{Graph, Hypergraph}
+import net.collatex.util.{Graph, Hypergraph, SetOf2}
 
 import scala.annotation.tailrec
 
@@ -14,8 +14,8 @@ type OrderPosition = Int
 case class DecisionGraphStepPhase2(
     pos1: OrderPosition,
     pos2: OrderPosition,
-    nodeType: DGNodeType,
-    HEMatch: HyperedgeMatch
+    nodeType: DGNodeType, // alignment or skip
+    HEMatch: HyperedgeMatch // data for node
 )
 
 case class NodeInfo(id: String, nodeType: DGNodeType)
@@ -255,4 +255,15 @@ def traversalGraphPhase2(
     val rank = rankNode(e)
     System.err.println(s"$rank : $e")
   }
+  // End debug
+  val phaseTwoTraversalGraph: Graph[DecisionGraphStepPhase2] = {
+    val nodes: Seq[DecisionGraphStepPhase2] =
+      order1.zipWithIndex.map {(e, i) =>
+        val pos1 = i
+        val pos2 = order2.indexOf(e)
+        DecisionGraphStepPhase2(pos1, pos2, DGNodeType.Alignment, e)
+      }
+    nodes.foldLeft(Graph.empty[DecisionGraphStepPhase2])(_ + Graph.node(_))
+  }
+  phaseTwoTraversalGraph.toMap.keys.foreach(System.err.println)
 }

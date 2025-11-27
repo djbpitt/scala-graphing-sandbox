@@ -80,9 +80,9 @@ def mergeHgHg(
   // Now we insert the separators
   val lTa = insertSeparators(HGTokensForBoth)
   val bothHgs = hg1 + hg2
-//  val _dg = bothHgs.toDependencyGraph()
-//  System.err.println("Combined HG input")
-//  dependencyGraphToDot(_dg, bothHgs)
+  //  val _dg = bothHgs.toDependencyGraph()
+  //  System.err.println("Combined HG input")
+  //  dependencyGraphToDot(_dg, bothHgs)
 
   // bothHgs.hyperedges.map(e => e.verticesIterator.toSet.map(f => f.length)).foreach(System.err.println)
   // val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
@@ -99,19 +99,21 @@ def mergeHgHg(
     matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
   // Sort by one value (head or last) and subsort by the other, with third subsort by head.label in case both
   //  are ambiguous
+  // Keep as seq
   // TODO: Ick! Assign both orders at once in a single val
-  val matchesSortedHead = {
+  val matchesSortedHead: Seq[HyperedgeMatch] = {
     if matchesAsSet.size > 1 then
       val ranking: Map[NodeType, Int] = matchesAsHg.rank()
       matchesAsSet.toSeq.sortBy(e => (ranking(NodeType(e.head.label)), ranking(NodeType(e.last.label)), e.head.label))
-    else matchesAsSet
+    else matchesAsSet.toSeq
   }
-  val matchesSortedLast = {
+  val matchesSortedLast: Seq[HyperedgeMatch] = {
     if matchesAsSet.size > 1 then
       val ranking: Map[NodeType, Int] = matchesAsHg.rank()
       matchesAsSet.toSeq.sortBy(e => (ranking(NodeType(e.last.label)), ranking(NodeType(e.head.label)), e.head.label))
-    else matchesAsSet
+    else matchesAsSet.toSeq
   }
+
   val (transpositionBool, _, _) =
     detectTransposition(matchesAsSet, matchesAsHg)
   if transpositionBool
