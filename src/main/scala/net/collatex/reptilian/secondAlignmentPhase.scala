@@ -97,18 +97,19 @@ def mergeHgHg(
   if spuriousMatches.nonEmpty then System.err.println(s"Spurious matches: $spuriousMatches")
   val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
     matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
-  // Sort by one value and subsort by the other
+  // Sort by one value (head or last) and subsort by the other, with third subsort by head.label in case both
+  //  are ambiguous
   // TODO: Ick! Assign both orders at once in a single val
   val matchesSortedHead = {
     if matchesAsSet.size > 1 then
       val ranking: Map[NodeType, Int] = matchesAsHg.rank()
-      matchesAsSet.toSeq.sortBy(e => (ranking(NodeType(e.head.label)), ranking(NodeType(e.last.label))))
+      matchesAsSet.toSeq.sortBy(e => (ranking(NodeType(e.head.label)), ranking(NodeType(e.last.label)), e.head.label))
     else matchesAsSet
   }
   val matchesSortedLast = {
     if matchesAsSet.size > 1 then
       val ranking: Map[NodeType, Int] = matchesAsHg.rank()
-      matchesAsSet.toSeq.sortBy(e => (ranking(NodeType(e.last.label)), ranking(NodeType(e.head.label))))
+      matchesAsSet.toSeq.sortBy(e => (ranking(NodeType(e.last.label)), ranking(NodeType(e.head.label)), e.head.label))
     else matchesAsSet
   }
   val (transpositionBool, _, _) =
