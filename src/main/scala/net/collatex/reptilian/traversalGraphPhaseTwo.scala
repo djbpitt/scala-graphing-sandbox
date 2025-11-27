@@ -2,6 +2,7 @@ package net.collatex.reptilian
 
 import net.collatex.reptilian.DGNodeType.{Alignment, Skip}
 import net.collatex.util.{Graph, Hypergraph, SetOf2}
+import scalax.collection.edge.WLDiEdge
 
 import scala.annotation.tailrec
 
@@ -11,6 +12,7 @@ enum DGNodeType:
 
 type OrderPosition = Int
 
+// TODO: 2026-11-27 Convert to enum that supports start and end nodes
 case class DecisionGraphStepPhase2(
     pos1: OrderPosition,
     pos2: OrderPosition,
@@ -237,32 +239,16 @@ def traversalGraphPhase2(
     order1: List[HyperedgeMatch],
     order2: List[HyperedgeMatch]
 ): Unit = { // Graph[DecisionGraphStepPhase2]
-  val ranking = hg.rank()
-  def rankNode(node: HyperedgeMatch) = {
-    val ranks = node.toList.map(e => ranking(NodeType(e.label)))
-    ranks
-  }
-  // Debug
-  System.err.println("\n=== [ Input ] ===")
-  System.err.println(s"Ranking: $ranking")
-  System.err.println(s"order1:")
-  order1.foreach { e =>
-    val rank = rankNode(e)
-    System.err.println(s"$rank : $e")
-  }
-  System.err.println(s"order2:")
-  order2.foreach { e =>
-    val rank = rankNode(e)
-    System.err.println(s"$rank : $e")
-  }
-  // End debug
   val phaseTwoTraversalGraph: Graph[DecisionGraphStepPhase2] = {
-    val nodes: Seq[DecisionGraphStepPhase2] =
-      order1.zipWithIndex.map {(e, i) =>
-        val pos1 = i
-        val pos2 = order2.indexOf(e)
-        DecisionGraphStepPhase2(pos1, pos2, DGNodeType.Alignment, e)
-      }
+    val startNode = DecisionGraphStepPhase2(-1, -1, DGNodeType.Alignment, HyperedgeMatch(Set()))
+    val endNode = DecisionGraphStepPhase2(Int.MaxValue, Int.MaxValue, DGNodeType.Alignment, HyperedgeMatch(Set()))
+    val nodes: Seq[DecisionGraphStepPhase2] = // Hyperedge label on first of SetOf2 will function as node identifier
+      Seq(startNode) ++
+        order1.zipWithIndex.map { (e, i) =>
+          val pos1 = i
+          val pos2 = order2.indexOf(e)
+          DecisionGraphStepPhase2(pos1, pos2, DGNodeType.Alignment, e)
+        } ++ Seq(endNode)
     nodes.foldLeft(Graph.empty[DecisionGraphStepPhase2])(_ + Graph.node(_))
   }
   phaseTwoTraversalGraph.toMap.keys.foreach(System.err.println)
