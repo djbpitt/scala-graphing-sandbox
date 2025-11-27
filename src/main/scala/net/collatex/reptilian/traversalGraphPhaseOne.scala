@@ -38,7 +38,7 @@ case class PathCandidate(path: List[Int], score: Double, skippedBlocks: Set[Full
 protected def computeNodesForGraph(blocks: Vector[FullDepthBlock]) =
   val nodeIdentifiers: Vector[Int] =
     blocks
-      .map(e => e.instances(0))
+      .map(e => e.instances.head) // Offset in witness 0 is block identifier
   val g = Graph.from[Int, WLDiEdge](nodeIdentifiers)
   g
 
