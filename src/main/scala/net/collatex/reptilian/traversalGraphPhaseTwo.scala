@@ -5,6 +5,7 @@ import net.collatex.util.{Graph, Hypergraph, SetOf2}
 import scalax.collection.edge.WLDiEdge
 
 import scala.annotation.tailrec
+import scala.collection.mutable.ArrayBuffer
 
 enum DGNodeType:
   case Alignment
@@ -19,6 +20,12 @@ case class DecisionGraphStepPhase2(
     nodeType: DGNodeType, // alignment or skip
     HEMatch: HyperedgeMatch // data for node
 )
+
+enum DecisionGraphStepPhase2Enum:
+  case Internal(pos1: OrderPosition, pos2: OrderPosition, HEMatch: HyperedgeMatch)
+  case Terminal(pos1: OrderPosition, pos2: OrderPosition)
+  def pos1: OrderPosition
+  def pos2: OrderPosition
 
 case class NodeInfo(id: String, nodeType: DGNodeType)
 
@@ -236,20 +243,27 @@ def greedy(
 
 def traversalGraphPhase2(
     hg: Hypergraph[EdgeLabel, TokenRange],
-    order1: List[HyperedgeMatch],
+    order1: List[HyperedgeMatch], // corresponds (with the following) to blockOrderForWitnesses in Phase 1
     order2: List[HyperedgeMatch]
-): Unit = { // Graph[DecisionGraphStepPhase2]
-  val phaseTwoTraversalGraph: Graph[DecisionGraphStepPhase2] = {
-    val startNode = DecisionGraphStepPhase2(-1, -1, DGNodeType.Alignment, HyperedgeMatch(Set()))
-    val endNode = DecisionGraphStepPhase2(Int.MaxValue, Int.MaxValue, DGNodeType.Alignment, HyperedgeMatch(Set()))
-    val nodes: Seq[DecisionGraphStepPhase2] = // Hyperedge label on first of SetOf2 will function as node identifier
-      Seq(startNode) ++
-        order1.zipWithIndex.map { (e, i) =>
-          val pos1 = i
-          val pos2 = order2.indexOf(e)
-          DecisionGraphStepPhase2(pos1, pos2, DGNodeType.Alignment, e)
-        } ++ Seq(endNode)
-    nodes.foldLeft(Graph.empty[DecisionGraphStepPhase2])(_ + Graph.node(_))
-  }
-  phaseTwoTraversalGraph.toMap.keys.foreach(System.err.println)
-}
+): Unit = // Graph[DecisionGraphStepPhase2]
+  val phaseTwoTraversalGraphNodes: Seq[DecisionGraphStepPhase2Enum] = // pos1 and pos2 values are both unique
+    val startNode = DecisionGraphStepPhase2Enum.Terminal(-1, -1)
+    val endNode = DecisionGraphStepPhase2Enum.Terminal(Int.MaxValue, Int.MaxValue)
+    // Hyperedge label on first of SetOf2 will function as node identifier
+    startNode +:
+      order1.zipWithIndex.map { (e, i) =>
+        val pos1 = i
+        val pos2 = order2.indexOf(e)
+        DecisionGraphStepPhase2Enum.Internal(pos1, pos2, e)
+      } :+ endNode
+  val hyperedgeOffsets: Map[EdgeLabel, ArrayBuffer[Int]] =  // corresponds to blockOffsets in Phase 1, key = offset in witness
+    // order1: List[HyperedgeMatch] ~ blockOrders.head: Vector[FullDepthBlock]
+    // order2: List[HyperedgeMatch] ~ blockOrders.last: Vector[FullDepthBlock]
+    val offsets:  Map[EdgeLabel, ArrayBuffer[Int]] =
+      order1.zipWithIndex.map((e, i) => e.head.label -> ArrayBuffer(i)).toMap
+    order2.zipWithIndex.map((e, i) => offsets(e.head.label) += i)
+    offsets
+
+  System.err.println(hyperedgeOffsets)
+
+
