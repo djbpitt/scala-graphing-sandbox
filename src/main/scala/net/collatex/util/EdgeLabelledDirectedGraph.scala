@@ -31,6 +31,7 @@ object EdgeLabelledDirectedGraph:
 enum EdgeLabelledDirectedGraph[N, E]:
   case EmptyGraph()
   case SingleNodeGraph(node: N)
+  case LabelledEdge(source: N, label: E, target: N)
   case DirectedGraph(adjacencyMap: Map[N, (Set[(N, E)], Set[(N, E)])])
 
   // NOTE: here I need two infix operators, to implement the 'a' |-- label --> 'b' construct
@@ -60,6 +61,10 @@ enum EdgeLabelledDirectedGraph[N, E]:
       case _: EmptyGraph[N, E] => Map.empty
       case g: SingleNodeGraph[N, E] =>
         Map.apply(g.node -> (Set.empty[(N, E)], Set.empty[(N, E)]))
+      case e: LabelledEdge[N, E] =>
+        val item1 = e.source -> (Set.empty[(N, E)], Set((e.target, e.label)))
+        val item2 = e.target -> (Set((e.source, e.label)), Set.empty[(N, E)])  
+        Map.apply(item1, item2)
       case g: DirectedGraph[N, E] => g.adjacencyMap
 
   @targetName("overlay")
@@ -78,6 +83,9 @@ enum EdgeLabelledDirectedGraph[N, E]:
     (this, node) match
       case (_: EmptyGraph[N, E], _) => Set.empty
       case (_: SingleNodeGraph[N, E], _) => Set.empty
+      case (x: LabelledEdge[N, E], _) =>
+        if (node == x.target) Set((x.source, x.label, x.target))
+        else Set.empty
       case (g: DirectedGraph[N, E], target) =>
         g.adjacencyMap(target)._1
           .map((source, edge) => (source, edge, target))
@@ -86,6 +94,9 @@ enum EdgeLabelledDirectedGraph[N, E]:
     (this, node) match
       case (_: EmptyGraph[N, E], _) => Set.empty
       case (_: SingleNodeGraph[N, E], _) => Set.empty
+      case (x: LabelledEdge[N, E], _) =>
+        if (node == x.source) Set((x.source, x.label, x.target))
+        else Set.empty
       case (g: DirectedGraph[N, E], source) =>
         g.adjacencyMap(source)._2
           .map((target, edge) => (source, edge, target))
