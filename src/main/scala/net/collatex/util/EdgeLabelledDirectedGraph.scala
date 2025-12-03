@@ -69,11 +69,13 @@ enum EdgeLabelledDirectedGraph[N, E]:
       case (_: EmptyGraph[N, E], other: EdgeLabelledDirectedGraph[N, E]) => other
       case (one: EdgeLabelledDirectedGraph[N, E], _: EmptyGraph[N, E]) => one
       case (one: EdgeLabelledDirectedGraph[N, E], other: EdgeLabelledDirectedGraph[N, E]) =>
-        // convert graphs into two maps so that we can merge the graphs
-        val (am1, lm1) = one.toMap
-        val (am2, lm2) = other.toMap
-        // create a new graph with the entries combined
-        DirectedGraph(am1 |+| am2, lm1 ++ lm2)
+        if one == other then one
+        else
+          // convert graphs into two maps so that we can merge the graphs
+          val (am1, lm1) = one.toMap
+          val (am2, lm2) = other.toMap
+          // create a new graph with the entries combined
+          DirectedGraph(am1 |+| am2, lm1 ++ lm2)
 
   def incomingEdges(node: N): Set[LabelledEdge[N, E]] =
     (this, node) match
