@@ -297,15 +297,19 @@ def traversalGraphPhase2(
   val g: EdgeLabelledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties] =
     edgePairs
       .map { (s, t) =>
-        val l = TraversalEdgeProperties(1, Set())
+        val w: Int = t match { // weight is number of tokens on target
+          case _:DecisionGraphStepPhase2Enum.Terminal => 0
+          case x:DecisionGraphStepPhase2Enum.Internal => x.HEMatch.head.v.head.length
+        }
+        val l = TraversalEdgeProperties(w, Set())
         EdgeLabelledDirectedGraph
           .edge(s, l, t)
       }
       .foldLeft(EdgeLabelledDirectedGraph.empty[DecisionGraphStepPhase2Enum, TraversalEdgeProperties])(_ + _)
-  g.toMap._2.foreach((nodes, l) => System.err.println(l)) // edge properties
+  g.toMap._2.foreach((e, l) => System.err.println(s"${e.toString}: $l")) // edge properties
   g
 
 case class TraversalEdgeProperties(
-    weight: Int,
+    weight: Int, // aligned tokens gained by taking target
     label: Set[HyperedgeMatch]
 )
