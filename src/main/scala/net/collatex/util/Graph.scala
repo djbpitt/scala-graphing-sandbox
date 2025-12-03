@@ -16,7 +16,7 @@ object Graph:
   def empty[N]: Graph[N] = EmptyGraph()
   def node[N](node: N): Graph[N] = SingleNodeGraph(node)
   def edge[N](source: N, target: N): Graph[N] =
-    node(source) * node(target)
+    DirectedEdge(source, target)
 
 enum Graph[N]:
   case EmptyGraph() extends Graph[N]
