@@ -32,12 +32,14 @@ object Graph:
 enum Graph[N]:
   case EmptyGraph() extends Graph[N]
   case SingleNodeGraph(node: N)
+  case DirectedEdge(source: N, target: N)
   case DirectedGraph(adjacencyMap: Map[N, (Set[N], Set[N])])
 
   def nodeSize: Int =
     this match {
       case _: EmptyGraph[N]      => 0
       case _: SingleNodeGraph[N] => 1
+      case _: DirectedEdge[N]    => 2
       case g: DirectedGraph[N]   => g.adjacencyMap.size
     }
 
@@ -45,6 +47,9 @@ enum Graph[N]:
     (this, node) match
       case (_: EmptyGraph[N], _)      => Set.empty
       case (_: SingleNodeGraph[N], _) => Set.empty
+      case (x: DirectedEdge[N], _) =>
+        if (node == x.target) Set((x.source, x.target))
+        else Set.empty
       case (g: DirectedGraph[N], n) =>
         g.adjacencyMap(n)
           ._1
@@ -54,6 +59,9 @@ enum Graph[N]:
     (this, node) match
       case (_: EmptyGraph[N], _)      => Set.empty
       case (_: SingleNodeGraph[N], _) => Set.empty
+      case (x: DirectedEdge[N], _) =>
+        if (node == x.source) Set((x.source, x.target))
+        else Set.empty
       case (g: DirectedGraph[N], n) =>
         g.adjacencyMap(n)
           ._2
@@ -63,12 +71,14 @@ enum Graph[N]:
     this match
       case _: EmptyGraph[N]      => Set.empty
       case g: SingleNodeGraph[N] => Set(g.node)
+      case e: DirectedEdge[N]    => Set(e.target)
       case g: DirectedGraph[N]   => g.adjacencyMap.filter(t => t._2._2.isEmpty).keySet
 
   def roots(): Set[N] =
     this match
       case _: EmptyGraph[N]      => Set.empty
       case g: SingleNodeGraph[N] => Set(g.node)
+      case e: DirectedEdge[N]    => Set(e.source)
       case g: DirectedGraph[N]   => g.adjacencyMap.filter(t => t._2._1.isEmpty).keySet
 
   def toMap: Map[N, (Set[N], Set[N])] =
@@ -76,6 +86,10 @@ enum Graph[N]:
       case _: EmptyGraph[N] => Map.empty
       case g: SingleNodeGraph[N] =>
         Map.apply(g.node -> (Set.empty[N], Set.empty[N]))
+      case e: DirectedEdge[N] =>
+        val item1 = e.source -> (Set.empty[N], Set(e.target))
+        val item2 = e.target -> (Set(e.source), Set.empty[N])
+        Map.apply(item1, item2)
       case g: DirectedGraph[N] => g.adjacencyMap
 
   @targetName("overlay")
@@ -99,10 +113,21 @@ enum Graph[N]:
     (this, other) match
       case (_: EmptyGraph[N], other: Graph[N]) => other
       case (one: Graph[N], _: EmptyGraph[N])   => one
+      // This can be optimized to use the DirectedEdge case class
       case (one: SingleNodeGraph[N], other: SingleNodeGraph[N]) =>
         val t1: (Set[N], Set[N]) = (Set(), Set(other.node))
         val t2: (Set[N], Set[N]) = (Set(one.node), Set())
         DirectedGraph(Map.apply(one.node -> t1, other.node -> t2))
+      case (one: SingleNodeGraph[N], other: DirectedEdge[N]) =>
+        DirectedEdge(one.node, other.source) +
+          DirectedEdge(one.node, other.target) +
+          other
+      case (one: DirectedEdge[N], other: SingleNodeGraph[N]) =>
+        other * one
+      case (_: DirectedEdge[N], _: Graph[N]) =>
+        throw new RuntimeException("Not implemented yet! Would be one leaves x other roots")
+      case (_: Graph[N], _: DirectedEdge[N]) =>
+        throw new RuntimeException("Not implemented yet! Would be one leaves x other roots")
       case (one: SingleNodeGraph[N], other: Graph[N]) =>
         // connect the node from one to all the roots of other
         // we update the pairing for one.
