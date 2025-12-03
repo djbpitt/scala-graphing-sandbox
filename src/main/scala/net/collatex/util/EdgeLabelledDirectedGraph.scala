@@ -17,9 +17,9 @@ import scala.collection.immutable.Set
 
 // constructor
 object EdgeLabelledDirectedGraph:
-  def empty[N, E]: EmptyGraph[N, E] = EmptyGraph()
-  def node[N, E](node: N): SingleNodeGraph[N, E] = SingleNodeGraph(node)
-  def edge[N, E](source: N, label: E, target: N): LabelledEdge[N, E] =
+  def empty[N, E]: EdgeLabelledDirectedGraph[N, E] = EmptyGraph()
+  def node[N, E](node: N): EdgeLabelledDirectedGraph[N, E] = SingleNodeGraph(node)
+  def edge[N, E](source: N, label: E, target: N): EdgeLabelledDirectedGraph[N, E] =
     LabelledEdge(source, label, target)
 
 // algebraic data type
