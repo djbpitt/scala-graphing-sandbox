@@ -301,9 +301,11 @@ def traversalGraphPhase2(
           case _:DecisionGraphStepPhase2Enum.Terminal => 0
           case x:DecisionGraphStepPhase2Enum.Internal => x.HEMatch.head.v.head.length
         }
-        val l = TraversalEdgeProperties(w, Set())
+        val l = // label is skipped HyperedgeMatch instances
+          Set.empty[HyperedgeMatch]
+        val p = TraversalEdgeProperties(w, l)
         EdgeLabelledDirectedGraph
-          .edge(s, l, t)
+          .edge(s, p, t)
       }
       .foldLeft(EdgeLabelledDirectedGraph.empty[DecisionGraphStepPhase2Enum, TraversalEdgeProperties])(_ + _)
   g.toMap._2.foreach((e, l) => System.err.println(s"${e.toString}: $l")) // edge properties
