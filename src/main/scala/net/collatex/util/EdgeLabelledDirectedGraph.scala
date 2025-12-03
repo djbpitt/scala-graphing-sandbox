@@ -97,14 +97,14 @@ enum EdgeLabelledDirectedGraph[N, E]:
         g.adjacencyMap(source)._2
           .map(target => LabelledEdge(source, g.labels(source, target), target))
 
+  def nodeSize: Int =
+    this match {
+      case _: EmptyGraph[N, E] => 0
+      case _: SingleNodeGraph[N, E] => 1
+      case _: LabelledEdge[N, E] => 2
+      case g: DirectedGraph[N, E] => g.adjacencyMap.size
+    }
 
-//  def nodeSize: Int =
-//    this match {
-//      case _: EmptyGraph[N, E] => 0
-//      case _: SingleNodeGraph[N, E] => 1
-//      case g: DirectedGraph[N, E] => g.adjacencyMap.size
-//    }
-//
 //
 //  def leafs(): Set[N] =
 //    this match
