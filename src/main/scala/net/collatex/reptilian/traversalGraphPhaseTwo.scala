@@ -245,7 +245,7 @@ def traversalGraphPhase2(
     hg: Hypergraph[EdgeLabel, TokenRange],
     order1: List[HyperedgeMatch], // corresponds (with the following) to blockOrderForWitnesses in Phase 1
     order2: List[HyperedgeMatch]
-): Unit = // Graph[DecisionGraphStepPhase2]
+): Graph[DecisionGraphStepPhase2Enum] =
   val startNode = DecisionGraphStepPhase2Enum.Terminal(-1, -1)
   val endNode = DecisionGraphStepPhase2Enum.Terminal(Int.MaxValue, Int.MaxValue)
   val dataNodes: List[DecisionGraphStepPhase2Enum.Internal] = order1.zipWithIndex.map { (e, i) =>
@@ -255,38 +255,24 @@ def traversalGraphPhase2(
   }
   val nodeIdToNodeMap: Map[HyperedgeMatch, DecisionGraphStepPhase2Enum] =
     dataNodes.map(e => e.HEMatch -> e).toMap
-  val phaseTwoTraversalGraphNodes: Seq[DecisionGraphStepPhase2Enum] = // pos1 and pos2 values are both unique
-    // Hyperedge label on first of SetOf2 will function as node identifier
-    startNode +: dataNodes :+ endNode
-//  val hyperedgeOffsets: Map[DecisionGraphStepPhase2Enum, ArrayBuffer[Int]] =
-//    val offsets: Map[DecisionGraphStepPhase2Enum, ArrayBuffer[Int]] =
-//      order1.zipWithIndex.map((e, i) => nodeIdToNodeMap(e.head.label) -> ArrayBuffer(i)).toMap
-//    order2.zipWithIndex.map((e, i) => offsets(nodeIdToNodeMap(e.head.label)) += i)
-//    offsets
-  /* To create edges:
-  1. Create edges from Start to first value in order1
-  2. From each value in order1, find first following value that is not less than current in both witnesses and
-   create an edge to it
-  3. If no acceptable following value, create edge to End and stop
-  4. Do the same in reverse order, beginning at End and stopping at Start
-  5. Repeat for order2 (library will deduplicate later)
-   * */
-  val edges: Seq[(DecisionGraphStepPhase2Enum, DecisionGraphStepPhase2Enum)] =
+  val edgePairs: Seq[(DecisionGraphStepPhase2Enum, DecisionGraphStepPhase2Enum)] =
     def createForwardEdges(
         order: List[HyperedgeMatch]
     ): List[(DecisionGraphStepPhase2Enum, DecisionGraphStepPhase2Enum)] = {
       (startNode, nodeIdToNodeMap(order.head)) +:
-      order.zipWithIndex.map { (e, i) =>
-        val sourceNode = nodeIdToNodeMap(e)
-        val targetCandidates = order.drop(i + 1)
-        val targetHe: Option[HyperedgeMatch] =
-          targetCandidates.find(f => nodeIdToNodeMap(f).pos1 > sourceNode.pos1 && nodeIdToNodeMap(f).pos2 > sourceNode.pos2)
-        val targetNode = targetHe match {
-          case Some(g) => nodeIdToNodeMap(g)
-          case None    => endNode
+        order.zipWithIndex.map { (e, i) =>
+          val sourceNode = nodeIdToNodeMap(e)
+          val targetCandidates = order.drop(i + 1)
+          val targetHe: Option[HyperedgeMatch] =
+            targetCandidates.find(f =>
+              nodeIdToNodeMap(f).pos1 > sourceNode.pos1 && nodeIdToNodeMap(f).pos2 > sourceNode.pos2
+            )
+          val targetNode = targetHe match {
+            case Some(g) => nodeIdToNodeMap(g)
+            case None    => endNode
+          }
+          (sourceNode, targetNode)
         }
-        (sourceNode, targetNode)
-      }
     }
     def createReverseEdges(
         order: List[HyperedgeMatch]
@@ -296,7 +282,9 @@ def traversalGraphPhase2(
         val targetNode = nodeIdToNodeMap(e)
         val sourceCandidates = reordered.drop(i + 1)
         val sourceHe: Option[HyperedgeMatch] =
-          sourceCandidates.find(f => nodeIdToNodeMap(f).pos1 < targetNode.pos1 && nodeIdToNodeMap(f).pos2 < targetNode.pos2)
+          sourceCandidates.find(f =>
+            nodeIdToNodeMap(f).pos1 < targetNode.pos1 && nodeIdToNodeMap(f).pos2 < targetNode.pos2
+          )
         val sourceNode = sourceHe match {
           case Some(g) => nodeIdToNodeMap(g)
           case None    => startNode
@@ -305,5 +293,6 @@ def traversalGraphPhase2(
       } :+ (nodeIdToNodeMap(reordered.head), endNode)
     }
     createForwardEdges(order1) ++ createForwardEdges(order2) ++ createReverseEdges(order1) ++ createReverseEdges(order2)
-  nodeIdToNodeMap.foreach(System.err.println)
-  edges.foreach(System.err.println)
+  val g: Graph[DecisionGraphStepPhase2Enum] =
+    edgePairs.map((s, t) => Graph.edge(s, t)).foldLeft(Graph.empty[DecisionGraphStepPhase2Enum])(_ + _)
+  g
