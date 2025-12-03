@@ -272,54 +272,38 @@ def traversalGraphPhase2(
   5. Repeat for order2 (library will deduplicate later)
    * */
   val edges: Seq[(DecisionGraphStepPhase2Enum, DecisionGraphStepPhase2Enum)] =
-    val order1forwardEdges = (startNode, nodeIdToNodeMap(order1.head)) +:
-      order1.zipWithIndex.map { (e, i) =>
+    def createForwardEdges(
+        order: List[HyperedgeMatch]
+    ): List[(DecisionGraphStepPhase2Enum, DecisionGraphStepPhase2Enum)] = {
+      (startNode, nodeIdToNodeMap(order.head)) +:
+      order.zipWithIndex.map { (e, i) =>
         val sourceNode = nodeIdToNodeMap(e)
-        val candidates = order1.drop(i)
+        val targetCandidates = order.drop(i + 1)
         val targetHe: Option[HyperedgeMatch] =
-          candidates.find(f => nodeIdToNodeMap(f).pos1 > sourceNode.pos1 && nodeIdToNodeMap(f).pos2 > sourceNode.pos2)
+          targetCandidates.find(f => nodeIdToNodeMap(f).pos1 > sourceNode.pos1 && nodeIdToNodeMap(f).pos2 > sourceNode.pos2)
         val targetNode = targetHe match {
           case Some(g) => nodeIdToNodeMap(g)
           case None    => endNode
         }
         (sourceNode, targetNode)
       }
-    val order2forwardEdges = (startNode, nodeIdToNodeMap(order2.head)) +:
-      order2.zipWithIndex.map { (e, i) =>
-        val sourceNode = nodeIdToNodeMap(e)
-        val candidates = order2.drop(i)
-        val targetHe: Option[HyperedgeMatch] =
-          candidates.find(f => nodeIdToNodeMap(f).pos1 > sourceNode.pos1 && nodeIdToNodeMap(f).pos2 > sourceNode.pos2)
-        val targetNode = targetHe match {
-          case Some(g) => nodeIdToNodeMap(g)
-          case None    => endNode
-        }
-        (sourceNode, targetNode)
-      }
-    val order1reverseEdges =
-      order1.reverse.zipWithIndex.map { (e, i) =>
+    }
+    def createReverseEdges(
+        order: List[HyperedgeMatch]
+    ): List[(DecisionGraphStepPhase2Enum, DecisionGraphStepPhase2Enum)] = {
+      val reordered = order.reverse // 2 (pos 0), 1 (pos 1), 0 (pos 2)
+      reordered.zipWithIndex.map { (e, i) =>
         val targetNode = nodeIdToNodeMap(e)
-        val candidates = order1.reverse.drop(i)
+        val sourceCandidates = reordered.drop(i + 1)
         val sourceHe: Option[HyperedgeMatch] =
-          candidates.find(f => nodeIdToNodeMap(f).pos1 < targetNode.pos1 && nodeIdToNodeMap(f).pos2 < targetNode.pos2)
+          sourceCandidates.find(f => nodeIdToNodeMap(f).pos1 < targetNode.pos1 && nodeIdToNodeMap(f).pos2 < targetNode.pos2)
         val sourceNode = sourceHe match {
           case Some(g) => nodeIdToNodeMap(g)
           case None    => startNode
         }
         (sourceNode, targetNode)
-      } :+ (nodeIdToNodeMap(order1.last), endNode)
-    val order2reverseEdges =
-      order2.reverse.zipWithIndex.map { (e, i) =>
-        val targetNode = nodeIdToNodeMap(e)
-        val candidates = order2.reverse.drop(i)
-        val sourceHe: Option[HyperedgeMatch] =
-          candidates.find(f => nodeIdToNodeMap(f).pos1 < targetNode.pos1 && nodeIdToNodeMap(f).pos2 < targetNode.pos2)
-        val sourceNode = sourceHe match {
-          case Some(g) => nodeIdToNodeMap(g)
-          case None    => startNode
-        }
-        (sourceNode, targetNode)
-      } :+ (nodeIdToNodeMap(order1.last), endNode)
-    order1forwardEdges ++ order2forwardEdges ++ order1reverseEdges ++ order2reverseEdges
+      } :+ (nodeIdToNodeMap(reordered.head), endNode)
+    }
+    createForwardEdges(order1) ++ createForwardEdges(order2) ++ createReverseEdges(order1) ++ createReverseEdges(order2)
   nodeIdToNodeMap.foreach(System.err.println)
   edges.foreach(System.err.println)
