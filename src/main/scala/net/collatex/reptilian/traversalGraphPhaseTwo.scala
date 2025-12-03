@@ -1,7 +1,7 @@
 package net.collatex.reptilian
 
 import net.collatex.reptilian.DGNodeType.{Alignment, Skip}
-import net.collatex.util.{Graph, Hypergraph, SetOf2}
+import net.collatex.util.{Graph, Hypergraph, SetOf2, EdgeLabelledDirectedGraph}
 import scalax.collection.edge.WLDiEdge
 
 import scala.annotation.tailrec
@@ -239,13 +239,14 @@ def greedy(
   result
 
 /* 2025-11-26 Construct traversal graph for phase 2, based on phase 1 logic
- * Replaces traversalGraphPhase2Old(), above, and obsoletes detectTransposition() */
+ * Replaces traversalGraphPhase2Old(), above, and obsoletes detectTransposition()
+ * TODO: Add edge information (weight, label) */
 
 def traversalGraphPhase2(
     hg: Hypergraph[EdgeLabel, TokenRange],
     order1: List[HyperedgeMatch], // corresponds (with the following) to blockOrderForWitnesses in Phase 1
     order2: List[HyperedgeMatch]
-): Graph[DecisionGraphStepPhase2Enum] =
+): EdgeLabelledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties] =
   val startNode = DecisionGraphStepPhase2Enum.Terminal(-1, -1)
   val endNode = DecisionGraphStepPhase2Enum.Terminal(Int.MaxValue, Int.MaxValue)
   val dataNodes: List[DecisionGraphStepPhase2Enum.Internal] = order1.zipWithIndex.map { (e, i) =>
@@ -293,6 +294,18 @@ def traversalGraphPhase2(
       } :+ (nodeIdToNodeMap(reordered.head), endNode)
     }
     createForwardEdges(order1) ++ createForwardEdges(order2) ++ createReverseEdges(order1) ++ createReverseEdges(order2)
-  val g: Graph[DecisionGraphStepPhase2Enum] =
-    edgePairs.map((s, t) => Graph.edge(s, t)).foldLeft(Graph.empty[DecisionGraphStepPhase2Enum])(_ + _)
+  val g: EdgeLabelledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties] =
+    edgePairs
+      .map { (s, t) =>
+        val l = TraversalEdgeProperties(1, Set())
+        EdgeLabelledDirectedGraph
+          .edge(s, l, t)
+      }
+      .foldLeft(EdgeLabelledDirectedGraph.empty[DecisionGraphStepPhase2Enum, TraversalEdgeProperties])(_ + _)
+  g.toMap._2.foreach((nodes, l) => System.err.println(l)) // edge properties
   g
+
+case class TraversalEdgeProperties(
+    weight: Int,
+    label: Set[HyperedgeMatch]
+)
