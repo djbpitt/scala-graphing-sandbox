@@ -272,7 +272,7 @@ def traversalGraphPhase2(
   5. Repeat for order2 (library will deduplicate later)
    * */
   val edges: Seq[(DecisionGraphStepPhase2Enum, DecisionGraphStepPhase2Enum)] =
-    (startNode, nodeIdToNodeMap(order1.head)) +:
+    val order1forwardEdges = (startNode, nodeIdToNodeMap(order1.head)) +:
       order1.zipWithIndex.map { (e, i) =>
         val sourceNode = nodeIdToNodeMap(e)
         val candidates = order1.drop(i)
@@ -284,5 +284,42 @@ def traversalGraphPhase2(
         }
         (sourceNode, targetNode)
       }
+    val order2forwardEdges = (startNode, nodeIdToNodeMap(order2.head)) +:
+      order2.zipWithIndex.map { (e, i) =>
+        val sourceNode = nodeIdToNodeMap(e)
+        val candidates = order2.drop(i)
+        val targetHe: Option[HyperedgeMatch] =
+          candidates.find(f => nodeIdToNodeMap(f).pos1 > sourceNode.pos1 && nodeIdToNodeMap(f).pos2 > sourceNode.pos2)
+        val targetNode = targetHe match {
+          case Some(g) => nodeIdToNodeMap(g)
+          case None    => endNode
+        }
+        (sourceNode, targetNode)
+      }
+    val order1reverseEdges =
+      order1.reverse.zipWithIndex.map { (e, i) =>
+        val targetNode = nodeIdToNodeMap(e)
+        val candidates = order1.reverse.drop(i)
+        val sourceHe: Option[HyperedgeMatch] =
+          candidates.find(f => nodeIdToNodeMap(f).pos1 < targetNode.pos1 && nodeIdToNodeMap(f).pos2 < targetNode.pos2)
+        val sourceNode = sourceHe match {
+          case Some(g) => nodeIdToNodeMap(g)
+          case None    => startNode
+        }
+        (sourceNode, targetNode)
+      } :+ (nodeIdToNodeMap(order1.last), endNode)
+    val order2reverseEdges =
+      order2.reverse.zipWithIndex.map { (e, i) =>
+        val targetNode = nodeIdToNodeMap(e)
+        val candidates = order2.reverse.drop(i)
+        val sourceHe: Option[HyperedgeMatch] =
+          candidates.find(f => nodeIdToNodeMap(f).pos1 < targetNode.pos1 && nodeIdToNodeMap(f).pos2 < targetNode.pos2)
+        val sourceNode = sourceHe match {
+          case Some(g) => nodeIdToNodeMap(g)
+          case None    => startNode
+        }
+        (sourceNode, targetNode)
+      } :+ (nodeIdToNodeMap(order1.last), endNode)
+    order1forwardEdges ++ order2forwardEdges ++ order1reverseEdges ++ order2reverseEdges
   nodeIdToNodeMap.foreach(System.err.println)
   edges.foreach(System.err.println)
