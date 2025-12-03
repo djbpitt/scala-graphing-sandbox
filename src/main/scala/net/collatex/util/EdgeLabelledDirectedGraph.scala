@@ -40,14 +40,10 @@ enum EdgeLabelledDirectedGraph[N, E]:
       case (_: EmptyGraph[N, E], other: EdgeLabelledDirectedGraph[N, E]) => other
       case (one: EdgeLabelledDirectedGraph[N, E], _: EmptyGraph[N, E]) => one
       case (one: SingleNodeGraph[N, E], other: SingleNodeGraph[N, E]) =>
-        val t1: (Set[N], Set[N]) = (Set(), Set(other.node))
-        val t2: (Set[N], Set[N]) = (Set(one.node), Set())
-        DirectedGraph(Map.apply(one.node -> t1, other.node -> t2),
-          Map.apply((one.node, other.node) -> edgeLabel))
+        LabelledEdge(one.node, edgeLabel, other.node)
       case (_, _) =>
         // This is just to make the method compile while working on the implementation
         EdgeLabelledDirectedGraph.empty[N, E]
-
 
   @targetName("end arrow operator")
   def -->:(weight: E): (EdgeLabelledDirectedGraph[N, E], E) = (this, weight)
