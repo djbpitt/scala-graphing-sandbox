@@ -301,8 +301,12 @@ def traversalGraphPhase2(
           case _:DecisionGraphStepPhase2Enum.Terminal => 0
           case x:DecisionGraphStepPhase2Enum.Internal => x.HEMatch.head.v.head.length
         }
-        val l = // label is skipped HyperedgeMatch instances
+        val l = { // label is skipped HyperedgeMatch instances
+          // 2025-12-03 RESUME HERE
+          // Modify edgePairs to include pos1 and pos2 for both source and target
+          // Use those values to slice order1 and order2 to identify skipped HyperedgeMatch instances for label
           Set.empty[HyperedgeMatch]
+        }
         val p = TraversalEdgeProperties(w, l)
         EdgeLabelledDirectedGraph
           .edge(s, p, t)
