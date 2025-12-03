@@ -32,29 +32,29 @@ enum Graph[N]:
       case g: DirectedGraph[N]   => g.adjacencyMap.size
     }
 
-  def incomingEdges(node: N): Set[(N, N)] =
+  def incomingEdges(node: N): Set[DirectedEdge[N]] =
     (this, node) match
       case (_: EmptyGraph[N], _)      => Set.empty
       case (_: SingleNodeGraph[N], _) => Set.empty
       case (x: DirectedEdge[N], _) =>
-        if (node == x.target) Set((x.source, x.target))
+        if (node == x.target) Set(x)
         else Set.empty
       case (g: DirectedGraph[N], n) =>
         g.adjacencyMap(n)
           ._1
-          .map(e => (e, node))
+          .map(e => DirectedEdge(e, node))
 
-  def outgoingEdges(node: N): Set[(N, N)] =
+  def outgoingEdges(node: N): Set[DirectedEdge[N]] =
     (this, node) match
       case (_: EmptyGraph[N], _)      => Set.empty
       case (_: SingleNodeGraph[N], _) => Set.empty
       case (x: DirectedEdge[N], _) =>
-        if (node == x.source) Set((x.source, x.target))
+        if (node == x.source) Set(x)
         else Set.empty
       case (g: DirectedGraph[N], n) =>
         g.adjacencyMap(n)
           ._2
-          .map(e => (node, e))
+          .map(e => DirectedEdge(node, e))
 
   def leafs(): Set[N] =
     this match
@@ -152,7 +152,7 @@ enum Graph[N]:
     // https://en.wikipedia.org/wiki/Topological_sorting
     // Kahn’s algorithm
     @tailrec
-    def addToSort(sorted: Vector[N], todo: Set[N], handledEdges: Set[(N, N)]): Vector[N] =
+    def addToSort(sorted: Vector[N], todo: Set[N], handledEdges: Set[DirectedEdge[N]]): Vector[N] =
       if todo.isEmpty then
         assert(
           sorted.size == this.nodeSize,
@@ -168,10 +168,7 @@ enum Graph[N]:
         val handledEdgesNew = handledEdges ++ outgoingEdgesOfCurrentNode
         val incomingEdgesOfTargetNodes =
           outgoingEdgesOfCurrentNode
-            .map((_, target) =>
-              this
-                .incomingEdges(target)
-            )
+            .map(e => this.incomingEdges(e.target))
             .filter(_.subsetOf(handledEdgesNew)) // new incoming edges of target node
         val todoNew = incomingEdgesOfTargetNodes.flatMap(_.map(_._2)) ++ todo.tail
         addToSort(
@@ -179,7 +176,7 @@ enum Graph[N]:
           todoNew,
           handledEdgesNew
         )
-    addToSort(Vector.empty[N], this.roots(), Set.empty[(N, N)])
+    addToSort(Vector.empty[N], this.roots(), Set.empty[DirectedEdge[N]])
 
   /* Compute length of longest path from root to each node
    * Assumes single root
