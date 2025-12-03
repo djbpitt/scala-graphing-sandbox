@@ -22,11 +22,6 @@ object EdgeLabelledDirectedGraph:
   def edge[N, E](source: N, target: N, label: E): EdgeLabelledDirectedGraph[N, E] =
     node(source) |-- label -->: node(target)
 
-  def lNode[E](label: String): EdgeLabelledDirectedGraph[LabelledNode, E] =
-    val labelledNode = LabelledNode(label)
-    val graph = SingleNodeGraph[LabelledNode, E](labelledNode)
-    graph
-
 // algebraic data type
 enum EdgeLabelledDirectedGraph[N, E]:
   case EmptyGraph()
