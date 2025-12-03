@@ -105,19 +105,20 @@ enum EdgeLabelledDirectedGraph[N, E]:
       case g: DirectedGraph[N, E] => g.adjacencyMap.size
     }
 
-//
-//  def leafs(): Set[N] =
-//    this match
-//      case _: EmptyGraph[N, E] => Set.empty
-//      case g: SingleNodeGraph[N, E] => Set(g.node)
-//      case g: DirectedGraph[N, E] => g.adjacencyMap.filter(t => t._2._2.isEmpty).keySet
-//
-//  def roots(): Set[N] =
-//    this match
-//      case _: EmptyGraph[N, E] => Set.empty
-//      case g: SingleNodeGraph[N, E] => Set(g.node)
-//      case g: DirectedGraph[N, E] => g.adjacencyMap.filter(t => t._2._1.isEmpty).keySet
-//
+  def leafs(): Set[N] =
+    this match
+      case _: EmptyGraph[N, E] => Set.empty
+      case g: SingleNodeGraph[N, E] => Set(g.node)
+      case e: LabelledEdge[N, E] => Set(e.target)
+      case g: DirectedGraph[N, E] => g.adjacencyMap.filter(t => t._2._2.isEmpty).keySet
+
+  def roots(): Set[N] =
+    this match
+      case _: EmptyGraph[N, E] => Set.empty
+      case g: SingleNodeGraph[N, E] => Set(g.node)
+      case e: LabelledEdge[N, E] => Set(e.source)
+      case g: DirectedGraph[N, E] => g.adjacencyMap.filter(t => t._2._1.isEmpty).keySet
+
 //
 //
 ////  NOTE: partly implemented above
