@@ -11,23 +11,12 @@ import scala.collection.immutable.Set
 // The implementation is based on adjacency maps.
 // The N generic is the node
 
-// Labelled nodes are classes, not case classes
-// so that the label does not determine its identity
-// The identity is determined by the memory pointer
-// NB: Compiler warning on unused label because unfinished
-class LabelledNode(label: String)
-
 // constructor
 object Graph:
   def empty[N]: Graph[N] = EmptyGraph()
   def node[N](node: N): Graph[N] = SingleNodeGraph(node)
   def edge[N](source: N, target: N): Graph[N] =
     node(source) * node(target)
-
-  def lNode(label: String): Graph[LabelledNode] =
-    val labelledNode = LabelledNode(label)
-    val graph = SingleNodeGraph[LabelledNode](labelledNode)
-    graph
 
 enum Graph[N]:
   case EmptyGraph() extends Graph[N]
