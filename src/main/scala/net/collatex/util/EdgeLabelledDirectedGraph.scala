@@ -42,7 +42,7 @@ enum EdgeLabelledDirectedGraph[N, E]:
       case (one: SingleNodeGraph[N, E], other: SingleNodeGraph[N, E]) =>
         val t1: (Set[N], Set[N]) = (Set(), Set(other.node))
         val t2: (Set[N], Set[N]) = (Set(one.node), Set())
-        DirectedGraph(Map.apply(one.node -> t1, other.node -> t2), 
+        DirectedGraph(Map.apply(one.node -> t1, other.node -> t2),
           Map.apply((one.node, other.node) -> edgeLabel))
       case (_, _) =>
         // This is just to make the method compile while working on the implementation
@@ -75,30 +75,30 @@ enum EdgeLabelledDirectedGraph[N, E]:
         // create a new graph with the entries combined
         DirectedGraph(am1 |+| am2, lm1 ++ lm2)
 
-  def incomingEdges(node: N): Set[(N, E, N)] =
+  def incomingEdges(node: N): Set[LabelledEdge[N, E]] =
     (this, node) match
       case (_: EmptyGraph[N, E], _) => Set.empty
       case (_: SingleNodeGraph[N, E], _) => Set.empty
       case (x: LabelledEdge[N, E], _) =>
-        if (node == x.target) Set((x.source, x.label, x.target))
+        if (node == x.target) Set(x)
         else Set.empty
       case (g: DirectedGraph[N, E], target) =>
         g.adjacencyMap(target)._1
-          .map(source => (source, g.labels(source, target), target))
+          .map(source => LabelledEdge(source, g.labels(source, target), target))
   
-  def outgoingEdges(node: N): Set[(N, E, N)] =
+  def outgoingEdges(node: N): Set[LabelledEdge[N, E]] =
     (this, node) match
       case (_: EmptyGraph[N, E], _) => Set.empty
       case (_: SingleNodeGraph[N, E], _) => Set.empty
       case (x: LabelledEdge[N, E], _) =>
-        if (node == x.source) Set((x.source, x.label, x.target))
+        if (node == x.source) Set(x)
         else Set.empty
       case (g: DirectedGraph[N, E], source) =>
         g.adjacencyMap(source)._2
-          .map(target => (source, g.labels(source, target), target))
+          .map(target => LabelledEdge(source, g.labels(source, target), target))
 
 
-//  def node_size: Int =
+//  def nodeSize: Int =
 //    this match {
 //      case _: EmptyGraph[N, E] => 0
 //      case _: SingleNodeGraph[N, E] => 1
