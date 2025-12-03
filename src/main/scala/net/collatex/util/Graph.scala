@@ -98,15 +98,11 @@ enum Graph[N]:
   // Connects two graphs with one or more edges.
   @targetName("connect")
   def *(other: Graph[N]): Graph[N] =
-    // NOTE: add single node graph, single node graph shortcut
     (this, other) match
       case (_: EmptyGraph[N], other: Graph[N]) => other
       case (one: Graph[N], _: EmptyGraph[N])   => one
-      // This can be optimized to use the DirectedEdge case class
       case (one: SingleNodeGraph[N], other: SingleNodeGraph[N]) =>
-        val t1: (Set[N], Set[N]) = (Set(), Set(other.node))
-        val t2: (Set[N], Set[N]) = (Set(one.node), Set())
-        DirectedGraph(Map.apply(one.node -> t1, other.node -> t2))
+        DirectedEdge(one.node, other.node)
       case (one: SingleNodeGraph[N], other: DirectedEdge[N]) =>
         DirectedEdge(one.node, other.source) +
           DirectedEdge(one.node, other.target) +
