@@ -310,7 +310,7 @@ def traversalGraphPhase2(
           .edge(s, t, p)
       }
       .foldLeft(EdgeLabeledDirectedGraph.empty[DecisionGraphStepPhase2Enum, TraversalEdgeProperties])(_ + _)
-  g.toMap._2.foreach((e, l) => System.err.println(s"${e.toString}: $l")) // edge properties
+  g.edges.foreach(e => System.err.println(s"${e.source} -> ${e.target}: ${e.label}")) // edge properties
   g
 
 case class TraversalEdgeProperties(
