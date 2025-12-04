@@ -73,6 +73,27 @@ def groupPatternsTogetherByHyperedge(
 
  */
 
+def prepareHgMatches(matchesAsSet: Set[HyperedgeMatch]) = {
+  val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
+    matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
+  // Sort by one value (head or last) and subsort by the other, with third subsort by head.label in case both
+  //  are ambiguous
+  // Keep as seq
+  // TODO: Ick! Assign both orders at once in a single val
+  val matchesSortedHead: Seq[HyperedgeMatch] = {
+    if matchesAsSet.size > 1 then
+      val ranking: Map[NodeType, OrderPosition] = matchesAsHg.rank()
+      matchesAsSet.toSeq.sortBy(e => (ranking(NodeType(e.head.label)), ranking(NodeType(e.last.label)), e.head.label))
+    else matchesAsSet.toSeq
+  }
+  val matchesSortedLast: Seq[HyperedgeMatch] = {
+    if matchesAsSet.size > 1 then
+      val ranking: Map[NodeType, OrderPosition] = matchesAsHg.rank()
+      matchesAsSet.toSeq.sortBy(e => (ranking(NodeType(e.last.label)), ranking(NodeType(e.head.label)), e.head.label))
+    else matchesAsSet.toSeq
+  }
+  (matchesAsHg, matchesSortedHead, matchesSortedLast)
+}
 def mergeHgHg(
     hg1: Hypergraph[EdgeLabel, TokenRange],
     hg2: Hypergraph[EdgeLabel, TokenRange]
@@ -101,24 +122,11 @@ def mergeHgHg(
   val matchesAsSet = unfilteredMatchesAsSet.filterNot(e => isSpuriousMatch(e)) // will process normally
   val spuriousMatches = unfilteredMatchesAsSet.diff(matchesAsSet) // will add to result directly
   if spuriousMatches.nonEmpty then System.err.println(s"Spurious matches: $spuriousMatches")
-  val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
-    matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
-  // Sort by one value (head or last) and subsort by the other, with third subsort by head.label in case both
-  //  are ambiguous
-  // Keep as seq
-  // TODO: Ick! Assign both orders at once in a single val
-  val matchesSortedHead: Seq[HyperedgeMatch] = {
-    if matchesAsSet.size > 1 then
-      val ranking: Map[NodeType, Int] = matchesAsHg.rank()
-      matchesAsSet.toSeq.sortBy(e => (ranking(NodeType(e.head.label)), ranking(NodeType(e.last.label)), e.head.label))
-    else matchesAsSet.toSeq
-  }
-  val matchesSortedLast: Seq[HyperedgeMatch] = {
-    if matchesAsSet.size > 1 then
-      val ranking: Map[NodeType, Int] = matchesAsHg.rank()
-      matchesAsSet.toSeq.sortBy(e => (ranking(NodeType(e.last.label)), ranking(NodeType(e.head.label)), e.head.label))
-    else matchesAsSet.toSeq
-  }
+  val (
+    matchesAsHg: Hypergraph[EdgeLabel, TokenRange],
+    matchesSortedHead: Seq[HyperedgeMatch],
+    matchesSortedLast: Seq[HyperedgeMatch]
+  ) = prepareHgMatches(matchesAsSet)
 
   val (transpositionBool, _, _) =
     detectTransposition(matchesAsSet, matchesAsHg)
