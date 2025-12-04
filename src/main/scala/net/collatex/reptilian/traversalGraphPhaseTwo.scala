@@ -25,8 +25,9 @@ enum DecisionGraphStepPhase2Enum:
   def pos1: OrderPosition
   def pos2: OrderPosition
   def pretty: String = this match {
-    case x:Internal => s"Internal(${x.pos1},${x.pos2},\"${x.HEMatch.head.v.head.nString}\",${x.HEMatch.head.v.head.length})"
-    case x:Terminal => s"Terminal(${x.pos1},${x.pos2})"
+    case x: Internal =>
+      s"Internal(${x.pos1},${x.pos2},\"${x.HEMatch.head.v.head.nString}\",${x.HEMatch.head.v.head.length})"
+    case x: Terminal => s"Terminal(${x.pos1},${x.pos2})"
   }
 
 case class NodeInfo(id: String, nodeType: DGNodeType)
@@ -300,15 +301,11 @@ def traversalGraphPhase2(
     edgePairs
       .map { (s, t) =>
         val w: Int = t match { // weight is number of tokens on target
-          case _:DecisionGraphStepPhase2Enum.Terminal => 0
-          case x:DecisionGraphStepPhase2Enum.Internal => x.HEMatch.head.v.head.length
+          case _: DecisionGraphStepPhase2Enum.Terminal => 0
+          case x: DecisionGraphStepPhase2Enum.Internal => x.HEMatch.head.v.head.length
         }
-        val l = { // label is skipped HyperedgeMatch instances
-          // 2025-12-03 RESUME HERE
-          // Modify edgePairs to include pos1 and pos2 for both source and target
-          // Use those values to slice order1 and order2 to identify skipped HyperedgeMatch instances for label
-          Set.empty[HyperedgeMatch]
-        }
+        val l =  // label is skipped HyperedgeMatch instances
+          order1.slice(s.pos1 + 1, t.pos1).toSet ++ order2.slice(s.pos2 + 1, t.pos2).toSet
         val p = TraversalEdgeProperties(w, l)
         EdgeLabeledDirectedGraph
           .edge(s, t, p)
