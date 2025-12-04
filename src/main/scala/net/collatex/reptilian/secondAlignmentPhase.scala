@@ -31,13 +31,19 @@ def mergeSingletonSingleton(
   val hypergraph = hyperedges.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((x, y) => y + x)
   hypergraph
 
+def createHypergraphFromSingleton(singletonTokens: Vector[Token], ta: Vector[TokenEnum]) = {
+  val singletonAsTokenRange =
+    TokenRange(start = singletonTokens.head.g, until = singletonTokens.last.g + 1, ta = ta)
+  val singletonHypergraph = AlignmentHyperedge(Set(singletonAsTokenRange))
+  singletonHypergraph
+}
 def mergeSingletonHG(
     singletonTokens: Vector[Token],
     hg: Hypergraph[EdgeLabel, TokenRange]
 ): Hypergraph[EdgeLabel, TokenRange] =
-  val singletonAsTokenRange =
-    TokenRange(start = singletonTokens.head.g, until = singletonTokens.last.g + 1, ta = hg.verticesIterator.next.ta)
-  mergeHgHg(hg, AlignmentHyperedge(Set(singletonAsTokenRange)))
+  val ta = hg.verticesIterator.next.ta
+  val singletonHypergraph: Hyperedge[EdgeLabel, TokenRange] = createHypergraphFromSingleton(singletonTokens, ta)
+  mergeHgHg(hg, singletonHypergraph)
 
 def groupPatternsTogetherByHyperedge(
     patterns: List[AlignedPatternPhaseTwo]
