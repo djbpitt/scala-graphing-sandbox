@@ -1,11 +1,9 @@
 package net.collatex.reptilian
 
 import net.collatex.reptilian.DGNodeType.{Alignment, Skip}
-import net.collatex.util.{Graph, Hypergraph, SetOf2, EdgeLabelledDirectedGraph}
-import scalax.collection.edge.WLDiEdge
+import net.collatex.util.{Graph, Hypergraph, EdgeLabeledDirectedGraph}
 
 import scala.annotation.tailrec
-import scala.collection.mutable.ArrayBuffer
 
 enum DGNodeType:
   case Alignment
@@ -246,7 +244,7 @@ def traversalGraphPhase2(
     hg: Hypergraph[EdgeLabel, TokenRange],
     order1: List[HyperedgeMatch], // corresponds (with the following) to blockOrderForWitnesses in Phase 1
     order2: List[HyperedgeMatch]
-): EdgeLabelledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties] =
+): EdgeLabeledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties] =
   val startNode = DecisionGraphStepPhase2Enum.Terminal(-1, -1)
   val endNode = DecisionGraphStepPhase2Enum.Terminal(Int.MaxValue, Int.MaxValue)
   val dataNodes: List[DecisionGraphStepPhase2Enum.Internal] = order1.zipWithIndex.map { (e, i) =>
@@ -294,7 +292,7 @@ def traversalGraphPhase2(
       } :+ (nodeIdToNodeMap(reordered.head), endNode)
     }
     createForwardEdges(order1) ++ createForwardEdges(order2) ++ createReverseEdges(order1) ++ createReverseEdges(order2)
-  val g: EdgeLabelledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties] =
+  val g: EdgeLabeledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties] =
     edgePairs
       .map { (s, t) =>
         val w: Int = t match { // weight is number of tokens on target
@@ -308,10 +306,10 @@ def traversalGraphPhase2(
           Set.empty[HyperedgeMatch]
         }
         val p = TraversalEdgeProperties(w, l)
-        EdgeLabelledDirectedGraph
+        EdgeLabeledDirectedGraph
           .edge(s, p, t)
       }
-      .foldLeft(EdgeLabelledDirectedGraph.empty[DecisionGraphStepPhase2Enum, TraversalEdgeProperties])(_ + _)
+      .foldLeft(EdgeLabeledDirectedGraph.empty[DecisionGraphStepPhase2Enum, TraversalEdgeProperties])(_ + _)
   g.toMap._2.foreach((e, l) => System.err.println(s"${e.toString}: $l")) // edge properties
   g
 

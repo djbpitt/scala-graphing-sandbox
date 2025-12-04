@@ -2,7 +2,7 @@ package net.collatex.util
 
 
 import cats.implicits.catsSyntaxSemigroup
-import net.collatex.util.EdgeLabelledDirectedGraph.{DirectedGraph, EmptyGraph, SingleNodeGraph}
+import net.collatex.util.EdgeLabeledDirectedGraph.{DirectedGraph, EmptyGraph, SingleNodeGraph}
 
 import scala.annotation.targetName
 import scala.collection.immutable.Set
@@ -16,14 +16,14 @@ import scala.collection.immutable.Set
 
 
 // constructor
-object EdgeLabelledDirectedGraph:
-  def empty[N, E]: EdgeLabelledDirectedGraph[N, E] = EmptyGraph()
-  def node[N, E](node: N): EdgeLabelledDirectedGraph[N, E] = SingleNodeGraph(node)
-  def edge[N, E](source: N, label: E, target: N): EdgeLabelledDirectedGraph[N, E] =
+object EdgeLabeledDirectedGraph:
+  def empty[N, E]: EdgeLabeledDirectedGraph[N, E] = EmptyGraph()
+  def node[N, E](node: N): EdgeLabeledDirectedGraph[N, E] = SingleNodeGraph(node)
+  def edge[N, E](source: N, label: E, target: N): EdgeLabeledDirectedGraph[N, E] =
     LabelledEdge(source, label, target)
 
 // algebraic data type
-enum EdgeLabelledDirectedGraph[N, E]:
+enum EdgeLabeledDirectedGraph[N, E]:
   case EmptyGraph()
   case SingleNodeGraph(node: N)
   case LabelledEdge(source: N, label: E, target: N)
@@ -33,20 +33,20 @@ enum EdgeLabelledDirectedGraph[N, E]:
   // where |-- is left associative, does the actual operation
   // and --> is right associative, returns a tuple
   @targetName("start arrow operator")
-  def |--(otherGraphAndLabel: (EdgeLabelledDirectedGraph[N, E], E)): EdgeLabelledDirectedGraph[N, E] =
+  def |--(otherGraphAndLabel: (EdgeLabeledDirectedGraph[N, E], E)): EdgeLabeledDirectedGraph[N, E] =
     val other = otherGraphAndLabel._1
     val edgeLabel = otherGraphAndLabel._2
     (this, other) match
-      case (_: EmptyGraph[N, E], other: EdgeLabelledDirectedGraph[N, E]) => other
-      case (one: EdgeLabelledDirectedGraph[N, E], _: EmptyGraph[N, E]) => one
+      case (_: EmptyGraph[N, E], other: EdgeLabeledDirectedGraph[N, E]) => other
+      case (one: EdgeLabeledDirectedGraph[N, E], _: EmptyGraph[N, E]) => one
       case (one: SingleNodeGraph[N, E], other: SingleNodeGraph[N, E]) =>
         LabelledEdge(one.node, edgeLabel, other.node)
       case (_, _) =>
         // This is just to make the method compile while working on the implementation
-        EdgeLabelledDirectedGraph.empty[N, E]
+        EdgeLabeledDirectedGraph.empty[N, E]
 
   @targetName("end arrow operator")
-  def -->:(weight: E): (EdgeLabelledDirectedGraph[N, E], E) = (this, weight)
+  def -->:(weight: E): (EdgeLabeledDirectedGraph[N, E], E) = (this, weight)
 
   def toMap: (Map[N, (Set[N], Set[N])], Map[(N, N), E]) =
     this match
@@ -60,11 +60,11 @@ enum EdgeLabelledDirectedGraph[N, E]:
       case g: DirectedGraph[N, E] => (g.adjacencyMap, g.labels)
 
   @targetName("overlay")
-  def +(other: EdgeLabelledDirectedGraph[N, E]): EdgeLabelledDirectedGraph[N, E] =
+  def +(other: EdgeLabeledDirectedGraph[N, E]): EdgeLabeledDirectedGraph[N, E] =
     (this, other) match
-      case (_: EmptyGraph[N, E], other: EdgeLabelledDirectedGraph[N, E]) => other
-      case (one: EdgeLabelledDirectedGraph[N, E], _: EmptyGraph[N, E]) => one
-      case (one: EdgeLabelledDirectedGraph[N, E], other: EdgeLabelledDirectedGraph[N, E]) =>
+      case (_: EmptyGraph[N, E], other: EdgeLabeledDirectedGraph[N, E]) => other
+      case (one: EdgeLabeledDirectedGraph[N, E], _: EmptyGraph[N, E]) => one
+      case (one: EdgeLabeledDirectedGraph[N, E], other: EdgeLabeledDirectedGraph[N, E]) =>
         if one == other then one
         else
           // convert graphs into two maps so that we can merge the graphs
