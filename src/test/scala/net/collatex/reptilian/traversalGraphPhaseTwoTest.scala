@@ -30,6 +30,12 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
     val w1AsHypergraph = createHypergraphFromSingleton(w1Tokens, GTa)
     System.err.println(w0AsHypergraph)
     System.err.println(w1AsHypergraph)
+    /* 2025-12-04 RESUME HERE
+     *
+     * We need to merge the hypergraphs, which requires splitting the hyperedges, which requires
+     * extracting functionality currently buried in mergeHgHg, so start by extracting that and
+     * making it callable
+     * */
     assert(1 == 1)
   }
 
