@@ -24,6 +24,10 @@ enum DecisionGraphStepPhase2Enum:
   case Terminal(pos1: OrderPosition, pos2: OrderPosition)
   def pos1: OrderPosition
   def pos2: OrderPosition
+  def pretty: String = this match {
+    case x:Internal => s"Internal(${x.pos1},${x.pos2},\"${x.HEMatch.head.v.head.nString}\",${x.HEMatch.head.v.head.length})"
+    case x:Terminal => s"Terminal(${x.pos1},${x.pos2})"
+  }
 
 case class NodeInfo(id: String, nodeType: DGNodeType)
 
@@ -310,7 +314,7 @@ def traversalGraphPhase2(
           .edge(s, t, p)
       }
       .foldLeft(EdgeLabeledDirectedGraph.empty[DecisionGraphStepPhase2Enum, TraversalEdgeProperties])(_ + _)
-  g.edges.foreach(e => System.err.println(s"${e.source} -> ${e.target}: ${e.label}")) // edge properties
+  g.edges.foreach(e => System.err.println(s"${e.source.pretty} -> ${e.target.pretty}: ${e.label}")) // edge properties
   g
 
 case class TraversalEdgeProperties(
