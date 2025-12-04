@@ -19,14 +19,14 @@ import scala.collection.immutable.Set
 object EdgeLabeledDirectedGraph:
   def empty[N, E]: EdgeLabeledDirectedGraph[N, E] = EmptyGraph()
   def node[N, E](node: N): EdgeLabeledDirectedGraph[N, E] = SingleNodeGraph(node)
-  def edge[N, E](source: N, label: E, target: N): EdgeLabeledDirectedGraph[N, E] =
-    LabelledEdge(source, label, target)
+  def edge[N, E](source: N, target: N, label: E): EdgeLabeledDirectedGraph[N, E] =
+    LabeledEdge(source, target, label)
 
 // algebraic data type
 enum EdgeLabeledDirectedGraph[N, E]:
   case EmptyGraph()
   case SingleNodeGraph(node: N)
-  case LabelledEdge(source: N, label: E, target: N)
+  case LabeledEdge(source: N, target: N, label: E)
   case DirectedGraph(adjacencyMap: Map[N, (Set[N], Set[N])], labels: Map[(N,N), E])
 
   // NOTE: here I need two infix operators, to implement the 'a' |-- label --> 'b' construct
@@ -40,7 +40,7 @@ enum EdgeLabeledDirectedGraph[N, E]:
       case (_: EmptyGraph[N, E], other: EdgeLabeledDirectedGraph[N, E]) => other
       case (one: EdgeLabeledDirectedGraph[N, E], _: EmptyGraph[N, E]) => one
       case (one: SingleNodeGraph[N, E], other: SingleNodeGraph[N, E]) =>
-        LabelledEdge(one.node, edgeLabel, other.node)
+        LabeledEdge(one.node, other.node, edgeLabel)
       case (_, _) =>
         // This is just to make the method compile while working on the implementation
         EdgeLabeledDirectedGraph.empty[N, E]
@@ -53,7 +53,7 @@ enum EdgeLabeledDirectedGraph[N, E]:
       case _: EmptyGraph[N, E] => (Map.empty, Map.empty)
       case g: SingleNodeGraph[N, E] =>
         (Map.apply(g.node -> (Set.empty[N], Set.empty[N])), Map.empty)
-      case e: LabelledEdge[N, E] =>
+      case e: LabeledEdge[N, E] =>
         val item1 = e.source -> (Set.empty[N], Set(e.target))
         val item2 = e.target -> (Set(e.source), Set.empty[N])
         (Map.apply(item1, item2), Map.apply((e.source, e.target) -> e.label))
@@ -73,46 +73,46 @@ enum EdgeLabeledDirectedGraph[N, E]:
           // create a new graph with the entries combined
           DirectedGraph(am1 |+| am2, lm1 ++ lm2)
 
-  def incomingEdges(node: N): Set[LabelledEdge[N, E]] =
+  def incomingEdges(node: N): Set[LabeledEdge[N, E]] =
     (this, node) match
       case (_: EmptyGraph[N, E], _) => Set.empty
       case (_: SingleNodeGraph[N, E], _) => Set.empty
-      case (x: LabelledEdge[N, E], _) =>
+      case (x: LabeledEdge[N, E], _) =>
         if (node == x.target) Set(x)
         else Set.empty
       case (g: DirectedGraph[N, E], target) =>
         g.adjacencyMap(target)._1
-          .map(source => LabelledEdge(source, g.labels(source, target), target))
+          .map(source => LabeledEdge(source, target, g.labels(source, target)))
   
-  def outgoingEdges(node: N): Set[LabelledEdge[N, E]] =
+  def outgoingEdges(node: N): Set[LabeledEdge[N, E]] =
     (this, node) match
       case (_: EmptyGraph[N, E], _) => Set.empty
       case (_: SingleNodeGraph[N, E], _) => Set.empty
-      case (x: LabelledEdge[N, E], _) =>
+      case (x: LabeledEdge[N, E], _) =>
         if (node == x.source) Set(x)
         else Set.empty
       case (g: DirectedGraph[N, E], source) =>
         g.adjacencyMap(source)._2
-          .map(target => LabelledEdge(source, g.labels(source, target), target))
+          .map(target => LabeledEdge(source, target, g.labels(source, target)))
 
   def nodeSize: Int =
     this match
       case _: EmptyGraph[N, E]      => 0
       case _: SingleNodeGraph[N, E] => 1
-      case _: LabelledEdge[N, E]    => 2
+      case _: LabeledEdge[N, E]    => 2
       case g: DirectedGraph[N, E]   => g.adjacencyMap.size
 
   def leafs(): Set[N] =
     this match
       case _: EmptyGraph[N, E]      => Set.empty
       case g: SingleNodeGraph[N, E] => Set(g.node)
-      case e: LabelledEdge[N, E]    => Set(e.target)
+      case e: LabeledEdge[N, E]    => Set(e.target)
       case g: DirectedGraph[N, E]   => g.adjacencyMap.filter(t => t._2._2.isEmpty).keySet
 
   def roots(): Set[N] =
     this match
       case _: EmptyGraph[N, E]      => Set.empty
       case g: SingleNodeGraph[N, E] => Set(g.node)
-      case e: LabelledEdge[N, E]    => Set(e.source)
+      case e: LabeledEdge[N, E]    => Set(e.source)
       case g: DirectedGraph[N, E]   => g.adjacencyMap.filter(t => t._2._1.isEmpty).keySet
 

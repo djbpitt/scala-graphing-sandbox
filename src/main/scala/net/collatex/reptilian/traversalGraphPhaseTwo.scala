@@ -307,7 +307,7 @@ def traversalGraphPhase2(
         }
         val p = TraversalEdgeProperties(w, l)
         EdgeLabeledDirectedGraph
-          .edge(s, p, t)
+          .edge(s, t, p)
       }
       .foldLeft(EdgeLabeledDirectedGraph.empty[DecisionGraphStepPhase2Enum, TraversalEdgeProperties])(_ + _)
   g.toMap._2.foreach((e, l) => System.err.println(s"${e.toString}: $l")) // edge properties
