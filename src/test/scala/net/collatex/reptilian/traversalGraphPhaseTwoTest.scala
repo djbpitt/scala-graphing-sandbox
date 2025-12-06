@@ -12,8 +12,8 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
       TokenEnum.Token("cat", "cat", 0, 2, Map()),
       TokenEnum.TokenSep("sep0", "sep0", 0, 3),
       TokenEnum.Token("The ", "the", 1, 4, Map()),
-      TokenEnum.Token("black ", "black", 1, 5),
-      TokenEnum.Token("cat", "cat", 1, 6)
+      TokenEnum.Token("black ", "black", 1, 5, Map()),
+      TokenEnum.Token("cat", "cat", 1, 6, Map())
     )
     val w0Tokens: Vector[TokenEnum.Token] = Vector(
       TokenEnum.Token("The ", "the", 0, 0, Map()),
@@ -52,8 +52,8 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
       TokenEnum.TokenSep("sep0", "sep0", 0, 4),
       TokenEnum.Token("The ", "the", 1, 5, Map()),
       TokenEnum.Token("striped ", "striped", 1, 6, Map()),
-      TokenEnum.Token("red ", "red", 1, 7),
-      TokenEnum.Token("cat", "cat", 1, 8)
+      TokenEnum.Token("red ", "red", 1, 7, Map()),
+      TokenEnum.Token("cat", "cat", 1, 8, Map())
     )
     val w0Tokens: Vector[TokenEnum.Token] = Vector(
       TokenEnum.Token("The ", "the", 0, 0, Map()),

@@ -95,7 +95,6 @@ def prepareHgMatches(matchesAsSet: Set[HyperedgeMatch]) = {
   (matchesAsHg, matchesSortedHead, matchesSortedLast)
 }
 def createPatterns(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeLabel, TokenRange]) = {
-  // We do not group both hyperedges together now
   // We need to capture from which hypergraph each token is coming
   val HGTokensForHG1 = identifyHGTokenRanges(hg1)
   val HGTokensForHG2 = identifyHGTokenRanges(hg2)

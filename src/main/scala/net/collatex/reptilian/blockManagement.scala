@@ -15,17 +15,24 @@ def adjustBlockOverlap(originalBlocks: Iterable[FullDepthBlock], gTa: Vector[Tok
 
   @tailrec
   def adjustForOverlap(
-                        blocksToProcess: Seq[FullDepthBlock],
-                        currentFirst: FullDepthBlock,
-                        acc: Seq[FullDepthBlock]
-                      ): Seq[FullDepthBlock] =
+      blocksToProcess: Seq[FullDepthBlock],
+      currentFirst: FullDepthBlock,
+      acc: Seq[FullDepthBlock]
+  ): Seq[FullDepthBlock] =
     if blocksToProcess.isEmpty
     then acc :+ currentFirst
     else
-      val (newFirst: FullDepthBlock, newSecond: FullDepthBlock) = allocateOverlappingTokens(currentFirst, blocksToProcess.head, gTa)
+      val (newFirst: FullDepthBlock, newSecond: FullDepthBlock) =
+        allocateOverlappingTokens(currentFirst, blocksToProcess.head, gTa)
       adjustForOverlap(blocksToProcess.tail, newSecond, acc :+ newFirst)
 
-  adjustForOverlap(sortedBlocks.tail, sortedBlocks.head, Seq[FullDepthBlock]())
+  val result = adjustForOverlap(sortedBlocks.tail, sortedBlocks.head, Seq[FullDepthBlock]())
+  // RESUME HERE 2025-12-06
+  // This function creates a block with length of -1, which shouldn't be possible
+  // In phase 2 "The red striped cat" / "The striped red cat" we lose "red" entirely
+  System.err.println(originalBlocks)
+  System.err.println(result)
+  result
 
 def vectorize(tokenArray: Vector[TokenEnum]): (Array[Int], Int) =
   val voc = tokenArray
@@ -212,7 +219,6 @@ def createAlignedPatternsPhaseTwo(
   val blocks: List[FullDepthBlock] =
     (blockStartPositions lazyZip blockLengths)
       .map((starts, length) => FullDepthBlock(starts.toVector, length)) pipe removeOverlappingBlocks
-
   val gTa = lTa.head.asInstanceOf[TokenHG].tr.ta // from arbitrary TokenRange
 
   def convertBlockToAlignedPatternOccurrence(f: Int, e: FullDepthBlock) =
@@ -225,38 +231,41 @@ def createAlignedPatternsPhaseTwo(
     val patternTr: TokenRange = TokenRange(occurrenceStartAsGlobal, occurrenceStartAsGlobal + e.length, gTa)
     AlignedPatternOccurrencePhaseTwo(originalBlock, originalHG, originalHe, originalTr, patternTr)
 
-
   // TODO: Why are there empty blocks in the adjusted blocks ??
   // necessitating that we filter _.length > 0 on the adjusted blocks
   val xxBlocks = if blocks.isEmpty then List.empty else adjustBlockOverlap(blocks, gTa).filter(_.length > 0).toList
+  xxBlocks.foreach(System.err.println)
   // NOTE: Each Block has two instances. If both instances point to the same hypergraph
   // we have an Illegal Pattern which should be filtered out
   val patternsAsTuples = xxBlocks map (e => // e: block
-    (convertBlockToAlignedPatternOccurrence(e.instances(0), e),
-      convertBlockToAlignedPatternOccurrence(e.instances(1), e))
+    (
+      convertBlockToAlignedPatternOccurrence(e.instances(0), e),
+      convertBlockToAlignedPatternOccurrence(e.instances(1), e)
+    )
   )
   // check that both parts are from different parts of the graph
   val validPatterns = patternsAsTuples.filter((x, y) => x.originalHypergraph != y.originalHypergraph)
   val occurrencePhaseTwo = validPatterns.map { case (x, y) => Vector(x, y) }
-  val patterns: List[AlignedPatternPhaseTwo] = occurrencePhaseTwo.map(occurrences => AlignedPatternPhaseTwo(occurrences))
+  val patterns: List[AlignedPatternPhaseTwo] =
+    occurrencePhaseTwo.map(occurrences => AlignedPatternPhaseTwo(occurrences))
 
-  val blocksAsTokenRanges =xxBlocks.map(x => x.remapBlockToGTa(lTa)).map(x => x.toTokenRanges(gTa))
-  //val debugBlockOverlapSortedByLast = blocksAsTokenRanges.sortBy(_.last.start)
+  val blocksAsTokenRanges = xxBlocks.map(x => x.remapBlockToGTa(lTa)).map(x => x.toTokenRanges(gTa))
+  // val debugBlockOverlapSortedByLast = blocksAsTokenRanges.sortBy(_.last.start)
   // val debugBlockOverlapSortedByHead = blocksAsTokenRanges.sortBy(_.head.start)
-  //println("blocks as token ranges sorted by first")
-  //debugBlockOverlapSortedByHead.foreach(x => println(x.toString()+" "+x.head.nString))
-  //println("blocks as token ranges sorted by last")
-  //debugBlockOverlapSortedByLast.foreach(x => println(x.toString()+" "+x.head.nString))
+  // println("blocks as token ranges sorted by first")
+  // debugBlockOverlapSortedByHead.foreach(x => println(x.toString()+" "+x.head.nString))
+  // println("blocks as token ranges sorted by last")
+  // debugBlockOverlapSortedByLast.foreach(x => println(x.toString()+" "+x.head.nString))
 
   def checkOverlap(first: TokenRange, second: TokenRange) = {
-    //println("checking overlap between: "+first+" :"+second)
+    // println("checking overlap between: "+first+" :"+second)
     second.start < first.until
   }
 
   // we go over both sets of sorted blocks and identify the overlapping blocks and remove them
   // we find the conflicting pairs first and remove both parts
   // 2025-08-19 RESUME HERE
-  if blocksAsTokenRanges.size>1 then
+  if blocksAsTokenRanges.size > 1 then
     val sortedTrs = blocksAsTokenRanges.flatten.sortBy(_.start)
     val slidingWindow = sortedTrs.sliding(2)
     val containsOverlap = slidingWindow.filter(p => checkOverlap(p.head, p.last)).flatten.toList
@@ -271,9 +280,9 @@ def createAlignedPatternsPhaseTwo(
 //    System.err. println("==End of contains overlap==")
     // Remove non-valid results. For now we remove both parts of the overlap
     val result = patterns.filterNot(p => {
-        // println("LOOKING FOR:"+ p.occurrences.head.patternTr)
-        containsOverlap.contains(p.occurrences.head.patternTr) || containsOverlap.contains(p.occurrences.last.patternTr)
-      })
+      // println("LOOKING FOR:"+ p.occurrences.head.patternTr)
+      containsOverlap.contains(p.occurrences.head.patternTr) || containsOverlap.contains(p.occurrences.last.patternTr)
+    })
 
     // if containsOverlap.nonEmpty then
     //   println("NEW RESULT IS: "+result)
@@ -283,7 +292,6 @@ def createAlignedPatternsPhaseTwo(
   // patterns.map(_.occurrences.head.patternTr.tString).foreach(e => println(s"Pattern  $e"))
   patterns
 
-
 case class AlignedPatternOccurrencePhaseTwo(
     originalBlock: FullDepthBlock,
     originalHypergraph: Hypergraph[EdgeLabel, TokenRange],
@@ -291,7 +299,7 @@ case class AlignedPatternOccurrencePhaseTwo(
     originalTr: TokenRange,
     patternTr: TokenRange // must be contained by originalTr
 ) {
-    override def toString: String = patternTr.toString
+  override def toString: String = patternTr.toString
 }
 
 // In practice there are only two occurrences in the vector
