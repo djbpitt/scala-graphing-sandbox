@@ -33,6 +33,9 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
     val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] =
       createPatterns(w0AsHypergraph, w1AsHypergraph)
     patterns.foreach(System.err.println)
+    val matchesProperties = createMatches(w0AsHypergraph, w1AsHypergraph)
+    matchesProperties.fields
+      .foreach((name, value) => System.err.println(s"$name = $value"))
     assert(1 == 1)
   }
 

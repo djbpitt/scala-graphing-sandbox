@@ -124,39 +124,44 @@ def createMatches(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeLa
     matchesSortedHead: Seq[HyperedgeMatch],
     matchesSortedLast: Seq[HyperedgeMatch]
   ) = prepareHgMatches(matchesAsSet)
-  (allSplitHyperedgesNew, unfilteredMatchesAsSet, matchesAsSet, matchesAsHg, matchesSortedHead, matchesSortedLast)
+  MatchesProperties(
+    allSplitHyperedgesNew,
+    unfilteredMatchesAsSet,
+    matchesAsSet,
+    matchesAsHg,
+    matchesSortedHead,
+    matchesSortedLast
+  )
 }
 def mergeHgHg(
     hg1: Hypergraph[EdgeLabel, TokenRange],
     hg2: Hypergraph[EdgeLabel, TokenRange]
 ): Hypergraph[EdgeLabel, TokenRange] =
-  val (
-    allSplitHyperedgesNew: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]),
-    unfilteredMatchesAsSet: Set[HyperedgeMatch],
-    matchesAsSet: Set[HyperedgeMatch],
-    matchesAsHg: Hypergraph[EdgeLabel, TokenRange],
-    matchesSortedHead: Seq[HyperedgeMatch],
-    matchesSortedLast: Seq[HyperedgeMatch]
-  ) = createMatches(hg1, hg2)
-  val spuriousMatches = unfilteredMatchesAsSet.diff(matchesAsSet) // will add to result directly
+  val matchesProperties: MatchesProperties = createMatches(hg1, hg2)
+  val spuriousMatches =
+    matchesProperties.unfilteredMatchesAsSet.diff(matchesProperties.matchesAsSet) // will add to result directly
   if spuriousMatches.nonEmpty then throw new RuntimeException(s"Spurious matches: $spuriousMatches")
   val (transpositionBool, _, _) =
-    detectTransposition(matchesAsSet, matchesAsHg)
+    detectTransposition(matchesProperties.matchesAsSet, matchesProperties.matchesAsHg)
   val result =
     if transpositionBool
     then
-      traversalGraphPhase2(matchesAsHg, matchesSortedHead.toList, matchesSortedLast.toList)
+      traversalGraphPhase2(
+        matchesProperties.matchesAsHg,
+        matchesProperties.matchesSortedHead.toList,
+        matchesProperties.matchesSortedLast.toList
+      )
       val decisionGraph: Graph[DecisionGraphStepPhase2] =
-        traversalGraphPhase2Old(matchesSortedHead.toList, matchesSortedLast.toList)
-      val matchLists = List(matchesSortedHead.toList, matchesSortedLast.toList)
+        traversalGraphPhase2Old(matchesProperties.matchesSortedHead.toList, matchesProperties.matchesSortedLast.toList)
+      val matchLists = List(matchesProperties.matchesSortedHead.toList, matchesProperties.matchesSortedLast.toList)
       greedy(decisionGraph, matchLists)
     else
-      val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
+      val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesProperties.matchesAsSet
         .map(e =>
           AlignmentHyperedge(e.head.verticesIterator.toSet ++ e.last.verticesIterator.toSet)
         ) // NB: new hyperedge
         .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
-      allSplitHyperedgesNew._1 // Original full hypergraph
+      matchesProperties.allSplitHyperedgesNew._1 // Original full hypergraph
         + newMatchHg // Add the merged hyperedges in place of those removed
   // debug: unmark to create and write dependency graph to disk
   // val dgNew = DependencyGraph(result)
@@ -458,3 +463,12 @@ object HyperedgeMatch:
     new HyperedgeMatch(set.head, set.last)
   def apply(he1: Hyperedge[EdgeLabel, TokenRange], he2: Hyperedge[EdgeLabel, TokenRange]) =
     new HyperedgeMatch(he1, he2)
+
+case class MatchesProperties(
+    allSplitHyperedgesNew: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]),
+    unfilteredMatchesAsSet: Set[HyperedgeMatch],
+    matchesAsSet: Set[HyperedgeMatch],
+    matchesAsHg: Hypergraph[EdgeLabel, TokenRange],
+    matchesSortedHead: Seq[HyperedgeMatch],
+    matchesSortedLast: Seq[HyperedgeMatch]
+)
