@@ -123,37 +123,35 @@ def mergeHgHg(
     splitHesOnAlignedPatterns(bothHgs, patterns)
   val unfilteredMatchesAsSet = allSplitHyperedgesNew._2 // May includes spurious matches within single witness
   val matchesAsSet = unfilteredMatchesAsSet.filterNot(e => isSpuriousMatch(e)) // will process normally
-  val spuriousMatches = unfilteredMatchesAsSet.diff(matchesAsSet) // will add to result directly
-  if spuriousMatches.nonEmpty then System.err.println(s"Spurious matches: $spuriousMatches")
   val (
     matchesAsHg: Hypergraph[EdgeLabel, TokenRange],
     matchesSortedHead: Seq[HyperedgeMatch],
     matchesSortedLast: Seq[HyperedgeMatch]
   ) = prepareHgMatches(matchesAsSet)
-
+  val spuriousMatches = unfilteredMatchesAsSet.diff(matchesAsSet) // will add to result directly
+  if spuriousMatches.nonEmpty then throw new RuntimeException(s"Spurious matches: $spuriousMatches")
   val (transpositionBool, _, _) =
     detectTransposition(matchesAsSet, matchesAsHg)
-  if transpositionBool
-  then
-    traversalGraphPhase2(matchesAsHg, matchesSortedHead.toList, matchesSortedLast.toList)
-    val decisionGraph: Graph[DecisionGraphStepPhase2] =
-      traversalGraphPhase2Old(matchesSortedHead.toList, matchesSortedLast.toList)
-    val matchLists = List(matchesSortedHead.toList, matchesSortedLast.toList)
-    val greedyResult: Hypergraph[EdgeLabel, TokenRange] = greedy(decisionGraph, matchLists)
-    // FIXME: Adding allSplitHyperedgeNew._1 to the greedyResult causes a cycle where it shouldn't be.
-    // val result = allSplitHyperedgesNew._1 + greedyResult
-    val result = greedyResult
-    spuriousMatches.flatten.foldLeft(result)(_ + _)
-  else
-    val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
-      .map(e => AlignmentHyperedge(e.head.verticesIterator.toSet ++ e.last.verticesIterator.toSet)) // NB: new hyperedge
-      .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
-    val hgWithMergeResults = allSplitHyperedgesNew._1 // Original full hypergraph
-      + newMatchHg // Add the merged hyperedges in place of those removed
-    // debug: unmark to create and write dependency graph to disk
-    // val dgNew = DependencyGraph(hgWithMergeResults)
-    // dependencyGraphToDot(dgNew, hgWithMergeResults) // writes to disk
-    spuriousMatches.flatten.foldLeft(hgWithMergeResults)(_ + _)
+  val result =
+    if transpositionBool
+    then
+      traversalGraphPhase2(matchesAsHg, matchesSortedHead.toList, matchesSortedLast.toList)
+      val decisionGraph: Graph[DecisionGraphStepPhase2] =
+        traversalGraphPhase2Old(matchesSortedHead.toList, matchesSortedLast.toList)
+      val matchLists = List(matchesSortedHead.toList, matchesSortedLast.toList)
+      greedy(decisionGraph, matchLists)
+    else
+      val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
+        .map(e =>
+          AlignmentHyperedge(e.head.verticesIterator.toSet ++ e.last.verticesIterator.toSet)
+        ) // NB: new hyperedge
+        .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
+      allSplitHyperedgesNew._1 // Original full hypergraph
+        + newMatchHg // Add the merged hyperedges in place of those removed
+  // debug: unmark to create and write dependency graph to disk
+  // val dgNew = DependencyGraph(result)
+  // dependencyGraphToDot(dgNew, result) // writes to disk
+  result
 
 def readJsonData: List[List[Token]] =
   val datafilePath =
