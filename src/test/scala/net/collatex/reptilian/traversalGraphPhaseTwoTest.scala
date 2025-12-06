@@ -30,12 +30,9 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
     val w1AsHypergraph = createHypergraphFromSingleton(w1Tokens, GTa)
     System.err.println(w0AsHypergraph)
     System.err.println(w1AsHypergraph)
-    /* 2025-12-04 RESUME HERE
-     *
-     * We need to merge the hypergraphs, which requires splitting the hyperedges, which requires
-     * extracting functionality currently buried in mergeHgHg, so start by extracting that and
-     * making it callable
-     * */
+    val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] =
+      createPatterns(w0AsHypergraph, w1AsHypergraph)
+    patterns.foreach(System.err.println)
     assert(1 == 1)
   }
 

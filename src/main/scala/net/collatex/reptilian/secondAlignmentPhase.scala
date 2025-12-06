@@ -94,10 +94,7 @@ def prepareHgMatches(matchesAsSet: Set[HyperedgeMatch]) = {
   }
   (matchesAsHg, matchesSortedHead, matchesSortedLast)
 }
-def mergeHgHg(
-    hg1: Hypergraph[EdgeLabel, TokenRange],
-    hg2: Hypergraph[EdgeLabel, TokenRange]
-): Hypergraph[EdgeLabel, TokenRange] =
+def createPatterns(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeLabel, TokenRange]) = {
   // We do not group both hyperedges together now
   // We need to capture from which hypergraph each token is coming
   val HGTokensForHG1 = identifyHGTokenRanges(hg1)
@@ -106,7 +103,6 @@ def mergeHgHg(
   val HGTokensForBoth = HGTokensForHG1 ++ HGTokensForHG2
   // Now we insert the separators
   val lTa = insertSeparators(HGTokensForBoth)
-  val bothHgs = hg1 + hg2
   //  val _dg = bothHgs.toDependencyGraph()
   //  System.err.println("Combined HG input")
   //  dependencyGraphToDot(_dg, bothHgs)
@@ -115,7 +111,14 @@ def mergeHgHg(
   // val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] =
     createAlignedPatternsPhaseTwo(lTa, 2) pipe groupPatternsTogetherByHyperedge
-
+  patterns
+}
+def mergeHgHg(
+    hg1: Hypergraph[EdgeLabel, TokenRange],
+    hg2: Hypergraph[EdgeLabel, TokenRange]
+): Hypergraph[EdgeLabel, TokenRange] =
+  val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] = createPatterns(hg1, hg2)
+  val bothHgs = hg1 + hg2
   val allSplitHyperedgesNew: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
     splitHesOnAlignedPatterns(bothHgs, patterns)
   val unfilteredMatchesAsSet = allSplitHyperedgesNew._2 // May includes spurious matches within single witness
