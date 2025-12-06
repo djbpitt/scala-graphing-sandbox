@@ -113,14 +113,10 @@ def createPatterns(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeL
     createAlignedPatternsPhaseTwo(lTa, 2) pipe groupPatternsTogetherByHyperedge
   patterns
 }
-def mergeHgHg(
-    hg1: Hypergraph[EdgeLabel, TokenRange],
-    hg2: Hypergraph[EdgeLabel, TokenRange]
-): Hypergraph[EdgeLabel, TokenRange] =
+def createMatches(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeLabel, TokenRange]) = {
   val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] = createPatterns(hg1, hg2)
-  val bothHgs = hg1 + hg2
   val allSplitHyperedgesNew: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
-    splitHesOnAlignedPatterns(bothHgs, patterns)
+    splitHesOnAlignedPatterns(hg1, hg2, patterns)
   val unfilteredMatchesAsSet = allSplitHyperedgesNew._2 // May includes spurious matches within single witness
   val matchesAsSet = unfilteredMatchesAsSet.filterNot(e => isSpuriousMatch(e)) // will process normally
   val (
@@ -128,6 +124,20 @@ def mergeHgHg(
     matchesSortedHead: Seq[HyperedgeMatch],
     matchesSortedLast: Seq[HyperedgeMatch]
   ) = prepareHgMatches(matchesAsSet)
+  (allSplitHyperedgesNew, unfilteredMatchesAsSet, matchesAsSet, matchesAsHg, matchesSortedHead, matchesSortedLast)
+}
+def mergeHgHg(
+    hg1: Hypergraph[EdgeLabel, TokenRange],
+    hg2: Hypergraph[EdgeLabel, TokenRange]
+): Hypergraph[EdgeLabel, TokenRange] =
+  val (
+    allSplitHyperedgesNew: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]),
+    unfilteredMatchesAsSet: Set[HyperedgeMatch],
+    matchesAsSet: Set[HyperedgeMatch],
+    matchesAsHg: Hypergraph[EdgeLabel, TokenRange],
+    matchesSortedHead: Seq[HyperedgeMatch],
+    matchesSortedLast: Seq[HyperedgeMatch]
+  ) = createMatches(hg1, hg2)
   val spuriousMatches = unfilteredMatchesAsSet.diff(matchesAsSet) // will add to result directly
   if spuriousMatches.nonEmpty then throw new RuntimeException(s"Spurious matches: $spuriousMatches")
   val (transpositionBool, _, _) =
@@ -299,12 +309,14 @@ def splitOneHyperedge(
   )
 
 def splitHesOnAlignedPatterns(
-    bothHgs: Hypergraph[EdgeLabel, TokenRange], // what to split
+    hg1: Hypergraph[EdgeLabel, TokenRange], // what to split
+    hg2: Hypergraph[EdgeLabel, TokenRange],
     patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] // how to split it
 ): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
   // A splitOneHyperedge call returns a map containing FullDepthBlocks -> to the new hyperedge
   // at the end we collect all the items in one multimap, which has multiple values per key
   // It can be stored in a MultiDict (part of the scala contrib module)
+  val bothHgs = hg1 + hg2
   @tailrec
   def processPattern(
       patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]],
