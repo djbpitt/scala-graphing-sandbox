@@ -2,8 +2,7 @@ package net.collatex.reptilian
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.*
-import ujson.*
-import net.collatex.reptilian.WitId
+import net.collatex.util.EdgeLabeledDirectedGraph
 
 class traversalGraphPhaseTwoTest extends AnyFunSuite:
   test("Construct traversal graph without transposition") {
@@ -28,15 +27,20 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
     )
     val w0AsHypergraph = createHypergraphFromSingleton(w0Tokens, GTa)
     val w1AsHypergraph = createHypergraphFromSingleton(w1Tokens, GTa)
-    System.err.println(w0AsHypergraph)
-    System.err.println(w1AsHypergraph)
-    val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] =
-      createPatterns(w0AsHypergraph, w1AsHypergraph)
-    patterns.foreach(System.err.println)
     val matchesProperties = createMatches(w0AsHypergraph, w1AsHypergraph)
-    matchesProperties.fields
-      .foreach((name, value) => System.err.println(s"$name = $value"))
-    assert(1 == 1)
+    val tg: EdgeLabeledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties] = traversalGraphPhase2(
+      matchesProperties.matchesAsHg,
+      matchesProperties.matchesSortedHead.toList,
+      matchesProperties.matchesSortedLast.toList
+    )
+    val edgesAsSeq = tg.edges.toSeq.sortBy(e => e._1.pos1)
+    assert(edgesAsSeq.sliding(2).forall { case Seq(a, b) => // Single, uninterrupted chain
+      a.target.pos1 == b.source.pos1
+    })
+    assert(tg.edges.forall(e => e.label.label.isEmpty)) // No skipped nodes on any edge
+    assert(
+      tg.edges.forall(e => (e.label.weight == 0 && e.target.pos1 == Int.MaxValue) || e.label.weight == 1)
+    ) // Weight 1 unless target is end node, in which case weight 0
   }
 
   ignore("Construct traversal graph with transposition")
