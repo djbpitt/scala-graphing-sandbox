@@ -83,6 +83,8 @@ def prepareHgMatches(matchesAsSet: Set[HyperedgeMatch]) = {
   val matchesSortedHead: Seq[HyperedgeMatch] = {
     if matchesAsSet.size > 1 then
       val ranking: Map[NodeType, OrderPosition] = matchesAsHg.rank()
+      matchesAsSet.foreach(e => System.err.println(s"matches as set: $e"))
+      System.err.println(s"ranking: $ranking")
       matchesAsSet.toSeq.sortBy(e => (ranking(NodeType(e.head.label)), ranking(NodeType(e.last.label)), e.head.label))
     else matchesAsSet.toSeq
   }
@@ -141,12 +143,12 @@ def mergeHgHg(
     matchesProperties.unfilteredMatchesAsSet.diff(matchesProperties.matchesAsSet) // will add to result directly
   if spuriousMatches.nonEmpty then throw new RuntimeException(s"Spurious matches: $spuriousMatches")
   val (transpositionBool, _, _) =
-    detectTransposition(matchesProperties.matchesAsSet, matchesProperties.matchesAsHg)
+    detectTransposition(matchesProperties.matchesAsSet, matchesProperties.matchDataAsHg)
   val result =
     if transpositionBool
     then
       traversalGraphPhase2(
-        matchesProperties.matchesAsHg,
+        matchesProperties.matchDataAsHg,
         matchesProperties.matchesSortedHead.toList,
         matchesProperties.matchesSortedLast.toList
       )
@@ -348,10 +350,10 @@ def splitHesOnAlignedPatterns(
     bothHgs,
     mutable.MultiDict.empty[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]
   )
-
   // convert MultiDict to HyperedgeMatches
+  // 2025-12-09 TODO: Does seq -> setof2 preserve order?
   val newHyperedgeMatches = resultInWrongFormat._2.map { (key, _) =>
-    HyperedgeMatch(resultInWrongFormat._2.get(key).toSet)
+    HyperedgeMatch(resultInWrongFormat._2.get(key).toSeq.sortBy(h => h.label).toSet) // Does toSet here preserve order?
   }.toSet
 
   (resultInWrongFormat._1, newHyperedgeMatches)
@@ -467,7 +469,7 @@ case class MatchesProperties(
     allSplitHyperedgesNew: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]),
     unfilteredMatchesAsSet: Set[HyperedgeMatch],
     matchesAsSet: Set[HyperedgeMatch],
-    matchesAsHg: Hypergraph[EdgeLabel, TokenRange],
+    matchDataAsHg: Hypergraph[EdgeLabel, TokenRange],
     matchesSortedHead: Seq[HyperedgeMatch],
     matchesSortedLast: Seq[HyperedgeMatch]
 )

@@ -29,7 +29,7 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
     val w1AsHypergraph = createHypergraphFromSingleton(w1Tokens, GTa)
     val matchesProperties = createMatches(w0AsHypergraph, w1AsHypergraph)
     val tg: EdgeLabeledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties] = traversalGraphPhase2(
-      matchesProperties.matchesAsHg,
+      matchesProperties.matchDataAsHg,
       matchesProperties.matchesSortedHead.toList,
       matchesProperties.matchesSortedLast.toList
     )
@@ -71,12 +71,18 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
     val w1AsHypergraph = createHypergraphFromSingleton(w1Tokens, GTa)
     val matchesProperties = createMatches(w0AsHypergraph, w1AsHypergraph)
     val tg: EdgeLabeledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties] = traversalGraphPhase2(
-      matchesProperties.matchesAsHg,
+      matchesProperties.matchDataAsHg,
       matchesProperties.matchesSortedHead.toList,
       matchesProperties.matchesSortedLast.toList
     )
+    System.err.println("Match data as HG")
+    matchesProperties.matchDataAsHg.hyperedges.map(_.verticesIterator.toList).foreach(System.err.println)
+    System.err.println("Head: ")
+    matchesProperties.matchesSortedHead.toList.foreach(System.err.println)
+    System.err.println("Last: ")
+    matchesProperties.matchesSortedLast.toList.foreach(System.err.println)
     val edgesAsSeq = tg.edges.toSeq.sortBy(e => e._1.pos1)
-    tg.edges.foreach(e =>
+    edgesAsSeq.foreach(e =>
       System.err.println(s"Source: ${e.source.pretty}")
       System.err.println(s"Target: ${e.target.pretty}")
       System.err.println(s"Label: ${e.label}")

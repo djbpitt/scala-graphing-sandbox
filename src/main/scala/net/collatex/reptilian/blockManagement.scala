@@ -30,8 +30,6 @@ def adjustBlockOverlap(originalBlocks: Iterable[FullDepthBlock], gTa: Vector[Tok
   // RESUME HERE 2025-12-06
   // This function creates a block with length of -1, which shouldn't be possible
   // In phase 2 "The red striped cat" / "The striped red cat" we lose "red" entirely
-  System.err.println(originalBlocks)
-  System.err.println(result)
   result
 
 def vectorize(tokenArray: Vector[TokenEnum]): (Array[Int], Int) =
