@@ -133,9 +133,13 @@ def findBlockOverlap(
     second: FullDepthBlock,
     gTa: Vector[TokenEnum]
 ): Seq[OverlapGroup] =
-  val blockOverlapData: Vector[Int] = // if any value > 0, there is overlap
-    first.instances.map(e => e + first.length).zip(second.instances).map((f, s) => f - s)
-  if blockOverlapData.exists(e => e > 0) then
+  val overlapBool: Boolean =
+    val firstRanges = first.instances.map(e => TokenRange(e, e + first.length, gTa))
+    val secondRanges = second.instances.map(e => TokenRange(e, e + second.length, gTa))
+    firstRanges.zip(secondRanges).map((f, s) => f.overlaps(s)).forall(b => false)
+  if overlapBool then
+    val blockOverlapData: Vector[Int] = // if any value > 0, there is overlap
+      first.instances.map(e => e + first.length).zip(second.instances).map((f, s) => f - s)
     val overlapLength: Int = blockOverlapData.filter(e => e > 0).head
     val overlapRange = TokenRange(second.instances.head, second.instances.head + overlapLength, gTa)
     val overlapBindings = determineOverlapTokenCategories(overlapRange)

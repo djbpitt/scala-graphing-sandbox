@@ -220,7 +220,6 @@ def createAlignedPatternsPhaseTwo(
     (blockStartPositions lazyZip blockLengths)
       .map((starts, length) => FullDepthBlock(starts.toVector, length)) pipe removeOverlappingBlocks
   val gTa = lTa.head.asInstanceOf[TokenHG].tr.ta // from arbitrary TokenRange
-
   def convertBlockToAlignedPatternOccurrence(f: Int, e: FullDepthBlock) =
     val occurrenceStart: TokenHG = lTa(f).asInstanceOf[TokenHG]
     val occurrenceStartAsGlobal: Int = occurrenceStart.g
@@ -234,7 +233,6 @@ def createAlignedPatternsPhaseTwo(
   // TODO: Why are there empty blocks in the adjusted blocks ??
   // necessitating that we filter _.length > 0 on the adjusted blocks
   val xxBlocks = if blocks.isEmpty then List.empty else adjustBlockOverlap(blocks, gTa).filter(_.length > 0).toList
-  xxBlocks.foreach(System.err.println)
   // NOTE: Each Block has two instances. If both instances point to the same hypergraph
   // we have an Illegal Pattern which should be filtered out
   val patternsAsTuples = xxBlocks map (e => // e: block
@@ -248,7 +246,6 @@ def createAlignedPatternsPhaseTwo(
   val occurrencePhaseTwo = validPatterns.map { case (x, y) => Vector(x, y) }
   val patterns: List[AlignedPatternPhaseTwo] =
     occurrencePhaseTwo.map(occurrences => AlignedPatternPhaseTwo(occurrences))
-
   val blocksAsTokenRanges = xxBlocks.map(x => x.remapBlockToGTa(lTa)).map(x => x.toTokenRanges(gTa))
   // val debugBlockOverlapSortedByLast = blocksAsTokenRanges.sortBy(_.last.start)
   // val debugBlockOverlapSortedByHead = blocksAsTokenRanges.sortBy(_.head.start)
@@ -264,7 +261,6 @@ def createAlignedPatternsPhaseTwo(
 
   // we go over both sets of sorted blocks and identify the overlapping blocks and remove them
   // we find the conflicting pairs first and remove both parts
-  // 2025-08-19 RESUME HERE
   if blocksAsTokenRanges.size > 1 then
     val sortedTrs = blocksAsTokenRanges.flatten.sortBy(_.start)
     val slidingWindow = sortedTrs.sliding(2)
@@ -287,7 +283,6 @@ def createAlignedPatternsPhaseTwo(
     // if containsOverlap.nonEmpty then
     //   println("NEW RESULT IS: "+result)
     // throw RuntimeException("STOP!")
-//    System.err.println(s"result after removing overlap: $result")
     return result
   // patterns.map(_.occurrences.head.patternTr.tString).foreach(e => println(s"Pattern  $e"))
   patterns
