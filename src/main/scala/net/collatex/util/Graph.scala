@@ -4,6 +4,7 @@ import cats.implicits.catsSyntaxSemigroup
 
 import scala.annotation.{tailrec, targetName}
 import scala.collection.immutable.Set
+import scala.collection.mutable
 
 // @author: Ronald Haentjens Dekker
 // This class represents a Directed Acyclic Graph.
@@ -173,6 +174,37 @@ enum Graph[N]:
           handledEdgesNew
         )
     addToSort(Vector.empty[N], this.roots(), Set.empty[DirectedEdge[N]])
+
+  def topologicalSortTotallyOrdered(ordering: Ordering[N]): Vector[N] =
+    // https://en.wikipedia.org/wiki/Topological_sorting
+    // Kahn’s algorithm
+    @tailrec
+    def addToSort(sorted: Vector[N], todo: mutable.PriorityQueue[N], handledEdges: Set[DirectedEdge[N]]): Vector[N] = 
+      if todo.isEmpty then
+        assert(
+          sorted.size == this.nodeSize,
+          s"Cycle detected: ${sorted.size} nodes in sort but ${this.nodeSize} nodes in graph"
+        )
+        sorted
+      else
+        val current = todo.head
+        val sortedNew = sorted :+ current
+        val outgoingEdgesOfCurrentNode = this
+          .outgoingEdges(current)
+          .diff(handledEdges) // outgoing edges of current node, unvisited
+        val handledEdgesNew = handledEdges ++ outgoingEdgesOfCurrentNode
+        val incomingEdgesOfTargetNodes =
+          outgoingEdgesOfCurrentNode
+            .map(e => this.incomingEdges(e.target))
+            .filter(_.subsetOf(handledEdgesNew)) // new incoming edges of target node
+        val todoNew = incomingEdgesOfTargetNodes.flatMap(_.map(_._2)) ++ todo.tail
+        addToSort(
+          sortedNew,
+          mutable.PriorityQueue.from(todoNew)(using ordering),
+          handledEdgesNew
+        )
+
+    addToSort(Vector.empty[N], mutable.PriorityQueue.from(roots())(using ordering), Set.empty[DirectedEdge[N]])
 
   /* Compute length of longest path from root to each node
    * Assumes single root
