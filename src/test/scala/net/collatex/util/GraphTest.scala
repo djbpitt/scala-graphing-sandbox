@@ -43,3 +43,32 @@ class GraphTest extends AnyFunSuite:
         result.slice(2, 4).toSet == expected.slice(2, 4).toSet &&
         result.slice(4, 5) == expected.slice(4, 5)
     )
+  test("Topological sort with tie-breaking domain-specific function"):
+    // 2 and 3 have the same rank
+    val g1: Graph[NodeType] =
+      Graph.edge(NodeType(0), NodeType(1)) +
+        Graph.edge(NodeType(1), NodeType(2)) +
+        Graph.edge(NodeType(1), NodeType(3)) +
+        Graph.edge(NodeType(2), NodeType(4)) +
+        Graph.edge(NodeType(3), NodeType(4)) +
+        Graph.edge(NodeType(4), NodeType(5))
+    val o1: Ordering[NodeType] = Ordering(ord =
+      (a, b) =>
+        (a, b) match
+          case (x: NodeType.Internal, y: NodeType.Internal) =>
+            y.label - x.label
+          case (_, _) => throw new RuntimeException("Oops!")
+    )
+    val expected1 = Vector(NodeType(0), NodeType(1), NodeType(2), NodeType(3), NodeType(4), NodeType(5))
+    val result1 = g1.topologicalSortTotallyOrdered(o1)
+    val o2: Ordering[NodeType] = Ordering(ord =
+      (a, b) =>
+        (a, b) match
+          case (x: NodeType.Internal, y: NodeType.Internal) =>
+            x.label - y.label
+          case (_, _) => throw new RuntimeException("Oops!")
+    )
+    val expected2 = Vector(NodeType(0), NodeType(1), NodeType(3), NodeType(2), NodeType(4), NodeType(5))
+    val result2 = g1.topologicalSortTotallyOrdered(o2)
+    assert(result1 == expected1)
+    assert(result2 == expected2)
