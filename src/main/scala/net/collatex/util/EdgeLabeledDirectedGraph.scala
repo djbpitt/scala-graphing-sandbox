@@ -120,4 +120,6 @@ enum EdgeLabeledDirectedGraph[N, E]:
     (for ((nodePair, label) <- toMap._2)
       yield nodePair -> LabeledEdge(nodePair._1, nodePair._2, label))
       .values.toSet.map(_.asInstanceOf[LabeledEdge[N, E]])
-  
+
+  def topologicalSortTotallyOrdered(ordering: Ordering[N]): Vector[N] =
+    Graph.DirectedGraph(this.toMap._1).topologicalSortTotallyOrdered(ordering)
