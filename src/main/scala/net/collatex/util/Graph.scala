@@ -179,7 +179,7 @@ enum Graph[N]:
     // https://en.wikipedia.org/wiki/Topological_sorting
     // Kahn’s algorithm
     @tailrec
-    def addToSort(sorted: Vector[N], todo: mutable.PriorityQueue[N], handledEdges: Set[DirectedEdge[N]]): Vector[N] = 
+    def addToSort(sorted: Vector[N], todo: mutable.PriorityQueue[N], handledEdges: Set[DirectedEdge[N]]): Vector[N] =
       if todo.isEmpty then
         assert(
           sorted.size == this.nodeSize,
@@ -200,11 +200,11 @@ enum Graph[N]:
         val todoNew = incomingEdgesOfTargetNodes.flatMap(_.map(_._2)) ++ todo.tail
         addToSort(
           sortedNew,
-          mutable.PriorityQueue.from(todoNew)(using ordering),
+          mutable.PriorityQueue.from(todoNew)(using ordering.reverse),
           handledEdgesNew
         )
 
-    addToSort(Vector.empty[N], mutable.PriorityQueue.from(roots())(using ordering), Set.empty[DirectedEdge[N]])
+    addToSort(Vector.empty[N], mutable.PriorityQueue.from(roots())(using ordering.reverse), Set.empty[DirectedEdge[N]])
 
   /* Compute length of longest path from root to each node
    * Assumes single root
