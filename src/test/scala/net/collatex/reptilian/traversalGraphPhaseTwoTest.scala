@@ -3,8 +3,25 @@ package net.collatex.reptilian
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.*
 import net.collatex.util.EdgeLabeledDirectedGraph
+import net.collatex.util.EdgeLabeledDirectedGraph.LabeledEdge
+import net.collatex.util.Graph.DirectedEdge
 
+// RESUME HERE 2025-12-13
 class traversalGraphPhaseTwoTest extends AnyFunSuite:
+  def topologicalOrderingOfEdges(
+      steps: List[DecisionGraphStepPhase2Enum],
+      graph: EdgeLabeledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties],
+      ord: Ordering[DecisionGraphStepPhase2Enum]
+  ): List[LabeledEdge[DecisionGraphStepPhase2Enum, TraversalEdgeProperties]] = {
+    val edgeOrdering: Ordering[LabeledEdge[DecisionGraphStepPhase2Enum, TraversalEdgeProperties]] =
+      Ordering.by[LabeledEdge[DecisionGraphStepPhase2Enum, TraversalEdgeProperties], DecisionGraphStepPhase2Enum](e =>
+        e.target
+      )(using ord)
+    steps.flatMap { n =>
+      graph.outgoingEdges(n).toSeq.sorted(using edgeOrdering)
+    }
+  }
+
   test("Construct traversal graph without transposition") {
     val GTa = Vector(
       TokenEnum.Token("The ", "the", 0, 0, Map()),
@@ -88,4 +105,8 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
       System.err.println(s"Label: ${e.label}")
     )
     assert(1 == 1)
+  }
+
+  test("CHANGE MY NAME") {
+    //
   }
