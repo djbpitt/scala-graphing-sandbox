@@ -6,7 +6,6 @@ import net.collatex.util.EdgeLabeledDirectedGraph
 import net.collatex.util.EdgeLabeledDirectedGraph.LabeledEdge
 import net.collatex.util.Graph.DirectedEdge
 
-// RESUME HERE 2025-12-13
 class traversalGraphPhaseTwoTest extends AnyFunSuite:
   def topologicalOrderingOfEdges(
       steps: List[DecisionGraphStepPhase2Enum],
@@ -92,17 +91,12 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
       matchesProperties.matchesSortedHead.toList,
       matchesProperties.matchesSortedLast.toList
     )
-    System.err.println("Match data as HG")
-    matchesProperties.matchDataAsHg.hyperedges.map(_.verticesIterator.toList).foreach(System.err.println)
-    System.err.println("Head: ")
-    matchesProperties.matchesSortedHead.toList.foreach(System.err.println)
-    System.err.println("Last: ")
-    matchesProperties.matchesSortedLast.toList.foreach(System.err.println)
-    val edgesAsSeq = tg.edges.toSeq.sortBy(e => e._1.pos1)
+    val nodeOrdering = Ordering.by[DecisionGraphStepPhase2Enum, (OrderPosition, OrderPosition)](e => (e.pos1, e.pos2))
+    val nodesAsSeq = tg.topologicalSortTotallyOrdered(nodeOrdering)
+    val edgesAsSeq = topologicalOrderingOfEdges(nodesAsSeq.toList, tg, nodeOrdering)
     edgesAsSeq.foreach(e =>
-      System.err.println(s"Source: ${e.source.pretty}")
-      System.err.println(s"Target: ${e.target.pretty}")
-      System.err.println(s"Label: ${e.label}")
+      System.err.println(s"Source: ${e.source}")
+      System.err.println(s"Target: ${e.target}")
     )
     assert(1 == 1)
   }

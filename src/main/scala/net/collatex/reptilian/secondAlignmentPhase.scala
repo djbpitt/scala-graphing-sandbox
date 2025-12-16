@@ -83,8 +83,6 @@ def prepareHgMatches(matchesAsSet: Set[HyperedgeMatch]) = {
   val matchesSortedHead: Seq[HyperedgeMatch] = {
     if matchesAsSet.size > 1 then
       val ranking: Map[NodeType, OrderPosition] = matchesAsHg.rank()
-      matchesAsSet.foreach(e => System.err.println(s"matches as set: $e"))
-      System.err.println(s"ranking: $ranking")
       matchesAsSet.toSeq.sortBy(e => (ranking(NodeType(e.head.label)), ranking(NodeType(e.last.label)), e.head.label))
     else matchesAsSet.toSeq
   }
