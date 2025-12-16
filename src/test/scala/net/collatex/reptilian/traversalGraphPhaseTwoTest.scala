@@ -1,10 +1,14 @@
 package net.collatex.reptilian
 
+import net.collatex.reptilian.DecisionGraphStepPhase2Enum.{Internal, Terminal}
+import net.collatex.reptilian.TokenRange.LegalTokenRange
+import net.collatex.reptilian.TokenEnum._
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.*
 import net.collatex.util.EdgeLabeledDirectedGraph
 import net.collatex.util.EdgeLabeledDirectedGraph.LabeledEdge
 import net.collatex.util.Graph.DirectedEdge
+import net.collatex.util.Hypergraph.Hyperedge
 
 class traversalGraphPhaseTwoTest extends AnyFunSuite:
   def topologicalOrderingOfEdges(
@@ -20,6 +24,13 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
       graph.outgoingEdges(n).toSeq.sorted(using edgeOrdering)
     }
   }
+
+  def assertEdge(edge: LabeledEdge[DecisionGraphStepPhase2Enum, TraversalEdgeProperties], value: String): Assertion =
+    edge.source match {
+      case Terminal(-1, -1) => assert("start" == value)
+      case Internal(_, _, hem) => assert(hem.head.v.head.nString == value)
+      case _ => succeed
+    }
 
   test("Construct traversal graph without transposition") {
     val GTa = Vector(
@@ -93,12 +104,15 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
     )
     val nodeOrdering = Ordering.by[DecisionGraphStepPhase2Enum, (OrderPosition, OrderPosition)](e => (e.pos1, e.pos2))
     val nodesAsSeq = tg.topologicalSortTotallyOrdered(nodeOrdering)
-    val edgesAsSeq = topologicalOrderingOfEdges(nodesAsSeq.toList, tg, nodeOrdering)
-    edgesAsSeq.foreach(e =>
-      System.err.println(s"Source: ${e.source}")
-      System.err.println(s"Target: ${e.target}")
-    )
-    assert(1 == 1)
+    val result = topologicalOrderingOfEdges(nodesAsSeq.toList, tg, nodeOrdering)
+    result.zipWithIndex.foreach((e, index) => System.err.println(s"$index: ${e.source.pretty}, ${e.target.pretty}"))
+    // w0: The red striped cat ~ w1: The striped red cat
+    assertEdge(result.head, "start") // [start] the
+    assertEdge(result(1), "the") // the red
+    assertEdge(result(2), "the") // the striped
+    assertEdge(result(3), "red") // red cat
+    assertEdge(result(4), "striped") // striped cat
+    assertEdge(result(5), "cat") // cat end
   }
 
   test("CHANGE MY NAME") {
