@@ -50,10 +50,10 @@ def nodeAtEnd(node: DecisionGraphStepPhase2, max: Int): Boolean =
 
 /** Adjust two sequences of hyperedge matches to remove transpositions
   *
-  * @param order1:
-  *   Seq[HyperedgeMatch]
-  * @param order2:
-  *   Seq[HyperedgeMatch]
+  * @param order1
+  *   Stuff
+  * @param order2
+  *   Stuff
   *
   * Called only when transposition detected, so there are always at least two matches
   *
@@ -141,19 +141,41 @@ extension [N](graph: Graph[N])
             List("}")
         ).mkString("\n")
 
-def dotNodeType[N](n: N): DGNodeType = n.asInstanceOf[DecisionGraphStepPhase2].nodeType
-def asDotLines[N](toNodeInfo: N => NodeInfo)(node: N, adjacentNodes: (Set[N], Set[N])): List[String] = {
-  val (incoming, outgoing) = adjacentNodes
-  incoming.toList.map(i => s"${toNodeInfo(i).id.replace('-', 'm')} -> ${toNodeInfo(node).id}") ++
-    outgoing.toList.map(o => s"${toNodeInfo(node).id.replace('-', 'm')} -> ${toNodeInfo(o).id}") ++
-    ((incoming ++ outgoing).toList map (node =>
-      val bgColor = node.asInstanceOf[DecisionGraphStepPhase2].nodeType match
-        case Alignment => "lightblue"
-        case Skip      => "lightpink"
-      val id = s"${toNodeInfo(node).id}"
-      s"${id.replace('-', 'm')} [style=\"filled\"; fillcolor=\"$bgColor\"]"
-    ))
-}
+  def dotNodeType(n: N): DGNodeType = n.asInstanceOf[DecisionGraphStepPhase2].nodeType
+  def asDotLines(toNodeInfo: N => NodeInfo)(node: N, adjacentNodes: (Set[N], Set[N])): List[String] = {
+    val (incoming, outgoing) = adjacentNodes
+    incoming.toList.map(i => s"${toNodeInfo(i).id.replace('-', 'm')} -> ${toNodeInfo(node).id}") ++
+      outgoing.toList.map(o => s"${toNodeInfo(node).id.replace('-', 'm')} -> ${toNodeInfo(o).id}") ++
+      ((incoming ++ outgoing).toList map (node =>
+        val bgColor = node.asInstanceOf[DecisionGraphStepPhase2].nodeType match
+          case Alignment => "lightblue"
+          case Skip      => "lightpink"
+        val id = s"${toNodeInfo(node).id}"
+        s"${id.replace('-', 'm')} [style=\"filled\"; fillcolor=\"$bgColor\"]"
+      ))
+  }
+
+extension (graph: EdgeLabeledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties])
+  def dotId(node: DecisionGraphStepPhase2Enum): String =
+    List("n", node.pos1, node.pos2).mkString("X").replace('-', 'm')
+  def asDot: String =
+    graph match
+      case EdgeLabeledDirectedGraph.EmptyGraph() => "graph EMPTY {}"
+      case EdgeLabeledDirectedGraph.SingleNodeGraph(node: DecisionGraphStepPhase2Enum) =>
+        s"graph SINGLE ${node.pretty}\n}"
+      case EdgeLabeledDirectedGraph.DirectedGraph(adjacencyMap, _) =>
+        (List("digraph G {") :::
+          adjacencyMap.keys.map { k =>
+            val label = k match {
+              case n: DecisionGraphStepPhase2Enum.Internal => n.HEMatch.head.v.head.nString
+              case n: DecisionGraphStepPhase2Enum.Terminal => "Terminus"
+            }
+            List(dotId(k), " [label=\"", label, "\"];").mkString
+          }.toList :::
+          graph.edges.map { e =>
+            List(dotId(e.source), " -> ", dotId(e.target), ";").mkString
+          }.toList
+          ::: List("}")).mkString("\n")
 
 def indent(l: String): String = s"  $l"
 
@@ -304,7 +326,7 @@ def traversalGraphPhase2(
           case _: DecisionGraphStepPhase2Enum.Terminal => 0
           case x: DecisionGraphStepPhase2Enum.Internal => x.HEMatch.head.v.head.length
         }
-        val l =  // label is skipped HyperedgeMatch instances
+        val l = // label is skipped HyperedgeMatch instances
           order1.slice(s.pos1 + 1, t.pos1).toSet ++ order2.slice(s.pos2 + 1, t.pos2).toSet
         val p = TraversalEdgeProperties(w, l)
         EdgeLabeledDirectedGraph

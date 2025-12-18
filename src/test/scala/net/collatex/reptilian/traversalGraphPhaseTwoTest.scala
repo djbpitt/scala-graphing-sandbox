@@ -118,6 +118,62 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
 
   }
 
+  test("Construct traversal graph with non-adjacent transposition") {
+    val GTa = Vector(
+      TokenEnum.Token("The ", "the", 0, 0, Map()),
+      TokenEnum.Token("red ", "red", 0, 1, Map()),
+      TokenEnum.Token("and ", "and", 0, 2, Map()),
+      TokenEnum.Token("black ", "black", 0, 3, Map()),
+      TokenEnum.Token("cat", "cat", 0, 4, Map()),
+      TokenEnum.TokenSep("sep0", "sep0", 0, 5),
+      TokenEnum.Token("The ", "the", 1, 6, Map()),
+      TokenEnum.Token("black ", "black", 1, 7, Map()),
+      TokenEnum.Token("and ", "and", 1, 8, Map()),
+      TokenEnum.Token("red ", "red", 1, 9, Map()),
+      TokenEnum.Token("cat", "cat", 1, 10, Map())
+    )
+    val w0Tokens: Vector[TokenEnum.Token] = Vector(
+      TokenEnum.Token("The ", "the", 0, 0, Map()),
+      TokenEnum.Token("red ", "red", 0, 1, Map()),
+      TokenEnum.Token("and ", "and", 0, 2, Map()),
+      TokenEnum.Token("black ", "black", 0, 3, Map()),
+      TokenEnum.Token("cat", "cat", 0, 4, Map())
+    )
+    val w1Tokens: Vector[TokenEnum.Token] = Vector(
+      TokenEnum.Token("The ", "the", 1, 6, Map()),
+      TokenEnum.Token("black ", "black", 1, 7, Map()),
+      TokenEnum.Token("and ", "and", 1, 8, Map()),
+      TokenEnum.Token("red ", "red", 1, 9, Map()),
+      TokenEnum.Token("cat", "cat", 1, 10, Map())
+    )
+    val w0AsHypergraph = createHypergraphFromSingleton(w0Tokens, GTa)
+    val w1AsHypergraph = createHypergraphFromSingleton(w1Tokens, GTa)
+    val matchesProperties = createMatches(w0AsHypergraph, w1AsHypergraph)
+    val tg: EdgeLabeledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties] = traversalGraphPhase2(
+      matchesProperties.matchDataAsHg,
+      matchesProperties.matchesSortedHead.toList,
+      matchesProperties.matchesSortedLast.toList
+    )
+    System.err.println(tg.asDot)
+    assert(1 == 1)
+//    val nodeOrdering = Ordering.by[DecisionGraphStepPhase2Enum, (OrderPosition, OrderPosition)](e => (e.pos1, e.pos2))
+//    val nodesAsSeq = tg.topologicalSortTotallyOrdered(nodeOrdering)
+//    val result = topologicalOrderingOfEdges(nodesAsSeq.toList, tg, nodeOrdering)
+//    result.foreach(System.err.println)
+    // The red and black cat ~ The black and red cat
+//    assertEdge(result.head, "start", "the")
+//    assertEdge(result(1), "the", "red")
+//    assertEdge(result(2), "the", "black")
+//    assertEdge(result(3), "red", "and")
+//    assertEdge(result(4), "black", "and")
+//    assertEdge(result(5), "and", "black")
+//    assertEdge(result(6), "and", "red")
+//    assertEdge(result(7), "red", "cat")
+//    assertEdge(result(8), "black", "cat")
+//    assertEdge(result(9), "cat", "end")
+
+  }
+
   test("CHANGE MY NAME") {
     //
   }
