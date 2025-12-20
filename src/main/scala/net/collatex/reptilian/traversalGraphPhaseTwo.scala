@@ -336,7 +336,61 @@ def traversalGraphPhase2(
   // g.edges.foreach(e => System.err.println(s"${e.source.pretty} -> ${e.target.pretty}: ${e.label}")) // edge properties
   g
 
+def scoreAllOptionsPhase2(
+    graph: EdgeLabeledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties],
+    endNode: DecisionGraphStepPhase2Enum,
+    current: PathCandidatePhase2
+): Vector[PathCandidatePhase2] =
+  // supply outer (our Int value) to retrieve complex inner
+  val currentLast: DecisionGraphStepPhase2Enum = current.path.head
+  if currentLast == endNode then Vector(current)
+  else {
+    // Penalize the skipped blocks in the score.
+    // That we can calculate the aligned token score incrementally,
+    //   that's not the case for skipped blocks cause transposed blocks are encountered twice
+    // Calculate the difference between the set of skipped blocks on the current and new.
+    graph
+      .outgoingEdges(currentLast)
+      .toVector
+      .map(e =>
+        val newSkippedHyperedgeMatches = e.label.skippedHyperedgeMatches diff current.skippedHyperedgeMatches
+        val newSkippedHyperedgeMatchScore =
+          newSkippedHyperedgeMatches.map(e => e.head.v.head.length).sum // Subtract 1 for skipped token
+        PathCandidatePhase2(
+          path = e.target :: current.path,
+          score = current.score + e.label.weight - newSkippedHyperedgeMatchScore
+        )
+      )
+  }
+
+def findOptimalAlignmentPhase2(
+    graph: EdgeLabeledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties]
+): List[DecisionGraphStepPhase2Enum] =
+  val beamMax = 35 // TODO: could be adaptable, e.g., x% of possible options
+  val start = PathCandidatePhase2(path = List(graph.roots().head), score = 0)
+  val endNode = graph.leafs().head
+  var beam: Vector[PathCandidatePhase2] = Vector(start) // initialize beam to hold just start node (zero tokens)
+
+  while !beam.map(_.path.head).forall(_ == endNode) do
+    val newOptionsTmp: Vector[Vector[PathCandidatePhase2]] =
+      beam.map(e => scoreAllOptionsPhase2(graph = graph, endNode = endNode, current = e))
+    val newOptions: Vector[PathCandidatePhase2] = newOptionsTmp.flatten
+
+    beam =
+      if newOptions.size <= beamMax
+      then newOptions
+      else newOptions.sortBy(_.score * -1).slice(from = 0, until = beamMax)
+  // System.err.println(s"""Final beam scores: ${beam.map(_.score).mkString((","))}""")
+  val result = beam.minBy(_.score * -1).path.reverse // Exit once all options on the beam until at the until node
+  result
+
 case class TraversalEdgeProperties(
     weight: Int, // aligned tokens gained by taking target
-    label: Set[HyperedgeMatch]
+    skippedHyperedgeMatches: Set[HyperedgeMatch]
+)
+
+case class PathCandidatePhase2(
+    path: List[DecisionGraphStepPhase2Enum],
+    score: Double,
+    skippedHyperedgeMatches: Set[HyperedgeMatch] = Set.empty
 )

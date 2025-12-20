@@ -68,7 +68,7 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
     assert(edgesAsSeq.sliding(2).forall { case Seq(a, b) => // Single, uninterrupted chain
       a.target.pos1 == b.source.pos1
     })
-    assert(tg.edges.forall(e => e.label.label.isEmpty)) // No skipped nodes on any edge
+    assert(tg.edges.forall(e => e.label.skippedHyperedgeMatches.isEmpty)) // No skipped nodes on any edge
     assert(
       tg.edges.forall(e => (e.label.weight == 0 && e.target.pos1 == Int.MaxValue) || e.label.weight == 1)
     ) // Weight 1 unless target is end node, in which case weight 0
@@ -217,6 +217,92 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
     assertEdge(result(7), "cat", "end")
   }
 
-  test("CHANGE MY NAME") {
-    //
+  test("Phase 2 beam search with adjacent transposition") {
+    val GTa = Vector(
+      TokenEnum.Token("The ", "the", 0, 0, Map()),
+      TokenEnum.Token("red ", "red", 0, 1, Map()),
+      TokenEnum.Token("striped ", "striped", 0, 2, Map()),
+      TokenEnum.Token("cat", "cat", 0, 3, Map()),
+      TokenEnum.TokenSep("sep0", "sep0", 0, 4),
+      TokenEnum.Token("The ", "the", 1, 5, Map()),
+      TokenEnum.Token("striped ", "striped", 1, 6, Map()),
+      TokenEnum.Token("red ", "red", 1, 7, Map()),
+      TokenEnum.Token("cat", "cat", 1, 8, Map())
+    )
+    val w0Tokens: Vector[TokenEnum.Token] = Vector(
+      TokenEnum.Token("The ", "the", 0, 0, Map()),
+      TokenEnum.Token("red ", "red", 0, 1, Map()),
+      TokenEnum.Token("striped ", "striped", 0, 2, Map()),
+      TokenEnum.Token("cat", "cat", 0, 3, Map())
+    )
+    val w1Tokens: Vector[TokenEnum.Token] = Vector(
+      TokenEnum.Token("The ", "the", 1, 5, Map()),
+      TokenEnum.Token("striped ", "striped", 1, 6, Map()),
+      TokenEnum.Token("red ", "red", 1, 7),
+      TokenEnum.Token("cat", "cat", 1, 8)
+    )
+    val w0AsHypergraph = createHypergraphFromSingleton(w0Tokens, GTa)
+    val w1AsHypergraph = createHypergraphFromSingleton(w1Tokens, GTa)
+    val matchesProperties = createMatches(w0AsHypergraph, w1AsHypergraph)
+    val tg: EdgeLabeledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties] = traversalGraphPhase2(
+      matchesProperties.matchDataAsHg,
+      matchesProperties.matchesSortedHead.toList,
+      matchesProperties.matchesSortedLast.toList
+    )
+    val expected = List(
+      "Terminal(-1,-1)",
+      """Internal(0,0,"the",1)""",
+      """Internal(1,2,"red",1)""",
+      """Internal(3,3,"cat",1)""",
+      "Terminal(2147483647,2147483647)"
+    )
+    val result = findOptimalAlignmentPhase2(tg).map(_.pretty)
+    assert(result == expected)
+  }
+
+  test("Phase 2 beam search with non-adjacent transposition") {
+    val GTa = Vector(
+      TokenEnum.Token("The ", "the", 0, 0, Map()),
+      TokenEnum.Token("red ", "red", 0, 1, Map()),
+      TokenEnum.Token("and ", "and", 0, 2, Map()),
+      TokenEnum.Token("black ", "black", 0, 3, Map()),
+      TokenEnum.Token("cat", "cat", 0, 4, Map()),
+      TokenEnum.TokenSep("sep0", "sep0", 0, 5),
+      TokenEnum.Token("The ", "the", 1, 6, Map()),
+      TokenEnum.Token("black ", "black", 1, 7, Map()),
+      TokenEnum.Token("and ", "and", 1, 8, Map()),
+      TokenEnum.Token("red ", "red", 1, 9, Map()),
+      TokenEnum.Token("cat", "cat", 1, 10, Map())
+    )
+    val w0Tokens: Vector[TokenEnum.Token] = Vector(
+      TokenEnum.Token("The ", "the", 0, 0, Map()),
+      TokenEnum.Token("red ", "red", 0, 1, Map()),
+      TokenEnum.Token("and ", "and", 0, 2, Map()),
+      TokenEnum.Token("black ", "black", 0, 3, Map()),
+      TokenEnum.Token("cat", "cat", 0, 4, Map())
+    )
+    val w1Tokens: Vector[TokenEnum.Token] = Vector(
+      TokenEnum.Token("The ", "the", 1, 6, Map()),
+      TokenEnum.Token("black ", "black", 1, 7, Map()),
+      TokenEnum.Token("and ", "and", 1, 8, Map()),
+      TokenEnum.Token("red ", "red", 1, 9, Map()),
+      TokenEnum.Token("cat", "cat", 1, 10, Map())
+    )
+    val w0AsHypergraph = createHypergraphFromSingleton(w0Tokens, GTa)
+    val w1AsHypergraph = createHypergraphFromSingleton(w1Tokens, GTa)
+    val matchesProperties = createMatches(w0AsHypergraph, w1AsHypergraph)
+    val tg: EdgeLabeledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties] = traversalGraphPhase2(
+      matchesProperties.matchDataAsHg,
+      matchesProperties.matchesSortedHead.toList,
+      matchesProperties.matchesSortedLast.toList
+    )
+    val expected = List(
+      """Terminal(-1,-1)""",
+      """Internal(0,0,"the",1)""",
+      """Internal(1,3,"red",1)""",
+      """Internal(4,4,"cat",1)""",
+      "Terminal(2147483647,2147483647)"
+    )
+    val result = findOptimalAlignmentPhase2(tg).map(_.pretty)
+    assert(result == expected)
   }
