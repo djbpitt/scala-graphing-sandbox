@@ -1,7 +1,9 @@
 package net.collatex.reptilian
 
 import net.collatex.reptilian.DGNodeType.{Alignment, Skip}
-import net.collatex.util.{Graph, Hypergraph, EdgeLabeledDirectedGraph}
+import net.collatex.util.{EdgeLabeledDirectedGraph, Graph, Hypergraph}
+import net.collatex.reptilian.AlignmentHyperedge
+import net.collatex.util.Hypergraph.Hyperedge
 
 import scala.annotation.tailrec
 
@@ -381,7 +383,37 @@ def findOptimalAlignmentPhase2(
       then newOptions
       else newOptions.sortBy(_.score * -1).slice(from = 0, until = beamMax)
   // System.err.println(s"""Final beam scores: ${beam.map(_.score).mkString((","))}""")
-  val result = beam.minBy(_.score * -1).path.reverse // Exit once all options on the beam until at the until node
+  // Exit once all options on the beam reach the end node, minBy always returns exactly one
+  val result = beam.minBy(_.score * -1).path.reverse
+  result
+
+/** Merge result of phase 2 traversal of options
+  *
+  * @param hg
+  *   Input hypergraph (combination of two)
+  * @param alignment
+  *   Output of beam search over alignment options
+  * @param matchesProperties
+  *   Includes matches as set, used to create new hypergraph
+  * @return
+  *   New hypergraph, contains merge results
+  */
+def mergeHypergraphsUsingAlignmentPhase2(
+    hg: Hypergraph[EdgeLabel, TokenRange],
+    alignment: List[DecisionGraphStepPhase2Enum],
+    matchesProperties: MatchesProperties
+): Hypergraph[EdgeLabel, TokenRange] =
+  // Combine three things: aligned matches, transposed matches, and unaligned hyperedges (additions, deletions)
+  val newAlignedMatches: Set[HyperedgeMatch] =
+    alignment.tail.map(_.asInstanceOf[DecisionGraphStepPhase2Enum.Internal].HEMatch).toSet
+  val newTransposedMatches: Set[HyperedgeMatch] = matchesProperties.matchesAsSet.diff(newAlignedMatches)
+  val unmatchedHyperedges: Set[Hyperedge[EdgeLabel, TokenRange]] = // matches are SetOf2, so flatten
+    hg.hyperedges.diff(matchesProperties.matchesAsSet.flatten)
+  val newMatchesHypergraph: Hypergraph[EdgeLabel, TokenRange] = newAlignedMatches
+    .map(e => AlignmentHyperedge(e.head.verticesIterator.toSet ++ e.last.verticesIterator.toSet))
+    .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
+  val newMatchesAndTransposedHypergraph = newTransposedMatches.flatten.foldLeft(newMatchesHypergraph)((y, x) => y + x)
+  val result = unmatchedHyperedges.foldLeft(newMatchesAndTransposedHypergraph)((y, x) => y + x)
   result
 
 case class TraversalEdgeProperties(

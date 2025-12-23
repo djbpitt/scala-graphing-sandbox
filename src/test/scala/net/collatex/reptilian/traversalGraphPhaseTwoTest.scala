@@ -3,7 +3,7 @@ package net.collatex.reptilian
 import net.collatex.reptilian.DecisionGraphStepPhase2Enum.{Internal, Terminal}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.*
-import net.collatex.util.EdgeLabeledDirectedGraph
+import net.collatex.util.{EdgeLabeledDirectedGraph, Hypergraph, SetOf2}
 import net.collatex.util.EdgeLabeledDirectedGraph.LabeledEdge
 
 class traversalGraphPhaseTwoTest extends AnyFunSuite:
@@ -296,6 +296,8 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
       matchesProperties.matchesSortedHead.toList,
       matchesProperties.matchesSortedLast.toList
     )
+    // There are three equivalent paths and Scala consistently returns the
+    // same one, so we use that as the expected value
     val expected = List(
       """Terminal(-1,-1)""",
       """Internal(0,0,"the",1)""",
@@ -306,3 +308,44 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
     val result = findOptimalAlignmentPhase2(tg).map(_.pretty)
     assert(result == expected)
   }
+
+  test("Merge hypergraphs without transpositions or indels") {
+    val GTa = Vector(
+      TokenEnum.Token("The ", "the", 0, 0, Map()),
+      TokenEnum.Token("red ", "red", 0, 1, Map()),
+      TokenEnum.Token("cat", "cat", 0, 2, Map()),
+      TokenEnum.TokenSep("sep0", "sep0", 0, 3),
+      TokenEnum.Token("The ", "the", 1, 4, Map()),
+      TokenEnum.Token("red ", "red", 1, 5, Map()),
+      TokenEnum.Token("cat", "cat", 1, 6, Map()),
+      TokenEnum.TokenSep("sep1", "sep1", 1, 7),
+      TokenEnum.Token("The ", "the", 2, 8, Map()),
+      TokenEnum.Token("red ", "red", 2, 9, Map()),
+      TokenEnum.Token("cat", "cat", 2, 10, Map())
+    )
+    val ah1 = AlignmentHyperedge(Set(TokenRange(0, 3, GTa), TokenRange(4, 7, GTa)))
+    val ah2 = AlignmentHyperedge(Set(TokenRange(8, 11, GTa)))
+    val hg: Hypergraph[EdgeLabel, TokenRange] = ah1 + ah2
+
+    val alignment: List[DecisionGraphStepPhase2Enum] = List(
+      Terminal(Int.MaxValue, Int.MaxValue),
+      Internal(0, 0, SetOf2(ah1, ah2))
+    )
+    val matchesProperties: MatchesProperties = MatchesProperties(
+      allSplitHyperedgesNew = (Hypergraph.empty, Set.empty),
+      unfilteredMatchesAsSet = Set.empty,
+      matchesAsSet = Set(SetOf2(ah1, ah2)),
+      matchDataAsHg = Hypergraph.empty,
+      matchesSortedHead = Seq.empty,
+      matchesSortedLast = Seq.empty
+    )
+    val expected = AlignmentHyperedge(Set(TokenRange(0, 3, GTa),TokenRange(4, 7, GTa), TokenRange(8, 11, GTa)))
+    val result = mergeHypergraphsUsingAlignmentPhase2(hg, alignment, matchesProperties)
+    assert(result.hyperedges.size == hg.hyperedges.size / 2) // Number of hyperedges is reduced by half
+    assert(result.hyperedges.flatMap(_.v) == expected.hyperedges.flatMap(_.v)) // Assert: No part of hg is missing from result
+    assert(result == expected) // Result is exactly equal to expected
+  }
+
+  ignore("Merge hypergraphs with transpositions but without indels") {}
+
+  ignore("Merge hypergraphs with transpositions and indels") {}

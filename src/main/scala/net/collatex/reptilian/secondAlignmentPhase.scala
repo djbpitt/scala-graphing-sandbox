@@ -112,7 +112,7 @@ def createPatterns(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeL
     createAlignedPatternsPhaseTwo(lTa, 2) pipe groupPatternsTogetherByHyperedge
   patterns
 }
-def createMatches(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeLabel, TokenRange]) = {
+def createMatches(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeLabel, TokenRange]): MatchesProperties =
   val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] = createPatterns(hg1, hg2)
   val allSplitHyperedgesNew: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
     splitHesOnAlignedPatterns(hg1, hg2, patterns)
@@ -131,7 +131,7 @@ def createMatches(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeLa
     matchesSortedHead,
     matchesSortedLast
   )
-}
+
 def mergeHgHg(
     hg1: Hypergraph[EdgeLabel, TokenRange],
     hg2: Hypergraph[EdgeLabel, TokenRange]
@@ -142,7 +142,7 @@ def mergeHgHg(
   if spuriousMatches.nonEmpty then throw new RuntimeException(s"Spurious matches: $spuriousMatches")
   val (transpositionBool, _, _) =
     detectTransposition(matchesProperties.matchesAsSet, matchesProperties.matchDataAsHg)
-  val result =
+  val result: Hypergraph[EdgeLabel, TokenRange] =
     if transpositionBool
     then
       traversalGraphPhase2(
@@ -153,7 +153,7 @@ def mergeHgHg(
       val decisionGraph: Graph[DecisionGraphStepPhase2] =
         traversalGraphPhase2Old(matchesProperties.matchesSortedHead.toList, matchesProperties.matchesSortedLast.toList)
       val matchLists = List(matchesProperties.matchesSortedHead.toList, matchesProperties.matchesSortedLast.toList)
-      greedy(decisionGraph, matchLists)
+      greedy(decisionGraph, matchLists) // returns Hypergraph[EdgeLabel, TokenRange]
     else
       val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesProperties.matchesAsSet
         .map(e =>
