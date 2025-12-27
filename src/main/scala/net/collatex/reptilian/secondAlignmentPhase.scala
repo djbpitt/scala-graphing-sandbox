@@ -2,7 +2,7 @@ package net.collatex.reptilian
 
 import net.collatex.reptilian.TokenEnum.*
 import net.collatex.util.Hypergraph.Hyperedge
-import net.collatex.util.{Graph, Hypergraph, SetOf2}
+import net.collatex.util.{EdgeLabeledDirectedGraph, Graph, Hypergraph, SetOf2}
 
 import scala.collection.mutable
 import os.Path
@@ -136,36 +136,20 @@ def mergeHgHg(
     hg1: Hypergraph[EdgeLabel, TokenRange],
     hg2: Hypergraph[EdgeLabel, TokenRange]
 ): Hypergraph[EdgeLabel, TokenRange] =
+  val bothHypergraphs: Hypergraph[EdgeLabel, TokenRange] = hg1 + hg2
   val matchesProperties: MatchesProperties = createMatches(hg1, hg2)
   val spuriousMatches =
     matchesProperties.unfilteredMatchesAsSet.diff(matchesProperties.matchesAsSet) // will add to result directly
   if spuriousMatches.nonEmpty then throw new RuntimeException(s"Spurious matches: $spuriousMatches")
-  val (transpositionBool, _, _) =
-    detectTransposition(matchesProperties.matchesAsSet, matchesProperties.matchDataAsHg)
-  val result: Hypergraph[EdgeLabel, TokenRange] =
-    if transpositionBool
-    then
-      traversalGraphPhase2(
-        matchesProperties.matchDataAsHg,
-        matchesProperties.matchesSortedHead.toList,
-        matchesProperties.matchesSortedLast.toList
-      )
-      val decisionGraph: Graph[DecisionGraphStepPhase2] =
-        traversalGraphPhase2Old(matchesProperties.matchesSortedHead.toList, matchesProperties.matchesSortedLast.toList)
-      val matchLists = List(matchesProperties.matchesSortedHead.toList, matchesProperties.matchesSortedLast.toList)
-      greedy(decisionGraph, matchLists) // returns Hypergraph[EdgeLabel, TokenRange]
-    else
-      val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesProperties.matchesAsSet
-        .map(e =>
-          AlignmentHyperedge(e.head.verticesIterator.toSet ++ e.last.verticesIterator.toSet)
-        ) // NB: new hyperedge
-        .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
-      matchesProperties.allSplitHyperedgesNew._1 // Original full hypergraph
-        + newMatchHg // Add the merged hyperedges in place of those removed
-  // debug: unmark to create and write dependency graph to disk
-  // val dgNew = DependencyGraph(result)
-  // dependencyGraphToDot(dgNew, result) // writes to disk
-  result
+  val tg: EdgeLabeledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties] = traversalGraphPhase2(
+    bothHypergraphs,
+    matchesProperties.matchesSortedHead.toList,
+    matchesProperties.matchesSortedLast.toList
+  )
+  val alignment: List[DecisionGraphStepPhase2Enum] = findOptimalAlignmentPhase2(tg)
+  val mergedHypergraph: Hypergraph[EdgeLabel, TokenRange] =
+    mergeHypergraphsUsingAlignmentPhase2(bothHypergraphs, alignment, matchesProperties)
+  mergedHypergraph
 
 def readJsonData: List[List[Token]] =
   val datafilePath =
