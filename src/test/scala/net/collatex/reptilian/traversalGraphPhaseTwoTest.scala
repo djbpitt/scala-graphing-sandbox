@@ -429,4 +429,94 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
     assert(result == expected) // Result is exactly equal to expected
   }
 
-  ignore("Merge hypergraphs with transpositions and indels") {}
+  test("Merge hypergraphs without transposition but with indels") {
+    val GTa = Vector(
+      TokenEnum.Token("The ", "the", 0, 0, Map()),
+      TokenEnum.Token("red ", "red", 0, 1, Map()),
+      TokenEnum.Token("pretty ", "pretty", 0, 2, Map()),
+      TokenEnum.Token("cat", "cat", 0, 3, Map()),
+      TokenEnum.TokenSep("sep0", "sep0", 0, 4),
+      TokenEnum.Token("The ", "the", 1, 5, Map()),
+      TokenEnum.Token("red ", "red", 1, 6, Map()),
+      TokenEnum.Token("pretty ", "pretty", 0, 7, Map()),
+      TokenEnum.Token("cat", "cat", 1, 8, Map()),
+      TokenEnum.TokenSep("sep1", "sep1", 1, 9),
+      TokenEnum.Token("The ", "the", 2, 10, Map()),
+      TokenEnum.Token("pretty ", "pretty", 2, 11, Map()),
+      TokenEnum.Token("striped ", "striped", 2, 12, Map()),
+      TokenEnum.Token("cat", "cat", 2, 13, Map())
+    )
+    /*
+    The red pretty    -    cat
+    The red pretty    -    cat
+    The  -  pretty striped cat
+     * */
+    // After splitting and before merging
+    val ah1 = AlignmentHyperedge(Set(TokenRange(0, 1, GTa), TokenRange(5, 6, GTa))) // The, witnesses a, b
+    val ah2 = AlignmentHyperedge(Set(TokenRange(1, 2, GTa), TokenRange(6, 7, GTa))) // red, witnesses a, b
+    val ah3 = AlignmentHyperedge(Set(TokenRange(2, 3, GTa), TokenRange(7, 8, GTa))) // pretty, witnesses a, b
+    val ah4 = AlignmentHyperedge(Set(TokenRange(3, 4, GTa), TokenRange(8, 9, GTa))) // cat, witnesses a, b
+    val ah5 = AlignmentHyperedge(Set(TokenRange(10, 11, GTa))) // The, witness c
+    val ah6 = AlignmentHyperedge(Set(TokenRange(11, 12, GTa))) // pretty, witness c
+    val ah7 = AlignmentHyperedge(Set(TokenRange(12, 13, GTa))) // striped, witness c
+    val ah8 = AlignmentHyperedge(Set(TokenRange(13, 14, GTa))) // cat, witness c
+    val hg: Hypergraph[EdgeLabel, TokenRange] = ah1 + ah2 + ah3 + ah4 + ah5 + ah6 + ah7 + ah8
+
+    val alignment: List[DecisionGraphStepPhase2Enum] = List(
+      // Numbers are positions in decision graph and are ignored, so we write them all as 0
+      // Indels (red, striped) are not part of the alignment
+      Terminal(Int.MaxValue, Int.MaxValue),
+      Internal(0, 0, SetOf2(ah4, ah8)), // All instances of cat
+      Internal(0, 0, SetOf2(ah3, ah6)), // All instances of pretty
+      Internal(0, 0, SetOf2(ah1, ah5)) // All instances of The
+    )
+    val matchesProperties: MatchesProperties = MatchesProperties(
+      // matchesAsSet includes both chosen and not chosen
+      allSplitHyperedgesNew = (Hypergraph.empty, Set.empty),
+      unfilteredMatchesAsSet = Set.empty,
+      matchesAsSet = Set(SetOf2(ah4, ah8), SetOf2(ah3, ah6), SetOf2(ah1, ah5)),
+      matchDataAsHg = Hypergraph.empty,
+      matchesSortedHead = Seq.empty,
+      matchesSortedLast = Seq.empty
+    )
+    val expected =
+      AlignmentHyperedge(
+        Set(
+          TokenRange(0, 1, GTa), // The in A
+          TokenRange(5, 6, GTa), // The in B
+          TokenRange(10, 11, GTa) // The in C
+        )
+      ) +
+        AlignmentHyperedge(
+          Set(
+            TokenRange(1, 2, GTa), // red in A
+            TokenRange(6, 7, GTa) // red in B
+          )
+        ) +
+        AlignmentHyperedge(
+          Set(
+            TokenRange(2, 3, GTa), // pretty in A
+            TokenRange(7, 8, GTa), // pretty in B
+            TokenRange(11, 12, GTa) // pretty in C
+          )
+        ) +
+        AlignmentHyperedge(
+          Set(
+            TokenRange(12, 13, GTa) // striped in C
+          )
+        ) +
+        AlignmentHyperedge(
+          Set(
+            TokenRange(3, 4, GTa), // cat in A
+            TokenRange(8, 9, GTa), // cat in B
+            TokenRange(13, 14, GTa) // cat in C
+          )
+        )
+    val result = mergeHypergraphsUsingAlignmentPhase2(hg, alignment, matchesProperties)
+    assert(result.hyperedges.size == 5) // The in all; red in A,B; pretty in all; striped in C, cat in all
+    assert(
+      result.hyperedges.flatMap(_.v) == expected.hyperedges.flatMap(_.v)
+    ) // Assert: No part of hg is missing from result
+  }
+
+  ignore("Merge hypergraphs with both transposition and indels") {}
