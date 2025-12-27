@@ -405,7 +405,7 @@ def mergeHypergraphsUsingAlignmentPhase2(
 ): Hypergraph[EdgeLabel, TokenRange] =
   // Combine three things: aligned matches, transposed matches, and unaligned hyperedges (additions, deletions)
   val newAlignedMatches: Set[HyperedgeMatch] =
-    alignment.tail.map(_.asInstanceOf[DecisionGraphStepPhase2Enum.Internal].HEMatch).toSet
+    alignment.dropRight(1).tail.map(_.asInstanceOf[DecisionGraphStepPhase2Enum.Internal].HEMatch).toSet
   val newTransposedMatches: Set[HyperedgeMatch] = matchesProperties.matchesAsSet.diff(newAlignedMatches)
   val unmatchedHyperedges: Set[Hyperedge[EdgeLabel, TokenRange]] = // matches are SetOf2, so flatten
     hg.hyperedges.diff(matchesProperties.matchesAsSet.flatten)

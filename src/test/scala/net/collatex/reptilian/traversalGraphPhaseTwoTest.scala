@@ -330,7 +330,8 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
 
     val alignment: List[DecisionGraphStepPhase2Enum] = List(
       Terminal(Int.MaxValue, Int.MaxValue),
-      Internal(0, 0, SetOf2(ah1, ah2))
+      Internal(0, 0, SetOf2(ah1, ah2)),
+      Terminal(-1, -1)
     )
     val matchesProperties: MatchesProperties = MatchesProperties(
       allSplitHyperedgesNew = (Hypergraph.empty, Set.empty),
@@ -383,7 +384,8 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
       // Numbers are positions in decision graph and are ignored, so we write them all as 0
       Terminal(Int.MaxValue, Int.MaxValue),
       Internal(0, 0, SetOf2(ah3, ah5)), // All instances of cat
-      Internal(0, 0, SetOf2(ah1, ah4)) // All instances of The
+      Internal(0, 0, SetOf2(ah1, ah4)), // All instances of The
+      Terminal(-1, -1)
     )
     val matchesProperties: MatchesProperties = MatchesProperties(
       // matchesAsSet includes both chosen and not chosen
@@ -468,7 +470,8 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
       Terminal(Int.MaxValue, Int.MaxValue),
       Internal(0, 0, SetOf2(ah4, ah8)), // All instances of cat
       Internal(0, 0, SetOf2(ah3, ah6)), // All instances of pretty
-      Internal(0, 0, SetOf2(ah1, ah5)) // All instances of The
+      Internal(0, 0, SetOf2(ah1, ah5)), // All instances of The
+      Terminal(-1, -1)
     )
     val matchesProperties: MatchesProperties = MatchesProperties(
       // matchesAsSet includes both chosen and not chosen
@@ -570,7 +573,8 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
       Terminal(Int.MaxValue, Int.MaxValue),
       Internal(0, 0, SetOf2(ah6, ah11)), // All instances of cat
       Internal(0, 0, SetOf2(ah4, ah9)), // All instances of and
-      Internal(0, 0, SetOf2(ah1, ah7)) // All instances of The
+      Internal(0, 0, SetOf2(ah1, ah7)), // All instances of The
+      Terminal(-1, -1)
     )
     val matchesProperties: MatchesProperties = MatchesProperties(
       // matchesAsSet includes both chosen and not chosen
@@ -635,5 +639,4 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
     assert(
       result.hyperedges.flatMap(_.v) == expected.hyperedges.flatMap(_.v)
     ) // Assert: No part of hg is missing from result
-
   }
