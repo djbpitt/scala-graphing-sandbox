@@ -138,21 +138,22 @@ def mergeHgHg(
 ): Hypergraph[EdgeLabel, TokenRange] =
   val bothHypergraphs: Hypergraph[EdgeLabel, TokenRange] = hg1 + hg2
   val matchesProperties: MatchesProperties = createMatches(hg1, hg2)
+  val hypergraphAfterSplitting = matchesProperties.allSplitHyperedgesNew._1
   val spuriousMatches =
     matchesProperties.unfilteredMatchesAsSet.diff(matchesProperties.matchesAsSet) // will add to result directly
   if spuriousMatches.nonEmpty then throw new RuntimeException(s"Spurious matches: $spuriousMatches")
   // When there are no matches simply return the two graphs combined
   if matchesProperties.matchesAsSet.isEmpty then
-    return hg1 + hg2
+    return bothHypergraphs
 
   val tg: EdgeLabeledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties] = traversalGraphPhase2(
-    bothHypergraphs,
+    hypergraphAfterSplitting, // != original hypergraph
     matchesProperties.matchesSortedHead.toList,
     matchesProperties.matchesSortedLast.toList
   )
   val alignment: List[DecisionGraphStepPhase2Enum] = findOptimalAlignmentPhase2(tg)
   val mergedHypergraph: Hypergraph[EdgeLabel, TokenRange] =
-    mergeHypergraphsUsingAlignmentPhase2(bothHypergraphs, alignment, matchesProperties)
+    mergeHypergraphsUsingAlignmentPhase2(hypergraphAfterSplitting, alignment, matchesProperties) // not original hypergraph
   mergedHypergraph
 
 def readJsonData: List[List[Token]] =
@@ -264,6 +265,16 @@ def splitOneHyperedge(
       hyperedgesByBlock: Map[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]
   ): (Hypergraph[EdgeLabel, TokenRange], Map[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]) =
     val currentOccurrence = occurrences.head
+      if currentHyperedge.v.map(_.length).size != 1 then
+      System.err.println("\nFrom splitOnPattern() inside splitOneHyperedge()")
+      System.err.println(s"occurrences: $occurrences")
+      System.err.println(s"currentHyperedge: $currentHyperedge")
+      System.err.println(s"preLength: $preLength")
+      System.err.println(s"postLength: $postLength")
+      System.err.println(s"hyperedgeParts: $hyperedgeParts")
+      System.err.println(s"hyperedgesByBlock: $hyperedgesByBlock")
+      System.err.println(s"${currentHyperedge.v.map(_.length).mkString(" ")}")
+      assert(currentHyperedge.v.map(_.length).size == 1)
     val (newPre, newPost, (block, middle)) =
       splitHyperedgeOneOccurrence(currentHyperedge, currentOccurrence, preLength, postLength)
     val hyperedgesByBlockNew = hyperedgesByBlock + (block -> middle)
@@ -336,6 +347,8 @@ def splitHesOnAlignedPatterns(
     bothHgs,
     mutable.MultiDict.empty[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]
   )
+  // System.err.println("\nPrinting patterns")
+  // patterns.foreach(System.err.println)
   // convert MultiDict to HyperedgeMatches
   // 2025-12-09 TODO: Does seq -> setof2 preserve order?
   val newHyperedgeMatches = resultInWrongFormat._2.map { (key, _) =>
