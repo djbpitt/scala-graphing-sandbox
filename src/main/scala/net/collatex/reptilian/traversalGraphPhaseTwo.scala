@@ -274,6 +274,8 @@ def traversalGraphPhase2(
     order1: List[HyperedgeMatch], // corresponds (with the following) to blockOrderForWitnesses in Phase 1
     order2: List[HyperedgeMatch]
 ): EdgeLabeledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties] =
+  if order1.isEmpty || order2.isEmpty then
+    throw RuntimeException("There are no matches to merge the graph with!")
   val startNode = DecisionGraphStepPhase2Enum.Terminal(-1, -1)
   val endNode = DecisionGraphStepPhase2Enum.Terminal(Int.MaxValue, Int.MaxValue)
   val dataNodes: List[DecisionGraphStepPhase2Enum.Internal] = order1.zipWithIndex.map { (e, i) =>
