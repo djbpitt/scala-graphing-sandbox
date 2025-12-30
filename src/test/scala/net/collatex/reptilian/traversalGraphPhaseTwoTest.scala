@@ -640,3 +640,6 @@ class traversalGraphPhaseTwoTest extends AnyFunSuite:
       result.hyperedges.flatMap(_.v) == expected.hyperedges.flatMap(_.v)
     ) // Assert: No part of hg is missing from result
   }
+
+  // TODO: Add test
+  ignore("Added a test for merging a graph without a match")

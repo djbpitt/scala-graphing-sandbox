@@ -141,6 +141,10 @@ def mergeHgHg(
   val spuriousMatches =
     matchesProperties.unfilteredMatchesAsSet.diff(matchesProperties.matchesAsSet) // will add to result directly
   if spuriousMatches.nonEmpty then throw new RuntimeException(s"Spurious matches: $spuriousMatches")
+  // When there are no matches simply return the two graphs combined
+  if matchesProperties.matchesAsSet.isEmpty then
+    return hg1 + hg2
+
   val tg: EdgeLabeledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties] = traversalGraphPhase2(
     bothHypergraphs,
     matchesProperties.matchesSortedHead.toList,
