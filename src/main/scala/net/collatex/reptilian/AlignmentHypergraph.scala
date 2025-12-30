@@ -13,6 +13,9 @@ extension (hg: Hypergraph[EdgeLabel, TokenRange])
     // NB: Not the path itself; keys are items, not types
     // TODO: Change name "NodeType" because it's a node, not a type
     val dependencyGraph = hg.toDependencyGraph
+    // Visualize dependency graph to debug cycles
+    dependencyGraphToDot(dependencyGraph, hg)
+    // End of debug
     val ranks = dependencyGraph.longestPath
     ranks
 

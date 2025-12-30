@@ -151,6 +151,11 @@ def mergeHgHg(
     matchesProperties.matchesSortedHead.toList,
     matchesProperties.matchesSortedLast.toList
   )
+  // Visualize traversal graph
+  System.err.println("Writing traversal graph visualization")
+  System.err.println(tg.asDot)
+  System.err.println("End of traversal graph visualization")
+  // End of debug
   val alignment: List[DecisionGraphStepPhase2Enum] = findOptimalAlignmentPhase2(tg)
   val mergedHypergraph: Hypergraph[EdgeLabel, TokenRange] =
     mergeHypergraphsUsingAlignmentPhase2(hypergraphAfterSplitting, alignment, matchesProperties) // not original hypergraph
