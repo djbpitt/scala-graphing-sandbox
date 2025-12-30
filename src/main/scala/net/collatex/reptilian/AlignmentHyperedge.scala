@@ -5,6 +5,8 @@ import net.collatex.util.Hypergraph.Hyperedge
 
 object AlignmentHyperedge:
   def apply(tokenRanges: Set[TokenRange]): Hyperedge[EdgeLabel, TokenRange] =
+    // System.err.println(tokenRanges.toVector.map(_.length).mkString(" ")) // Examine visually to check for same length
+    assert(tokenRanges.map(_.length).size == 1) // All tokenRanges in hyperedge should have same length
     val edgeLabel = EdgeLabel(tokenRanges.map(_.start).min)
     Hyperedge[EdgeLabel, TokenRange](edgeLabel, tokenRanges)
 
@@ -12,8 +14,9 @@ extension (he: Hyperedge[EdgeLabel, TokenRange])
   def slice(startOffset: Int, untilOffset: Int): Hypergraph[EdgeLabel, TokenRange] =
     if startOffset == untilOffset then Hypergraph.empty
     else
-      Hyperedge(
-        EdgeLabel(he.verticesIterator.map(_.start).min + startOffset),
+      AlignmentHyperedge(
+        // EdgeLabel needed for Hyperedge, but not for AlignmentHyperedge
+        // EdgeLabel(he.verticesIterator.map(_.start).min + startOffset),
         he.verticesIterator.map(t =>
           t.slice(startOffset, untilOffset)
             .getOrElse(
