@@ -28,5 +28,10 @@ extension (hg: Hypergraph[EdgeLabel, TokenRange])
       hg.hyperedges.map(he => findTr(he)).find(_.isDefined).get.get
     result
 
-  def toDependencyGraph: Graph[NodeType] =
-    DependencyGraph(hg)
+  def toDependencyGraph: Graph[NodeType] = {
+    val result = DependencyGraph(hg)
+    // Visualize for debugging
+    // dependencyGraphToDot(result, hg)
+    // End of debugging code
+    result
+  }
