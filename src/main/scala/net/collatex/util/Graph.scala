@@ -212,15 +212,16 @@ enum Graph[N]:
   def longestPath: Map[N, Int] =
     val topSort = this.topologicalSort
     // println(s"Topological sort: $topSort")
-    topSort.tail // handle root separately
+    topSort
       .foldLeft(Map[N, Int](topSort.head -> 0))((acc, e) => // initialize root as 0
         val incomingEdges = this.incomingEdges(e)
-        if incomingEdges.isEmpty then
-          throw RuntimeException(s"Node $e has no incoming edges!")
         val highestParentRank =
-          incomingEdges // all incoming paths
-            .map(_._1) // source nodes for incoming paths
-            .map(acc(_)) // rank of those source nodes
-            .max // only the largest
+          // handle roots separately
+          if incomingEdges.isEmpty then 0
+          else
+            incomingEdges // all incoming paths
+              .map(_._1) // source nodes for incoming paths
+              .map(acc(_)) // rank of those source nodes
+              .max // only the largest
         acc + (e -> (highestParentRank + 1)) // new node is one greater than its source
       )

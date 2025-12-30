@@ -97,3 +97,6 @@ class GraphTest extends AnyFunSuite:
     val expected = Vector(0, 1, 2, 3, 4, 5)
     val result = g.topologicalSortTotallyOrdered(o)
     assert(result == expected)
+
+  // TODO: add a longest path function test where the graph has multiple roots
+  ignore("Add test for longest path function with multiple roots")
