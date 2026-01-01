@@ -11,7 +11,14 @@ import net.collatex.reptilian.TokenRange.*
 import org.scalatest.funsuite.AnyFunSuite
 
 class TokenRangeTest extends AnyFunSuite:
-  val fakeGTa: Vector[TokenEnum] = Vector()
+  val fakeGTa: Vector[TokenEnum] = Vector(
+    Token("a ", "a", 0, 0, Map()),
+    Token("b ", "b", 0, 1, Map()),
+    Token("c ", "c", 0, 2, Map()),
+    Token("d ", "d", 0, 3, Map()),
+    Token("e ", "e", 0, 4, Map()),
+    Token("f ", "f", 0, 5, Map())
+  )
 
   /** Tests for TokenRange enum (legal, empty, or illegal)
     */
@@ -145,24 +152,27 @@ class TokenRangeTest extends AnyFunSuite:
   }
 
   test("Slice token range with start < 0 (should fail)") {
-    val caught = intercept[RuntimeException](TokenRange(2, 4, fakeGTa).slice(-1, 2))
-    assert(caught.getMessage == "Slice failed!")
+    val expected = Left(net.collatex.reptilian.SliceTokenRangeError)
+    val result = TokenRange(2, 4, fakeGTa).slice(-1, 2)
+    assert(result == expected)
   }
 
   test("Slice token range with until < start (should fail)") {
-    val caught = intercept[RuntimeException](TokenRange(2, 4, fakeGTa).slice(4, 3))
-    assert(caught.getMessage == "Slice failed!")
+    val expected = Left(net.collatex.reptilian.SliceTokenRangeError)
+    val result = TokenRange(2, 4, fakeGTa).slice(4, 3)
+    assert(result == expected)
   }
 
   test("Slice token range with start beyond end (should fail)") {
     val expected = Left(SliceTokenRangeError)
-    val caught = intercept[RuntimeException](TokenRange(2, 4, fakeGTa).slice(3, 4))
-    assert(caught.getMessage == "Slice failed!")
+    val result = TokenRange(2, 4, fakeGTa).slice(3, 4)
+    assert(result == expected)
   }
 
   test("Slice token range with until beyond end (should fail)") {
-    val caught = intercept[RuntimeException](TokenRange(2, 4, fakeGTa).slice(0, 3))
-    assert(caught.getMessage == "Slice failed!")
+    val expected = Left(net.collatex.reptilian.SliceTokenRangeError)
+    val result = TokenRange(2, 4, fakeGTa).slice(0, 3)
+    assert(result == expected)
   }
 
   test("Slice inside token range") {
