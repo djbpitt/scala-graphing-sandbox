@@ -233,7 +233,7 @@ object GtaBuilder:
             currentTokens.map(_.asInstanceOf[TokenEnum.Token])
           case WitObj(_, _, _, None, Some(tokens)) => // Only t and option n properties are real
             val emittedTokens = emitFromProvided(
-              tokens,
+              tokens.take(cfg.tokensPerWitnessLimit),
               currentWitOffset,
               acc.map(_.tokens.size).sum + currentWitOffset // startG
             )
