@@ -87,8 +87,8 @@ class overlappingTokenManagementTest extends AnyFunSuite:
       Token("much ", "much", 0, 3),
       Token("diversity ", "diversity", 0, 4)
     )
-    val first = FullDepthBlock(Vector(0), 3)
-    val second = FullDepthBlock(Vector(2), 3)
+    val first = FullDepthBlock(Vector(0), 3) // of Egypt ,
+    val second = FullDepthBlock(Vector(2), 3) // , much diversity
     val expected = (
       FullDepthBlock(Vector(0), 3),
       FullDepthBlock(Vector(3), 2)
