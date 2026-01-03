@@ -135,7 +135,7 @@ def findBlockOverlap(
     val firstRanges = first.instances.map(e => TokenRange(e, e + first.length, gTa))
     val secondRanges = second.instances.map(e => TokenRange(e, e + second.length, gTa))
     firstRanges.zip(secondRanges).map((f, s) => f.overlaps(s)
-    ).find(_ == true).getOrElse(false) // Returns false if *any* pair overlaps
+    ).contains(true) // Returns false if *any* pair overlaps
   if overlapBool then
     val blockOverlapData: Vector[Int] = // if any value > 0, there is overlap
       first.instances.map(e => e + first.length).zip(second.instances).map((f, s) => f - s)
