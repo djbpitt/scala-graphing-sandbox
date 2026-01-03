@@ -126,6 +126,68 @@ def determineOverlapTokenCategories(overlapTokens: TokenRange): Seq[OverlapGroup
   val overlapGroups = overlapTokens.tokens.map(OverlapGroup.apply)
   overlapGroups
 
+/*
+  What we saw before we tried to handle something we called "overlap"
+  Block with 6 witnesses: ... Egypt , (a b c d e f)
+  Block with 6 witnesses: , much ...  (a b c g h i)
+  With or without transposition: tokens at a, b, c cannot be in two places in output
+  To be addressed: Different issue with and without transposition
+
+  Witness data
+  A: Egypt-0 very-1 much-2
+  B: Egypt-3 very-4 very-5 much-6
+  C: very-7 much-8 Egypt-9 very-A
+
+  Blocks:
+    Egypt very: A: 01, B: 34, C; 9A
+    very much:  A; 12, B: 56, C: 78
+
+  If we resolve transposition first, traversal graph aligns one of the two blocks only:
+
+  A:                Egypt-0 very-1        much-2
+  B:                Egypt-3 very-4 very-5 much-6
+  C: very-7 much -8 Egypt-9 very-A
+
+  Above: Transpose "much" around "Egypt very" (blocks only)
+
+  A: Egypt-0        very-1 much-2
+  B: Egypt-3 very-4 very-5 much-6
+  C:                very-7 much-8 Egypt-9 very-A
+
+  Above: Tranpose "Egypt" around "very much" (blocks only)
+
+  Problem: Token very-1 appears in two blocks
+    (everything else is in exactly one block)
+  Solution: Remove conflicting token from one or the other block(s)
+  Unknown: Can the number of tokens be different? We think not
+
+  Detail: Conflicting token is present in only *some* witnesses
+    (issue does not arise if it's in all witnesses)
+  Issue: No token can appear in more than location in the traversal graph
+  Currently: We resolve token assigned more than once before building traversal
+    graph, which works only if there is no transposition, which cannot be assumed
+  What to do instead:
+
+  Phase 1: Detect conflict
+    0. Detect blocks that have same tokens before building traversal graph (requires
+      no decisions, all information is available)
+  Phase 2: Handle conflict
+    1. Build traversal graph (needs block order per witness, which we can still do
+      because duplication happens at end of one and beginning of other), annotate
+      blocks identified in preceding step (may have to change code that checks for
+      backwards movement in any witness)
+    2. Traverse and resolve transpositions, repetitions, defer duplicate-token issue
+    3. Resolve duplicate token issue after traversing the traversal graph
+      to derive alignment (we're already doing this, but not entirely correctly)
+
+  Why: Resolution depends on consecutive blocks, and therefore on alignment,
+    and therefore on completion of deriving alignment from traversal-graph
+
+  What happens with three-way conflicts?
+    AB BC CA resolve B, C
+    BC CA AB resolve C, A
+    CA AB BC resolve A, B
+* */
 def findBlockOverlap(
     first: FullDepthBlock,
     second: FullDepthBlock,
