@@ -151,11 +151,6 @@ def mergeHgHg(
     matchesProperties.matchesSortedHead.toList,
     matchesProperties.matchesSortedLast.toList
   )
-  // Visualize traversal graph
-  System.err.println("Writing traversal graph visualization")
-  System.err.println(tg.asDot)
-  System.err.println("End of traversal graph visualization")
-  // End of debug
   val alignment: List[DecisionGraphStepPhase2Enum] = findOptimalAlignmentPhase2(tg)
   val mergedHypergraph: Hypergraph[EdgeLabel, TokenRange] =
     mergeHypergraphsUsingAlignmentPhase2(hypergraphAfterSplitting, alignment, matchesProperties) // not original hypergraph
@@ -270,16 +265,16 @@ def splitOneHyperedge(
       hyperedgesByBlock: Map[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]
   ): (Hypergraph[EdgeLabel, TokenRange], Map[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]) =
     val currentOccurrence = occurrences.head
-      if currentHyperedge.v.map(_.length).size != 1 then
-      System.err.println("\nFrom splitOnPattern() inside splitOneHyperedge()")
-      System.err.println(s"occurrences: $occurrences")
-      System.err.println(s"currentHyperedge: $currentHyperedge")
-      System.err.println(s"preLength: $preLength")
-      System.err.println(s"postLength: $postLength")
-      System.err.println(s"hyperedgeParts: $hyperedgeParts")
-      System.err.println(s"hyperedgesByBlock: $hyperedgesByBlock")
-      System.err.println(s"${currentHyperedge.v.map(_.length).mkString(" ")}")
-      assert(currentHyperedge.v.map(_.length).size == 1)
+//      if currentHyperedge.v.map(_.length).size != 1 then
+//      System.err.println("\nFrom splitOnPattern() inside splitOneHyperedge()")
+//      System.err.println(s"occurrences: $occurrences")
+//      System.err.println(s"currentHyperedge: $currentHyperedge")
+//      System.err.println(s"preLength: $preLength")
+//      System.err.println(s"postLength: $postLength")
+//      System.err.println(s"hyperedgeParts: $hyperedgeParts")
+//      System.err.println(s"hyperedgesByBlock: $hyperedgesByBlock")
+//      System.err.println(s"${currentHyperedge.v.map(_.length).mkString(" ")}")
+//      assert(currentHyperedge.v.map(_.length).size == 1)
     val (newPre, newPost, (block, middle)) =
       splitHyperedgeOneOccurrence(currentHyperedge, currentOccurrence, preLength, postLength)
     val hyperedgesByBlockNew = hyperedgesByBlock + (block -> middle)
