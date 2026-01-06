@@ -129,7 +129,7 @@ def determineOverlapTokenCategories(overlapTokens: TokenRange): Seq[OverlapGroup
 /*
   What we saw before we tried to handle something we called "overlap"
   Block with 6 witnesses: ... Egypt , (a b c d e f)
-  Block with 6 witnesses: , much ...  (a b c g h i)
+  Block with 6 witnesses: , much ...  (g h i a b c)
   With or without transposition: tokens at a, b, c cannot be in two places in output
   To be addressed: Different issue with and without transposition
 
@@ -168,17 +168,25 @@ def determineOverlapTokenCategories(overlapTokens: TokenRange): Seq[OverlapGroup
     graph, which works only if there is no transposition, which cannot be assumed
   What to do instead:
 
-  Phase 1: Detect conflict
-    0. Detect blocks that have same tokens before building traversal graph (requires
-      no decisions, all information is available)
-  Phase 2: Handle conflict
+    Note: Perform in both phase 1 and phase 2
     1. Build traversal graph (needs block order per witness, which we can still do
-      because duplication happens at end of one and beginning of other), annotate
-      blocks identified in preceding step (may have to change code that checks for
-      backwards movement in any witness)
-    2. Traverse and resolve transpositions, repetitions, defer duplicate-token issue
-    3. Resolve duplicate token issue after traversing the traversal graph
-      to derive alignment (we're already doing this, but not entirely correctly)
+       because duplication happens at end of one and beginning of other)
+    2. Go over all edges, checking source + target, including for each combination in
+       transposed blocks. Create new graph that creates edges (and, therefore, nodes)
+       only if there is token reuse (and, if so, also record transposition).
+       (NB: We can visualize the two graphs together in GraphViz at this point)
+    3. Traverse and resolve transpositions, repetitions, defer duplicate-token issue,
+       except that avoid double-counting. (We already do this for transposition; now
+       we'll do it also for token reuse, even without transposition.)
+    4. We now have best path, so adjust blocks to resolve duplicate token issue (we're
+       already doing this, but not entirely correctly) as we convert path through
+       traversal graph into alignment.
+
+    Can it happen that a phase 1 block and a phase 2 zone have repeated tokens? We
+       think not, but if we're wrong, we can make a final check over the complete
+       alignment for repetation at the seams of a phase 1 block and phase 2 zone.
+
+    In debug mode, assert that every token in GTa appears exactly once in alignment.
 
   Why: Resolution depends on consecutive blocks, and therefore on alignment,
     and therefore on completion of deriving alignment from traversal-graph
@@ -187,6 +195,8 @@ def determineOverlapTokenCategories(overlapTokens: TokenRange): Seq[OverlapGroup
     AB BC CA resolve B, C
     BC CA AB resolve C, A
     CA AB BC resolve A, B
+  First develop for two, then test three to see what happens
+
 * */
 def findBlockOverlap(
     first: FullDepthBlock,
