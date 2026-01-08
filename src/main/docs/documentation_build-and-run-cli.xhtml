@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Build and run CLI (CollateX Reptilian documentation)</title>
+    </head>
+    <body>
+        <h1>CollateX Reptilian Documentation: Build and run CLI</h1>
+        <section>
+            <h2>General</h2>
+            <p>Built and tested with java 24 and 25 (openjdk).</p>
+            <p>We use daily build of IntelliJ and Scala plugin.</p>
+        </section>
+        <section>
+            <h2>To build on the command line</h2>
+            <ol>
+                <li><p><kbd>cd</kbd> into project root directory</p></li>
+                <li><p>Type <kbd>sbt</kbd> to launch <code>sbt</code> shell</p></li>
+                <li><p>Type <kbd>assembly</kbd> to create fat jar in <i>target/scala-3.7.1</i> with
+                        filename <i>collatex-reptilian-0.1.0-SNAPSHOT.jar</i>. Ignore
+                    warnings.</p></li>
+                <li><p>Exit <code>sbt</code> shell</p></li>
+            </ol>
+        </section>
+        <section>
+            <h2>To run from from CLI</h2>
+            <p>Type <kbd>java -cp collatex-reptilian-0.1.0-SNAPSHOT.jar
+                    net.collatex.reptilian.manifest &lt;path-to-xml-or-json-manifest&gt;</kbd></p>
+            <p>For example, if working directory is <i>target/scala-3.7.1</i>: <code>java -cp
+                    collatex-reptilian-0.1.0-SNAPSHOT.jar net.collatex.reptilian.manifest
+                    ../../src/main/data/manifest/sample-manifest.json</code></p>
+            <p>Default behavior outputs, to stdout, plain-text alignment table with one witness per
+                row and alignment points in columns. Documentation of command-line options is
+                available by typing <kbd>java -cp collatex-reptilian-0.1.0-SNAPSHOT.jar
+                    net.collatex.reptilian.manifest</kbd>, that is, by declining to provide a
+                manifest. Currently the output is:</p>
+            <pre><![CDATA[Usage: java -jar collatex-reptilian-<version>.jar <manifest-filename> [options]
+                        
+<manifest-filename> must end with '.xml' or '.json'. See TBA for structural description.
+
+Options:
+
+-f, --format <formats...>
+    Space-separated list of output formats (one or more values required if '--format' switch is present).
+    Allowed formats:
+    ribbon        Alignment ribbon (HTML)
+    table         Plain-text table, horizontal (one row per witness) (default)
+    table-h       Same as "table"
+    table-v       Plain-text table, vertical (one column per witness)
+    table-html-h  HTML table, horizontal (one row per witness)
+    table-html-v  HTML table, vertical (one column per witness)
+    json          JSON output (TBA)
+    svg           Rhine delta (variant graph) as SVG (one reading per token)
+    svg-rich      Rhine delta (variant graph) as SVG (one reading per witness per token)
+    graphml       GraphML XML output
+    tei           TEI XML (parallel segmentation)
+    xml           XML
+    See TBA for output format documentation.
+    
+-h, --html <html-option>
+    Value required if '--html' switch is present. Output file extension for HTML formats:
+    Allowed values: html (default), xhtml
+    
+-o, --output <base-path>
+    Value required if '--output' switch is present. Base path for output files (may include directories).
+    The parent directory must exist and be writable. The last path component is treated as the base filename;
+    output extensions like '.svg' or '.txt' will be appended automatically.
+    
+-d, --debug
+    Output traversal graph visualization in traversalGraphs subdirectory of output directory. Ignored if no
+    --output value is specified.
+
+Notes:
+- All switches are optional. If present, each must be followed by the required number of values.
+- Defaults apply only when switches are omitted entirely, not when provided without values, which
+is an error. ]]></pre>
+            <p>For example, the command <kbd>java -cp collatex-reptilian-0.1.0-SNAPSHOT.jar
+                    net.collatex.reptilian.manifest
+                    ../../src/main/data/manifest/sample-manifest.json -f ribbon table -h xhtml -o
+                    ../../src/main/outputs/sample</kbd> will align witness data from the specified
+                JSON manifest and 1) create alignment-ribbon and plain-text alignment-table output;
+                2) use <code>xhtml</code> (instead of default <code>html</code>) as filename
+                extension for alignment ribbon file, and 3) write outputs to the specified
+                    <i>outputs</i> directory with filenames that begin with the specified string
+                    <code>sample</code>. The rest of the filename is supplied automatically, e.g.,
+                an alignment table with one line per witness is regarded as horizontal, so the
+                output filename is <i>sample-h.txt</i>, with <code>h</code> for
+                <q>horizontal</q>.</p>
+            <p>If no <code>-o</code> value is provided, 1) only one output format is permitted and
+                2) output is written to stdout.</p>
+        </section>
+        <section>
+            <h2>To run from IntelliJ</h2>
+            <p>TODO: How to configure run configuration and set parameters</p>
+        </section>
+    </body>
+</html>
