@@ -80,7 +80,7 @@ object GtaBuilder:
           out <- buildFromWitnessData(witnesses, defaultColors)
         yield out
 
-  private def buildFromWitnessData(
+  private[reptilian] def buildFromWitnessData(
       wits: Seq[WitnessData],
       defaultColors: List[String]
   ): Either[String, (Vector[TokenEnum], List[Siglum], List[String], List[Option[String]])] =

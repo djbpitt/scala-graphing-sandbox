@@ -6,14 +6,24 @@ import scala.util.Using
 import scala.util.matching.Regex
 
 // For config.yaml
-case class Config(tokensPerWitnessLimit: Option[Int] = None, tokenPattern: String, defaultColors: List[String])
-    derives YamlCodec
-case class ResolvedConfig(tokensPerWitnessLimit: Int, tokenPattern: Regex, defaultColors: List[String])
+case class Config(
+    tokensPerWitnessLimit: Option[Int] = None,
+    tokenPattern: String,
+    defaultColors: List[String],
+    defaultPort: Int
+) derives YamlCodec
+case class ResolvedConfig(
+    tokensPerWitnessLimit: Int,
+    tokenPattern: Regex,
+    defaultColors: List[String],
+    defaultPort: Int
+)
 object ResolvedConfig {
   def from(c: Config): ResolvedConfig = ResolvedConfig(
     tokensPerWitnessLimit = c.tokensPerWitnessLimit.getOrElse(Int.MaxValue),
     tokenPattern = Regex(c.tokenPattern),
-    defaultColors = c.defaultColors
+    defaultColors = c.defaultColors,
+    defaultPort = c.defaultPort
   )
 }
 def loadResolvedConfig(resourceName: String = "config.yaml"): Either[String, ResolvedConfig] =
