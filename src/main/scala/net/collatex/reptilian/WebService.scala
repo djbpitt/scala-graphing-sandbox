@@ -74,7 +74,7 @@ object WebService extends IOApp {
         val (gTa: Vector[TokenEnum], displaySigla: List[Siglum], colors: List[String], fonts: List[Option[String]]) =
           buildFromWitnessData(witnessData, defaultColors).getOrElse(throw new RuntimeException("Oops!"))
         val root = createAlignmentRibbon(gTa, Set(), false)
-        val table: Unit = displayDispatch(root, gTa, displaySigla, colors, Map.empty)
+        val table: Unit = displayDispatch(root, gTa, displaySigla, colors, fonts, Map.empty)
         Ok(table.toString).map(_.withContentType(`Content-Type`(MediaType.application.json)))
       }
       .handleErrorWith { _ =>

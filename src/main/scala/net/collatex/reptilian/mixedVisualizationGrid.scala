@@ -259,7 +259,7 @@ def buildRibbonFontEnv(
     .map { fam =>
       if (fam == defaultFamily) lineBoxPx(defaultFont)
       else {
-        val f = TextWidth.FontUtils.fontOrError(fam, sizePt = 16f) // you’ve standardized on 16pt
+        val f = TextWidth.FontUtils.fontOrError(fam, sizePt = 16f) // standardized on 16pt
         lineBoxPx(f)
       }
     }
@@ -311,8 +311,6 @@ def buildRibbonFontEnv(
   *   Colors used in ribbon visualization
   * @param fonts
   *   Optional user-supplied witness-specific fonts
-  * @param gTa
-  *   Global token array
   * @return
   *   <html> element in HTML namespace, with embedded SVG
   */
@@ -320,8 +318,7 @@ def createHorizontalRibbons(
     root: AlignmentRibbon,
     displaySigla: List[Siglum],
     displayColors: List[String],
-    fonts: List[Option[String]],
-    gTa: Vector[TokenEnum]
+    fonts: List[Option[String]]
 ): scala.xml.Node =
   val gTaSigla = displaySigla.indices.toList
   val env = buildRibbonFontEnv(fonts)
