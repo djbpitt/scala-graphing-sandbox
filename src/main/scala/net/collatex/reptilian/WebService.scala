@@ -69,8 +69,8 @@ object WebService extends IOApp {
         val witnessData = jsonToWitnessData(jsonString, cfg).getOrElse(throw new RuntimeException("Oops"))
         val defaultColors = List("peru", "orange", "yellow", "green", "blue", "violet")
         val (gTa: Vector[TokenEnum], displaySigla: List[Siglum], colors: List[String], fonts: List[Option[String]]) =
-          buildFromWitnessData(witnessData, cfg, defaultColors).getOrElse(throw new RuntimeException("Oops!"))
-        val root = createAlignmentRibbon(gTa)
+          buildFromWitnessData(witnessData, defaultColors).getOrElse(throw new RuntimeException("Oops!"))
+        val root = createAlignmentRibbon(gTa, Set(), false)
         val table: Unit = displayDispatch(root, gTa, displaySigla, colors, Map.empty)
         Ok(table.toString).map(_.withContentType(`Content-Type`(MediaType.application.json)))
       }
