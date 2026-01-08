@@ -49,6 +49,7 @@ object WebService extends IOApp {
    * Note that the manifest requires a name
    */
 
+  // TODO: Currently just echoes input (all fields)
   private val multiPartService = HttpRoutes.of[IO] { case req @ POST -> Root / "multipart" =>
     for { // Needs Logger[IO].debug rather than logger.debug
       _ <- Logger[IO].debug(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}")
@@ -58,7 +59,9 @@ object WebService extends IOApp {
     } yield resp
   }
 
-  // TODO: Currently just echoes JSON input
+  // TODO: Apparently creates alignment table using regular display functions,
+  // which write to stdout (or disk) as side effect without returning value,
+  // so returns `()`
   private val reptilianService = HttpRoutes.of[IO] { case req @ POST -> Root =>
     val responseIO: IO[Response[IO]] = req
       .as[ujson.Value]

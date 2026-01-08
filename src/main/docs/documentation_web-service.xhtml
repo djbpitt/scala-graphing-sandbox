@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Web service (CollateX Reptilian documentation)</title>
+    </head>
+    <body>
+        <h1>CollateX Reptilian Documentation: Web service</h1>
+        <section>
+            <section>
+                <h2>General</h2>
+                <p>Default port is 8082 (specified in config.yaml)</p>
+            </section>
+            <section>
+                <h2>Default API</h2>
+                <pre> curl -X POST http://localhost:8082 -d @sample-manifest.json</pre>
+                <p>Currently (apparently) creates plain-text alignment table using regular display
+                    functions, that is, as side effect, without returning a value, so function
+                    returns just <code>()</code>.</p>
+            </section>
+            <section>
+                <h2>Multipart API</h2>
+                <pre>curl -X POST http://localhost:8082/multipart \
+   -F 'formats=ribbon,svg' \
+   -F 'manifest=@validManifest.json;type=application/json'</pre>
+                <p>Note that the manifest requires a name.</p>
+                <p>Currently just echoes input (all fields).</p>
+            </section>
+            <hr />
+            <section>
+                <h2>Misc</h2>
+                <p>To test connectivity</p>
+                <pre>curl -X POST http://localhost:8082/hello/Ronald</pre>
+                <p>Returns <q>Hello Ronald</q></p>
+            </section>
+        </section>
+    </body>
+</html>
