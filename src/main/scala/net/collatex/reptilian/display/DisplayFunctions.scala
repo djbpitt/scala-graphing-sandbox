@@ -47,6 +47,7 @@ object DisplayFunctions {
       gTa: Vector[TokenEnum],
       displaySigla: List[Siglum],
       displayColors: List[String],
+      fonts: List[Option[String]],
       argMap: Map[String, Set[String]]
   ): Unit =
     // Default colors are used only when colors are not specified in the XML or JSON manifest
@@ -59,7 +60,7 @@ object DisplayFunctions {
       case "table-html-h"      => emitTableHorizontalHTML(root, displaySigla, gTa, outputBaseFilename, htmlExtension)
       case "table-html-v"      => emitTableVerticalHTML(root, displaySigla, gTa, outputBaseFilename, htmlExtension)
       case "ribbon" =>
-        emitAlignmentRibbon(root, displaySigla, displayColors, outputBaseFilename, htmlExtension)
+        emitAlignmentRibbon(root, displaySigla, displayColors, fonts, outputBaseFilename, htmlExtension)
       // Both Rhine delta formats use same output function with different values of Boolean 'rich' parameter
       case "svg"      => emitSvgGraph(root, displaySigla, outputBaseFilename)
       case "svg-rich" => emitSvgGraph(root, displaySigla, outputBaseFilename, true)
@@ -438,11 +439,12 @@ object DisplayFunctions {
       alignment: AlignmentRibbon,
       displaySigla: List[Siglum],
       displayColors: List[String],
+      fonts: List[Option[String]],
       outputBaseFilename: Set[String], // either empty or single string (validated in parsArgs())
       htmlExtension: Set[String]
   ): Unit =
     val doctypeHtml: DocType = DocType("html")
-    val horizontalRibbons = createHorizontalRibbons(alignment, displaySigla, displayColors)
+    val horizontalRibbons = createHorizontalRibbons(alignment, displaySigla, displayColors, fonts)
     if outputBaseFilename.isEmpty then // Write to stdout
       Using.resource(new PrintWriter(Console.out)) { writer =>
         XML.write(writer, horizontalRibbons, "UTF-8", xmlDecl = true, doctype = doctypeHtml)

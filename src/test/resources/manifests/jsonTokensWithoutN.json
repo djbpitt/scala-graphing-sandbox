@@ -1,0 +1,48 @@
+{
+  "witnesses": [
+    {
+      "id": "A",
+      "tokens": [
+        {
+          "t": "Some "
+        },
+        {
+          "t": "tokens "
+        },
+        {
+          "t": "A"
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "tokens": [
+        {
+          "t": "Some "
+        },
+        {
+          "t": "tokens "
+        },
+        {
+          "t": "B"
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "tokens": [
+        {
+          "t": "Some "
+        },
+        {
+          "t": "tokens ",
+          "x-extra": 123
+        },
+        {
+          "t": "C"
+        }
+      ]
+    }
+  ]
+}
+

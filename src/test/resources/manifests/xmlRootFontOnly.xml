@@ -1,0 +1,5 @@
+<witnesses xmlns="http://interedition.eu/collatex/ns/1.0" font="RootFont">
+  <witness siglum="A" url="localA.txt"/>
+  <witness siglum="B" url="localB.txt"/>
+  <witness siglum="C" url="localC.txt"/>
+</witnesses>

@@ -2,17 +2,17 @@
 # tokensPerWitnessLimit will default to Int.MaxValue unless we specify an integer here
 # DefaultPort for web service: 8082
 tokenPattern: '(?:\w+|[^\w\s])\s*' # must be valid as regex, use non-capturing group for clarity
-defaultColors: # must be non-empty list of strings
-  - '#ff7d94'
-  - '#52fece'
-  - '#e074c0'
-  - '#abf8a3'
-  - '#93a034'
-  - '#01a9fd'
-  - '#d1883b'
-  - '#54a371'
-  - '#ff9982'
-  - '#b7f3ca'
-  - '#9b8bc2'
-  - '#fbbac9'
 defaultPort: 8082
+defaultColors: # from https://colorbrewer2.org/#type=qualitative&scheme=Set3&n=12
+  - '#8dd3c7'
+  - '#ffffb3'
+  - '#bebada'
+  - '#fb8072'
+  - '#80b1d3'
+  - '#fdb462'
+  - '#b3de69'
+  - '#fccde5'
+  - '#d9d9d9'
+  - '#bc80bd'
+  - '#ccebc5'
+  - '#ffed6f'

@@ -2,17 +2,14 @@
   "witnesses": [
     {
       "id": "A",
-      "content": "Some content A",
-      "color": "red"
+      "content": "Some content A"
     },
     {
       "id": "B",
-      "content": "Some content B",
-      "color": "blue"
+      "content": "Some content B"
     },
     {
       "id": "C",
-      "color": "green",
       "tokens": [
         {
           "t": "Some ",

@@ -2,17 +2,17 @@
   "witnesses": [
     {
       "id": "A",
-      "content": "Some content A",
-      "color": "red"
+      "font": "WitnessAFont",
+      "content": "Some content A"
     },
     {
       "id": "B",
-      "content": "Some content B",
-      "color": "blue"
+      "font": "WitnessBFont",
+      "content": "Some content B"
     },
     {
       "id": "C",
-      "color": "green",
+      "font": "WitnessCFont",
       "tokens": [
         {
           "t": "Some ",

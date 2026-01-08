@@ -8,6 +8,7 @@
     {
       "id": "B",
       "content": "Some content B",
+      "font": "WitnessBFont",
       "color": "blue"
     },
     {

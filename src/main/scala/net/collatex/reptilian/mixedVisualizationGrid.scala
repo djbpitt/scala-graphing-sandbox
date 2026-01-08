@@ -3,6 +3,25 @@ package net.collatex.reptilian
 import scala.annotation.{tailrec, unused}
 import scala.xml.{Elem, NodeSeq, Unparsed}
 import math.Ordered.orderingToOrdered
+import net.collatex.reptilian.display.TextWidth
+import net.collatex.reptilian.display.TextWidth.FontStack
+
+import java.awt.Font
+
+// Helper to manage actual font-specific text-width measurers
+def buildWitnessMeasurers(fonts: List[Option[String]]): Vector[TextWidth.Measurer] = {
+  // Resolve Option[String] (possibly a CSS stack) → concrete installed family
+  val families: Vector[String] =
+    fonts.iterator
+      .map(_.fold(TextWidth.defaultFamily)(stack => TextWidth.FontStack.firstInstalledFamily(stack)))
+      .toVector
+
+  // Prime the pool once per distinct family (cheap; ensures nice errors early)
+  families.distinct.foreach(TextWidth.Pool.measurerForExactFamily)
+
+  // Return one measurer per witness, aligned with input
+  families.map(TextWidth.Pool.measurerForExactFamily)
+}
 
 /* ====================================================================== */
 /* Horizontal ribbons                                                     */
@@ -12,6 +31,7 @@ import math.Ordered.orderingToOrdered
 val flowLength = 80d
 
 /* Constants for computeTokenTextLength() */
+// FIXME: Remove this once we're processing user-specified and default fonts
 val tnr16Metrics = scala.xml.XML.load(this.getClass.getResourceAsStream("/tnr_16_metrics.xml"))
 val tnrCharLengths = ((tnr16Metrics \ "character")
   .map(e => ((e \ "@str").text.head, (e \ "@width").toString.toDouble))
@@ -189,6 +209,96 @@ def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
       nextInput(ins.tail, newAcc)
   nextInput(inputs, Map[Set[String], Int]())
 
+// Holds everything the ribbon builder needs
+final case class RibbonFontEnv(
+    families: Vector[String], // resolved per-witness family (same length/order as input)
+    measurers: Vector[TextWidth.Measurer], // per-witness measurer (returns widths in CSS px)
+    ribbonHeightPx: Float // uniform rect height for all ribbons (CSS px)
+)
+
+/** Build measurers and a uniform ribbon height (px) from witness fonts + default.
+  *   - fonts: per-witness font names or CSS stacks (None ⇒ defaultFamily)
+  *   - defaultFamily: your resolved default family (from TextWidth.defaultFamily)
+  *   - defaultFont: the same default AWT Font at 16pt (from TextWidth.defaultFont)
+  *   - paddingTop/Bottom: extra vertical breathing room added to the tallest line-box
+  *
+  * Call with buildRibbonFontEnv(fonts, fam, font, 1f, 1f) (specify everything)
+  *
+  * Primarily for testing; in production we'll usually call the convenience overload below to supply default font
+  * information
+  */
+def buildRibbonFontEnv(
+    fonts: List[Option[String]],
+    defaultFamily: String,
+    defaultFont: Font,
+    paddingTop: Float,
+    paddingBottom: Float
+): RibbonFontEnv = {
+
+  // 1) Resolve each witness Option[String] → concrete installed family
+  val families: Vector[String] =
+    fonts.iterator
+      .map(_.fold(defaultFamily)(stack => TextWidth.FontStack.firstInstalledFamily(stack)))
+      .toVector
+
+  // 2) Per-witness measurers (Pool returns px if you wired Units.CssPx there)
+  //    Priming is optional; getOrElseUpdate will handle it.
+  val measurers: Vector[TextWidth.Measurer] =
+    families.map(TextWidth.Pool.measurerForExactFamily)
+
+  // 3) Uniform height: compute max line-box across distinct families (in CSS px)
+  val frcPx = TextWidth.frcFor(antialiased = true, fractional = true, units = TextWidth.Units.CssPx)
+
+  inline def lineBoxPx(f: Font): Float = {
+    val lm = f.getLineMetrics("Hg", frcPx) // font-wide metrics at this size
+    lm.getAscent + lm.getDescent + lm.getLeading
+  }
+
+  val distinctFamilies = (families :+ defaultFamily).distinct
+  val maxLineBoxPx: Float = distinctFamilies
+    .map { fam =>
+      if (fam == defaultFamily) lineBoxPx(defaultFont)
+      else {
+        val f = TextWidth.FontUtils.fontOrError(fam, sizePt = 16f) // you’ve standardized on 16pt
+        lineBoxPx(f)
+      }
+    }
+    .maxOption
+    .getOrElse(lineBoxPx(defaultFont))
+
+  val ribbonHeightPx = math.ceil(maxLineBoxPx + paddingTop + paddingBottom).toFloat
+
+  RibbonFontEnv(families, measurers, ribbonHeightPx)
+}
+
+// convenience overload: source defaults from TextWidth
+// Call with val envA = buildRibbonFontEnv(fonts), supplies 1f top and bottom padding
+def buildRibbonFontEnv(
+    fonts: List[Option[String]]
+): RibbonFontEnv =
+  buildRibbonFontEnv(
+    fonts = fonts,
+    defaultFamily = TextWidth.defaultFamily,
+    defaultFont = TextWidth.defaultFont,
+    paddingTop = 1f,
+    paddingBottom = 1f
+  )
+
+// Convenience to allow custom padding but still use TextWidth defaults
+// Call with buildRibbonFontEnv(fonts, 2f, 2f)
+def buildRibbonFontEnv(
+    fonts: List[Option[String]],
+    paddingTop: Float,
+    paddingBottom: Float
+): RibbonFontEnv =
+  buildRibbonFontEnv(
+    fonts = fonts,
+    defaultFamily = TextWidth.defaultFamily,
+    defaultFont = TextWidth.defaultFont,
+    paddingTop = paddingTop,
+    paddingBottom = paddingBottom
+  )
+
 /** createHorizontalRibbons()
   *
   * Entry point for creating horizontal alignment ribbon plot
@@ -199,20 +309,27 @@ def computeWitnessSimilarities(inputs: Vector[Iterable[Set[String]]]) =
   *   Sigla values used for output
   * @param displayColors
   *   Colors used in ribbon visualization
+  * @param fonts
+  *   Optional user-supplied witness-specific fonts
+  * @param gTa
+  *   Global token array
   * @return
   *   <html> element in HTML namespace, with embedded SVG
   */
 def createHorizontalRibbons(
     root: AlignmentRibbon,
     displaySigla: List[Siglum],
-    displayColors: List[String]
+    displayColors: List[String],
+    fonts: List[Option[String]],
+    gTa: Vector[TokenEnum]
 ): scala.xml.Node =
   val gTaSigla = displaySigla.indices.toList
+  val env = buildRibbonFontEnv(fonts)
+  val ribbonHeightPx = env.ribbonHeightPx
+  val measurers = env.measurers
 
-  /** Constants */
-  val ribbonWidth = 18
-  // val missingTop = allSigla.size * ribbonWidth * 2 + ribbonWidth / 2
-  val missingTop = gTaSigla.size * ribbonWidth * 2 + ribbonWidth / 2
+  // val missingTop = allSigla.size * ribbonHeightPx * 2 + ribbonHeightPx / 2
+  val missingTop = gTaSigla.size * ribbonHeightPx * 2 + ribbonHeightPx / 2
   val witnessCount = gTaSigla.size
   val nodeSequence: Vector[NumberedNode] = flattenNodeSeq(root)
   val horizNodes = createHorizNodeData(nodeSequence, gTaSigla)
@@ -263,7 +380,7 @@ def createHorizontalRibbons(
   // cells.map(e => witnessSimilarities(e)).foreach(System.err.println)
    */
   /* End of computing optimal witness order */
-  val totalHeight = ribbonWidth * (witnessCount * 3) - ribbonWidth / 2
+  val totalHeight = ribbonHeightPx * (witnessCount * 3) - ribbonHeightPx / 2
 
   val gradientMap: Map[WitId, String] =
     displayColors.zipWithIndex.map((color, offset) => offset -> List("url(#", color, "Gradient)").mkString("")).toMap
@@ -275,21 +392,33 @@ def createHorizontalRibbons(
 
   def plotRect(vOffset: Double, node: HorizNodeData, fillColor: String, top: Double) =
     <rect x="0"
-       y={(vOffset * ribbonWidth + top).toString}
+       y={(vOffset * ribbonHeightPx + top).toString}
        width={node.alignmentWidth.toString}
-       height={ribbonWidth.toString}
+       height={ribbonHeightPx.toString}
        fill={fillColor}
     />
-  def plotReading(vOffset: Int, node: HorizNodeData, top: Double, hngm: (HorizNodeGroupMember, Int)) =
-    <foreignObject x="1"
-                   y={(vOffset * ribbonWidth + top - 2).toString}
-                   width={node.alignmentWidth.toString}
-                   height={ribbonWidth.toString}>
-      <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">{
-      s"${formatSiglum(hngm._1.witId)}: "
-    }</span>
-        {hngm._1.reading}</div>
-    </foreignObject>
+  def plotReading(
+      vOffset: Int,
+      node: HorizNodeData,
+      top: Double,
+      font: Option[String],
+      hngm: (HorizNodeGroupMember, Int)
+  ) =
+    val cls: String = font.map(f => s""" class="$f"""").getOrElse("") // class is a reserved word
+    val readingSpan: Elem =
+      font match
+        case Some(f) => <span class={s"$f"}>{hngm._1.reading}</span>
+        case None    => <span>{hngm._1.reading}</span>
+    val result =
+      <foreignObject x="1"
+         y={(vOffset * ribbonHeightPx + top - 2).toString}
+         width={node.alignmentWidth.toString}
+         height={ribbonHeightPx.toString}>
+        <div xmlns="http://www.w3.org/1999/xhtml"><span class="sigla">{
+        s"${formatSiglum(hngm._1.witId)}: "
+      }</span> {readingSpan}</div>
+      </foreignObject>
+    result
 
   /** plotOneAlignmentPoint()
     *
@@ -307,15 +436,16 @@ def createHorizontalRibbons(
       def nextGroup(groups: Vector[HorizNodeGroup], top: Double, acc: Vector[Elem]): Vector[Elem] =
         if groups.isEmpty then acc
         else
-          val groupHeight = (groups.head.members.size + 1) * ribbonWidth // Include space below group
+          val groupHeight = (groups.head.members.size + 1) * ribbonHeightPx // Include space below group
           val newG =
             <g>{
               for e <- groups.head.members.zipWithIndex yield
                 val fillColor = displayColors(e._1.witId)
+                val font = fonts(e._1.witId)
                 val vOffset = e._2
                 Seq(
                   plotRect(vOffset, node, fillColor, top),
-                  plotReading(vOffset, node, top, e)
+                  plotReading(vOffset, node, top, font, e)
                 )
             }</g>
           nextGroup(groups.tail, top + groupHeight, acc :+ newG)
@@ -329,9 +459,9 @@ def createHorizontalRibbons(
       Seq(
         plotRect(vOffset, node, fillColor, top),
         <foreignObject x="1"
-                       y={(vOffset * ribbonWidth + top - 2).toString}
+                       y={(vOffset * ribbonHeightPx + top - 2).toString}
                        width={node.alignmentWidth.toString}
-                       height={ribbonWidth.toString}>
+                       height={ribbonHeightPx.toString}>
           <div xmlns="http://www.w3.org/1999/xhtml">
             <span class="sigla">{s"(${formatSiglum(e._1)})"}</span>
           </div>
@@ -368,16 +498,16 @@ def createHorizontalRibbons(
       if groups.isEmpty then acc
       else
         val newAcc = acc ++ groups.head.members.zipWithIndex
-          .map(e => e._1.witId -> (top + e._2 * ribbonWidth))
+          .map(e => e._1.witId -> (top + e._2 * ribbonHeightPx))
           .toMap
-        nextGroup(groups.tail, top + (groups.head.members.size + 1) * ribbonWidth, newAcc)
+        nextGroup(groups.tail, top + (groups.head.members.size + 1) * ribbonHeightPx, newAcc)
     def missings(missings: Vector[WitId], top: Double): Map[WitId, Double] =
-      missings.zipWithIndex.map(e => e._1 -> (top + e._2 * ribbonWidth)).toMap
+      missings.zipWithIndex.map(e => e._1 -> (top + e._2 * ribbonHeightPx)).toMap
     def computeRibbonYPos(node: HorizNodeData): Map[WitId, Double] =
-      val result = nextGroup(node.groups, ribbonWidth / 2, Map.empty[WitId, Double]) ++
+      val result = nextGroup(node.groups, ribbonHeightPx / 2, Map.empty[WitId, Double]) ++
         missings(
           node.missing,
-          missingTop + ribbonWidth / 2
+          missingTop + ribbonHeightPx / 2
         )
       result
 
@@ -390,7 +520,7 @@ def createHorizontalRibbons(
         s"M 0,$leftYPos L 10,$leftYPos C 40,$leftYPos 40,$rightYPos 70,$rightYPos L 80,$rightYPos"
       }
             stroke={gradientMap(e)}
-            stroke-width={ribbonWidth.toString}
+            stroke-width={ribbonHeightPx.toString}
             fill="none"/>
     )
     <div class="flow">
@@ -458,7 +588,7 @@ def createHorizontalRibbons(
                 <rect x="1"
                       y={(missingTop + 1).toString}
                       width={node.alignmentWidth.toString}
-                      height={(node.missing.size * ribbonWidth).toString}
+                      height={(node.missing.size * ribbonHeightPx).toString}
                       fill="none"
                       stroke="black"
                       stroke-width="2"
@@ -469,17 +599,24 @@ def createHorizontalRibbons(
           val newAcc = acc :+ <rect x="1"
                 y={(top + 1).toString}
                 width={node.alignmentWidth.toString}
-                height={(groups.head.members.size * ribbonWidth).toString}
+                height={(groups.head.members.size * ribbonHeightPx).toString}
                 fill="none"
                 stroke="black"
                 stroke-width="2"
                 rx="3"/>
-          val newTop = top + (groups.head.members.size + 1) * ribbonWidth
+          val newTop = top + (groups.head.members.size + 1) * ribbonHeightPx
           nextGroup(groups.tail, newTop, newAcc)
       nextGroup(groups, 0, Vector.empty[Elem])
     wrapGroups(node.groups)
 
   val contents = plotAllAlignmentPointsAndRibbons(horizNodes)
+  /* Create css classes for distinct font values */
+  val fontClasses: String = fonts.flatten.distinct
+    .map { font =>
+      s".$font {font-family: '$font';}"
+    }
+    .mkString("\n")
+
   /* Create gradient stops for each color, using colorname + "Gradient" as @id of <linearGradient> wrapper */
   val gradients =
     <defs>{
@@ -512,8 +649,8 @@ def createHorizontalRibbons(
                |  background: linear-gradient(
                |    to bottom,
                |    gainsboro 0,
-               |    gainsboro ${missingTop - ribbonWidth / 2}px,
-               |    gray ${missingTop - ribbonWidth / 2}px,
+               |    gainsboro ${missingTop - ribbonHeightPx / 2}px,
+               |    gray ${missingTop - ribbonHeightPx / 2}px,
                |    gray 100%
                |  );
                |}
@@ -542,8 +679,9 @@ def createHorizontalRibbons(
                |  font-family: "Times New Roman"; /* Match font metrics */
                |  font-size: 16px; /* needed by Safari */
                |  padding: .1em .1em 0 .1em;
-               |  line-height: ${ribbonWidth - 1}px;
-               |}""".stripMargin
+               |  line-height: ${ribbonHeightPx - 1}px;
+               |}
+               |$fontClasses""".stripMargin
   val js = """<![CDATA["use strict";
              |document.addEventListener("DOMContentLoaded", function () {
              |  const groups = document.getElementsByClassName("group");

@@ -1,0 +1,57 @@
+{
+  "witnesses": [
+    {
+      "id": "A",
+      "tokens": [
+        {
+          "t": "Some ",
+          "n": "some"
+        },
+        {
+          "t": "tokens ",
+          "n": "tokens"
+        },
+        {
+          "t": "A",
+          "n": "A"
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "tokens": [
+        {
+          "t": "Some ",
+          "n": "some"
+        },
+        {
+          "t": "tokens ",
+          "n": "tokens"
+        },
+        {
+          "t": "B",
+          "n": "B"
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "tokens": [
+        {
+          "t": "Some ",
+          "n": "some"
+        },
+        {
+          "t": "tokens ",
+          "n": "tokens",
+          "x-extra": 123
+        },
+        {
+          "t": "C",
+          "n": "C"
+        }
+      ]
+    }
+  ]
+}
+

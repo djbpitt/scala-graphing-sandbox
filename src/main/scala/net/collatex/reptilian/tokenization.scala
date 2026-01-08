@@ -44,7 +44,7 @@ enum TokenEnum:
   override def toString: String = this match {
     case x:TokenEnum.TokenHG => (x.t, x.n, x.w, x.g).toString
     case x:TokenEnum.Token => (x.t, x.n, x.w, x.g, x.other).toString
-    case _:TokenEnum.TokenSep => "[TokenSep]"
+    case x:TokenEnum.TokenSep => s"[TokenSep w=${x.w}, g=${x.g}]"
   }
   /* Extra token fields for pretokenized JSON input; unused in TokenSep. */
   def other: Map[String, ujson.Value] = Map.empty

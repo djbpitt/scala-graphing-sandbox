@@ -45,7 +45,7 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
 @main def manifest(args: String*): Unit =
 
   val parsedValidated
-      : Either[String, (AlignmentRibbon, Vector[TokenEnum], List[Siglum], List[String], Map[String, Set[String]])] =
+      : Either[String, (AlignmentRibbon, Vector[TokenEnum], List[Siglum], List[String], List[Option[String]], Map[String, Set[String]])] =
     for {
       ResolvedConfig(tokensPerWitnessLimit, tokenPattern, defaultColors, defaultPort) <- loadResolvedConfig()
       // Parse args (two-step unpacking because Scala chokes on one-step version)
@@ -56,14 +56,14 @@ def retrieveManifestJson(source: ManifestSource): Either[String, String] = {
       gTaBundle <- GtaBuilder.build(manifestData, cfg, defaultColors)
       (gTa, displaySigla, colors, fonts) = gTaBundle
       root = createAlignmentRibbon(gTa, argMap.getOrElse("--output", Set()), argMap.contains("--debug"))
-    } yield (root, gTa, displaySigla, colors, argMap)
+    } yield (root, gTa, displaySigla, colors, fonts, argMap)
 
   parsedValidated match
     case Left(e) =>
       System.err.println(e)
 
-    case Right((root, gTa, displaySigla, colors, argMap)) =>
-      displayDispatch(root, gTa, displaySigla, colors, argMap)
+    case Right((root, gTa, displaySigla, colors, fonts, argMap)) =>
+      displayDispatch(root, gTa, displaySigla, colors, fonts, argMap)
 
 /** Resolves manifest location (input as string) as absolute path (if local) or URL (if remote)
   *
