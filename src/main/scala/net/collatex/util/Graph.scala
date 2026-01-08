@@ -4,6 +4,7 @@ import cats.implicits.catsSyntaxSemigroup
 
 import scala.annotation.{tailrec, targetName}
 import scala.collection.immutable.Set
+import scala.collection.mutable
 
 // @author: Ronald Haentjens Dekker
 // This class represents a Directed Acyclic Graph.
@@ -11,63 +12,63 @@ import scala.collection.immutable.Set
 // The implementation is based on adjacency maps.
 // The N generic is the node
 
-// Labelled nodes are classes, not case classes
-// so that the label does not determine its identity
-// The identity is determined by the memory pointer
-class LabelledNode(label: String)
-
 // constructor
 object Graph:
   def empty[N]: Graph[N] = EmptyGraph()
   def node[N](node: N): Graph[N] = SingleNodeGraph(node)
   def edge[N](source: N, target: N): Graph[N] =
-    node(source) * node(target)
-
-  def lNode(label: String): Graph[LabelledNode] =
-    val labelledNode = LabelledNode(label)
-    val graph = SingleNodeGraph[LabelledNode](labelledNode)
-    graph
+    DirectedEdge(source, target)
 
 enum Graph[N]:
   case EmptyGraph() extends Graph[N]
   case SingleNodeGraph(node: N)
+  case DirectedEdge(source: N, target: N)
   case DirectedGraph(adjacencyMap: Map[N, (Set[N], Set[N])])
 
   def nodeSize: Int =
     this match {
       case _: EmptyGraph[N]      => 0
       case _: SingleNodeGraph[N] => 1
+      case _: DirectedEdge[N]    => 2
       case g: DirectedGraph[N]   => g.adjacencyMap.size
     }
 
-  def incomingEdges(node: N): Set[(N, N)] =
+  def incomingEdges(node: N): Set[DirectedEdge[N]] =
     (this, node) match
       case (_: EmptyGraph[N], _)      => Set.empty
       case (_: SingleNodeGraph[N], _) => Set.empty
+      case (x: DirectedEdge[N], _) =>
+        if (node == x.target) Set(x)
+        else Set.empty
       case (g: DirectedGraph[N], n) =>
         g.adjacencyMap(n)
           ._1
-          .map(e => (e, node))
+          .map(e => DirectedEdge(e, node))
 
-  def outgoingEdges(node: N): Set[(N, N)] =
+  def outgoingEdges(node: N): Set[DirectedEdge[N]] =
     (this, node) match
       case (_: EmptyGraph[N], _)      => Set.empty
       case (_: SingleNodeGraph[N], _) => Set.empty
+      case (x: DirectedEdge[N], _) =>
+        if (node == x.source) Set(x)
+        else Set.empty
       case (g: DirectedGraph[N], n) =>
         g.adjacencyMap(n)
           ._2
-          .map(e => (node, e))
+          .map(e => DirectedEdge(node, e))
 
   def leafs(): Set[N] =
     this match
       case _: EmptyGraph[N]      => Set.empty
       case g: SingleNodeGraph[N] => Set(g.node)
+      case e: DirectedEdge[N]    => Set(e.target)
       case g: DirectedGraph[N]   => g.adjacencyMap.filter(t => t._2._2.isEmpty).keySet
 
   def roots(): Set[N] =
     this match
       case _: EmptyGraph[N]      => Set.empty
       case g: SingleNodeGraph[N] => Set(g.node)
+      case e: DirectedEdge[N]    => Set(e.source)
       case g: DirectedGraph[N]   => g.adjacencyMap.filter(t => t._2._1.isEmpty).keySet
 
   def toMap: Map[N, (Set[N], Set[N])] =
@@ -75,6 +76,10 @@ enum Graph[N]:
       case _: EmptyGraph[N] => Map.empty
       case g: SingleNodeGraph[N] =>
         Map.apply(g.node -> (Set.empty[N], Set.empty[N]))
+      case e: DirectedEdge[N] =>
+        val item1 = e.source -> (Set.empty[N], Set(e.target))
+        val item2 = e.target -> (Set(e.source), Set.empty[N])
+        Map.apply(item1, item2)
       case g: DirectedGraph[N] => g.adjacencyMap
 
   @targetName("overlay")
@@ -94,14 +99,21 @@ enum Graph[N]:
   // Connects two graphs with one or more edges.
   @targetName("connect")
   def *(other: Graph[N]): Graph[N] =
-    // NOTE: add single node graph, single node graph shortcut
     (this, other) match
       case (_: EmptyGraph[N], other: Graph[N]) => other
       case (one: Graph[N], _: EmptyGraph[N])   => one
       case (one: SingleNodeGraph[N], other: SingleNodeGraph[N]) =>
-        val t1: (Set[N], Set[N]) = (Set(), Set(other.node))
-        val t2: (Set[N], Set[N]) = (Set(one.node), Set())
-        DirectedGraph(Map.apply(one.node -> t1, other.node -> t2))
+        DirectedEdge(one.node, other.node)
+      case (one: SingleNodeGraph[N], other: DirectedEdge[N]) =>
+        DirectedEdge(one.node, other.source) +
+          DirectedEdge(one.node, other.target) +
+          other
+      case (one: DirectedEdge[N], other: SingleNodeGraph[N]) =>
+        other * one
+      case (_: DirectedEdge[N], _: Graph[N]) =>
+        throw new RuntimeException("Not implemented yet! Would be one leaves x other roots")
+      case (_: Graph[N], _: DirectedEdge[N]) =>
+        throw new RuntimeException("Not implemented yet! Would be one leaves x other roots")
       case (one: SingleNodeGraph[N], other: Graph[N]) =>
         // connect the node from one to all the roots of other
         // we update the pairing for one.
@@ -137,7 +149,7 @@ enum Graph[N]:
     // https://en.wikipedia.org/wiki/Topological_sorting
     // Kahn’s algorithm
     @tailrec
-    def addToSort(sorted: Vector[N], todo: Set[N], handledEdges: Set[(N, N)]): Vector[N] =
+    def addToSort(sorted: Vector[N], todo: Set[N], handledEdges: Set[DirectedEdge[N]]): Vector[N] =
       if todo.isEmpty then
         assert(
           sorted.size == this.nodeSize,
@@ -153,10 +165,7 @@ enum Graph[N]:
         val handledEdgesNew = handledEdges ++ outgoingEdgesOfCurrentNode
         val incomingEdgesOfTargetNodes =
           outgoingEdgesOfCurrentNode
-            .map((_, target) =>
-              this
-                .incomingEdges(target)
-            )
+            .map(e => this.incomingEdges(e.target))
             .filter(_.subsetOf(handledEdgesNew)) // new incoming edges of target node
         val todoNew = incomingEdgesOfTargetNodes.flatMap(_.map(_._2)) ++ todo.tail
         addToSort(
@@ -164,7 +173,38 @@ enum Graph[N]:
           todoNew,
           handledEdgesNew
         )
-    addToSort(Vector.empty[N], this.roots(), Set.empty[(N, N)])
+    addToSort(Vector.empty[N], this.roots(), Set.empty[DirectedEdge[N]])
+
+  def topologicalSortTotallyOrdered(ordering: Ordering[N]): Vector[N] =
+    // https://en.wikipedia.org/wiki/Topological_sorting
+    // Kahn’s algorithm
+    @tailrec
+    def addToSort(sorted: Vector[N], todo: mutable.PriorityQueue[N], handledEdges: Set[DirectedEdge[N]]): Vector[N] =
+      if todo.isEmpty then
+        assert(
+          sorted.size == this.nodeSize,
+          s"Cycle detected: ${sorted.size} nodes in sort but ${this.nodeSize} nodes in graph"
+        )
+        sorted
+      else
+        val current = todo.head
+        val sortedNew = sorted :+ current
+        val outgoingEdgesOfCurrentNode = this
+          .outgoingEdges(current)
+          .diff(handledEdges) // outgoing edges of current node, unvisited
+        val handledEdgesNew = handledEdges ++ outgoingEdgesOfCurrentNode
+        val incomingEdgesOfTargetNodes =
+          outgoingEdgesOfCurrentNode
+            .map(e => this.incomingEdges(e.target))
+            .filter(_.subsetOf(handledEdgesNew)) // new incoming edges of target node
+        val todoNew = incomingEdgesOfTargetNodes.flatMap(_.map(_._2)) ++ todo.tail
+        addToSort(
+          sortedNew,
+          mutable.PriorityQueue.from(todoNew)(using ordering.reverse),
+          handledEdgesNew
+        )
+
+    addToSort(Vector.empty[N], mutable.PriorityQueue.from(roots())(using ordering.reverse), Set.empty[DirectedEdge[N]])
 
   /* Compute length of longest path from root to each node
    * Assumes single root
@@ -172,13 +212,16 @@ enum Graph[N]:
   def longestPath: Map[N, Int] =
     val topSort = this.topologicalSort
     // println(s"Topological sort: $topSort")
-    topSort.tail // handle root separately
+    topSort
       .foldLeft(Map[N, Int](topSort.head -> 0))((acc, e) => // initialize root as 0
+        val incomingEdges = this.incomingEdges(e)
         val highestParentRank =
-          this
-            .incomingEdges(e) // all incoming paths
-            .map(_._1) // source nodes for incoming paths
-            .map(acc(_)) // rank of those source nodes
-            .max // only the largest
+          // handle roots separately
+          if incomingEdges.isEmpty then 0
+          else
+            incomingEdges // all incoming paths
+              .map(_._1) // source nodes for incoming paths
+              .map(acc(_)) // rank of those source nodes
+              .max // only the largest
         acc + (e -> (highestParentRank + 1)) // new node is one greater than its source
       )

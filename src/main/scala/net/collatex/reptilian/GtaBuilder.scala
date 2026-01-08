@@ -69,7 +69,7 @@ object GtaBuilder:
           _ <- validateJson(source)
           json <- retrieveManifestJson(source)
           witnesses <- jsonToWitnessData(json, cfg)
-          out <- buildFromWitnessData(witnesses, cfg, defaultColors)
+          out <- buildFromWitnessData(witnesses, defaultColors)
         yield out
 
       case ManifestData(source, ManifestFormat.Xml) =>
@@ -77,12 +77,11 @@ object GtaBuilder:
           _ <- validateXml(source)
           xml <- retrieveManifestXml(source)
           witnesses <- xmlToWitnessData(xml, md, cfg)
-          out <- buildFromWitnessData(witnesses, cfg, defaultColors)
+          out <- buildFromWitnessData(witnesses, defaultColors)
         yield out
 
   private[reptilian] def buildFromWitnessData(
       wits: Seq[WitnessData],
-      cfg: BuildConfig,
       defaultColors: List[String]
   ): Either[String, (Vector[TokenEnum], List[Siglum], List[String], List[Option[String]])] =
     final case class Acc(
@@ -234,7 +233,7 @@ object GtaBuilder:
             currentTokens.map(_.asInstanceOf[TokenEnum.Token])
           case WitObj(_, _, _, None, Some(tokens)) => // Only t and option n properties are real
             val emittedTokens = emitFromProvided(
-              tokens,
+              tokens.take(cfg.tokensPerWitnessLimit),
               currentWitOffset,
               acc.map(_.tokens.size).sum + currentWitOffset // startG
             )

@@ -6,6 +6,7 @@ import scala.collection.immutable.AbstractSet
 import scala.collection.immutable.Set
 
 // Copied and hacked from Set2 library code
+// Observes insertion order
 class SetOf2[A](elem1: A, elem2: A) extends AbstractSet[A] with StrictOptimizedIterableOps[A, Set, Set[A]] with Serializable {
   override def size: Int = 2
 
@@ -34,6 +35,7 @@ class SetOf2[A](elem1: A, elem2: A) extends AbstractSet[A] with StrictOptimizedI
   override def foreach[U](f: A => U): Unit = {
     f(elem1)
     f(elem2)
+    ()
   }
 
   override def exists(p: A => Boolean): Boolean = {

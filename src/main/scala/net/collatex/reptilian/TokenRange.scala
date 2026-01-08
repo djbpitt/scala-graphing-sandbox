@@ -33,6 +33,10 @@ enum TokenRange:
   def contains(pos: Int): Boolean = // position in gTa
     this.start <= pos && this.until > pos
 
+  def overlaps(that: TokenRange): Boolean =
+    (this.start >= that.start && this.start < that.until) ||
+      (that.start >= this.start && that.start < this.until)
+
   def length: Int =
     (this: @unchecked) match // IllegalTokenRange throws
       case _: EmptyTokenRange => 0

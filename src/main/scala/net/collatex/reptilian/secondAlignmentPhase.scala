@@ -2,7 +2,7 @@ package net.collatex.reptilian
 
 import net.collatex.reptilian.TokenEnum.*
 import net.collatex.util.Hypergraph.Hyperedge
-import net.collatex.util.{Graph, Hypergraph, SetOf2}
+import net.collatex.util.{EdgeLabeledDirectedGraph, Graph, Hypergraph, SetOf2}
 
 import scala.collection.mutable
 import os.Path
@@ -31,14 +31,19 @@ def mergeSingletonSingleton(
   val hypergraph = hyperedges.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((x, y) => y + x)
   hypergraph
 
+def createHypergraphFromSingleton(singletonTokens: Vector[Token], ta: Vector[TokenEnum]) = {
+  val singletonAsTokenRange =
+    TokenRange(start = singletonTokens.head.g, until = singletonTokens.last.g + 1, ta = ta)
+  val singletonHypergraph = AlignmentHyperedge(Set(singletonAsTokenRange))
+  singletonHypergraph
+}
 def mergeSingletonHG(
     singletonTokens: Vector[Token],
-    hg: Hypergraph[EdgeLabel, TokenRange],
-    debug: Boolean
+    hg: Hypergraph[EdgeLabel, TokenRange]
 ): Hypergraph[EdgeLabel, TokenRange] =
-  val singletonAsTokenRange =
-    TokenRange(start = singletonTokens.head.g, until = singletonTokens.last.g + 1, ta = hg.verticesIterator.next.ta)
-  mergeHgHg(hg, AlignmentHyperedge(Set(singletonAsTokenRange)), debug)
+  val ta = hg.verticesIterator.next.ta
+  val singletonHypergraph: Hyperedge[EdgeLabel, TokenRange] = createHypergraphFromSingleton(singletonTokens, ta)
+  mergeHgHg(hg, singletonHypergraph)
 
 def groupPatternsTogetherByHyperedge(
     patterns: List[AlignedPatternPhaseTwo]
@@ -54,12 +59,42 @@ def groupPatternsTogetherByHyperedge(
   if xx.exists((_, v) => v > 1) then throw RuntimeException("Two blocks conflict with each other!")
   result
 
-def mergeHgHg(
-    hg1: Hypergraph[EdgeLabel, TokenRange],
-    hg2: Hypergraph[EdgeLabel, TokenRange],
-    debug: Boolean
-): Hypergraph[EdgeLabel, TokenRange] =
-  // We do not group both hyperedges together now
+/* Notes for mergeHgHg 2025-11-20
+
+  Entry point in phase 2 is traversalGraphPhase2Old(), which
+    Has: two input values (both of type List[HyperedgeMatch], returned from detectTransposition())
+    Returns: Graph[DecisionGraphStepPhase2]
+  DecisionGraphStepPhase2 has four properties:
+    pos1: OrderPosition, (Int)
+    pos2: OrderPosition, (Int)
+    nodeType: DGNodeType, (Alignment or Skip)
+    HEMatch: HyperedgeMatch (SetOf2[Hyperedge[EdgeLabel, TokenRange]])
+  Called from mergeHgHg to create Graph[DecisionGraphStepPhase2]
+
+ */
+
+def prepareHgMatches(matchesAsSet: Set[HyperedgeMatch]) = {
+  val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
+    matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
+  // Sort by one value (head or last) and subsort by the other, with third subsort by head.label in case both
+  //  are ambiguous
+  // Keep as seq
+  // TODO: Ick! Assign both orders at once in a single val
+  val matchesSortedHead: Seq[HyperedgeMatch] = {
+    if matchesAsSet.size > 1 then
+      val ranking: Map[NodeType, OrderPosition] = matchesAsHg.rank()
+      matchesAsSet.toSeq.sortBy(e => (ranking(NodeType(e.head.label)), ranking(NodeType(e.last.label)), e.head.label))
+    else matchesAsSet.toSeq
+  }
+  val matchesSortedLast: Seq[HyperedgeMatch] = {
+    if matchesAsSet.size > 1 then
+      val ranking: Map[NodeType, OrderPosition] = matchesAsHg.rank()
+      matchesAsSet.toSeq.sortBy(e => (ranking(NodeType(e.last.label)), ranking(NodeType(e.head.label)), e.head.label))
+    else matchesAsSet.toSeq
+  }
+  (matchesAsHg, matchesSortedHead, matchesSortedLast)
+}
+def createPatterns(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeLabel, TokenRange]) = {
   // We need to capture from which hypergraph each token is coming
   val HGTokensForHG1 = identifyHGTokenRanges(hg1)
   val HGTokensForHG2 = identifyHGTokenRanges(hg2)
@@ -67,52 +102,59 @@ def mergeHgHg(
   val HGTokensForBoth = HGTokensForHG1 ++ HGTokensForHG2
   // Now we insert the separators
   val lTa = insertSeparators(HGTokensForBoth)
-  val bothHgs = hg1 + hg2
-//  val _dg = bothHgs.toDependencyGraph()
-//  System.err.println("Combined HG input")
-//  dependencyGraphToDot(_dg, bothHgs)
+  //  val _dg = bothHgs.toDependencyGraph()
+  //  System.err.println("Combined HG input")
+  //  dependencyGraphToDot(_dg, bothHgs)
 
   // bothHgs.hyperedges.map(e => e.verticesIterator.toSet.map(f => f.length)).foreach(System.err.println)
   // val lTa: Vector[TokenEnum] = createHgTa(bothHgs) // create local token array
   val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] =
     createAlignedPatternsPhaseTwo(lTa, 2) pipe groupPatternsTogetherByHyperedge
-
+  patterns
+}
+def createMatches(hg1: Hypergraph[EdgeLabel, TokenRange], hg2: Hypergraph[EdgeLabel, TokenRange]): MatchesProperties =
+  val patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] = createPatterns(hg1, hg2)
   val allSplitHyperedgesNew: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
-    splitHesOnAlignedPatterns(bothHgs, patterns)
+    splitHesOnAlignedPatterns(hg1, hg2, patterns)
   val unfilteredMatchesAsSet = allSplitHyperedgesNew._2 // May includes spurious matches within single witness
   val matchesAsSet = unfilteredMatchesAsSet.filterNot(e => isSpuriousMatch(e)) // will process normally
-  val spuriousMatches = unfilteredMatchesAsSet.diff(matchesAsSet) // will add to result directly
-  if spuriousMatches.nonEmpty then System.err.println(s"Spurious matches: $spuriousMatches")
-  val matchesAsHg: Hypergraph[EdgeLabel, TokenRange] =
-    matchesAsSet.foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])((y, x) => y + x.head + x.last)
-  val (transpositionBool, matchesOrderedByHead, matchesOrderedByLast) =
-    detectTransposition(matchesAsSet, matchesAsHg, true)
-  if transpositionBool
-  then
-    val decisionGraph: Graph[DecisionGraphStepPhase2] =
-      traversalGraphPhase2(matchesOrderedByHead.toList, matchesOrderedByLast.toList)
-    // TODO: Perform a* over newAlignment to resolve transposition (only if transposition previously detected)
-    val matchLists = List(matchesOrderedByHead.toList, matchesOrderedByLast.toList)
-    val greedyResult: Hypergraph[EdgeLabel, TokenRange] = greedy(decisionGraph, matchLists)
-    // FIXME: Adding allSplitHyperedgeNew._1 to the greedyResult causes a cycle where it shouldn't be.
-    // val result = allSplitHyperedgesNew._1 + greedyResult
-    val result = greedyResult
-    // val tmp = result.hyperedges.toVector
-    //  .sortBy(e => e.verticesIterator.map(_.start).min)
-    //  .map(_.verticesIterator.next())
-    //  .map(_.tString)
-    // tmp.foreach(System.err.println)
-    spuriousMatches.flatten.foldLeft(result)(_ + _)
-  else
-    val newMatchHg: Hypergraph[EdgeLabel, TokenRange] = matchesAsSet
-      .map(e => AlignmentHyperedge(e.head.verticesIterator.toSet ++ e.last.verticesIterator.toSet)) // NB: new hyperedge
-      .foldLeft(Hypergraph.empty[EdgeLabel, TokenRange])(_ + _)
-    val hgWithMergeResults = allSplitHyperedgesNew._1 // Original full hypergraph
-      + newMatchHg // Add the merged hyperedges in place of those removed
-    // debug: unmark to create and write dependency graph to disk
-    // val dgNew = DependencyGraph(hgWithMergeResults)
-    // dependencyGraphToDot(dgNew, hgWithMergeResults) // writes to disk
-    spuriousMatches.flatten.foldLeft(hgWithMergeResults)(_ + _)
+  val (
+    matchesAsHg: Hypergraph[EdgeLabel, TokenRange],
+    matchesSortedHead: Seq[HyperedgeMatch],
+    matchesSortedLast: Seq[HyperedgeMatch]
+  ) = prepareHgMatches(matchesAsSet)
+  MatchesProperties(
+    allSplitHyperedgesNew,
+    unfilteredMatchesAsSet,
+    matchesAsSet,
+    matchesAsHg,
+    matchesSortedHead,
+    matchesSortedLast
+  )
+
+def mergeHgHg(
+    hg1: Hypergraph[EdgeLabel, TokenRange],
+    hg2: Hypergraph[EdgeLabel, TokenRange]
+): Hypergraph[EdgeLabel, TokenRange] =
+  val bothHypergraphs: Hypergraph[EdgeLabel, TokenRange] = hg1 + hg2
+  val matchesProperties: MatchesProperties = createMatches(hg1, hg2)
+  val hypergraphAfterSplitting = matchesProperties.allSplitHyperedgesNew._1
+  val spuriousMatches =
+    matchesProperties.unfilteredMatchesAsSet.diff(matchesProperties.matchesAsSet) // will add to result directly
+  if spuriousMatches.nonEmpty then throw new RuntimeException(s"Spurious matches: $spuriousMatches")
+  // When there are no matches simply return the two graphs combined
+  if matchesProperties.matchesAsSet.isEmpty then
+    return bothHypergraphs
+
+  val tg: EdgeLabeledDirectedGraph[DecisionGraphStepPhase2Enum, TraversalEdgeProperties] = traversalGraphPhase2(
+    hypergraphAfterSplitting, // != original hypergraph
+    matchesProperties.matchesSortedHead.toList,
+    matchesProperties.matchesSortedLast.toList
+  )
+  val alignment: List[DecisionGraphStepPhase2Enum] = findOptimalAlignmentPhase2(tg)
+  val mergedHypergraph: Hypergraph[EdgeLabel, TokenRange] =
+    mergeHypergraphsUsingAlignmentPhase2(hypergraphAfterSplitting, alignment, matchesProperties) // not original hypergraph
+  mergedHypergraph
 
 def readJsonData: List[List[Token]] =
   val datafilePath =
@@ -223,6 +265,16 @@ def splitOneHyperedge(
       hyperedgesByBlock: Map[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]
   ): (Hypergraph[EdgeLabel, TokenRange], Map[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]) =
     val currentOccurrence = occurrences.head
+//      if currentHyperedge.v.map(_.length).size != 1 then
+//      System.err.println("\nFrom splitOnPattern() inside splitOneHyperedge()")
+//      System.err.println(s"occurrences: $occurrences")
+//      System.err.println(s"currentHyperedge: $currentHyperedge")
+//      System.err.println(s"preLength: $preLength")
+//      System.err.println(s"postLength: $postLength")
+//      System.err.println(s"hyperedgeParts: $hyperedgeParts")
+//      System.err.println(s"hyperedgesByBlock: $hyperedgesByBlock")
+//      System.err.println(s"${currentHyperedge.v.map(_.length).mkString(" ")}")
+//      assert(currentHyperedge.v.map(_.length).size == 1)
     val (newPre, newPost, (block, middle)) =
       splitHyperedgeOneOccurrence(currentHyperedge, currentOccurrence, preLength, postLength)
     val hyperedgesByBlockNew = hyperedgesByBlock + (block -> middle)
@@ -260,12 +312,14 @@ def splitOneHyperedge(
   )
 
 def splitHesOnAlignedPatterns(
-    bothHgs: Hypergraph[EdgeLabel, TokenRange], // what to split
+    hg1: Hypergraph[EdgeLabel, TokenRange], // what to split
+    hg2: Hypergraph[EdgeLabel, TokenRange],
     patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]] // how to split it
 ): (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]) =
   // A splitOneHyperedge call returns a map containing FullDepthBlocks -> to the new hyperedge
   // at the end we collect all the items in one multimap, which has multiple values per key
   // It can be stored in a MultiDict (part of the scala contrib module)
+  val bothHgs = hg1 + hg2
   @tailrec
   def processPattern(
       patterns: Map[EdgeLabel, Iterable[AlignedPatternOccurrencePhaseTwo]],
@@ -293,10 +347,12 @@ def splitHesOnAlignedPatterns(
     bothHgs,
     mutable.MultiDict.empty[FullDepthBlock, Hyperedge[EdgeLabel, TokenRange]]
   )
-
+  // System.err.println("\nPrinting patterns")
+  // patterns.foreach(System.err.println)
   // convert MultiDict to HyperedgeMatches
+  // 2025-12-09 TODO: Does seq -> setof2 preserve order?
   val newHyperedgeMatches = resultInWrongFormat._2.map { (key, _) =>
-    HyperedgeMatch(resultInWrongFormat._2.get(key).toSet)
+    HyperedgeMatch(resultInWrongFormat._2.get(key).toSeq.sortBy(h => h.label).toSet) // Does toSet here preserve order?
   }.toSet
 
   (resultInWrongFormat._1, newHyperedgeMatches)
@@ -324,7 +380,7 @@ def isSpuriousMatch(candidate: HyperedgeMatch): Boolean =
 
 def createDependencyGraphEdgeLabels(hg: Hypergraph[EdgeLabel, TokenRange]): Unit =
   val gTa = hg.verticesIterator.next.ta
-  val hgDg = hg.toDependencyGraph()
+  val hgDg = hg.toDependencyGraph
   val fullHgRanking = hg.rank() // FIXME: creates yet another dependency graph internally
   val edges = hgDg.toMap map ((k, v) => k -> v._2)
   val allWitnesses = Range(0, 6).toSet // FIXME: Look it up
@@ -389,26 +445,16 @@ def mergeClustersIntoHG(
           // prepare arguments, tokens for singleton and Hypergraph instance (!) for hypergraph
           val singletonTokens = darwinReadings(item1).toVector
           val hg = y(item2)
-          val hypergraph = mergeSingletonHG(singletonTokens, hg, false)
+          val hypergraph = mergeSingletonHG(singletonTokens, hg)
           y + ((i + darwinReadings.size) -> hypergraph)
         case (HGHG(item1, item2, _), i: Int) =>
-          val hypergraph = mergeHgHg(y(item1), y(item2), false) // true creates xhtml table
+          val hypergraph = mergeHgHg(y(item1), y(item2))
           y + ((i + darwinReadings.size) -> hypergraph)
     })
 
   // hypergraphMapToDot(hgMap) /// Writes all intermediate hypergraphs as dot to disk (for debug)
   val hg = hgMap(hgMap.keySet.max)
   hg
-
-//@main def secondAlignmentPhase(): Unit =
-//  val darwinReadings: List[List[Token]] = readJsonData
-//  val gTa: Vector[TokenEnum] = createGlobalTokenArray(darwinReadings)
-//  val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
-//  val hg: Hypergraph[EdgeLabel, TokenRange] =
-//    mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-//  createDependencyGraphEdgeLabels(hg)
-//  // Transform hypergraph to alignment ribbon and visualize
-//  createSecondAlignmentPhaseVisualization(hg)
 
 type HyperedgeMatch = SetOf2[Hyperedge[EdgeLabel, TokenRange]]
 
@@ -418,29 +464,11 @@ object HyperedgeMatch:
   def apply(he1: Hyperedge[EdgeLabel, TokenRange], he2: Hyperedge[EdgeLabel, TokenRange]) =
     new HyperedgeMatch(he1, he2)
 
-//@main def secondAlignmentPhaseExploration(): Unit =
-//  val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
-//  val unalignedZonesDir = os.pwd / "src" / "main" / "outputs" / "unalignedZones_2025-06-03"
-//  val JSONFiles = os.list(unalignedZonesDir).filter(e => os.isFile(e))
-//  for uzFilename <- JSONFiles do
-//    System.err.println(uzFilename)
-//    val darwinReadings: List[List[Token]] = readSpecifiedJsonData(uzFilename)
-//    val hg =
-//      if darwinReadings.size == 1 then // Don’t try to cluster if there’s only one witness
-//        Hyperedge(
-//          EdgeLabel(darwinReadings.head.head.w.toString),
-//          Set(TokenRange(darwinReadings.head.head.g, darwinReadings.head.last.g + 1, gTa))
-//        )
-//      else // Transform hypergraph to alignment ribbon and visualize
-//        val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
-//        mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-//    createSecondAlignmentPhaseVisualization(hg)
-
-//@main def explore1122(): Unit = // longest unaligned zone
-//  val (_, gTa: Vector[TokenEnum]) = createGTa(Int.MaxValue) // need true gTa for entire alignment
-//  val filename = os.pwd / "src" / "main" / "outputs" / "unalignedZones_2025-06-03" / "1122.json"
-//  val darwinReadings: List[List[Token]] = readSpecifiedJsonData(filename)
-//  val nodesToCluster: List[ClusterInfo] = clusterWitnesses(darwinReadings)
-//  System.err.println(nodesToCluster)
-//  val hg = mergeClustersIntoHG(nodesToCluster, darwinReadings, gTa)
-//  createSecondAlignmentPhaseVisualization(hg)
+case class MatchesProperties(
+    allSplitHyperedgesNew: (Hypergraph[EdgeLabel, TokenRange], Set[HyperedgeMatch]),
+    unfilteredMatchesAsSet: Set[HyperedgeMatch],
+    matchesAsSet: Set[HyperedgeMatch],
+    matchDataAsHg: Hypergraph[EdgeLabel, TokenRange],
+    matchesSortedHead: Seq[HyperedgeMatch],
+    matchesSortedLast: Seq[HyperedgeMatch]
+)

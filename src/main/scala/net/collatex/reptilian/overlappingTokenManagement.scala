@@ -34,22 +34,23 @@ enum OverlapGroup:
   def size: Int
   def +(second: OverlapGroup): Seq[OverlapGroup] =
     (this, second) match // second always has a size of 1
-      case (first: Left, second: Left)   => Seq(Left(first.size + 1))
+      // 4 x 4 combinations
+      case (first: Left, _: Left)        => Seq(Left(first.size + 1))
       case (first: Left, second: Right)  => Seq(first, second)
       case (first: Left, second: Ambig)  => Seq(first, second)
-      case (first: Left, second: Both)   => Seq(Both(first.size + 1))
-      case (first: Right, second: Left)  => Seq(Ambig(first.size + 1))
-      case (first: Right, second: Right) => Seq(Right(first.size + 1))
-      case (first: Right, second: Ambig) => Seq(Ambig(first.size + 1))
-      case (first: Right, second: Both)  => Seq(Right(first.size + 1))
-      case (first: Both, second: Left)   => Seq(Left(first.size + 1))
-      case (first: Both, second: Right)  => Seq(Both(first.size + 1))
-      case (first: Both, second: Ambig)  => Seq(Left(first.size + 1))
-      case (first: Both, second: Both)   => Seq(Both(first.size + 1))
-      case (first: Ambig, second: Left)  => Seq(Ambig(first.size + 1))
+      case (first: Left, _: Both)        => Seq(Both(first.size + 1))
+      case (first: Right, _: Left)       => Seq(Ambig(first.size + 1))
+      case (first: Right, _: Right)      => Seq(Right(first.size + 1))
+      case (first: Right, _: Ambig)      => Seq(Ambig(first.size + 1))
+      case (first: Right, _: Both)       => Seq(Right(first.size + 1))
+      case (first: Both, _: Left)        => Seq(Left(first.size + 1))
+      case (first: Both, _: Right)       => Seq(Both(first.size + 1))
+      case (first: Both, _: Ambig)       => Seq(Left(first.size + 1))
+      case (first: Both, _: Both)        => Seq(Both(first.size + 1))
+      case (first: Ambig, _: Left)       => Seq(Ambig(first.size + 1))
       case (first: Ambig, second: Right) => Seq(first, second)
       case (first: Ambig, second: Ambig) => Seq(first, second) // don’t merge because we can split between them
-      case (first: Ambig, second: Both)  => Seq(Right(first.size + 1))
+      case (first: Ambig, _: Both)       => Seq(Right(first.size + 1))
 
 // Used by apply method
 val bindsLeft = Set(",", ".")
@@ -77,11 +78,9 @@ def groupOverlapTokens(input: Seq[OverlapGroup]): Seq[OverlapGroup] =
 
 /** Resolve overlapping blocks by allocating tokens to only one
   *
-  * e.g.: on the monuments of Egypt, || , much diversity in the breeds (overlapping comma)
-  *
-  * Assumes: Determine initial overlap groups of length 1 with OverlapGroup.apply()
-  *
-  * Fold interacting adjacent groups with groupOverlapTokens()
+  *   - e.g.: on the monuments of Egypt, || , much diversity in the breeds (overlapping comma)
+  *   - Assumes: Determine initial overlap groups of length 1 with OverlapGroup.apply()
+  *   - Fold interacting adjacent groups with groupOverlapTokens()
   *
   * @param first
   *   Left input block
@@ -127,14 +126,91 @@ def determineOverlapTokenCategories(overlapTokens: TokenRange): Seq[OverlapGroup
   val overlapGroups = overlapTokens.tokens.map(OverlapGroup.apply)
   overlapGroups
 
+/*
+  What we saw before we tried to handle something we called "overlap"
+  Block with 6 witnesses: ... Egypt , (a b c d e f)
+  Block with 6 witnesses: , much ...  (g h i a b c)
+  With or without transposition: tokens at a, b, c cannot be in two places in output
+  To be addressed: Different issue with and without transposition
+
+  Witness data
+  A: Egypt-0 very-1 much-2
+  B: Egypt-3 very-4 very-5 much-6
+  C: very-7 much-8 Egypt-9 very-A
+
+  Blocks:
+    Egypt very: A: 01, B: 34, C; 9A
+    very much:  A; 12, B: 56, C: 78
+
+  If we resolve transposition first, traversal graph aligns one of the two blocks only:
+
+  A:                Egypt-0 very-1        much-2
+  B:                Egypt-3 very-4 very-5 much-6
+  C: very-7 much -8 Egypt-9 very-A
+
+  Above: Transpose "much" around "Egypt very" (blocks only)
+
+  A: Egypt-0        very-1 much-2
+  B: Egypt-3 very-4 very-5 much-6
+  C:                very-7 much-8 Egypt-9 very-A
+
+  Above: Tranpose "Egypt" around "very much" (blocks only)
+
+  Problem: Token very-1 appears in two blocks
+    (everything else is in exactly one block)
+  Solution: Remove conflicting token from one or the other block(s)
+  Unknown: Can the number of tokens be different? We think not
+
+  Detail: Conflicting token is present in only *some* witnesses
+    (issue does not arise if it's in all witnesses)
+  Issue: No token can appear in more than location in the traversal graph
+  Currently: We resolve token assigned more than once before building traversal
+    graph, which works only if there is no transposition, which cannot be assumed
+  What to do instead:
+
+    Note: Perform in both phase 1 and phase 2
+    1. Build traversal graph (needs block order per witness, which we can still do
+       because duplication happens at end of one and beginning of other)
+    2. Go over all edges, checking source + target, including for each combination in
+       transposed blocks. Create new graph that creates edges (and, therefore, nodes)
+       only if there is token reuse (and, if so, also record transposition).
+       (NB: We can visualize the two graphs together in GraphViz at this point)
+    3. Traverse and resolve transpositions, repetitions, defer duplicate-token issue,
+       except that avoid double-counting. (We already do this for transposition; now
+       we'll do it also for token reuse, even without transposition.)
+    4. We now have best path, so adjust blocks to resolve duplicate token issue (we're
+       already doing this, but not entirely correctly) as we convert path through
+       traversal graph into alignment.
+
+    Can it happen that a phase 1 block and a phase 2 zone have repeated tokens? We
+       think not, but if we're wrong, we can make a final check over the complete
+       alignment for repetation at the seams of a phase 1 block and phase 2 zone.
+
+    In debug mode, assert that every token in GTa appears exactly once in alignment.
+
+  Why: Resolution depends on consecutive blocks, and therefore on alignment,
+    and therefore on completion of deriving alignment from traversal-graph
+
+  What happens with three-way conflicts?
+    AB BC CA resolve B, C
+    BC CA AB resolve C, A
+    CA AB BC resolve A, B
+  First develop for two, then test three to see what happens
+
+* */
 def findBlockOverlap(
     first: FullDepthBlock,
     second: FullDepthBlock,
     gTa: Vector[TokenEnum]
 ): Seq[OverlapGroup] =
-  val blockOverlapData: Vector[Int] = // if any value > 0, there is overlap
-    first.instances.map(e => e + first.length).zip(second.instances).map((f, s) => f - s)
-  if blockOverlapData.exists(e => e > 0) then
+  val overlapBool: Boolean =
+    val firstRanges = first.instances.map(e => TokenRange(e, e + first.length, gTa))
+    val secondRanges = second.instances.map(e => TokenRange(e, e + second.length, gTa))
+    firstRanges.zip(secondRanges).map((f, s) => f.overlaps(s)
+    ).contains(true) // Returns false if *any* pair overlaps
+  if overlapBool then
+    val blockOverlapData: Vector[Int] = // if any value > 0, there is overlap
+      first.instances.map(e => e + first.length).zip(second.instances).map((f, s) => f - s)
     val overlapLength: Int = blockOverlapData.filter(e => e > 0).head
     val overlapRange = TokenRange(second.instances.head, second.instances.head + overlapLength, gTa)
     val overlapBindings = determineOverlapTokenCategories(overlapRange)

@@ -208,7 +208,6 @@ class displayfunctionsTest extends AnyFunSuite:
       alignment = alignment,
       displaySigla = sigla,
       displayColors = List("pink", "aqua"),
-      gTa = gTa,
       outputBaseFilename = outputBaseFilename,
       htmlExtension = htmlExtension
     )
@@ -227,7 +226,6 @@ class displayfunctionsTest extends AnyFunSuite:
         alignment = alignment,
         displaySigla = sigla,
         displayColors = List("pink", "aqua"),
-        gTa = gTa,
         outputBaseFilename = Set.empty,
         htmlExtension = Set("html")
       )

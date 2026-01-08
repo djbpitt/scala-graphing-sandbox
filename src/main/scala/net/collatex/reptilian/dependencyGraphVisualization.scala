@@ -170,6 +170,6 @@ def dependencyGraphToDot(
     os.pwd / "src" / "main" / "outputs" /
       s"${System.currentTimeMillis()}-dependency-graph-$hgId.dot"
   val dotValue = prologue + dotEdges + dotNodes + epilogue
-  System.err.println("Writing the dependency graph visualisation of the hypergraph to: "+dotPath.toString)
-  System.err.println(dotValue)
+//  System.err.println("Writing the dependency graph visualisation of the hypergraph to: "+dotPath.toString)
+//  System.err.println(dotValue)
   os.write.over(dotPath, dotValue)

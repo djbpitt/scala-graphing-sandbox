@@ -18,8 +18,12 @@ lazy val root = (project in file("."))
       "-unchecked",
       // "-deprecation",
       "-feature",
+      "-Wvalue-discard",
       "-Wunused:imports",
       "-Wunused:privates",
+      "-Wunused:params",
+      "-Wunused:patvars",
+      "-Wunused:implicits",
       "-Wunused:locals" // can change to "all" to add unchecked, deprecation, and feature
     ),
     libraryDependencies ++= Seq(

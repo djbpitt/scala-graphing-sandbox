@@ -14,6 +14,7 @@ class treeVisualizationTest extends AnyFunSuite:
     assert(result == expected)
   }
 
+  // TODO: Why are we ignoring this?
   ignore(testName = "Wrap string to specified line length and line count") {
     val result = wrapTextToWidth(string1, targetLineLength = 20, targetLineCount = 3) // Truncate after 3 lines
     val expected ="Lorem ipsum dolor\\lsit amet,\\lconsectetur\\ladipiscing elit. … \\l"

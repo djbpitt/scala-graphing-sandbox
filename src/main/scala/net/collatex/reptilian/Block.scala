@@ -30,6 +30,7 @@ case class FullDepthBlock(instances: Vector[Int], length: Int):
       .slice(this.instances(0), this.instances(0) + this.length)
       .map(_.n)
       .mkString(" ")
+  def id: Int = this.instances(0) // Unique for full-depth blocks
 
   def remapBlockToGTa(lTa: Vector[TokenEnum]): FullDepthBlock =
     FullDepthBlock(instances.map(e => lTa(e).g), length)
