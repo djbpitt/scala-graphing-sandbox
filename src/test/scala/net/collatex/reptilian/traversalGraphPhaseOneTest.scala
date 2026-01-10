@@ -1,11 +1,9 @@
 package net.collatex.reptilian
 
+import net.collatex.util.EdgeLabeledDirectedGraph
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.*
-import scalax.collection.mutable.Graph
-import scalax.collection.GraphPredef.EdgeAssoc
-import scalax.collection.edge.Implicits.edge2WDiEdgeAssoc
-import scalax.collection.edge.WDiEdge
+
 import scala.collection.mutable.ArrayBuffer
 
 /** Set up fixtures
@@ -76,69 +74,37 @@ class traversalGraphPhaseOneTest extends AnyFunSuite:
     val result = identifySkippedBlocks(source, target, offsets, blockOrders)
     assert(result == expected)
   }
-  test("Create graph from blocks") {
-    val result = initializeEmptyGraph(blocks)
-    assert(
-      result ==
-        Graph(192, 225, 4, 101, 229, 38, 134, 198, 39, 104, 43, 172, 142, 146, 243, 212, 184, 60, 188, 93, 31)
-    )
-  }
   test("Create traversal graph") {
     val result = createTraversalGraph(blocks)
     // NB: weights on the edges are not checked in this assert!
-
     assert(
       result ==
-        Graph(
-          -1,
-          2147483647,
-          4,
-          31,
-          38,
-          39,
-          43,
-          60,
-          93,
-          101,
-          104,
-          134,
-          142,
-          146,
-          172,
-          184,
-          188,
-          192,
-          198,
-          212,
-          225,
-          229,
-          243,
-          -1 ~> 4 % 6.0,
-          4 ~> 31 % 6.0,
-          31 ~> 38 % 5.0,
-          31 ~> 39 % 1.0,
-          38 ~> 43 % 1.0,
-          39 ~> 43 % 5.0,
-          43 ~> 60 % 6.0,
-          60 ~> 93 % 6.0,
-          93 ~> 101 % 6.0,
-          101 ~> 104 % 6.0,
-          104 ~> 134 % 6.0,
-          134 ~> 142 % 6.0,
-          142 ~> 146 % 6.0,
-          146 ~> 172 % 6.0,
-          172 ~> 184 % 6.0,
-          184 ~> 188 % 6.0,
-          188 ~> 192 % 6.0,
-          192 ~> 198 % 6.0,
-          198 ~> 212 % 6.0,
-          212 ~> 225 % 6.0,
-          225 ~> 229 % 6.0,
-          229 ~> 243 % 6.0,
-          243 ~> 2147483647 % 6.0
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](-1, 4, TraversalGraphPhaseOneEdgeProperties(26,Set())) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](4, 31, TraversalGraphPhaseOneEdgeProperties(6,Set())) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](31, 38, TraversalGraphPhaseOneEdgeProperties(1,Set(FullDepthBlock(Vector(39, 299, 557, 819, 1079, 1332), 3)))) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](31, 39, TraversalGraphPhaseOneEdgeProperties(3, Set(FullDepthBlock(Vector(38, 298, 556, 818, 1082, 1331), 1)))) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](38, 43, TraversalGraphPhaseOneEdgeProperties(16, Set(FullDepthBlock(Vector(39, 299, 557, 819, 1079, 1332), 3)))) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](39, 43, TraversalGraphPhaseOneEdgeProperties(16, Set(FullDepthBlock(Vector(38, 298, 556, 818, 1082, 1331), 1)))) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](43, 60, TraversalGraphPhaseOneEdgeProperties(31, Set())) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](60, 93, TraversalGraphPhaseOneEdgeProperties(7,Set())) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](93, 101, TraversalGraphPhaseOneEdgeProperties(2,Set())) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](101, 104, TraversalGraphPhaseOneEdgeProperties(29,Set())) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](104, 134, TraversalGraphPhaseOneEdgeProperties(7,Set())) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](134, 142, TraversalGraphPhaseOneEdgeProperties(2,Set())) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](142, 146, TraversalGraphPhaseOneEdgeProperties(25,Set())) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](146, 172, TraversalGraphPhaseOneEdgeProperties(11,Set())) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](172, 184, TraversalGraphPhaseOneEdgeProperties(2,Set())) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](184, 188, TraversalGraphPhaseOneEdgeProperties(3, Set())) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](188, 192, TraversalGraphPhaseOneEdgeProperties(6,Set())) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](192, 198, TraversalGraphPhaseOneEdgeProperties(12,Set())) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](198, 212, TraversalGraphPhaseOneEdgeProperties(12,Set())) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](212, 225, TraversalGraphPhaseOneEdgeProperties(2,Set())) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](225, 229, TraversalGraphPhaseOneEdgeProperties(13,Set())) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](229, 243, TraversalGraphPhaseOneEdgeProperties(17,Set())) +
+        EdgeLabeledDirectedGraph.edge[Int, TraversalGraphPhaseOneEdgeProperties](243, 2147483647, TraversalGraphPhaseOneEdgeProperties(1,Set()))
         )
-    )
   }
+
   test("Find potential next path steps") {
     val g = createTraversalGraph(blocks)
     val b1 = PathCandidate(path = List(38, 31, 4, -1), score = 10) // one option
@@ -146,8 +112,8 @@ class traversalGraphPhaseOneTest extends AnyFunSuite:
     val expect1 = Vector(PathCandidate(List(43, 38, 31, 4, -1), score = 23))
     assert(result1 == expect1)
     val b3 = PathCandidate(path = List(31, 4, -1), score = 20) // two options
-    val result3 = scoreAllOptions(g, b3)
-    val expect3 = Vector(PathCandidate(List(39, 31, 4, -1), 22.0), PathCandidate(List(38, 31, 4, -1), 18.0))
+    val result3 = scoreAllOptions(g, b3).toSet
+    val expect3 = Set(PathCandidate(List(39, 31, 4, -1), 22.0), PathCandidate(List(38, 31, 4, -1), 18.0))
     assert(result3 == expect3)
   }
   test("Skip when necessary") {
