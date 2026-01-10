@@ -35,8 +35,12 @@ class ConfigTest extends AnyFunSuite {
     val yaml =
       """tokenPattern: '(\w+|[^\w\s])\s*'
         |tokensPerWitnessLimit: 100
-        |defaultColors: ['#ff0000', '#00ff00']
+        |defaultColors:
+        | - '#ff0000'
+        | - '#00ff00'
+        |defaultPort: 8082
         |""".stripMargin
+    System.err.print(yaml)
 
     val cfg = decode(yaml)
     val rc = ResolvedConfig.from(cfg)
@@ -65,6 +69,7 @@ class ConfigTest extends AnyFunSuite {
     val yaml =
       """tokenPattern: '(?:\w+|[^\w\s])\s*'
         |defaultColors: ['A','B','B','C']
+        |defaultPort: 8082
         |""".stripMargin
 
     val cfg = decode(yaml)
