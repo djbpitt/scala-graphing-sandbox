@@ -77,7 +77,7 @@ class traversalGraphPhaseOneTest extends AnyFunSuite:
     assert(result == expected)
   }
   test("Create graph from blocks") {
-    val result = computeNodesForGraph(blocks)
+    val result = initializeEmptyGraph(blocks)
     assert(
       result ==
         Graph(192, 225, 4, 101, 229, 38, 134, 198, 39, 104, 43, 172, 142, 146, 243, 212, 184, 60, 188, 93, 31)
