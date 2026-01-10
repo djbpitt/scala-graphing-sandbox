@@ -1,8 +1,8 @@
 package net.collatex.reptilian
 
-import scalax.collection.mutable.Graph
-import scalax.collection.config.CoreConfig
-import scalax.collection.edge.WLDiEdge
+//import scalax.collection.mutable.Graph
+//import scalax.collection.config.CoreConfig
+//import scalax.collection.edge.WLDiEdge
 import scala.collection.mutable.ArrayBuffer
 
 /** Functions for working with blocks
@@ -18,7 +18,7 @@ import scala.collection.mutable.ArrayBuffer
   */
 
 val endNodeId = Integer.MAX_VALUE // End-node uses maximum possible integer value (i.e., inconveniently large value)
-given CoreConfig = CoreConfig() // Needed (how?) by graph library
+//given CoreConfig = CoreConfig() // Needed (how?) by graph library
 
 /** https://stackoverflow.com/questions/28254447/is-there-a-scala-java-equivalent-of-python-3s-collections-counter
   */
