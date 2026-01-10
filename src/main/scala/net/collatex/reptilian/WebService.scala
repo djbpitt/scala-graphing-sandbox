@@ -2,11 +2,12 @@ package net.collatex.reptilian
 
 import cats.effect.{ExitCode, IO, IOApp, Resource}
 import cats.implicits.catsSyntaxEither
-import cats.syntax.all.catsSyntaxApplicativeId
+import cats.syntax.all.*
 import cats.syntax.traverse.toTraverseOps
 import com.comcast.ip4s.{Port, ipv4}
 import net.collatex.reptilian.GtaBuilder.{buildFromWitnessData, jsonToWitnessData}
 import net.collatex.reptilian.display.DisplayFunctions.displayDispatch
+import org.http4s.*
 import org.http4s.headers.`Content-Type`
 import org.http4s.{DecodeResult, EntityDecoder, InvalidMessageBodyFailure, MediaType}
 import org.http4s.{Entity, HttpRoutes, Response, Status}
@@ -53,8 +54,8 @@ object WebService extends IOApp {
   private val multiPartService = HttpRoutes.of[IO] { case req @ POST -> Root / "multipart" =>
     for { // Needs Logger[IO].debug rather than logger.debug
       _ <- Logger[IO].debug(s"Request: ${req.method} ${req.uri} from ${req.remoteAddr.getOrElse("unknown")}")
-      m <- req.as[Multipart[IO]]
-      lines <- m.parts.traverse { p => p.bodyText.compile.string.map(b => s"${p.name.getOrElse("<unnamed>")}: $b") }
+      m: Multipart[IO] <- req.as[Multipart[IO]]
+      lines: Vector[String] <- m.parts.traverse { (p: Part[IO]) => p.bodyText.compile.string.map(b => s"${p.name.getOrElse("<unnamed>")}: $b") }
       resp <- Ok(lines.mkString("\n"))
     } yield resp
   }

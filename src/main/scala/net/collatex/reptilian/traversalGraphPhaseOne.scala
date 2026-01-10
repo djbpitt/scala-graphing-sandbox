@@ -1,8 +1,7 @@
 package net.collatex.reptilian
 
-import scalax.collection.mutable.Graph
-import scalax.collection.config.CoreConfig
-import scalax.collection.edge.WLDiEdge
+import net.collatex.util.EdgeLabeledDirectedGraph
+
 import scala.collection.mutable.ArrayBuffer
 
 /** Functions for working with blocks
@@ -18,7 +17,7 @@ import scala.collection.mutable.ArrayBuffer
   */
 
 val endNodeId = Integer.MAX_VALUE // End-node uses maximum possible integer value (i.e., inconveniently large value)
-given CoreConfig = CoreConfig() // Needed (how?) by graph library
+//given CoreConfig = CoreConfig() // Needed (how?) by graph library
 
 /** https://stackoverflow.com/questions/28254447/is-there-a-scala-java-equivalent-of-python-3s-collections-counter
   */
@@ -35,11 +34,11 @@ def counts[T](s: Seq[T]) = s.groupBy(identity).view.mapValues(_.length)
   */
 case class PathCandidate(path: List[Int], score: Double, skippedBlocks: Set[FullDepthBlock] = Set.empty)
 
-protected def computeNodesForGraph(blocks: Vector[FullDepthBlock]) =
+protected def initializeEmptyGraph(blocks: Vector[FullDepthBlock]) =
   val nodeIdentifiers: Vector[Int] =
     blocks
       .map(e => e.instances.head) // Offset in witness 0 is block identifier
-  val g = Graph.from[Int, WLDiEdge](nodeIdentifiers)
+  val g = EdgeLabeledDirectedGraph.empty[Int, TraversalGraphPhaseOneEdgeProperties]
   g
 
 /** Sort all blocks according to all witnesses
@@ -192,7 +191,7 @@ def createOutgoingEdgesForBlock(
     block: FullDepthBlock,
     blockOrderForWitnesses: Vector[Vector[FullDepthBlock]],
     blockOffsets: Map[Int, ArrayBuffer[Int]] // block number -> array buffer of offsets of key block for each witness
-): Vector[WLDiEdge[Int]] =
+): Vector[EdgeLabeledDirectedGraph[Int, TraversalGraphPhaseOneEdgeProperties]] =
   // val currentPositionsPerWitness: Vector[Int] = block.instances // gTa positions
   val targetsByWitness: Vector[FullDepthBlock] = blockOrderForWitnesses.indices
     .map(i =>
@@ -205,14 +204,18 @@ def createOutgoingEdgesForBlock(
     .distinct // deduplicate
   targetsByWitness.map(target =>
     val skippedBlocks: Set[FullDepthBlock] = identifySkippedBlocks(block, target, blockOffsets, blockOrderForWitnesses)
-    WLDiEdge(block.id, target.id)(target.length, skippedBlocks)
+    EdgeLabeledDirectedGraph.edge(
+      block.id,
+      target.id,
+      TraversalGraphPhaseOneEdgeProperties(target.length, skippedBlocks)
+    )
   ) // length of target block is weight
 
 def createReversedEdgesForBlock(
     block: FullDepthBlock,
     blockOrderForWitnesses: Vector[Vector[FullDepthBlock]],
     blockOffsets: Map[Int, ArrayBuffer[Int]] // block number -> array buffer of offsets of key block for each witness
-): Vector[WLDiEdge[Int]] =
+): Vector[EdgeLabeledDirectedGraph[Int, TraversalGraphPhaseOneEdgeProperties]] =
   // val currentPositionsPerWitness: Vector[Int] = block.instances // gTa positions
   val sourcesByWitness: Vector[FullDepthBlock] = blockOrderForWitnesses.indices
     .map(i =>
@@ -226,7 +229,11 @@ def createReversedEdgesForBlock(
     .distinct // deduplicate
   sourcesByWitness.map(source =>
     val skippedBlocks: Set[FullDepthBlock] = identifySkippedBlocks(source, block, blockOffsets, blockOrderForWitnesses)
-    WLDiEdge(source.id, block.id)(block.length, skippedBlocks)
+    EdgeLabeledDirectedGraph.edge(
+      source.id,
+      block.id,
+      TraversalGraphPhaseOneEdgeProperties(block.length, skippedBlocks)
+    )
   ) // length of target block is weight
 
 /** createOutgoingEdges
@@ -245,7 +252,7 @@ def createOutgoingEdges(
     blocks: Vector[FullDepthBlock],
     blockOrderForWitnesses: Vector[Vector[FullDepthBlock]],
     blockOffsets: Map[Int, ArrayBuffer[Int]]
-): Vector[WLDiEdge[Int]] =
+): Vector[EdgeLabeledDirectedGraph[Int, TraversalGraphPhaseOneEdgeProperties]] =
   val edges = blocks.tail // End node is first block in vector and has no outgoing edges, so exclude
     .flatMap(e => createOutgoingEdgesForBlock(e, blockOrderForWitnesses, blockOffsets))
   edges
@@ -260,20 +267,24 @@ def createReversedEdges(
     .flatMap(e => createReversedEdgesForBlock(e, blockOrderForWitnesses, blockOffsets))
   edges
 
-def createTraversalGraph(blocks: Iterable[FullDepthBlock]): Graph[Int, WLDiEdge] =
+def createTraversalGraph(
+    blocks: Iterable[FullDepthBlock]
+): EdgeLabeledDirectedGraph[Int, TraversalGraphPhaseOneEdgeProperties] =
   val localBlocks = blocks.toVector
   val witnessCount = localBlocks(0).instances.length
   val startBlock = FullDepthBlock(instances = Vector.fill(witnessCount)(-1), length = 1) // fake first (start) block
   val endBlock = FullDepthBlock(instances = Vector.fill(witnessCount)(endNodeId), length = 1)
   val blocksForGraph = Vector(endBlock) ++ localBlocks ++ Vector(startBlock) // don't care about order
-  val g = computeNodesForGraph(blocksForGraph)
+  val g = initializeEmptyGraph(blocksForGraph)
   val blockOrderForWitnesses = computeBlockOrderForWitnesses(blocksForGraph)
   val blockOffsets: Map[Int, ArrayBuffer[Int]] = computeBlockOffsetsInAllWitnesses(blockOrderForWitnesses)
+  def edgesVectorToGraph(edgesIn: Vector[EdgeLabeledDirectedGraph[Int, TraversalGraphPhaseOneEdgeProperties]]) =
+    edgesIn.foldLeft(EdgeLabeledDirectedGraph.empty[Int, TraversalGraphPhaseOneEdgeProperties])(_ + _)
   val edges = createOutgoingEdges(blocksForGraph, blockOrderForWitnesses, blockOffsets)
   // Create edges based on end-to-start traversal to pick up orphaned nodes
   val edgesReversed = createReversedEdges(blocksForGraph, blockOrderForWitnesses, blockOffsets)
   // End of edges based on end-to-start traversal
-  val graphWithEdges = g ++ edges ++ edgesReversed
+  val graphWithEdges = g + edgesVectorToGraph(edges) + edgesVectorToGraph(edgesReversed)
   graphWithEdges
 
 /** Take path step for all edges on PathCandidate and return all potential new PathCandidate objects graph : Needed to
@@ -283,24 +294,32 @@ def createTraversalGraph(blocks: Iterable[FullDepthBlock]): Graph[Int, WLDiEdge]
   * Otherwise check each out-edge, prepend to path, increment score, and return new PathCandidate Returns all options;
   * we decide elsewhere which ones to keep on the beam for the next tier
   */
-def scoreAllOptions(graph: Graph[Int, WLDiEdge], current: PathCandidate): Vector[PathCandidate] =
+def scoreAllOptions(
+    graph: EdgeLabeledDirectedGraph[Int, TraversalGraphPhaseOneEdgeProperties],
+    current: PathCandidate
+): Vector[PathCandidate] =
   // supply outer (our Int value) to retrieve complex inner
   val currentLast: Int = current.path.head
   if currentLast == Int.MaxValue then Vector(current)
   else {
     // Penalize the skipped blocks in the score.
     // That we can calculate the aligned token score incrementally,
-    //   that's not the case for skipped blocks cause transposed blocks are encountered twice
+    //   that's not the case for skipped blocks because transposed blocks are encountered twice
     // Calculate the difference between the set of skipped blocks on the current and new.
-    (graph get currentLast).outgoing.toVector
+
+    graph
+      .outgoingEdges(currentLast)
+      .toVector
       .map(e =>
-        val newSkippedBlocks = e.label.asInstanceOf[Set[FullDepthBlock]] diff current.skippedBlocks
+        val newSkippedBlocks = e.label.skippedBlocks diff current.skippedBlocks
         val newSkippedBlocksScore = newSkippedBlocks.map(e => e.length).sum // Subtract 1 for skipped token
-        PathCandidate(path = e.to :: current.path, score = current.score + e.weight - newSkippedBlocksScore)
+        PathCandidate(path = e.target :: current.path, score = current.score + e.label.weight - newSkippedBlocksScore)
       )
   }
 
-def findOptimalAlignment(graph: Graph[Int, WLDiEdge]): List[Int] = // specify return type?
+def findOptimalAlignment(
+    graph: EdgeLabeledDirectedGraph[Int, TraversalGraphPhaseOneEdgeProperties]
+): List[Int] = // specify return type?
   // Call scoreAllOptions() to … er … score all options for each item on beam
   //
   // If number of new options is smaller than beam size, assign all options to new beam
@@ -336,3 +355,5 @@ def alignmentIntsToBlocks(alignment: Set[Int], blocks: Iterable[FullDepthBlock])
   val alignmentBlocks: Iterable[FullDepthBlock] = blocks
     .filter(e => alignment.contains(e.instances.head))
   alignmentBlocks
+
+case class TraversalGraphPhaseOneEdgeProperties(weight: Int, skippedBlocks: Set[FullDepthBlock])

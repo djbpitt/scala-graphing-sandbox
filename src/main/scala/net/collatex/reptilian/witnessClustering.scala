@@ -44,9 +44,9 @@ def clusterWitnesses =
  */
 private def bag(readings: List[List[Token]]): List[Map[String, Int]] =
   val nValues = readings.map(_.map(_.n))
-  val allTypes = nValues.flatten.toSet // shared list of all tokens
+  val allTypes: Set[String] = nValues.flatten.toSet // shared list of all tokens
   def oneBag(reading: List[String]): Map[String, Int] =
-    val typesInReading = reading.groupBy(identity).map((k, v) => (k, v.length))
+    val typesInReading: Map[String, Int] = reading.groupBy(identity).map((k, v) => (k, v.length))
     val allTypesForReading = allTypes
       .map(e => e -> typesInReading.getOrElse(e, 0))
     allTypesForReading.toMap

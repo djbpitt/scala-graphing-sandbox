@@ -1,4 +1,4 @@
-val http4sVersion = "1.0.0-M44"
+val http4sVersion = "1.0.0-M46"
 val log4catsVersion = "2.7.1"
 lazy val root = (project in file("."))
   .settings(
@@ -28,8 +28,6 @@ lazy val root = (project in file("."))
     ),
     libraryDependencies ++= Seq(
       "org.relaxng" % "jing" % "20241231",
-      "org.scala-graph" %% "graph-core" % "1.13.6" cross CrossVersion.for3Use2_13,
-      "org.scala-graph" %% "graph-dot" % "1.13.3" cross CrossVersion.for3Use2_13,
       "com.lihaoyi" %% "os-lib" % "0.10.1",
       "com.lihaoyi" %% "upickle" % "4.3.0",
       "com.github.haifengl" %% "smile-scala" % "3.1.1" cross CrossVersion.for3Use2_13 exclude ("org.scala-lang.modules", "scala-xml_2.13"),
